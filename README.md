@@ -21,6 +21,7 @@
 
 * [Conflict with dependency 'com.android.supportsupport-annotations' in project 'xxx'. Resolved versions for app (25.4.0) and test app (27.1.1) differ 问题解决](https://github.com/ZhangMiao147/android_learning_notes/blob/master/question/Conflict%20with%20dependency%20'com.android.supportsupport-annotations'%20in%20project%20'xxx'.%20Resolved%20versions%20for%20app%20(25.4.0)%20and%20test%20app%20(27.1.1)%20differ%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3.md)
 
+* [You need to use a Theme.AppCompat theme (or descendant) with this activity 问题解决]()
 
 
 
