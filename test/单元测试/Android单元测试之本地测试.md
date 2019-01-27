@@ -52,7 +52,7 @@ app/src
    |-- test/java（本地单元测试）
 ```
 
-###### 创建测试类
+###### 测试
 　　可以自己手动在相应目录创建测试类， AS 也提供了一种快捷方式：选择对应的类 -> 将光标停留在类名上 -> 按下 ALT + ENTER -> 在弹出的弹窗中选择 Create Test 。
 ![](./create_test.png)
 　　选择 Create Test 选项之后，弹出下面框：
@@ -72,8 +72,6 @@ app/src
 ![](./test_passed.png)
 　　**测试未通过.**如图在 isJudgeSysmbol 中写入参数和不正确的返回结果，测试结果未通过。
 ![](./test_failed.png)
-
-###### 使用命令 gradlew test 运行测试用例
 
 
 
