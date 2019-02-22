@@ -1,39 +1,10 @@
-# Android单元测试
+# Android单元测试之本地测试
 
-## Android单元测试介绍
+## 本地测试
+本地测试（ Local tests）：只在本地机器 JVM 上运行，以最小化执行时间，这种单元测试不依赖于 Android 框架，或者即使有依赖，也很方便使用模拟框架来模拟依赖，以达到隔离 Android 依赖的目的，模拟框架如 google 推荐的 Mockito 。
+## 如何进行本地测试
 
-#### 简单介绍
-　　单元测试是应用程序测试策略中的基本测试，通过对代码进行单元测试，一方面可以轻松地验证单个单元的逻辑是否正确，另一方面在每次构建之后运行单元测试，可以快读捕获和修复因代码更改（重构、优化等）带来的回归问题。
-
-#### 为什么要进行单元测试？
-* 提高稳定性，能够明确地了解是否正确的完成开发；
-* 快速反馈 bug ，跑一遍单元测试用例，定位 bug ；
-* 在开发周期中尽早通过单元测试检查 bug ，最小化技术债，越往后可能修复 bug 的代价会越大，严重的情况下会影响项目进度；
-* 为代码重构提供安全保障，在优化代码时不用担心回归问题，在重构后跑一遍测试用例，没通过说明重构可能是有问题的，更加易于维护。
-
-#### 单元测试要测什么
-* 列出想要测试覆盖的正常、异常情况，进行测试验证；
-* 性能测试，例如某个算法的耗时等等。
-
-## JUnit 注解
-| Annotation | 描述 |
-|--------|--------|
-| @Test publish void method | 定义所在方法为单元测试方法 |
-| @Test(expected=Exception.class) public void method() | 测试方法若没有抛出 Annotation 中的 Exception 类型（子类型也可以）-> 失败 |
-| @Test(timeout=100) public void method() | 性能测试，如果方法耗时超过 100 毫秒 -> 失败 |
-| @Before public void method() | 这个方法在每个测试之前执行，用于准备测试环境（如：初始化类，读输入流等），在一个测试类中，每个 @Test 方法的执行都会触发一次调用。 |
-| @After publish void method() | 这个方法在每个测试之后执行，用于清理测试环境数据，在一个测试类中，每个 @Test 方法的执行都会触发一次调用。 |
-| @BeforeClass public static void method() | 这个方法在所有测试开始之前执行一次，用于做一些耗时的初始化工作（如，连接数据库），方法必须是 static 。 |
-| @AfterClass public static void method() | 这个方法在所有测试结束之后执行一次，用于清理数据（如：断开数据连接），方法必须是 static 。 |
-| @Ignore或者@Ignore(“太耗时”) public void method | 忽略当前测试方法，一般用于测试方法还没准备好，或者太耗时之类的。 |
-| @FixMethodOrder(MethodAorters.NAME_ASCENDING) public class TestClass{} | 使得该测试类中的所有测试方法都按照方法名的字母顺序执行，分别指定 3 个值，DEFAULT、JVM、NAME_ASCENDING。 |
-## 单元测试的分类
-
-#### 本地测试
-
-##### 使用
-
-###### 添加依赖
+#### 添加依赖
 ```
 dependencies {
 ...
@@ -44,7 +15,7 @@ dependencies {
 }
 ```
 
-###### 测试代码存放的位置
+#### 测试代码存放的位置
 ```
 app/src
    |-- androidTest/java（仪器化单元测试、 UI 测试）
@@ -52,7 +23,7 @@ app/src
    |-- test/java（本地单元测试）
 ```
 
-###### 测试
+#### 测试
 　　可以自己手动在相应目录创建测试类， AS 也提供了一种快捷方式：选择对应的类 -> 将光标停留在类名上 -> 按下 ALT + ENTER -> 在弹出的弹窗中选择 Create Test 。
 ![](./create_test.png)
 　　选择 Create Test 选项之后，弹出下面框：
@@ -73,89 +44,9 @@ app/src
 　　**测试未通过.**如图在 isJudgeSysmbol 中写入参数和不正确的返回结果，测试结果未通过。
 ![](./test_failed.png)
 
-
-
-#### 仪器化测试
-
 ## 总结
+　　本地测试比较适合一些工具类测试，不需要使用任何 Android 系统的东西，只适用于测试公共方法，比如字符处理，数据整理等这些方法。
 
 ## 参考文章
 https://www.jianshu.com/p/aa51a3e007e2
 
-
-
-个人添加：
-gradlew test也是可以运行单元测试，但是输出的内容很多，需要自己在输出中找出自己想看的测试结果，很麻烦，不是很建议。
-
-```
-android {
-   defaultConfig {
-        ...
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-    }
-...
-    testOptions.unitTests.all {
-        testLogging {
-            events 'passed', 'skipped', 'failed', 'standardOut', 'standardError'
-            outputs.upToDateWhen { false }
-            showStandardStreams = true
-        }
-    }
-}
-
-dependencies {
-    ...
-    androidTestCompile 'com.android.support:support-annotations:27.1.1'
-    androidTestCompile 'com.android.support.test:runner:1.0.2'
-    androidTestCompile 'com.android.support.test:rules:1.0.2'
-}
-
-```
-
-```
-package cn.dream.exerciseanalysis.util;
-
-import android.content.Context;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import cn.dream.exerciseanalysis.R;
-
-import static org.junit.Assert.*;
-import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.when;
-
-/**
- * 字符工具类测试
- * Author: zhangmiao
- * Date: 2018/9/22
- */
-@RunWith(MockitoJUnitRunner.class)
-public class CharacterUtilTest {
-
-    @Test
-    public void isJudgeSymbol() {
-        assertThat(CharacterUtil.isJudgeSymbol("", "＜"), is(false));
-    }
-
-    private static final String FAKE_STRING = "ExerciseAnalalysis";
-
-    @Mock
-    Context mMockContext;
-
-    @Test
-    public void readStringFromContext_localizedString() {
-        //模拟方法调用的返回值，隔离对Android系统的依赖
-        when(mMockContext.getString(R.string.app_name)).thenReturn(FAKE_STRING);
-        assertThat(mMockContext.getString(R.string.app_name), is(FAKE_STRING));
-        when(mMockContext.getPackageName()).thenReturn("cn.dream.exerciseanalysis");
-        System.out.println(mMockContext.getPackageName());
-    }
-
-}
-```
