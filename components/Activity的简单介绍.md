@@ -65,9 +65,13 @@ Android configChanges的属性值和含义(详细) https://blog.csdn.net/qq_3354
 https://juejin.im/post/5adab7b6518825670c457de3 老生常谈-Activity
 https://juejin.im/post/5aef0d215188253dc612991b
 
+和生命周期一样， activity 的四种 launchMode 也非常重要但又特别容易混淆，首先，activity 是以任务栈的形式创建和销毁的，栈是一种“后进先出”的数据结构，在默认情况下，启动第一个 actiivty 时，系统将会为它创建一个任务栈并将活动置于栈底，而从这个 activity 启动的其他 activity 将会依次入栈，当用户连续按下返回键时，任务栈中的 activity 会从栈顶开始依次销毁。但是这样有一个弊端，就是对于某些 activity 我们不希望它总要重新创建，这时就需要采用不同的启动模式。
+
 ### 四种启动模式
 
 #### standard(标准模式)
+activity 的默认启动模式，主要启动 activity 就会创建一个新实例。
+
 
 #### singleTop(栈顶复用)
 
