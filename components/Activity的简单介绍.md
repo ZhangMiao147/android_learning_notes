@@ -1,21 +1,22 @@
-# Activity的基础知识
+# Activity 之简单介绍（一）
 
-## Activity介绍
-	Activity是Android的四大组件之一，只要用于提供窗口与用户进行交互。
+## Activity 介绍
+	Activity 是 Android 的四大组件之一，主要用于提供窗口与用户进行交互。
 
 https://juejin.im/entry/589847f7128fe10058ebd803 全面了解 Activity
 
-## 生命周期
+## Activity 的生命周期
 https://juejin.im/post/5aef0d215188253dc612991b
 https://juejin.im/post/5adab7b6518825670c457de3
 ### 生命周期图
 拿到官网的Activity的生命周期图：
 ![](./Activity生命周期图.png)
 图中个方法的作用：
+
 | 生命周期方法 | 作用 | 说明 |
 | -------- | -------- | -------- |
-| onCreate | 表示Activity正在被创建 | activity被创建时调用，一般在这个方法中进行活动的初始化工作，如设置布局工作、加载数据、绑定控件等。 |
-| onRestart | 表示Activity正在重新启动 | 这个回调代表了activity由完全不可见重新变为可见的过程，当Activity经历了onStop()回调变为完全不可见后，如果用户返回原activity，便会触发该回调，并且紧接着会触发onStart()来使活动重新可见。 |
+| onCreate | 表示 Activity 正在被创建 | activity 被创建时调用，一般在这个方法中进行活动的初始化工作，如设置布局工作、加载数据、绑定控件等。 |
+| onRestart | 表示 Activity 正在重新启动 | 这个回调代表了 Activity 由完全不可见重新变为可见的过程，当 Activity 经历了 onStop() 回调变为完全不可见后，如果用户返回原 Activity，便会触发该回调，并且紧接着会触发onStart()来使活动重新可见。 |
 | onStart | 表示Activity正在被启动 | 经历该回调后，activity由不可见变为可见，但此时处于后台可见，还不能和用户进行交互。 |
 | onResume | 表示Activity已经可见 | 已经可见的activity从后台来到前台，可以和用户进行交互。 |
 | onPause | 表示Activity正在停止 | 当用户启动了新的activity，原来的activity不再处于前台，也无法与用户进行交互，并且紧接着就会调用onStop()方法，但如果用户这时立刻按返回键回到原activity，就会调用onResume()方法让活动重新回到前台。而且在官方文档中给出了说明，不允许在onPause()方法中执行耗时操作，因为这会影响到新Activity的启动。 |
