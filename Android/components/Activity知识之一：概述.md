@@ -76,17 +76,40 @@
 ##### 数据保存
 　　第一种就是系统提供的 onSaveInstanceState 和 onRestoreInstanceState 方法，onSaveInstanceState 方法会在 Activity 异常销毁之前调用，用来保存需要保存的数据，onRestoreInstanceState 方法在 Activity 重建之后获取保存的数据。
 
+　　在活动异常销毁之前，系统会调用 onSaveInstanceState，可以在 Bundle 类型的参数中保存想要的信息，之后这个 Bundle 对象会作为参数传递给 onRestoreInstanceState 和 onCreate 方法，这样在重新创建时就乐意获取数据了。
+　　关于 onSaveInstanceState 与 onRestoreInstanceState 方法需要注意的一些问题：
+　　1. onSaveInstanceState 方法的调用时机是在 onStop 之前，与 onPause 没有固定的时序关系。而 onestoreInstanceState 方法则是在 onStart 之后调用。
+　　2. 正常情况下的活动销毁并不胡调用这两个方法，只有当活动异常销毁并且有机会重现展示的时候才会进行调用，除了资源配置的改变外，activity 因内存不足被销毁也是通过这两个方法保存数据。
+　　3. 在 onRestoreInstanceState 和 onCreate 都可以进行数据恢复工作，但是根据官方文档建议采用在 onRestoreInstanceState 中去恢复。
+　　4. 在 OnRestoreInstanceState 和 onRestoreInstanceState 这两个方法中，系统会默认为我们进行一定的恢复工作，例如 EditText 中的文本信息、ListView 中的滚动位置等，下面对一些空间观察实际保存效果。
+* EditText：（通过转屏观察信息，要加 id 才行）
+
+* TextView：（通过转屏观察信息，这里只是通过 setText 方法动态设置文本内容，在这种情况下加了 id 也无法自动保存，这种情况可以通过给 TextView 设置 freezesText 属性才能自动保存，当然这条属性对 EditText 也同样适用）
+
+
 
 
 ##### 防止重建
 　　在默认情况下，资源配置改变会导致活动的重新创建，但是可以通过对活动的 android:configChanges 属性的设置使活动防止重新被创建。
 
 ** android:configChanges 属性值**
+
 | 属性值 | 含义 |
 |--------|--------|
 | mcc | SIM 卡唯一标识IMSI（国际移动用户标识码）中的国家代码，由三位数字组成，中国为：460，这里标识 mcc 代码发生了变化 |
 | mnc | SIM 卡唯一标识 IMSI（国际移动用户标识码）中的运营商代码，有两位数字组成，中国移动 TD 系统为 00 ，中国联通为 01，电信为 03，此项标识 mnc 发生了改变 |
 | locale | 设备的本地位置发生了改变，一般指的是切换了系统语言 |
+| touchscreen | 触摸屏发生了改变 |
+| keyboard | 键盘类型发生了改变，比如用户使用了外接键盘 |
+| keyboardHidden | 键盘的可访问性发生了改变，比如用户调出了键盘 |
+| navigation | 系统导航方式发生了改变 |
+| screenLayout | 屏幕布局发生了改变，很可能是用户激活了另外一个显示设备 |
+| fontScale | 系统字体缩放比例发生了改变，比如用户选择了个新的字号 |
+| uiMode | 用户界面模式发生了改变，比如开启夜间模式 -API8 新添加 |
+| orientation | 屏幕方向发生改变，比如旋转了手机屏幕 |
+| screenSize | 当屏幕尺寸信息发生改变（当编译选项中的 minSdkVersion 和 targeSdkVersion 均低于 13 时不会导致 Activity 重启 ） API 13 新添加 |
+| smallestScreenSize | 设备的物理尺寸发生改变，这个和屏幕方向没关系，比如切换到外部显示设备 -API13 新添加 |
+| layoutDirection | 当布局方向发生改变的时候，正常情况下无法修改布局的 layoutDirection 的属性-API17 新添加 |
 
 Android configChanges的属性值和含义(详细) https://blog.csdn.net/qq_33544860/article/details/54863895
 
