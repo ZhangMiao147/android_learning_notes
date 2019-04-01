@@ -238,13 +238,133 @@ public class FirstActivity extends AppCompatActivity {
 ###### 2.dialog 是否会对生命周期产生影响？
 
 　　查看 Activity 声明周期的描述，如果 Activity 不在前台，且并非完全不可见时， Activity 就会处在 onPause() 的暂停状态。但是事实如何，用代码说话，测试三种情况：一，弹出标准的 AlertDialog ；二，弹出全屏的 AlertDialog ；三，弹出主题为 Theme.AppCompat.Dialog 的 Activity ，查看这三种情况下的生命周期的变化：
+
 **弹出标准的 AlertDialog**
-（运行结果图）
+* 在 MainActivity 的布局中添加一个弹出标准 AlertDialog 的按钮，用于观察 MainActivity 在弹出 AlertDialog 和隐藏 AlertDialog 的情况下的生命周期变化。
+**activity_main.xml**
+
+```
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    ...
+
+    <Button
+        android:id="@+id/show_standard_alert_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="弹出标准的AlertDialog" />
+
+</LinearLayout>
+```
+**MainActivity.java**
+```
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        ...
+        findViewById(R.id.show_standard_alert_dialog).setOnClickListener(this);
+    }
+	...
+	@Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            ...
+            case R.id.show_standard_alert_dialog:
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("这是一个标准的AlertDialog");
+                builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+                break;
+            default:
+                break;
+        }
+    }
+```
+
+* 点击弹出标准 AlertDialog 的生命周期的运行
+![](./显示标准的AlertDialog的生命周期.png)
+　　可以看到弹出标准的 AlertDialog 并不会对 MainActivity 的生命周期有任何的影响。
+
+* 点击 AlertDialog 的“确定”按钮，对 AlertDialog 进行隐藏，观察 MainActivity 的生命周期的变化
+　　点击 AlertDialog 的“确定”按钮后，看到没有任何的日志打印出来，所有隐藏标准 AlertDialog 也不会对 MainActivity 的生命周期有任何的影响。
 
 **弹出全屏的 AlertDialog**
-(全屏背景是黑的和背景是半透明的也运行一下)
+* 在 MainActivity 的布局中添加一个弹出全屏 AlertDialog 的按钮，用于观察 MainActivity 在弹出全屏 AlertDialog 和隐藏全屏 AlertDialog 的情况下的生命周期变化。
+**activity_main.xml**
 
-**弹出主题为 Theme.AppCompat.Dialog **
+```
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    ...
+
+    <Button
+        android:id="@+id/show_full_alert_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="弹出全屏的AlertDialog" />
+
+</LinearLayout>
+```
+**全屏 AlertDialog 的 style**
+```
+    <style name="Dialog_Fullscreen">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+    </style>
+```
+**Activity_main.java**
+```
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        ...
+        findViewById(R.id.show_full_alert_dialog).setOnClickListener(this);
+    }
+	...
+	@Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            ...
+            case R.id.show_full_alert_dialog:
+                AlertDialog.Builder fullBuilder = new AlertDialog.Builder(MainActivity.this, R.style.Dialog_Fullscreen);
+                fullBuilder.setTitle("这是一个全屏的AlertDialog");
+                fullBuilder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                AlertDialog fullAlertDialog = fullBuilder.create();
+                fullAlertDialog.show();
+            default:
+                break;
+        }
+    }
+```
+* 点击弹出全屏 AlertDialog 的生命周期的运行
+![](./显示全屏的AlertDialog的生命周期.png)
+　　可以看到弹出全屏的 AlertDialog 并不会对 MainActivity 的生命周期有任何的影响。
+
+* 点击 AlertDialog 的“确定”按钮，对 AlertDialog 进行隐藏，观察 MainActivity 的生命周期的变化
+　　点击 AlertDialog 的“确定”按钮后，看到没有任何的日志打印出来，所有隐藏全屏 AlertDialog 也不会对 MainActivity 的生命周期有任何的影响。
+
+
+
+**弹出主题为 Theme.AppCompat.Dialog 的 Activity **
 (运行结果图)
 
 ### 异常状态下活动的生命周期
