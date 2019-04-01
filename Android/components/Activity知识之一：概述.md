@@ -21,20 +21,216 @@
 | onDestroy | 表示 Activity 即将被销毁 | 来到了这个回调，说明 Activity 即将被销毁，应该将资源的回收和释放工作在该方法中执行。 |
 
 ### 正常情况下的生命周期分析
-（一次运行的过程图）
+* 写一个 MainActivity 类，来观察 Activity 的生命周期方法的调用
+** MainActivity.java **
 
+```
+package com.zhangmiao.activityproject;
 
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
+public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = MainActivity.class.getSimpleName();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        Log.d(TAG, "onCreate()");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.d(TAG, "onRestart()");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart()");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume()");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause()");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop()");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy()");
+    }
+}
+```
+
+** activity_main.xml **
+```
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="这是 MainActivity" />
+
+</LinearLayout>
+```
+
+* 点击应用到界面显示出来的生命周期
+![](./显示界面的生命周期.png)
+
+* 在显示界面点击返回键退出的生命周期
+![](./点击返回键的生命周期.png)
 
 ##### 关于生命周期的一些常见问题
 
 ###### 1.由活动A启动活动B时。活动A的 onPause() 与活动B的 onResume() 哪一个先执行？
-　　创建两个 Activity ，由 MainActivity 跳转到 FirstAcivity ，运行结果如下：
-（运行结果图）
+* 在 MainActivity 界面中添加一个按钮，点击按钮跳转 FirstActivity 界面。
 
-　　可以看到，是 MainActivity 先执行了 onPause ， FirstActivity 的 onResume() 后执行的。
-点击返回看一下执行的顺序：
-（运行结果图）
+** activity_main.xml **
+```
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+	...
+
+    <Button
+        android:id="@+id/goto_first_activity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="跳转firstActivity" />
+
+</LinearLayout>
+```
+
+**MainActivity.java**
+```
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        findViewById(R.id.goto_first_activity).setOnClickListener(this);
+        Log.d(TAG, "onCreate()");
+    }
+	...
+	@Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.goto_first_activity:
+                Log.d(TAG, "跳转FirstActivity");
+                Intent intent = new Intent(MainActivity.this, FirstActivity.class);
+                startActivity(intent);
+                break;
+            default:
+                break;
+        }
+    }
+```
+
+**activity_first.xml**
+```
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="这是 FirstActivity" />
+
+</LinearLayout>
+```
+
+**FirstActivity.xml**
+```
+package com.zhangmiao.activityproject;
+
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+
+public class FirstActivity extends AppCompatActivity {
+
+    private static final String TAG = FirstActivity.class.getSimpleName();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_first);
+        Log.d(TAG, "onCreate()");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.d(TAG, "onRestart()");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart()");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume()");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause()");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop()");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy()");
+    }
+}
+```
+
+* 创建两个 Activity ，由 MainActivity 跳转到 FirstAcivity ，运行结果如下：
+![](./跳转FirstActivity的生命周期.png)
+
+　　可以看到，是 MainActivity 先执行了 onPause() ， FirstActivity 的 onResume() 后执行的。
+
+* 点击返回看一下执行的顺序：
+![](./跳转FirstActivity点击返回的生命周期.png)
+
 　　点击返回后，可以看到是 FirstActivity 的 onPause() 先执行，MainActivity 的 onResume() 后执行。
 
 　　所以，当活动 A 启动活动B时，是活动 A 的 onPause() 方法先执行，活动 B 的 onResume() 方法后执行。
