@@ -512,7 +512,7 @@ public class DialogActivity extends AppCompatActivity {
 #### 资源配置改变导致 Activity 重建
 　　资源配置最常见的情况就是横竖屏切换导致资源的变化，当程序启动时，会根据不同的配置加载不同的资源，例如横竖屏两个状态对应着两张不同的资源图片。如果在使用过程中屏幕突然旋转，那么 Activity 就会因为系统配置发生改变而销毁重建，加载合适的资源。
 下面是 MainActivity 在横竖屏切换时生命周期变化的过程：
-（运行结果图）
+![](./横竖屏切换的生命周期.png)
 
 #### 低优先级 Activity 由于内存不足被杀死
 　　当设备的内存空间不足时，系统为了保证用户的体验，会按照进程优先级将一些低优先级的进程杀死，以来保证用户的体验。
@@ -530,30 +530,101 @@ public class DialogActivity extends AppCompatActivity {
 　　不属于上面三种情况，但进程持有一个不可见的 Activity，即执行了 onStop 但未执行 onDestory 的状态。
 （5）空进程
 　　不包含任何活跃的应用组件，作用是加快下次启动这个进程中组件所需要的时间，优先级低。
-（运行结果图）
+
+　　模拟内存不足杀死应用：先打开应用，然后按 home 键，使应用进入后台，然后使用命令 `adb shell am kill 包名`将应用杀死。
+　　从打开应用到杀死应用的生命周期变化如下：
+![](./模拟内存不足杀死应用的生命周期.png)
+　　在按 home 键之后，MainActivty 调用了 onPause() 与 onStop() 方法，并没有调用 onDestory() 方法，所以主进程现在属于后台进程。
+　　然后在点击应用的图标，打开应用，生命周期变化如下：
+![](./模拟内存不足杀死应用后重新打开应用的生命周期.png)
 
 #### 异常情况下的处理
 　　在发生异常情况后，用户再次回到 Activity，原 Activity 会重新建立，原已有的数据就会丢失，比如用户选择了对，重建之后用户就看不到之前的选择，在异常的情况下如何给用户带来好的体验，有两种办法。
 
 ##### 数据保存
 　　第一种就是系统提供的 onSaveInstanceState 和 onRestoreInstanceState 方法，onSaveInstanceState 方法会在 Activity 异常销毁之前调用，用来保存需要保存的数据，onRestoreInstanceState 方法在 Activity 重建之后获取保存的数据。
-（运行结果图）
 　　在活动异常销毁之前，系统会调用 onSaveInstanceState，可以在 Bundle 类型的参数中保存想要的信息，之后这个 Bundle 对象会作为参数传递给 onRestoreInstanceState 和 onCreate 方法，这样在重新创建时就乐意获取数据了。
 　　关于 onSaveInstanceState 与 onRestoreInstanceState 方法需要注意的一些问题：
 　　1. onSaveInstanceState 方法的调用时机是在 onStop 之前，与 onPause 没有固定的时序关系。而 onestoreInstanceState 方法则是在 onStart 之后调用。
 　　2. 正常情况下的活动销毁并不胡调用这两个方法，只有当活动异常销毁并且有机会重现展示的时候才会进行调用，除了资源配置的改变外，activity 因内存不足被销毁也是通过这两个方法保存数据。
 　　3. 在 onRestoreInstanceState 和 onCreate 都可以进行数据恢复工作，但是根据官方文档建议采用在 onRestoreInstanceState 中去恢复。
-　　4. 在 OnRestoreInstanceState 和 onRestoreInstanceState 这两个方法中，系统会默认为我们进行一定的恢复工作，例如 EditText 中的文本信息、ListView 中的滚动位置等，下面对一些空间观察实际保存效果。
+　　4. 在 onSaveInstanceState 和 onRestoreInstanceState 这两个方法中，系统会默认为我们进行一定的恢复工作，例如 EditText 中的文本信息、ListView 中的滚动位置等，下面对一些空间观察实际保存效果。
+
+　　在 MainActivity 中覆盖 onSaveInstanceState 和 onRestoreInstanceState 两个方法：
+```
+...
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+	...
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        Log.d(TAG, "onSaveInstanceState()");
+        super.onSaveInstanceState(outState);
+        outState.putString("message", "onSaveInstanceState");
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        Log.d(TAG, "onRestoreInstanceState()");
+        super.onRestoreInstanceState(savedInstanceState);
+        if (savedInstanceState != null) {
+            String message = savedInstanceState.getString("message");
+            Log.d(TAG, "onRestoreInstanceState message:" + message);
+        }
+    }
+}
+```
+　　在 onSaveInstanceState 方法中保存 key 值为 message ,值为 onSaveInstanceState 的数值，在 onRestoreInstanceState 方法中获取 key 值为 message 对应的数值，使用横竖屏切换来测试这两个方法的调用，以及保存数值的获取。
+　　从 MainActivity 开启到切换横竖屏的生命周期变化如下：
+![](./横竖屏切换数据保存的生命周期.png)
+　　再切换回来的生命周期变化如下:
+![](./横竖屏切换数据保存切换回来的生命周期.png)
+　　onCreate() 方法中也能获取 onSaveInstanceState 方法中保存的数据，在 MainActivity 的 onCreate() 方法中增加获取代码：
+```
+...
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+	...
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        findViewById(R.id.goto_first_activity).setOnClickListener(this);
+        findViewById(R.id.show_standard_alert_dialog).setOnClickListener(this);
+        findViewById(R.id.show_full_alert_dialog).setOnClickListener(this);
+        findViewById(R.id.goto_dialog_activity).setOnClickListener(this);
+        Log.d(TAG, "onCreate()");
+        if (savedInstanceState != null) {
+            String message = savedInstanceState.getString("message");
+            Log.d(TAG, "onCreate message:" + message);
+        }
+    }
+	...
+}
+```
+　　横竖屏切换之后 onCreate() 打印的日志如下:
+![](./onCreate也可以获取保存的数据.png)
+
 * EditText：（通过转屏观察信息，要加 id 才行）
 （运行结果图）
-* TextView：（通过转屏观察信息，这里只是通过 setText 方法动态设置文本内容，在这种情况下加了 id 也无法自动保存，这种情况可以通过给 TextView 设置 freezesText 属性才能自动保存，当然这条属性对 EditText 也同样适用）
-（运行结果图）
+　　在 MainActivity 的布局文件中添加 EditText，打开应用后，在输入框内输入一些文字。在横竖屏切换后观察输入框内的文字是否和切换之前的文字相同。
+** activity_main.xml **
 
+** MainActivity.java **
+
+
+　　从打开应用，到横竖屏切换之后输入框的文字内容如下：
+
+
+* TextView：（通过转屏观察信息，这里只是通过 setText 方法动态设置文本内容，在这种情况下加了 id 也无法自动保存，这种情况可以通过给 TextView 设置 freezesText 属性才能自动保存，当然这条属性对 EditText 也同样适用）
+　　打开应用后修改 TextView 的内容，横竖屏切换后，观察 TextView 的内容是否和切换之前的文字相同。
+
+** MainActivity.java **
+
+　　从打开应用，到横竖屏切换之后 TextView 的文字内容如下：
 
 
 ##### 防止重建
 　　在默认情况下，资源配置改变会导致活动的重新创建，但是可以通过对活动的 android:configChanges 属性的设置使活动防止重新被创建。
-（运行结果图）
+
 ** android:configChanges 属性值**
 
 | 属性值 | 含义 |
@@ -572,8 +643,12 @@ public class DialogActivity extends AppCompatActivity {
 | screenSize | 当屏幕尺寸信息发生改变（当编译选项中的 minSdkVersion 和 targeSdkVersion 均低于 13 时不会导致 Activity 重启 ） API 13 新添加 |
 | smallestScreenSize | 设备的物理尺寸发生改变，这个和屏幕方向没关系，比如切换到外部显示设备 -API13 新添加 |
 | layoutDirection | 当布局方向发生改变的时候，正常情况下无法修改布局的 layoutDirection 的属性-API17 新添加 |
+　　将 MainActivity 的 android:configChanges 设置为 orientation ，在横竖屏切换的时候防止重新被创建。
+** AndroidManifest.xml **
 
-Android configChanges的属性值和含义(详细) https://blog.csdn.net/qq_33544860/article/details/54863895
+
+
+　　横竖屏切换时，生命周期的变化如下:
 
 
 
@@ -591,3 +666,4 @@ Android configChanges的属性值和含义(详细) https://blog.csdn.net/qq_3354
 11. [Android四大组件之Activity详解](https://www.cnblogs.com/caobotao/p/4987015.html)
 12. [Android之Activity系列总结（一）--Activity概览](https://www.cnblogs.com/jycboy/p/6367282.html)
 13. [3分钟看懂Activity启动流程](https://www.jianshu.com/p/9ecea420eb52)
+14. [Android configChanges的属性值和含义(详细)](https://blog.csdn.net/qq_33544860/article/details/54863895)
