@@ -298,7 +298,9 @@ public class FirstActivity extends AppCompatActivity {
 　　点击 AlertDialog 的“确定”按钮后，看到没有任何的日志打印出来，所有隐藏标准 AlertDialog 也不会对 MainActivity 的生命周期有任何的影响。
 
 **弹出全屏的 AlertDialog**
+
 * 在 MainActivity 的布局中添加一个弹出全屏 AlertDialog 的按钮，用于观察 MainActivity 在弹出全屏 AlertDialog 和隐藏全屏 AlertDialog 的情况下的生命周期变化。
+
 **activity_main.xml**
 
 ```
@@ -350,11 +352,13 @@ public class FirstActivity extends AppCompatActivity {
                 });
                 AlertDialog fullAlertDialog = fullBuilder.create();
                 fullAlertDialog.show();
+				break;
             default:
                 break;
         }
     }
 ```
+
 * 点击弹出全屏 AlertDialog 的生命周期的运行
 ![](./显示全屏的AlertDialog的生命周期.png)
 　　可以看到弹出全屏的 AlertDialog 并不会对 MainActivity 的生命周期有任何的影响。
@@ -362,10 +366,145 @@ public class FirstActivity extends AppCompatActivity {
 * 点击 AlertDialog 的“确定”按钮，对 AlertDialog 进行隐藏，观察 MainActivity 的生命周期的变化
 　　点击 AlertDialog 的“确定”按钮后，看到没有任何的日志打印出来，所有隐藏全屏 AlertDialog 也不会对 MainActivity 的生命周期有任何的影响。
 
+**跳转主题为 Theme.AppCompat.Dialog 的 Activity **
 
+* 在 MainActivity 的布局中添加一个跳转主题为 Theme.AppCompat.Dialog 的 Activity 的按钮，用于观察 MainActivity 在跳转主题为 Theme.AppCompat.Dialog 的 Activity 和从 主题为 Theme.AppCompat.Dialog 的 Activity 返回的情况下的生命周期变化。
 
-**弹出主题为 Theme.AppCompat.Dialog 的 Activity **
-(运行结果图)
+**activity_main.xml**
+
+```
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    ...
+
+    <Button
+        android:id="@+id/goto_dialog_activity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="弹出主题为Dialog的Activity" />
+
+</LinearLayout>
+```
+
+**DialogActivity**
+```
+package com.zhangmiao.activityproject;
+
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+
+public class DialogActivity extends AppCompatActivity {
+
+    private static final String TAG = DialogActivity.class.getSimpleName();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_dialog);
+        Log.d(TAG, "onCreate()");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.d(TAG, "onRestart()");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart()");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume()");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause()");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop()");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy()");
+    }
+}
+```
+
+**activity_dialog**
+```
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Theme 为 Dialog 的 Activity" />
+</LinearLayout>
+```
+**在AndroidManifest.xml中设置DialogActivity的主题为Dialog**
+```
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.zhangmiao.activityproject">
+
+    <application
+        ...>
+        ...
+        <activity
+            android:name=".DialogActivity"
+            android:theme="@style/Theme.AppCompat.Dialog" />
+    </application>
+
+</manifest>
+```
+**Activity_main.java**
+```
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        ...
+        findViewById(R.id.goto_dialog_activity).setOnClickListener(this);
+    }
+	...
+	@Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            ...
+            case R.id.goto_dialog_activity:
+                Intent DialogIntent = new Intent(MainActivity.this, DialogActivity.class);
+                startActivity(DialogIntent);
+				break;
+            default:
+                break;
+        }
+    }
+```
+
+* 跳转主题为 Dialog 的 Activity 的生命周期变化
+![](./弹出主题为Dialog的Activity的生命周期.png)
+　　可以看到跳转主题为 Dialog 的 Activity 会对 MainActivity 的生命周期产生影响，生命周期的变化与跳转 Activity 的变化相同。
+
+* 在主题为 Dialog 的 Activity 下点击返回键的生命周期变化
+![](./主题为Dialog的Activity点击返回的生命周期.png)
+　　在主题为 Dialog 的 Activity 下点击返回键，返回到 MainActivity 的界面，从运行结果可以看出，与跳转 Activity 之后返回的声明周期变化不同，MainActivity 只调用了 onResume() 方法，并没有调用 onRestart() 与 onStart() 两个方法，DialogActivity 调用 onPause()、onStop() 与 onDestory() 方法。
 
 ### 异常状态下活动的生命周期
 　　当 Activity 在运行过程中发生一些情况时，生命周期流程也会发生变化。常见的异常情况有两种，一种是资源配置改变；另一是内存不足导致生命周期流程发生变化。
