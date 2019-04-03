@@ -537,7 +537,7 @@ public class DialogActivity extends AppCompatActivity {
 　　在按 home 键之后，MainActivty 调用了 onPause() 与 onStop() 方法，并没有调用 onDestory() 方法，所以主进程现在属于后台进程。
 　　然后在点击应用的图标，打开应用，生命周期变化如下：
 ![](./模拟内存不足杀死应用后重新打开应用的生命周期.png)
-
+　　可以看到 MainActivity 调用了 onCreate()、onStart() 和 onResume() 方法，Activity 重新创建了。
 #### 异常情况下的处理
 　　在发生异常情况后，用户再次回到 Activity，原 Activity 会重新建立，原已有的数据就会丢失，比如用户选择了对，重建之后用户就看不到之前的选择，在异常的情况下如何给用户带来好的体验，有两种办法。
 
@@ -576,8 +576,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 　　在 onSaveInstanceState 方法中保存 key 值为 message ,值为 onSaveInstanceState 的数值，在 onRestoreInstanceState 方法中获取 key 值为 message 对应的数值，使用横竖屏切换来测试这两个方法的调用，以及保存数值的获取。
 　　从 MainActivity 开启到切换横竖屏的生命周期变化如下：
 ![](./横竖屏切换数据保存的生命周期.png)
+　　横竖屏切换时，MainActivity 调用了 onSaveInstanceState() 方法，切换之后 MainActivity 重新创建，并且调用了 onRestoreInstanceState() 方法，并从 Bundle 中取得了 onSaveInstanceState() 方法中保存的数据。
 　　再切换回来的生命周期变化如下:
 ![](./横竖屏切换数据保存切换回来的生命周期.png)
+　　切换回来与切换的时候的生命周期变化一样，先调用了 onSaveInstanceState() 方法，切换后 MainActivity 重新创建并调用 onRestoreInstanceState() 方法，并从Bundle 中取得了 onSaveInstanceState() 方法中保存的数据。
 　　onCreate() 方法中也能获取 onSaveInstanceState 方法中保存的数据，在 MainActivity 的 onCreate() 方法中增加获取代码：
 ```
 ...
@@ -602,9 +604,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 ```
 　　横竖屏切换之后 onCreate() 打印的日志如下:
 ![](./onCreate也可以获取保存的数据.png)
+　　在 MainActivity 重新创建时，调用了 onCreate() 方法，并从 onCreate() 方法的 Bundle 中获取到 onSaveInstanceState() 方法中存储的值。注意：onCreate() 中从 Bundle 中获取数据之前，一定要判空，因为第一次进入的时候，Bundle 是空的，会有空指针异常。
 
 * EditText：（通过转屏观察信息，要加 id 才行）
-（运行结果图）
 　　在 MainActivity 的布局文件中添加 EditText，打开应用后，在输入框内输入一些文字。在横竖屏切换后观察输入框内的文字是否和切换之前的文字相同。
 ** activity_main.xml **
 
