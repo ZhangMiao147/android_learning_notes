@@ -7,6 +7,26 @@
 3. startActivity
 4. startActivityForResult
 
+## Activity 之间的跳转
+
+#### 相关的 API
+1. startActivity
+(使用)
+
+2. startActivityForResult
+(使用)
+
+#### 显示启动
+　　显示启动的方式：
+
+1. 直接在 Intent 构造方法启动：
+
+2. setComponent
+
+3. setClass / setClassName
+
+#### 隐式启动
+
 ## 参考文章：
 1. [老生常谈-Activity](https://juejin.im/post/5adab7b6518825670c457de3)
 2. [全面了解 Activity](https://juejin.im/entry/589847f7128fe10058ebd803)

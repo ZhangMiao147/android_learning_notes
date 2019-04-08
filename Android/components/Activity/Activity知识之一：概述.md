@@ -506,6 +506,19 @@ public class DialogActivity extends AppCompatActivity {
 ![](./主题为Dialog的Activity点击返回的生命周期.png)
 　　在主题为 Dialog 的 Activity 下点击返回键，返回到 MainActivity 的界面，从运行结果可以看出，与跳转 Activity 之后返回的声明周期变化不同，MainActivity 只调用了 onResume() 方法，并没有调用 onRestart() 与 onStart() 两个方法，DialogActivity 调用 onPause()、onStop() 与 onDestory() 方法。
 
+##### 常见情况下声明周期的回调
+（A 与 B 表示不同的 Activity ）
+| 情况 | 回调 |
+|--------|--------|
+| 第一次启动 | onCreate() -> onStart() -> onResume() |
+| 从 A 跳转到不透明的 B | A_onPause() -> B_onCreate() -> B_onStart() -> B_onResume() -> A_onStop() |
+| 从 A 跳转到透明的 B | A_onPause() -> B_onCreate() -> B_onStart() -> B_onResume() |
+| 从不透明的 B 再次回到 A | B_onPause() -> A_onRestart() -> A_onStart() -> A_onResume() -> B_onStop() |
+| 从透明的 B 再次回到 A | B_onPause() -> A_onResume() -> B_onStop() -> B_onDestory() |
+| 用户按 home 键 | onPause() -> onStop() |
+| 按 home 键回后回到应用 | onRestart() -> onStart() -> onResume() |
+| 用户按 back 键回退 | onPause() -> onStop() -> onDestroy() |
+
 ### 异常状态下活动的生命周期
 　　当 Activity 在运行过程中发生一些情况时，生命周期流程也会发生变化。常见的异常情况有两种，一种是资源配置改变；另一是内存不足导致生命周期流程发生变化。
 
@@ -544,12 +557,14 @@ public class DialogActivity extends AppCompatActivity {
 
 ##### 数据保存
 　　第一种就是系统提供的 onSaveInstanceState 和 onRestoreInstanceState 方法，onSaveInstanceState 方法会在 Activity 异常销毁之前调用，用来保存需要保存的数据，onRestoreInstanceState 方法在 Activity 重建之后获取保存的数据。
-　　在活动异常销毁之前，系统会调用 onSaveInstanceState，可以在 Bundle 类型的参数中保存想要的信息，之后这个 Bundle 对象会作为参数传递给 onRestoreInstanceState 和 onCreate 方法，这样在重新创建时就乐意获取数据了。
+　　在活动异常销毁之前，系统会调用 onSaveInstanceState，可以在 Bundle 类型的参数中保存想要的信息，之后这个 Bundle 对象会作为参数传递给 onRestoreInstanceState 和 onCreate 方法，这样在重新创建时就可以获取数据了。
 　　关于 onSaveInstanceState 与 onRestoreInstanceState 方法需要注意的一些问题：
 　　1. onSaveInstanceState 方法的调用时机是在 onStop 之前，与 onPause 没有固定的时序关系。而 onestoreInstanceState 方法则是在 onStart 之后调用。
-　　2. 正常情况下的活动销毁并不胡调用这两个方法，只有当活动异常销毁并且有机会重现展示的时候才会进行调用，除了资源配置的改变外，activity 因内存不足被销毁也是通过这两个方法保存数据。
+　　2. 正常情况下的活动销毁并不会调用这两个方法，只有当活动异常销毁并且有机会重现展示的时候才会进行调用，除了资源配置的改变外，activity 因内存不足被销毁也是通过这两个方法保存数据。
 　　3. 在 onRestoreInstanceState 和 onCreate 都可以进行数据恢复工作，但是根据官方文档建议采用在 onRestoreInstanceState 中去恢复。
 　　4. 在 onSaveInstanceState 和 onRestoreInstanceState 这两个方法中，系统会默认为我们进行一定的恢复工作，例如 EditText 中的文本信息、ListView 中的滚动位置等，下面对一些空间观察实际保存效果。
+　　5. onSveInstanceState() 常见的触发场景有：横竖屏切换、按下电源键、按下菜单键、切换到别的 Activity 等；onRestoreInstanceState() 常见的触发场景有：横竖屏切换、切换语言等等。
+
 
 * 在 MainActivity 中覆盖 onSaveInstanceState 和 onRestoreInstanceState 两个方法：
 **MainActivity.java**
@@ -816,6 +831,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 * 横竖屏切换时，生命周期的变化如下:
 ![](./防止重建横竖屏切换的生命周期.png)
 　　可以看到在第一次进入 Activity 会调用 onCreate() -> onStart() -> onResume() 创建，之后切换横竖屏并不会有任何的生命周期方法的调用。
+
+#### 关于生命周期的其他
+1. onPostCreate()
+　　一般我们都没有实现这个方法，它的作用是在代码开始运行之前，调用系统做最后的初始化工作。
 
 ## 参考文章：
 1. [老生常谈-Activity](https://juejin.im/post/5adab7b6518825670c457de3)

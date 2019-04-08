@@ -2,16 +2,42 @@
 
 ## 启动模式简述
 
-　　和生命周期一样， activity 的四种 launchMode 也非常重要但又特别容易混淆，首先，activity 是以任务栈的形式创建和销毁的，栈是一种“后进先出”的数据结构，在默认情况下，启动第一个 actiivty 时，系统将会为它创建一个任务栈并将活动置于栈底，而从这个 activity 启动的其他 activity 将会依次入栈，当用户连续按下返回键时，任务栈中的 activity 会从栈顶开始依次销毁。但是这样有一个弊端，就是对于某些 activity 我们不希望它总要重新创建，这时就需要采用不同的启动模式。
+　　和生命周期一样， activity 的四种 launchMode 非常重要但也特别容易混淆，首先，activity 是以任务栈的形式创建和销毁的，栈是一种“后进先出”的数据结构，在默认情况下，启动第一个 actiivty 时，系统将会为它创建一个任务栈并将活动置于栈底，而从这个 activity 启动的其他 activity 将会依次入栈，当用户连续按下返回键时，任务栈中的 activity 会从栈顶开始依次销毁。
+　　而启动模式就是定义 Activity 实例与 task 的关联方式。
 
-## 如何设置 Activity 的启动模式
-　　设置 Activity 的启动模式有两种方式，一种是在 AndroidManifest.xml 中设置，一种就是设置 Activity 的Flags 值来设置 Activity 的启动模式。
+#### 为什么需要定义启动模式？
+　　任务栈有一个弊端，就是对于某些 activity 我们不希望它总要重新创建，比如，让某个 Activity 启动在一个新的 task 中，让 Activity 启动时只调用栈内已有的某个实例，或者当用户离开 task 时只想保留根 Activity ，并且清空 task 里面的其他 Activity ，这样的需求，使用默认的任务栈模式是无法实现的，这时就需要采用不同的启动模式。
+
+
+## 如何定义 Activity 的启动模式
+　　设置 Activity 的启动模式有两种方式，一种是在 AndroidManifest.xml 中设置，一种就是使用 Intent 标识设置 Activity 的启动模式。
 
 #### 在 AndroidManifest.xml 中设置 Activity 的启动模式
 　　在 AndroidManidest.xml 中设置 Activity 的启动模式非常简单，直接在想要设置的 Activity 中添加 `android:launchMode=""` 属性即可，`android:launchMode=""` 属性有四个可供选择的值，分别是 `standard`、`singleTop`、`singTask` 与 `singleInstance`，这四个值分别对应四种启动模式：标准模式、栈顶复用、栈内复用与单例模式。
+　　例如，设置 Activity 的启动模式为 `singleTop` ,在 AndroidManifest.xml 中应该是：
+```
+   <activity
+            android:name=".FirstActivity"
+            android:launchMode="singleTop" />
+```
 
-#### 设置 Activity 的 Flags
-　　这种设置模式就是在 Activity 的类中设置值。
+#### 使用 Intent 标识定义启动模式
+　　Intent 的表示有三个，FLAG_ACTIVITY_NEW_TASK、FLAG_ACTIVITY_SINGLE_TOP、FLAG_ACTIVITY_CLEAR_TOP 。
+
+* FLAG_ACTIVITY_NEW_TASK
+　　栈内复用模式。启动 Activity ,如果 task 中 Activity 已经存在，则将它推到前台，回复其上一个状态，通过 onNewIntent() 收到这个新的 Intent ；如果 task 中 Activity 不存在，则新建 Activity 并加入 task 中。
+
+* FLAG_ACTIVITY_SINGLE_TOP
+　　栈顶复用模式。启动 Activity ，如果 Activity 是 task 的栈顶 Activity ，则已经存在的实例收到 onNewIntent()；如果 Activity 不是 task 的栈顶 Activity ，则新建 Activity 并加入 task 中。
+
+* FLAG_ACTIVITY_CLEAR_TOP
+　　启动 Activity，如果 task 中已经存在 Activity ,则销毁在它之上的其他 Activities ，然后通过 onNewIntent() 传递一个新的 intent 给恢复的 Activity 。
+　　这个行为在 launchMode 中没有对应的属性值。
+　　注意，如果 Activity 的启动模式是“standard”，它自己也将被移除，然后一个新的实例将被启动。这是因为当启动模式是“standard”时，为了接收新的 Intent 必须创建新的实例。
+
+#### 注意
+　　如果你同时在 AndroidManifest 中用 lauchMode 属性和代码中用 Intent 设置了 Activity 的启动模式，则会以代码中 Intent 的设置为准。
+
 
 ## 四种启动模式
 　　通过执行 `adb shell dumpsys activity` 命令观察任务栈中 Activity 的入栈和出栈情况。
@@ -330,7 +356,7 @@ public class SecondActivity extends AppCompatActivity implements View.OnClickLis
 　　从图中可以看到应用刚打开是，任务栈里只有一个 MainActivity 。
 
 #### standard(标准模式)
-　　activity 的默认启动模式，只要启动 activity 就会创建一个新实例。
+　　Activity 的默认启动模式，只要启动 Activity 就会创建一个新实例，并将该 Activity 添加到当前 Task 栈中。
 
 * 在 MainActivity 中点击跳转 FirstActivity ，然后在 FirstActivity 中点击跳转 FirstActivity ，任务栈情况:
 ![](./标准模式任务栈.png)
@@ -370,6 +396,7 @@ public class SecondActivity extends AppCompatActivity implements View.OnClickLis
 　　这种模式比较复杂，是一种栈内单例模式，当一个 activity 启动时，会进行两次判断：
 （1） 首先会寻找是否有这个活动需要的任务栈，如果没有就创建这个任务栈并将活动入栈，如果有的话就进入下一步判断。
 （2） 第二次判断这个栈中是否存在该 activity 的实例，如果不存在就新建 activity 入栈，如果存在的话就直接复用，并且带有 clearTop 效果，会将该实例上方的所有活动全部出栈，令这个 activity 位于栈顶。
+　　这种模式会保证 Activity 在所需要的栈内只有一个或者没有。
 
 * 将 FirstActivity 的启动模式修改为 singleTask 。
 
@@ -402,7 +429,7 @@ public class SecondActivity extends AppCompatActivity implements View.OnClickLis
 * 栈内复用模式的使用场景
 
 #### singleInstance(单例模式)
-　　这种模式是真正的单例模式，以这种模式启动的活动会单独创建一个任务栈，并且依然遵循栈内复用的特性，保证了这个栈中只能存在这一个活动。
+　　这种模式是真正的单例模式，以这种模式启动的活动会单独创建一个任务栈，并且依然遵循栈内复用的特性，保证了这个栈中只能存在这一个活动。并且系统不会在这个单例模式的 Activity 的实例所在 task 中启动任何其他的 Activity 。单例模式的 Activity 的实例永远是这个 task 中的唯一一个成员。
 
 * 将 FirstActivity 的启动模式修改为 singleInstance 。
 
@@ -442,12 +469,11 @@ public class SecondActivity extends AppCompatActivity implements View.OnClickLis
 
 * 单例模式的使用场景
 
-### onNewIntent()方法与回调时机
 
-### TaskAffinity属性与allowTaskReparenting
-
-## Activity中的Flags
+## 通过 Intent 设置 Activity 的启动模式
 　　https://juejin.im/post/5aef0d215188253dc612991b
+#### onNewIntent()方法与回调时机
+
 
 ## 参考文章：
 1. [老生常谈-Activity](https://juejin.im/post/5adab7b6518825670c457de3)
