@@ -24,12 +24,13 @@
 * Class 文件格式
 * Java API 类库
 * 来自商业机构和开源社区的第三方 Java 类库。
+
 **图 Java技术体系所包含的内容**
 ![Java技术体系所包含的内容](./Java技术体系所包含的内容.jpg)
 
-　　把 Java 程序设计语言、Java 虚拟机、Java API 类库这三部分统称为 JSK(Java Development Kit)，JDK 是用于支持 Java 程序开发的最小环境。
+　　把 Java 程序设计语言、Java 虚拟机、Java API 类库这三部分统称为 JDK(Java Development Kit)，JDK 是用于支持 Java 程序开发的最小环境。
 　　把 Java API 类库中的 Java SE API 子集和 Java 虚拟机这两部分统称为 JRE (Java Runtime Environment)，JRE 是支持 Java 程序运行的标准环境。
-
+　　如果按照技术
 
 
 
