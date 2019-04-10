@@ -1,4 +1,4 @@
-# 第三章 软件也要拼脸蛋，UI开发的点点滴滴
+# 第 3 章 软件也要拼脸蛋，UI开发的点点滴滴
 
 1. ProgressDialog 使用 setCancelable() 中传入了 false ,表示 ProgressDialog 是不能通过 Back 键取消掉的。
 
