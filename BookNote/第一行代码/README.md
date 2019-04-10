@@ -15,7 +15,7 @@
 
 **第 8 章** [丰富你的程序，运行手机多媒体](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E7%AC%AC%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81/%E7%AC%AC8%E7%AB%A0-%E4%B8%B0%E5%AF%8C%E4%BD%A0%E7%9A%84%E7%A8%8B%E5%BA%8F%EF%BC%8C%E8%BF%90%E8%A1%8C%E6%89%8B%E6%9C%BA%E5%A4%9A%E5%AA%92%E4%BD%93.md)
 
-**第 9 章** [后台默默的劳动者，探究服务](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E7%AC%AC%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81/%E7%AC%AC%E4%B9%9D%E7%AB%A0-%E5%90%8E%E5%8F%B0%E9%BB%98%E9%BB%98%E7%9A%84%E5%8A%B3%E5%8A%A8%E8%80%85%EF%BC%8C%E6%8E%A2%E7%A9%B6%E6%9C%8D%E5%8A%A1.md)
+**第 9 章** [后台默默的劳动者，探究服务](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E7%AC%AC%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81/%E7%AC%AC9%E7%AB%A0-%E5%90%8E%E5%8F%B0%E9%BB%98%E9%BB%98%E7%9A%84%E5%8A%B3%E5%8A%A8%E8%80%85%EF%BC%8C%E6%8E%A2%E7%A9%B6%E6%9C%8D%E5%8A%A1.md)
 
 
 **第 14 章** 进入实战，开发酷欧天气
