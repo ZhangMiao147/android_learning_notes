@@ -4,8 +4,8 @@
 　　Activity 是 Android 的四大组件之一，主要用于提供窗口与用户进行交互。
 
 ## Activity 的生命周期
-### 生命周期图
-　　拿到官网的 Activity 的生命周期图：
+#### 生命周期图
+　　官网的 Activity 的生命周期图：
 ![](./Activity生命周期图.png)
 
 　　解释图中个方法的作用：
@@ -20,7 +20,7 @@
 | onStop | 表示 Activity 即将停止 | 这个回调代表了 Activity 由可见变为完全不可见，在这里可以进行一些稍微重量级的操作。需要注意的是，处于 onPause() 和 onStop() 回调后的 Activity 优先级很低，当有优先级更高的应用需要内存时，该应用就会被杀死，那么当再次返回原 Activity 的时候，会重新调用 Activity 的onCreate()方法。 |
 | onDestroy | 表示 Activity 即将被销毁 | 来到了这个回调，说明 Activity 即将被销毁，应该将资源的回收和释放工作在该方法中执行。 |
 
-##### 常见情况下生命周期的回调
+#### 常见情况下生命周期的回调
 （A 与 B 表示不同的 Activity ）
 | 情况 | 回调 |
 |--------|--------|
@@ -33,13 +33,13 @@
 | 按 home 键回后回到应用 | onRestart() -> onStart() -> onResume() |
 | 用户按 back 键回退 | onPause() -> onStop() -> onDestroy() |
 
-### 异常状态下活动的生命周期
+#### 异常状态下活动的生命周期
 　　当 Activity 在运行过程中发生一些情况时，生命周期流程也会发生变化。常见的异常情况有两种，一种是资源配置改变；另一是内存不足导致生命周期流程发生变化。
 
-#### 资源配置改变导致 Activity 重建
+##### 资源配置改变导致 Activity 重建
 　　资源配置最常见的情况就是横竖屏切换导致资源的变化，当程序启动时，会根据不同的配置加载不同的资源，例如横竖屏两个状态对应着两张不同的资源图片。如果在使用过程中屏幕突然旋转，那么 Activity 就会因为系统配置发生改变而销毁重建，加载合适的资源。
 
-#### 低优先级 Activity 由于内存不足被杀死
+##### 低优先级 Activity 由于内存不足被杀死
 　　当设备的内存空间不足时，系统为了保证用户的体验，会按照进程优先级将一些低优先级的进程杀死，以来保证用户的体验。
 　　系统回收进程的优先级：
 （1） 前台进程
@@ -91,10 +91,28 @@
 | smallestScreenSize | 设备的物理尺寸发生改变，这个和屏幕方向没关系，比如切换到外部显示设备 -API13 新添加 |
 | layoutDirection | 当布局方向发生改变的时候，正常情况下无法修改布局的 layoutDirection 的属性-API17 新添加 |
 
-#### 关于生命周期的其他
+　　最常用的就是 screenLayout 与 screenSize 属性，在横竖屏切换时防止资源的重建。
+
+#### 关于 Activity 的不常用的生命周期回调方法
 1. onPostCreate()
-　　一般我们都没有实现这个方法，它的作用是在代码开始运行之前，调用系统做最后的初始化工作。
+　　onPostCreate() 方法是指 onCreate() 方法彻底执行完毕的回调。一般我们都没有实现这个方法，它的作用是在代码开始运行之前，调用系统做最后的初始化工作。现在知道的做法是使用 ActionBarDrawerTogglt 时在屏幕旋转的时候在 onPostCreate() 中同步下状态。
+
+2. onPostResume()
+　　onPostResume() 与 onPostCreate() 方法类似，onPostResume() 方法在 onResume() 方法彻底执行完毕的回调。 onCreate() 方法中获取某个 View 的高度和宽度时，返回的值是 0 ，因为这个时候 View 可能还没初始化好，但是在 onPostResume() 中获取就不会有问题，因为 onPostResume() 是在 onResume() 彻底执行完毕的回调。
+
+3. onContentChanged()
+　　当 Activity 的布局改动时，即 setContentView() 或者 addContentView() 方法执行完毕时就会调用该方法。所以，Activity 中 View 的 findViewById() 方法都可以放到该方法中。
+
+4. onUserInteraction()
+　　Activity 无论分发按键事件、触摸事件或者轨迹球事件都会调用 Activity#onUserInteraction()。如果想知道用户用某种方式和你正在运行的 activity 交互，可以重写 Activity#onUserInteraction()。所有调用 Activity#onUserLeaveHint() 的回调都会首先回调 Activity#onUserInteraction() 。
+　　Activity 在分发各种事件的时候会调用该方法，注意：启动另一个 activity ,Activity#onUserInteraction()会被调用两次，一次是 activity 捕获到事件，另一次是调用 Activity#onUserLeaveHint() 之前会调用 Activity#onUserInteraction() 。
+　　可以用这个方法来监控用户有没有与当前的 Activity 进行交互。
+
+5. onUserLeaveHint()
+　　当用户的操作使一个 activity 准备进入后台时，此方法会像 activity 的生命周期的一部分被调用。例如，当用户按下 Home 键，Activity#onUserLeaveHint() 将会被调用。但是当来电导致 activity 自动占据前台（系统自动切换），Activity#onUserLeaveHint() 将不会被回调。
+　　一般监听返回键，是重写 onKeyDown() 方法，但是 Home 键和 Menu 键就不好监听，但是可以在 onUserLeaveHint() 方法中监听。
 
 ## 参考文章：
 1. [老生常谈-Activity](https://juejin.im/post/5adab7b6518825670c457de3)
 2. [全面了解 Activity](https://juejin.im/entry/589847f7128fe10058ebd803)
+3. [超详细的生命周期图-你能回答全吗](https://www.jianshu.com/p/d586c3406cfb)
