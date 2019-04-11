@@ -22,16 +22,30 @@
 
 #### 常见情况下生命周期的回调
 （A 与 B 表示不同的 Activity ）
+
 | 情况 | 回调 |
 |--------|--------|
 | 第一次启动 | onCreate() -> onStart() -> onResume() |
-| 从 A 跳转到不透明的 B | A_onPause() -> B_onCreate() -> B_onStart() -> B_onResume() -> A_onStop() |
-| 从 A 跳转到透明的 B | A_onPause() -> B_onCreate() -> B_onStart() -> B_onResume() |
-| 从不透明的 B 再次回到 A | B_onPause() -> A_onRestart() -> A_onStart() -> A_onResume() -> B_onStop() |
-| 从透明的 B 再次回到 A | B_onPause() -> A_onResume() -> B_onStop() -> B_onDestory() |
+| 从 A 跳转到 B | A_onPause() -> B_onCreate() -> B_onStart() -> B_onResume() -> A_onStop() |
+| 从 B 再次回到 A | B_onPause() -> A_onRestart() -> A_onStart() -> A_onResume() -> B_onStop() |
 | 用户按 home 键 | onPause() -> onStop() |
-| 按 home 键回后回到应用 | onRestart() -> onStart() -> onResume() |
+| 按 home 键后回到应用 | onRestart() -> onStart() -> onResume() |
+| 用户按电源键屏保 | onPause() -> onStop() |
+| 用户按电源键亮屏 | onRestart() -> onStart() -> onResume() |
 | 用户按 back 键回退 | onPause() -> onStop() -> onDestroy() |
+
+　　表中生命周期的验证可以在 [Activity关于生命周期一些问题的实践验证](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E9%97%AE%E9%A2%98%E9%AA%8C%E8%AF%81/Activity%E5%85%B3%E4%BA%8E%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98%E7%9A%84%E5%AE%9E%E8%B7%B5%E9%AA%8C%E8%AF%81.md) 文章中查看。
+
+#### 关于生命周期常见问题
+
+| 问题 | 回调 |
+|--------|--------|
+| 由活动 A 启动活动 B时，活动 A 的 onPause() 与 活动 B 的 onResume() 哪一个先执行？ | 活动 A 的 onPause() 先执行，活动 B 的 onResume() 方法后执行 |
+| 标准 Dialog 是否会对生命周期产生影响 | 没有影响 |
+| 全屏 Dialog 是否会对生命周期产生影响 | 没有影响 |
+| 主题为 Dialog 的 Activity 是否会对生命周期产生影响 | 有影响，与跳转 Activity 一样 |
+
+　　关于生命周期的常见问题的验证可以在 [Activity关于生命周期一些问题的实践验证](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E9%97%AE%E9%A2%98%E9%AA%8C%E8%AF%81/Activity%E5%85%B3%E4%BA%8E%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98%E7%9A%84%E5%AE%9E%E8%B7%B5%E9%AA%8C%E8%AF%81.md) 文章中查看。
 
 #### 异常状态下活动的生命周期
 　　当 Activity 在运行过程中发生一些情况时，生命周期流程也会发生变化。常见的异常情况有两种，一种是资源配置改变；另一是内存不足导致生命周期流程发生变化。
@@ -92,6 +106,8 @@
 | layoutDirection | 当布局方向发生改变的时候，正常情况下无法修改布局的 layoutDirection 的属性-API17 新添加 |
 
 　　最常用的就是 screenLayout 与 screenSize 属性，在横竖屏切换时防止资源的重建。
+
+　　异常状态下生命周期与异常情况下的处理的的验证可以在 [Activity关于生命周期一些问题的实践验证](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E9%97%AE%E9%A2%98%E9%AA%8C%E8%AF%81/Activity%E5%85%B3%E4%BA%8E%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98%E7%9A%84%E5%AE%9E%E8%B7%B5%E9%AA%8C%E8%AF%81.md) 文章中查看。
 
 #### 关于 Activity 的不常用的生命周期回调方法
 1. onPostCreate()

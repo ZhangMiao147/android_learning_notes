@@ -10,6 +10,22 @@
 ![](./显示界面的生命周期.png)
 **结论：**第一次打开 MainActivity ，调用了 onCreate() -> onStart() -> onResume() 方法。
 
+* 按下电源键时的屏保的生命周期
+![](./屏保生命周期.png)
+**结论：**屏保时的生命周期调用为：onPause() -> onStop() 。
+
+* 亮屏时的生命周期
+![](./亮屏生命周期.png)
+**结论：**亮屏时的生命周期调用为：onRestore() -> onStart() -> onResume() 。
+
+* 按 home 键时的生命周期
+![](./按home键生命周期.png)
+**结论：**按下 home 键时的生命周期调用为：onPause() -> onStop() 。
+
+* 按 home 键后重新打开界面的生命周期（从后台应用打开的生命周期是相同的）
+![](./按home键之后重新打开生命周期.png)
+**结论：**按下 home 键之后重新打开界面时的生命周期调用为：onRestore() -> onStart() -> onResume() 。
+
 * 在显示界面点击返回键退出的生命周期
 ![](./点击返回键的生命周期.png)
 **结论：**关闭 MainActivity ，调用了 onPause() -> onStop() -> onDestory() 方法。

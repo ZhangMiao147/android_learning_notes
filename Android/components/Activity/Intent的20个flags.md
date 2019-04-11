@@ -1,15 +1,7 @@
-# Activity 知识之四：Intent 的 flags
+# Intent 的 20 个 flags
 
 ## 简介
-　　除了 4 种 launchMode 设置 Activity 与 task 的关系之外，还可以通过启动 Activity 的 Intent 添加 Flag 来设置 Activity 与 task 的关系。
-
-## 设置方法
-　　在使用 Intent 启动 Activity 时，通过使用 Intent.addFlags(int flags) 方法来设置，如下：
-```
-  Intent intent = new Intent(MainActivity.this, FirstActivity.class);
-  intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-  startActivity(intent);
-```
+　　除了 4 种 launchMode 设置 Activity 与 task 的关系之外，还可以通过启动 Activity 的 Intent 添加 Flag 来设置 Activity 与 task 的关系。本片只是将 20 个 flags 罗列出来，并简单介绍描述。
 
 ## 20 个 flag 的描述
 
