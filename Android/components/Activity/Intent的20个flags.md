@@ -51,7 +51,10 @@
      * Stack</a> for more information about tasks.
      */
 ```
-
+　　如果设置此标签，activity 已经在栈中，则不会启动 activity 的新实例，而是将栈中 activity 之上的 activities 进行出栈关闭，Intent 将被传递给旧的 activity 作为新的 Intent 。
+　　例如，思考一个栈中包含 activities : A,B,C,D。如果 D 调用 startActivity() 携带 Intent 去打开 activity B，这时，c 和 D 出栈结束，B 会接收到给定的 Intent ，从而现在栈中是：A，B。
+　　上述例子中当前运行的 activity B 的 onNewInstent() 方法将会收到新的 intent。如果它将启动模式声明为 “multiple”(默认)，并且没有在 Intent 上设置 FLAG_ACTIVITY_SINGLE_TOP，它将结束并重新创建，除此之外的其他启动模式或者 Intent 设置 FLAG_ACTIVITY_SINGLE_TOP ，将传递 Intent 给当前的 activity 实例的 onNewIntent() 方法。
+　　此 flag 还可以与 FLAG_ACTIVITY_NEW_TASK 一起使用会有更好的效果：如果被使用给栈的根 activity ，activity 会成为前台 activity，并且将其清除到根状态。这是特别有用的，比如，从通知管理器开启 activity 。
 
 #### 3. FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET
 ```
@@ -102,6 +105,11 @@
      * @see #FLAG_ACTIVITY_NEW_TASK
      */
 ```
+　　此 flag 用于创建新的 task ，并在 task 中启动 activity，此 flag 经常与 FLAG_ACTIVITY_NEW_DOCUMENT  或者 FLAG_ACTIVITY_NEW_TASK 一起使用。单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 或 FLAG_ACTIVITY_NEW_TASK 时，会先从存在的栈中搜索匹配 Intent 的栈 ，如果没有栈被发现则创建新的栈。当与 FLAG_ACTIVITY_MULTIPLE_TASK 配合使用时，会跳过搜索匹配的栈而是直接开启一个新栈。
+　　如果使用了 FLAG_ACTIVITY_NEW_TASK 就不要使用此标签，除非你启动的是应用的 launcher 。当与 FLAG_ACTIVITY_NEW_TASK 组合使用时，会防止将已存在的 task 带到前台，总是会为 activity 开启一个新的 task，不管是否已经存在 task 正在运行相同的事情。
+　　因为系统默认不会包含可视化的任务管理，因此不应该使用这个标志，除非给用户提供可以回到其他任务的方法。
+　　此标志不与 FLAG_ACTIVITY_NEW_TASK 或者 FLAG_ACTIVITY_NEW_DOCUMENT 配合使用时是没有效的。
+
 
 #### 5. FLAG_ACTIVITY_NEW_DOCUMENT
 ```
@@ -183,6 +191,7 @@
      */
 ```
 
+　　如果在 Context.startActivity 给 Intent 设置这个标签，将不会展示系统在 activity 从当前状态跳转到下一个 activity 的切换动画。这不意味着动画将不会被展示，如果另一个 activity 的改变在当前展示的动画前发生并且没有使用这个 flag，那么动画还是会展示（不会影响其他 activity 的切换动画的展示）。当你进行一系列的 activity 操作时，用户看到的动画就不应由第一个 activity  的改变而展示而是由后一个展示。
 
 #### 8. FLAG_ACTIVITY_NO_HISTORY
 ```
@@ -197,6 +206,9 @@
      * sets a result and finishes.
      */
 ```
+　　如果设置此 flag ，则新的 activity 将不会保留在历史栈中。一旦用户离开它，activity 将结束。也可以通过 `android.R.styleable#AndroidManifestActivity_noHistory noHistory` 属性设置。
+　　如果设置此 flag ，当前的 activity 启动一个新的 activity ，新的 activity 设置返回值并结束，但旧的 activity 的 onActivityResult() 不会被触发。
+
 #### 9. FLAG_ACTIVITY_REORDER_TO_FRONT
 ```
     /**
