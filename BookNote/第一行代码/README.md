@@ -17,6 +17,13 @@
 
 **第 9 章** [后台默默的劳动者，探究服务](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E7%AC%AC%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81/%E7%AC%AC9%E7%AB%A0-%E5%90%8E%E5%8F%B0%E9%BB%98%E9%BB%98%E7%9A%84%E5%8A%B3%E5%8A%A8%E8%80%85%EF%BC%8C%E6%8E%A2%E7%A9%B6%E6%9C%8D%E5%8A%A1.md)
 
+**第 10 章** [看看精彩的世界，使用网络技术](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E7%AC%AC%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81/%E7%AC%AC10%E7%AB%A0-%E7%9C%8B%E7%9C%8B%E7%B2%BE%E5%BD%A9%E7%9A%84%E4%B8%96%E7%95%8C%EF%BC%8C%E4%BD%BF%E7%94%A8%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF.md)
+
+**第 11 章** [Android 特色开发，基于位置的服务](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E7%AC%AC%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81/%E7%AC%AC11%E7%AB%A0-Android%E7%89%B9%E8%89%B2%E5%BC%80%E5%8F%91%EF%BC%8C%E5%9F%BA%E4%BA%8E%E4%BD%8D%E7%BD%AE%E7%9A%84%E6%9C%8D%E5%8A%A1.md)
+
+**第 12 章** [Android 特色开发，使用传感器](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E7%AC%AC%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81/%E7%AC%AC12%E7%AB%A0-Android%E7%89%B9%E8%89%B2%E5%BC%80%E5%8F%91%EF%BC%8C%E4%BD%BF%E7%94%A8%E4%BC%A0%E6%84%9F%E5%99%A8.md)
+
+**第 13 章** [继续进阶，你还应该掌握的高级技巧](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E7%AC%AC%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81/%E7%AC%AC13%E7%AB%A0-%E7%BB%A7%E7%BB%AD%E8%BF%9B%E9%98%B6%EF%BC%8C%E4%BD%A0%E8%BF%98%E5%BA%94%E8%AF%A5%E6%8E%8C%E6%8F%A1%E7%9A%84%E9%AB%98%E7%BA%A7%E6%8A%80%E5%B7%A7.md)
 
 **第 14 章** 进入实战，开发酷欧天气
 
