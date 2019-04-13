@@ -110,7 +110,6 @@
 　　因为系统默认不会包含可视化的任务管理，因此不应该使用这个标志，除非给用户提供可以回到其他任务的方法。
 　　此标志不与 FLAG_ACTIVITY_NEW_TASK 或者 FLAG_ACTIVITY_NEW_DOCUMENT 配合使用时是没有效的。
 
-
 #### 5. FLAG_ACTIVITY_NEW_DOCUMENT
 ```
     /**
@@ -145,7 +144,10 @@
      * @see #FLAG_ACTIVITY_MULTIPLE_TASK
      */
 ```
-
+　　此标志被用于基于 Intent 的 activity 活动开一个新的任务记录。通过使用这个标志或者它的同含义属性 android.R.attr#documentLaunchMode ，同一个 activity 的不同实例将会在最近的任务列表中显示不同的记录。
+　　Intent 的 flag 要优先于对 activity 的属性使用 android.R.attr#documentLaunchMode。属性表单会为 Activity 的所有活动设置特殊的多记录行为，然而，flag 需要为启动 Activity 的每一个 Intent 来指定它。
+　　注意，这个标志的默认含义，在 activity 结束之后它的入口是否还会保留在在最近的列表中与 FLAG_ACTIVITY_NEW_TASK 和 android.R.attr#documentLaunchMode 是不同的，此标志是不会被移除的，而 FLAG_ACTIVITY_NEW_TASK 则会被移除 。如果使用 FLAG_ACTIVITY_NEW_TASK 创建一个新的入口，那么默认情况下当 activity 结束时入口将被移除，你可以使用 FLAG_ACTIVITY_RETAIN_IN_RECENTS 标志修改这个行为。
+　　FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_MULTIPLE_TASK 一起使用，当单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 相当于在 manifest 中 Activity 定义 android.R.attr#docucumentLaunchMode  = “intoExisting”；当和 FLAG_ACTIVITY_MULTIPLE_TASK 一起使用时，相当于在 manifest 中 Activity 定义 android.R.attr#docucumentLaunchMode = “always”。
 
 #### 6. FLAG_ACTIVITY_NEW_TASK
 ```
