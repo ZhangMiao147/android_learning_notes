@@ -176,7 +176,10 @@
      * the activity being launched.
      */
 ```
-
+　　如果设置这个标志，activity 将成为历史栈中的新任务的开始。一个任务栈（从启动它的 activity 到下一个任务 activity）定义了一个用户可以移动的 activities 的原子组。栈可以被移动到前台和后台；所有 activities 中的一个特定的栈总是保持相同的顺序。
+　　此标签通常被用于想要显示 “launcher” 类型行为的 activities，用户完成一系列的操作，并完全独立于启动他们的 activity 。
+　　当使用这个标志时，如果 task 中已经包含了想要启动的 activity，那么，并不会启动一个新的 activity，而是将 task 移到屏幕的前面，并显示最后一次的状态。可以查看 FLAG_ACTIVITY_MULTIPLE_TASK 标志禁止这种行为。
+　　当调用者 activity 想要从启动的 activity 请求到 result 时，这个标志不能使用。
 
 #### 7. FLAG_ACTIVITY_NO_ANIMATION
 ```
@@ -227,7 +230,9 @@
      * specified.
      */
 ```
-
+　　如果通过 Context.startActivity() 的 Intent 设置此标志，如果 activity 已经在栈中运行，将会把 activity 带到栈的顶部。
+　　例如。一个栈中包含四个 activities：A,B,C,D。如果 D 调用 startActivity() 方法，并且 Intent 设置此标签，启动 B，那么 B 将被带到历史栈的栈顶，所以其结果就是：A,C,D,B。
+　　如果此标志与 FLAG_ACTIVITY_CLEAR_TOP 同时设置，那么此标签无效。
 
 #### 10. FLAG_ACTIVITY_RETAIN_IN_RECENTS
 ```
@@ -246,7 +251,8 @@
      * Activity.finishAndRemoveTask()}.
      */
 ```
-
+　　默认情况下，进入最近任务栈的记录由 FLAG_ACTIVITY_NEW_DOCUMENT 创建，当用户关闭 activity （使用 back 键 或者他调用 finish()）时记录将会被移除，如果你想要允许记录保留在最近方便它能被重新启动，你可以使用此标志。当设置了此标志并且任务中的 activity 已经结束，当用户重新启动它，界面将会保留最近的进入记录，就像是顶部应用进入一样。
+　　接收活动可以请求 android.R.attr#autoRemoveFromRecents 或者通过调用 Activity.finishAndRemoveTask() 来覆盖本请求。
 
 #### 11. FLAG_ACTIVITY_SINGLE_TOP
 ```
@@ -267,6 +273,9 @@
      * the reply target of the original activity.
      */
 ```
+　　如果设置这个标志并用于启动一个新的 activity 从源活动，则源活动的回复对象转移到新活动上。
+　　新活动调用 android.app.Activity#setResult 方法，这个结果数据将会返回给源 activity 。
+
 #### 13. FLAG_ACTIVITY_PREVIOUS_IS_TOP
 ```
     /**
@@ -286,6 +295,7 @@
      */
 ```
 　　如果设置这个 flag，则新的 activity 将不会被保留在最近启动 activities 的列表中。
+
 #### 15. FLAG_ACTIVITY_BROUGHT_TO_FRONT
 ```
     /**
@@ -295,6 +305,10 @@
      * launchMode} documentation for the singleTask mode.
      */
 ```
+　　如果设置此标签，并且用于启动一个新的 activity 从源活动，当前 activity 不会被视为栈顶活动，无论是传递新的 intent 
+
+
+
 #### 16. FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
 ```
     /**
