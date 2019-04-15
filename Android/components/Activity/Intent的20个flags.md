@@ -287,6 +287,8 @@
      * will finish itself immediately.
      */
 ```
+　　如果设置此标签，并且用于启动一个新的 activity 从源活动，当前 activity 不会被视为栈顶活动，无论是传递新的 intent 给栈顶还是启动一个新的 activity 。如果当前的 activity 将立即结束，则上一个 activity 将作为栈顶。
+
 #### 14. FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
 ```
     /**
@@ -305,9 +307,7 @@
      * launchMode} documentation for the singleTask mode.
      */
 ```
-　　如果设置此标签，并且用于启动一个新的 activity 从源活动，当前 activity 不会被视为栈顶活动，无论是传递新的 intent 
-
-
+　　此标签通常不由应用代码设置，当 launchmode 为 singleTask 模式时由系统设置。
 
 #### 16. FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
 ```
@@ -328,6 +328,9 @@
      * (longpress home key).
      */
 ```
+　　此标志通常不由应用代码设置，当 activity 从历史记录中启动（长按 home 键）时，系统就会为你设置。
+
+
 #### 18. FLAG_ACTIVITY_NO_USER_ACTION
 ```
     /**
