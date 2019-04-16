@@ -1,4 +1,4 @@
-# Activity 知识之三：启动模式
+# Activity 知识之二：启动模式
 
 ## 启动模式简述
 
@@ -82,32 +82,10 @@
 　　关于 launchMode 的四种模式验证，可以查看 [Activity四种launchMode的实践验证](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E5%9B%9B%E7%A7%8DlaunchMode%E9%AA%8C%E8%AF%81/Activity%E5%9B%9B%E7%A7%8DlaunchMode%E7%9A%84%E5%AE%9E%E8%B7%B5%E9%AA%8C%E8%AF%81.md) 文章。
 
 ## Intent 的 flags
-　　Intent 的 flags 有 20 个，这里只列出常用的一些。如果想看全部的 flags ，请查看 [Intent的20个flags](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Intent%E7%9A%8420%E4%B8%AAflags.md) 。
-
-#### FLAG_ACTIVITY_CLEAR_TASK & FLAG_ACTIVITY_NEW_TASK
-
-#### FLAG_ACTIVITY_CLEAR_TOP
-　　如果设置此标签，activity 已经在栈中，则不会启动 activity 的新实例，而是将栈中 activity 之上的 activities 进行出栈关闭，Intent 将被传递给旧的 activity 作为新的 Intent 。
-
-#### FLAG_ACTIVITY_CLEAR_TOP & FLAG_ACTIVITY_NEW_TASK
-　　如果被使用给栈的根 activity ，activity 会成为前台 activity，并且将其清除到根状态。这是特别有用的，比如，从通知管理器开启 activity 。
-
-
-#### FLAG_ACTIVITY_MULTIPLE_TASK & FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_MULTIPLE_TASK & FLAG_ACTIVITY_NEW_DOCUMENT
-　　FLAG_ACTIVITY_MULTIPLE_TASK 用于创建新的 task ，并在 task 中启动 activity，此 flag 经常与 FLAG_ACTIVITY_NEW_DOCUMENT  或者 FLAG_ACTIVITY_NEW_TASK 一起使用。单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 或 FLAG_ACTIVITY_NEW_TASK 时，会先从存在的栈中搜索匹配 Intent 的栈 ，如果没有栈被发现则创建新的栈。当与 FLAG_ACTIVITY_MULTIPLE_TASK 配合使用时，会跳过搜索匹配的栈而是直接开启一个新栈。
-　　如果使用了 FLAG_ACTIVITY_NEW_TASK 就不要使用此标签，除非你启动的是应用的 launcher 。
-
-#### FLAG_ACTIVITY_NO_HISTORY
-　　如果设置此 flag ，则新的 activity 将不会保留在历史栈中。一旦用户离开它，activity 将结束。也可以通过 `android.R.styleable#AndroidManifestActivity_noHistory noHistory` 属性设置。
-　　如果设置此 flag ，当前的 activity 启动一个新的 activity ，新的 activity 设置返回值并结束，但旧的 activity 的 onActivityResult() 不会被触发。
-
-#### FLAG_ACTIVITY_NO_ANIMATION
-　　如果在 Context.startActivity 给 Intent 设置这个标签，将不会展示系统在 activity 从当前状态跳转到下一个 activity 的切换动画。
-　　https://juejin.im/post/5aef0d215188253dc612991b
-
+　　Intent 的 flags 有 20 个，这里只列出常用的一些。查看全部的 flags ，请查看 [Intent的20个flags](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Intent%E7%9A%8420%E4%B8%AAflags.md) 。
 
 ## onNewIntent() 方法与回调时机
-　　onNewIntent() 方法会在 activity 复用的时候调用，就是说调用 activity ，但是在启动模式下，不会新建 activity ，而是复用栈中的 activity ，复用时就会调用 onNewIntent() 方法。
+　　onNewIntent() 方法会在 activity 复用的时候调用，也就是说调用 activity ，并不会常见 activity 的新实例，而是复用栈中的 activity ，复用时就会调用 onNewIntent() 方法，将新的 Intent 传递给 oNewIntent() 方法。
 
 ## TaskAffinity属性与allowTaskReparenting
 　　Affinity 指示了 Activity 更倾向于属于哪个 Task。

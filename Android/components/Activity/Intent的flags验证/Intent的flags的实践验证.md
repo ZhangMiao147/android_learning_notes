@@ -1,4 +1,4 @@
-# Intent 的常用 flags 的实践验证
+# Intent 的 flags 的实践验证
 
 ## 关于如何验证
 　　创建一个 MainActivity 、 FirstActivity 与 SecondActivity 类，MainActivity 是项目的主界面，任何一个 Activity 都可以跳转包括自己的任意一个 Activiity ，通过在代码中跳转 FirstActivity 时设置 flag 。
@@ -73,15 +73,20 @@
 * 查看从 MainActivity 跳转 FirstActivity 时的动画显示、FirstActivity 按 back 键返回 MainActivity 的动画显示以及 FirstActivty 跳转 FirstActivity 的动画显示。
 　　从 MainActivity 跳转 FirstActivity 时的动画并没有显示，FirstActivity 按 back 键返回 MainActivity 的动画显示正常，FirstActivty 跳转 FirstActivity 的动画显示正常。说明 FLAG_ACTIVITY_NO_ANIMATION 标签只能阻碍 startActivity 的动画，之后的返回与其他地方的 startActivity 并不会受到影响。
 
+
 #### FLAG_ACTIVITY_NEW_TASK
+　　如果设置这个标志，activity 将成为历史栈中的新任务的开始。一个任务栈（从启动它的 activity 到下一个任务 activity）定义了一个用户可以移动的 activities 的原子组。栈可以被移动到前台和后台；所有 activities 中的一个特定的栈总是保持相同的顺序。
+　　此标签通常被用于想要显示 “launcher” 类型行为的 activities，用户完成一系列的操作，并完全独立于启动他们的 activity 。
+　　当使用这个标志时，如果 task 中已经包含了想要启动的 activity，那么，并不会启动一个新的 activity，而是将任务移到屏幕的前面，并显示最后一次的状态。可以查看 FLAG_ACTIVITY_MULTIPLE_TASK 标志禁止这种行为。
+　　当调用者 activity 想要从启动的 activity 请求到 result 时，这个标志不能使用。
 
-#### FLAG_ACTIVITY_CLEAR_TASK & FLAG_ACTIVITY_NEW_TASK
+#### FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_CLEAR_TASK
 
-#### FLAG_ACTIVITY_CLEAR_TOP & FLAG_ACTIVITY_NEW_TASK
+#### FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_CLEAR_TOP
 　　如果被使用给栈的根 activity ，activity 会成为前台 activity，并且将其清除到根状态。这是特别有用的，比如，从通知管理器开启 activity 。
 
 
-#### FLAG_ACTIVITY_MULTIPLE_TASK & FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_MULTIPLE_TASK & FLAG_ACTIVITY_NEW_DOCUMENT
+#### FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_MULTIPLE_TASK 与 FLAG_ACTIVITY_MULTIPLE_TASK & FLAG_ACTIVITY_NEW_DOCUMENT
 　　FLAG_ACTIVITY_MULTIPLE_TASK 用于创建新的 task ，并在 task 中启动 activity，此 flag 经常与 FLAG_ACTIVITY_NEW_DOCUMENT  或者 FLAG_ACTIVITY_NEW_TASK 一起使用。单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 或 FLAG_ACTIVITY_NEW_TASK 时，会先从存在的栈中搜索匹配 Intent 的栈 ，如果没有栈被发现则创建新的栈。当与 FLAG_ACTIVITY_MULTIPLE_TASK 配合使用时，会跳过搜索匹配的栈而是直接开启一个新栈。
 　　如果使用了 FLAG_ACTIVITY_NEW_TASK 就不要使用此标签，除非你启动的是应用的 launcher 。
 
@@ -110,9 +115,6 @@
 #### FLAG_ACTIVITY_PREVIOUS_IS_TOP
 　　如果设置此标签，并且用于启动一个新的 activity 从源活动，当前 activity 不会被视为栈顶活动，无论是传递新的 intent 给栈顶还是启动一个新的 activity 。如果当前的 activity 将立即结束，则上一个 activity 将作为栈顶。
 
-#### FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
-　　如果设置这个 flag，则新的 activity 将不会被保留在最近启动 activities 的列表中。
-
 #### FLAG_ACTIVITY_BROUGHT_TO_FRONT
 　　此标签通常不由应用代码设置，当 launchmode 为 singleTask 模式时由系统设置。
 
@@ -120,6 +122,22 @@
 　　如果设置此标志，activity 要么在新的任务中被启动要么将存在的 activity 移到存在任务的顶部，而 activity 将作为任务的前门被启动。这将导致与应用相关联的活动在适当的状态下需要拥有这个任务（无论是移动活动进入或者是移除），或者在需要的时候重置任务到初始状态。
 
 #### FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
+　　此标志通常不由应用代码设置，当 activity 从历史记录中启动（长按 home 键）时，系统就会为你设置。
+
+#### FLAG_ACTIVITY_NO_USER_ACTION
+　　如果设置此标志，在 activity 被前台的新启动的 activity 造成 paused 之前，将会阻止当前最顶部的 activity 的 onUserLeaveHint 回调。
+　　通常，当 activity 在用户的操作下被移除前面则会调用 onUserLeaveHint 回调。这个回调标志着 activity 的生命周期的一个点，以便隐藏任何 “ 直到用户看到他们 ” 的通知，比如闪烁的 LED 灯。
+　　如果 accitivity 曾经通过任何非用户操作启动（例如来电或闹铃启动），就应该通过 startActivity 添加此标签，确保暂停时 activity 不认为用户确认了它的通知。
+
+#### FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_TASK_ON_HOME
+　　如果通过 startActivity 的 Intent 设置此标志，这个标志将会导致最新启动的任务位于当前主页活动任务（假设这里有）的顶部。换句话说，当任务点击 back 键，将总是返回用户的主页，无论主页是否是用户看到的上一个界面。此标志只能与 FLAG_ACTIVITY_NEW_TASK 一起使用。
+
+#### FLAG_ACTIVITY_LAUNCH_ADJACENT & FLAG_ACTIVITY_NEW_TASK
+　　此标志仅用于分屏多窗口模式。新活动将被显示在启动它的活动的旁边。这个标志只能与 FLAG_ACTIVITY_NEW_TASK 联合使用。此外，如果想要创建一个已存在的活动的新实例，那么设置 FLAG_ACTIVITY_MULTIPLE_TASK 标签。
+
+#### FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+　　如果设置这个 flag，则新的 activity 将不会被保留在最近启动 activities 的列表中。
+　　经过测试单独使用并没有用，上网查询，和 FLAG_ACTIVITY_NEW_TASK 联合使用。
 
 ## 参考文章：
 1. [Intent.addFlags() 启动Activity的20种flags全解析](https://blog.csdn.net/blueangle17/article/details/79712229)
