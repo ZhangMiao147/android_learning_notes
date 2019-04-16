@@ -320,6 +320,8 @@
      * its initial state if needed.
      */
 ```
+　　如果设置此标志，activity 要么在新的任务中被启动要么将存在的 activity 移到存在任务的顶部，而 activity 将作为任务的前门被启动。这将导致与应用相关联的活动在适当的状态下需要拥有这个任务（无论是移动活动进入或者是移除），或者在需要的时候重置任务到初始状态。
+
 #### 17. FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
 ```
     /**
@@ -329,7 +331,6 @@
      */
 ```
 　　此标志通常不由应用代码设置，当 activity 从历史记录中启动（长按 home 键）时，系统就会为你设置。
-
 
 #### 18. FLAG_ACTIVITY_NO_USER_ACTION
 ```
@@ -350,6 +351,10 @@
      * activity does not think the user has acknowledged its notification.
      */
 ```
+　　如果设置此标志，在 activity 被前台的新启动的 activity 造成 paused 之前，将会阻止当前最顶部的 activity 的 onUserLeaveHint 回调。
+　　通常，当 activity 在用户的操作下被移除前面则会调用 onUserLeaveHint 回调。这个回调标志着 activity 的生命周期的一个点，以便隐藏任何 “ 直到用户看到他们 ” 的通知，比如闪烁的 LED 灯。
+　　如果 accitivity 曾经通过任何非用户操作启动（例如来电或闹铃启动），就应该通过 startActivity 添加此标签，确保暂停时 activity 不认为用户确认了它的通知。
+
 #### 19. FLAG_ACTIVITY_TASK_ON_HOME
 ```
     /**
@@ -360,6 +365,8 @@
      * saw.   This can only be used in conjunction with {@link #FLAG_ACTIVITY_NEW_TASK}.
      */
 ```
+　　如果通过 startActivity 的 Intent 设置此标志，这个标志将会导致最新启动的任务位于当前主页活动任务（假设这里有）的顶部。换句话说，当任务点击 back 键，将总是返回用户的主页，无论主页是否是用户看到的上一个界面。此标志只能与 FLAG_ACTIVITY_NEW_TASK 一起使用。
+
 #### 20. FLAG_ACTIVITY_LAUNCH_ADJACENT
 ```
     /**
@@ -369,5 +376,7 @@
      * required if you want a new instance of an existing activity to be created.
      */
 ```
+　　此标志仅用于分屏多窗口模式。新活动将被显示在启动它的活动的旁边。这个标志只能与 FLAG_ACTIVITY_NEW_TASK 联合使用。此外，如果想要创建一个已存在的活动的新实例，那么设置 FLAG_ACTIVITY_MULTIPLE_TASK 标签。
+
 ## 参考文章：
 1. [Intent.addFlags() 启动Activity的20种flags全解析](https://blog.csdn.net/blueangle17/article/details/79712229)

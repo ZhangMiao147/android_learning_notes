@@ -107,6 +107,19 @@
 　　如果设置这个标志并用于启动一个新的 activity 从源活动，则源活动的回复对象转移到新活动上。
 　　新活动调用 android.app.Activity#setResult 方法，这个结果数据将会返回给源 activity 。
 
+#### FLAG_ACTIVITY_PREVIOUS_IS_TOP
+　　如果设置此标签，并且用于启动一个新的 activity 从源活动，当前 activity 不会被视为栈顶活动，无论是传递新的 intent 给栈顶还是启动一个新的 activity 。如果当前的 activity 将立即结束，则上一个 activity 将作为栈顶。
+
+#### FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+　　如果设置这个 flag，则新的 activity 将不会被保留在最近启动 activities 的列表中。
+
+#### FLAG_ACTIVITY_BROUGHT_TO_FRONT
+　　此标签通常不由应用代码设置，当 launchmode 为 singleTask 模式时由系统设置。
+
+#### FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+　　如果设置此标志，activity 要么在新的任务中被启动要么将存在的 activity 移到存在任务的顶部，而 activity 将作为任务的前门被启动。这将导致与应用相关联的活动在适当的状态下需要拥有这个任务（无论是移动活动进入或者是移除），或者在需要的时候重置任务到初始状态。
+
+#### FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
 
 ## 参考文章：
 1. [Intent.addFlags() 启动Activity的20种flags全解析](https://blog.csdn.net/blueangle17/article/details/79712229)
