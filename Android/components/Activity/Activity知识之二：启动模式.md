@@ -3,6 +3,7 @@
 ## 启动模式简述
 
 　　和生命周期一样， activity 的四种 launchMode 非常重要但也特别容易混淆，首先，activity 是以任务栈的形式创建和销毁的，栈是一种“后进先出”的数据结构，在默认情况下，启动第一个 actiivty 时，系统将会为它创建一个任务栈并将活动置于栈底，而从这个 activity 启动的其他 activity 将会依次入栈，当用户连续按下返回键时，任务栈中的 activity 会从栈顶开始依次销毁。
+
 　　而启动模式就是定义 Activity 实例与 task 的关联方式。
 
 #### 为什么需要定义启动模式？
@@ -84,10 +85,11 @@
 　　Intent 的 flags 有 20 个，这里只列出常用的一些。查看全部的 flags ，请查看 [Intent的20个flags](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Intent%E7%9A%8420%E4%B8%AAflags.md) 。
 
 **常用的 flags 的使用**
-操作中的 A,B,C 表示不同的 Activity，A->B 表示从 A 跳转到 B，栈情况中的 t1,t2 表示不同的栈，栈中的记录都是记录的从栈底到栈顶的顺序。
+
+　　操作中的 A,B,C 表示不同的 Activity，A->B 表示从 A 跳转到 B，栈情况中的 t1,t2 表示不同的栈，栈中的记录都是记录的从栈底到栈顶的顺序。
 
 | 使用标志 | 解释 | 设置 | 操作 | 栈情况 | 其他 |
-| -------- | -------- |
+| -------- | -------- | -------- | -------- | -------- | -------- |
 | FLAG_ACTIVITY_CLEAR_TOP | 如果设置此标签，activity 已经在栈中，则不会启动 activity 的新实例，而是将栈中 activity 之上的 activities 进行出栈关闭，Intent 将被传递给旧的 activity 作为新的 Intent 。 | A 跳转 B 的 flag 设置为 FLAG_ACTIVITY_CLEAR_TOP  | 1:A->B->C 2: C->B 3:B->B 4:B->C 5:C->B| 1: t1(A->B->C) 2:t1(A->B) 3:t1(A->B->B) 4:t1(A->B->B->C) 5:t1(A->B->B) | 与 launchMode 的 SingleTask 相同 |
 
 
