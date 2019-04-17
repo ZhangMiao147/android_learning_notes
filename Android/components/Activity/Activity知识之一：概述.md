@@ -55,19 +55,33 @@
 
 ##### 低优先级 Activity 由于内存不足被杀死
 　　当设备的内存空间不足时，系统为了保证用户的体验，会按照进程优先级将一些低优先级的进程杀死，以来保证用户的体验。
+  
 　　系统回收进程的优先级：
+
 （1） 前台进程
+
 　　持有用户正在交互的 Activty，即生命周期处于 onResume 状态的活动。
+
 　　该进程有绑定到正在交互的 Activity 的 service  或前台 service。
+
 （2） 可见进程
+
 　　这种进程虽然不在前台，但是仍然可见。
+ 
 　　该进程持有的 Activity 执行了 onPause 但未执行 onStop 。例如原活动启动了一个 dialog 主题的 Activity，但此时原活动并非完全不可见。
+ 
 　　该进程有 service 绑定到可见的或前台 Activity。
+
 （3）服务进程
+
 　　进程中持有一个 service，同时不属于上面两种情况。
+
 （4）后台进程
+
 　　不属于上面三种情况，但进程持有一个不可见的 Activity，即执行了 onStop 但未执行 onDestory 的状态。
+
 （5）空进程
+
 　　不包含任何活跃的应用组件，作用是加快下次启动这个进程中组件所需要的时间，优先级低。
 
 #### 异常情况下的处理
@@ -75,12 +89,19 @@
 
 ##### 数据保存
 　　第一种就是系统提供的 onSaveInstanceState 和 onRestoreInstanceState 方法，onSaveInstanceState 方法会在 Activity 异常销毁之前调用，用来保存需要保存的数据，onRestoreInstanceState 方法在 Activity 重建之后获取保存的数据。
+
 　　在活动异常销毁之前，系统会调用 onSaveInstanceState，可以在 Bundle 类型的参数中保存想要的信息，之后这个 Bundle 对象会作为参数传递给 onRestoreInstanceState 和 onCreate 方法，这样在重新创建时就可以获取数据了。
+
 　　关于 onSaveInstanceState 与 onRestoreInstanceState 方法需要注意的一些问题：
+
 　　1. onSaveInstanceState 方法的调用时机是在 onStop 之前，与 onPause 没有固定的时序关系。而 onestoreInstanceState 方法则是在 onStart 之后调用。
+
 　　2. 正常情况下的活动销毁并不会调用这两个方法，只有当活动异常销毁并且有机会重现展示的时候才会进行调用，除了资源配置的改变外，activity 因内存不足被销毁也是通过这两个方法保存数据。
+
 　　3. 在 onRestoreInstanceState 和 onCreate 都可以进行数据恢复工作，但是根据官方文档建议采用在 onRestoreInstanceState 中去恢复。
+
 　　4. 在 onSaveInstanceState 和 onRestoreInstanceState 这两个方法中，系统会默认为我们进行一定的恢复工作，例如 EditText 中的文本信息、ListView 中的滚动位置等，下面对一些空间观察实际保存效果。
+
 　　5. onSveInstanceState() 常见的触发场景有：横竖屏切换、按下电源键、按下菜单键、切换到别的 Activity 等；onRestoreInstanceState() 常见的触发场景有：横竖屏切换、切换语言等等。
 
 ##### 防止重建
@@ -111,21 +132,29 @@
 
 #### 关于 Activity 的不常用的生命周期回调方法
 1. onPostCreate()
+
 　　onPostCreate() 方法是指 onCreate() 方法彻底执行完毕的回调。一般我们都没有实现这个方法，它的作用是在代码开始运行之前，调用系统做最后的初始化工作。现在知道的做法是使用 ActionBarDrawerTogglt 时在屏幕旋转的时候在 onPostCreate() 中同步下状态。
 
 2. onPostResume()
+
 　　onPostResume() 与 onPostCreate() 方法类似，onPostResume() 方法在 onResume() 方法彻底执行完毕的回调。 onCreate() 方法中获取某个 View 的高度和宽度时，返回的值是 0 ，因为这个时候 View 可能还没初始化好，但是在 onPostResume() 中获取就不会有问题，因为 onPostResume() 是在 onResume() 彻底执行完毕的回调。
 
 3. onContentChanged()
+
 　　当 Activity 的布局改动时，即 setContentView() 或者 addContentView() 方法执行完毕时就会调用该方法。所以，Activity 中 View 的 findViewById() 方法都可以放到该方法中。
 
 4. onUserInteraction()
+
 　　Activity 无论分发按键事件、触摸事件或者轨迹球事件都会调用 Activity#onUserInteraction()。如果想知道用户用某种方式和你正在运行的 activity 交互，可以重写 Activity#onUserInteraction()。所有调用 Activity#onUserLeaveHint() 的回调都会首先回调 Activity#onUserInteraction() 。
+
 　　Activity 在分发各种事件的时候会调用该方法，注意：启动另一个 activity ,Activity#onUserInteraction()会被调用两次，一次是 activity 捕获到事件，另一次是调用 Activity#onUserLeaveHint() 之前会调用 Activity#onUserInteraction() 。
+
 　　可以用这个方法来监控用户有没有与当前的 Activity 进行交互。
 
 5. onUserLeaveHint()
+
 　　当用户的操作使一个 activity 准备进入后台时，此方法会像 activity 的生命周期的一部分被调用。例如，当用户按下 Home 键，Activity#onUserLeaveHint() 将会被调用。但是当来电导致 activity 自动占据前台（系统自动切换），Activity#onUserLeaveHint() 将不会被回调。
+
 　　一般监听返回键，是重写 onKeyDown() 方法，但是 Home 键和 Menu 键就不好监听，但是可以在 onUserLeaveHint() 方法中监听。
 
 ## 参考文章：
