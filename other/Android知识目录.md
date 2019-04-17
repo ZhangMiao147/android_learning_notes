@@ -61,6 +61,7 @@
 28. bitmap 有几种格式，分别占多少字节？
 29. 系统进程可以用webview吗？
 30. 计算viewgroup的层级，递归实现和非递归实现
+31. Bitmap resize 相关 (设置 option 然后 decode)
 
 ## 解析xml
 1. sax解析xml的优点
@@ -89,8 +90,11 @@
 13. 在android中，请简述jni的调用过程？请结束android.mk的作用，并试写一个android.mk文件（包含一个.c源文件即可）
 14. binder 的原理与机制
 15. 原子类的了解一个app多进程的好处
-16. 主线程looper 如果没有消息，就会阻塞在那，为什么不会anr？
-17. 自己写一个应用，包名就叫android行不行，为什么不行？
+16. 主线程 looper 如果没有消息，就会阻塞在那，为什么不会anr？
+17. 自己写一个应用，包名就叫 android 行不行，为什么不行？
+18. 主线程 Looper 一直循环查消息为何没卡主线程？
+19. 用MultiDex解决何事？其根本原因在于？Dex如何优化？主Dex放哪些东西？主Dex和其他Dex调用、关联？Odex优化点在于啥？Dalvik和Art虚拟机区别？多渠道打包如何实现（Flavor、Dimension应用）？从母包生出渠道包实现方法？渠道标识替换原理？
+20. Android 打包哪些类型文件不能混淆？
 
 ## 常用的开源库总结
 * 这个库是做什么用的？
@@ -116,6 +120,9 @@
 #### zxing
 1. zxing二维码开源框架流程
 2. zxing 有过优化提高识别率吗？
+
+#### Glide
+1. Glide 缓存特点。
 
 #### 第三方开源数据库
 
@@ -191,12 +198,18 @@
 3. 网络代理
 4. 日志
 
+## 架构
+1. 模块化怎么做的？怎么设计的？接口发现暴露怎么做？基于什么思想？MVC、MVP、MVVM 应用和彼此本质区别？
+
+
 ## 其他
 1. Android 的打包流程？apk里有哪些东西？签名算法的原理？
 2. 了解哪些插件化技术？
 3. Android 怎么做保活？
 4. 动态配置manifest文章完成 （记录到记录文章列表中）
 * 参考文章 https://www.jianshu.com/p/e64f0b89e570  https://blog.csdn.net/DG_summer/article/details/53678247
+5. 动态代理静态代理区别？
+
 
 ## 平时开发遇到的系列问题记录
 1. Bitmap too larget to be uploaded into a texture 的解决方法

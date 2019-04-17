@@ -26,7 +26,9 @@
         </activity>
 ```
 　　一个这样的 intent filter 会使得这个 activity 的 icon 和 label 显示在程序启动处，提供了一种方法，使得用户可以启动这个 activity，当它启动后，用户也可以通过它来返回到这个 task 。
+
 　　用户必须能够离开一个 task ，然后通过 activity launcher 返回到它。
+
 　　因为这个原因，两个让 Activity 永远实例化一个 task 的启动模式："singleTask" 和 "singleInstance"，应该仅在 Activity 有一个 ACTION_MAIN 和 CATEGORY_LAUNCHER filter 的时候用它们。
 
 ## 如何定义 Activity 的启动模式
@@ -34,6 +36,7 @@
 
 #### 在 AndroidManifest.xml 中设置 Activity 的启动模式
 　　在 AndroidManidest.xml 中设置 Activity 的启动模式非常简单，直接在想要设置的 Activity 中添加 `android:launchMode=""` 属性即可，`android:launchMode=""` 属性有四个可供选择的值，分别是 `standard`、`singleTop`、`singTask` 与 `singleInstance`，这四个值分别对应四种启动模式：标准模式、栈顶复用、栈内复用与单例模式。
+
 　　例如，设置 Activity 的启动模式为 `singleTop` ,在 AndroidManifest.xml 中应该是：
 ```
    <activity
@@ -53,31 +56,33 @@
 #### 注意
 　　如果你同时在 AndroidManifest 中用 lauchMode 属性和代码中用 Intent 设置了 Activity 的启动模式，则会以代码中 Intent 的设置为准。
 
-## launchMode 的 四种启动模式
+## launchMode 的四种启动模式
 
 #### standard(标准模式)
-　　Activity 的默认启动模式，只要启动 Activity 就会创建一个新实例，并将该 Activity 添加到当前 Task 栈中。
+　　Activity 的默认启动模式，不设置启动模式时，就是标准模式。只要启动 Activity 就会创建一个新实例，并将该 Activity 添加到当前任务栈中。
 
-###### 标准模式的使用场景
+###### 标准模式的应用场景
+　　正常打开一个新的页面，这种启动模式使用最多，最普通。
 
 #### singleTop(栈顶复用)
-　　在这种启动模式下，首先会判断要启动的活动是否已经存在于栈顶，如果是的话就不创建新实例，直接复用栈顶活动。如果要启动的活动不位于栈顶或在栈中或在栈中无实例，则会创建新实例入栈。
+　　在这种启动模式下，首先会判断要启动的活动是否已经存在于栈顶，如果是的话就不创建新实例，直接复用栈顶活动。如果要启动的活动不位于栈顶，则会创建新实例入栈，并且调用 activity 的 onNewIntent() 方法。
 
-###### 栈顶复用模式的使用场景
+###### 栈顶复用模式的应用场景
+　　栈顶复用模式避免了同一个页面被重复打开，应用场景例如一个新闻客户端，在通知栏收到多条推送，点击一条推送就会打开新闻的详情页，如果是默认的启动模式，点击一次将会打开一个详情页，栈中就会有三个详情页，如果使用栈顶复用模式，点击第一条推送之后，接着点击其他的推送，都只会有一个详情页，可以避免重复打开页面。
 
 #### singleTask(栈内复用)
+　　singleTask 是一种栈内单例模式，当一个 activity 启动时，如果栈中没有 activity 则会创建 activity 并让它入栈；如果栈中有 activity ，则会将位于 activity 之上的 activities 出栈，然后复用栈中的 activity ，调用 activity 的 onNewIntent() 方法。
 
-　　这种模式比较复杂，是一种栈内单例模式，当一个 activity 启动时，会进行两次判断：
-（1） 首先会寻找是否有这个活动需要的任务栈，如果没有就创建这个任务栈并将活动入栈，如果有的话就进入下一步判断。
-（2） 第二次判断这个栈中是否存在该 activity 的实例，如果不存在就新建 activity 入栈，如果存在的话就直接复用，并且带有 clearTop 效果，会将该实例上方的所有活动全部出栈，令这个 activity 位于栈顶。
-　　这种模式会保证 Activity 在所需要的栈内只有一个或者没有。
+　　这种模式会保证 Activity 在栈内只有一个或者没有。
 
-###### 栈内复用模式的使用场景
+###### 栈内复用模式的应用场景
+　　栈内复用模式适合作为程序的入口。最常用的就是一个 APP 的首页，一般 App 的首页长时间保留在栈内，并且是栈的第一个 activity。例如浏览器的主界面，不管从多少个应用启动浏览器，只会启动主界面一次，并清空主界面上面的其他页面，根据 onNewIntent 方法传递的数值，显示新的界面。
 
 #### singleInstance(单例模式)
-　　这种模式是真正的单例模式，以这种模式启动的活动会单独创建一个任务栈，并且依然遵循栈内复用的特性，保证了这个栈中只能存在这一个活动。并且系统不会在这个单例模式的 Activity 的实例所在 task 中启动任何其他的 Activity 。单例模式的 Activity 的实例永远是这个 task 中的唯一一个成员。
+　　这种模式是真正的单例模式，以这种模式启动的活动会单独创建一个任务栈，并且依然遵循栈内复用的特性，保证了这个栈中只能存在这一个活动。并且系统不会在这个单例模式的 Activity 的实例所在栈中中启动任何其他的 Activity 。单例模式的 Activity 的实例永远是这个栈中的唯一一个成员。
 
-###### 单例模式的使用场景
+###### 单例模式的应用场景
+　　单例模式使用需要与程序分离开的页面。电话拨号页面，通过自己的应用或者其他应用打开拨打电话页面，只要系统的栈中存在该实例，那么就会直接调用，还有闹铃提醒。
 
 　　关于 launchMode 的四种模式验证，可以查看 [Activity四种launchMode的实践验证](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E5%9B%9B%E7%A7%8DlaunchMode%E9%AA%8C%E8%AF%81/Activity%E5%9B%9B%E7%A7%8DlaunchMode%E7%9A%84%E5%AE%9E%E8%B7%B5%E9%AA%8C%E8%AF%81.md) 文章。
 
@@ -95,12 +100,22 @@
 
 ## onNewIntent() 方法与回调时机
 　　onNewIntent() 方法会在 activity 复用的时候调用，也就是说调用 activity ，并不会常见 activity 的新实例，而是复用栈中的 activity ，复用时就会调用 onNewIntent() 方法，将新的 Intent 传递给 oNewIntent() 方法。
+
 　　关于 onNewIntent() 方法的验证，可以查看 [onNewIntent方法的实践验证](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/onNewIntent%E6%96%B9%E6%B3%95%E7%9A%84%E9%AA%8C%E8%AF%81/onNewIntent%E6%96%B9%E6%B3%95%E7%9A%84%E5%AE%9E%E8%B7%B5%E9%AA%8C%E8%AF%81.md) 文章。
 
 ## TaskAffinity属性与allowTaskReparenting
 　　Affinity 指示了 Activity 更倾向于属于哪个 Task。
+
 　　默认情况下，同一个应用的 Activity 倾向于在同一个 task 中。可以通过 <activity> 标签的 taskAffinity 来修改这种行为。
+
+## launchMode 与 Intent 的 flags 的对比
+1. Intent 的 flags 的优先于要高于 launchMode 。
+2. launchMode 设置的一些启动模式 Intent 的 flags 无法代替，Intent 的 flag 的一些使用 launchMode 也无法代替。
+3. 指定 launchMode 的 activity 被任何对象热河地方调用，启动模式都一样；而 Intent 的 flags 只对 startActivity 的 activity 有效，其他调用同样的 activity 可以设置其他的启动模式，并不会相互影响。
+
+
 
 ## 参考文章：
 1. [老生常谈-Activity](https://juejin.im/post/5adab7b6518825670c457de3)
 2. [全面了解 Activity](https://juejin.im/entry/589847f7128fe10058ebd803)
+3. [Activity 必知必会]https://juejin.im/post/5aef0d215188253dc612991b
