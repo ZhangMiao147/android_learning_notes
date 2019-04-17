@@ -176,9 +176,9 @@
      * the activity being launched.
      */
 ```
-　　如果设置这个标志，activity 将成为历史栈中的新任务的开始。一个任务栈（从启动它的 activity 到下一个任务 activity）定义了一个用户可以移动的 activities 的原子组。栈可以被移动到前台和后台；所有 activities 中的一个特定的栈总是保持相同的顺序。
+　　如果设置这个标志，activity 将成为历史栈中的新任务的开始。一个任务栈（从启动它的 activity 到下一个 activity）定义了一个用户操作的 activities 的原子组。栈可以被移动到前台和后台；包含 activity 的任务栈的所有 activities 总是保持相同的顺序。
 　　此标签通常被用于想要显示 “launcher” 类型行为的 activities，用户完成一系列的操作，并完全独立于启动他们的 activity 。
-　　当使用这个标志时，如果 task 中已经包含了想要启动的 activity，那么，并不会启动一个新的 activity，而是将 task 移到屏幕的前面，并显示最后一次的状态。可以查看 FLAG_ACTIVITY_MULTIPLE_TASK 标志禁止这种行为。
+　　当使用这个标志时，如果栈中已经包含了想要启动的 activity，那么，并不会启动一个新的 activity，而是将包含 activity 的任务栈移到屏幕的前面，并显示栈的最后一次的状态。可以查看 FLAG_ACTIVITY_MULTIPLE_TASK 标志禁止这种行为。
 　　当调用者 activity 想要从启动的 activity 请求到 result 时，这个标志不能使用。
 
 #### 7. FLAG_ACTIVITY_NO_ANIMATION

@@ -35,3 +35,4 @@
 
 * [第一行代码](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/%E7%AC%AC%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81)
 
+* [深入理解 Java 虚拟机](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA)
