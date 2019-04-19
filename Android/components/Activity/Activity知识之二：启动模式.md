@@ -12,6 +12,8 @@
 ## 关于栈
 　　Android 中的 activity 全都归属于 task 管理（task 是一个具有栈结构的容器），task 是多个 activity 的集合，android 默认情况下会为每个 App 维持一个 task 来存放 App 的所有 activity (在默认情况下)，task 的默认 name 为该 app 的 packagename(包名)。
 
+　　任务是指在执行特定作业时与用户交互的一系列 Activity 。这些 Activity 按照各自的打开顺序排列在堆栈中。
+
 #### 开启一个 task
 　　可以通过给 activity 一个 intent filter (action 是 “android.intent.action.MAIN”，category 是“android.intent.category.LAUNCHER”)，让这个 activity 是一个 task 的进入点。例如，我们最常见的 MainActivity：
 ```
@@ -59,7 +61,7 @@
 ## launchMode 的四种启动模式
 
 #### standard(标准模式)
-　　Activity 的默认启动模式，不设置启动模式时，就是标准模式。只要启动 Activity 就会创建一个新实例，并将该 Activity 添加到当前任务栈中。
+　　Activity 的默认启动模式，不设置启动模式时，就是标准模式。只要启动 Activity 就会创建一个新实例，并将该 Activity 添加到当前任务栈中。一个任务栈可以拥有多个实例。
 
 ###### 标准模式的应用场景
 　　正常打开一个新的页面，这种启动模式使用最多，最普通。
@@ -93,9 +95,9 @@
 
 　　操作中的 A,B,C 表示不同的 Activity，A->B 表示从 A 跳转到 B，栈情况中的 t1,t2 表示不同的栈，栈中的记录都是记录的从栈底到栈顶的顺序。
 
-| 使用标志 | 解释 | 设置 | 操作 | 栈情况 | 其他 |
+| 使用标志 | 解释 | 举例 | 其他 |
 | -------- | -------- | -------- | -------- | -------- | -------- |
-| FLAG_ACTIVITY_CLEAR_TOP | 如果设置此标签，activity 已经在栈中，则不会启动 activity 的新实例，而是将栈中 activity 之上的 activities 进行出栈关闭，Intent 将被传递给旧的 activity 作为新的 Intent 。 | A 跳转 B 的 flag 设置为 FLAG_ACTIVITY_CLEAR_TOP  | 1:A->B->C 2: C->B 3:B->B 4:B->C 5:C->B| 1: t1(A->B->C) 2:t1(A->B) 3:t1(A->B->B) 4:t1(A->B->B->C) 5:t1(A->B->B) | 与 launchMode 的 SingleTask 相同 |
+| FLAG_ACTIVITY_CLEAR_TOP | 如果设置此标签，activity 已经在栈中，则不会启动 activity 的新实例，而是将栈中 activity 之上的 activities 进行出栈关闭，Intent 将被传递给旧的 activity 作为新的 Intent 。 | C 跳转 B 的 flag 设置为 FLAG_ACTIVITY_CLEAR_TOP ，当前栈中（从栈底到栈顶）的情况是：A->B->C，然后 C 跳转 B，栈的情况就成了：A->B | 与 launchMode 的 SingleTask 相同 |
 
 
 ## onNewIntent() 方法与回调时机

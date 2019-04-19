@@ -54,7 +54,7 @@
 　　资源配置最常见的情况就是横竖屏切换导致资源的变化，当程序启动时，会根据不同的配置加载不同的资源，例如横竖屏两个状态对应着两张不同的资源图片。如果在使用过程中屏幕突然旋转，那么 Activity 就会因为系统配置发生改变而销毁重建，加载合适的资源。
 
 ##### 低优先级 Activity 由于内存不足被杀死
-　　当设备的内存空间不足时，系统为了保证用户的体验，会按照进程优先级将一些低优先级的进程杀死，以来保证用户的体验。
+　　后台可以同时运行多个任务，当设备的内存空间不足时，系统为了保证用户的体验，会按照进程优先级将一些低优先级的进程杀死以会回收内存资源，后台 Activity 就有可能会被销毁。
 
 　　系统回收进程的优先级：
 
@@ -100,7 +100,7 @@
 
 　　3. 在 onRestoreInstanceState 和 onCreate 都可以进行数据恢复工作，但是根据官方文档建议采用在 onRestoreInstanceState 中去恢复。
 
-　　4. 在 onSaveInstanceState 和 onRestoreInstanceState 这两个方法中，系统会默认为我们进行一定的恢复工作，例如 EditText 中的文本信息、ListView 中的滚动位置等，下面对一些空间观察实际保存效果。
+　　4. 在 onSaveInstanceState 和 onRestoreInstanceState 这两个方法中，系统会默认为我们进行一定的恢复工作，具体地讲，默认实现会为布局中的每个 View 调用相应的 onSaveInstanceState() 方法，让每个视图都能提供有关自身的应保存信息。Android 框架中几乎每个小部件都会根据需要实现此方法，以便在重建 Activity 时自动保存和恢复付 UI 所做的任何可见更改。例如 EditText 中的文本信息、ListView 中的滚动位置等，下面对一些空间观察实际保存效果。也可以通过 android:daveEnabled 属性设置为 “false” 或通过调用 setSaveEnabled() 方法显示组织布局内的视图保存其状态，通常不会将该属性停用，除非想要以不同方式恢复 Activity IU 的状态。
 
 　　5. onSveInstanceState() 常见的触发场景有：横竖屏切换、按下电源键、按下菜单键、切换到别的 Activity 等；onRestoreInstanceState() 常见的触发场景有：横竖屏切换、切换语言等等。
 
@@ -161,3 +161,4 @@
 1. [老生常谈-Activity](https://juejin.im/post/5adab7b6518825670c457de3)
 2. [全面了解 Activity](https://juejin.im/entry/589847f7128fe10058ebd803)
 3. [超详细的生命周期图-你能回答全吗](https://www.jianshu.com/p/d586c3406cfb)
+4. [Android之Activity系列总结（一）--Activity概览](https://www.cnblogs.com/jycboy/p/6367282.html)
