@@ -12,6 +12,12 @@
 ## 关于栈
 　　Android 中的 activity 全都归属于 task 管理（task 是一个具有栈结构的容器），task 是多个 activity 的集合，android 默认情况下会为每个 App 维持一个 task 来存放 App 的所有 activity (在默认情况下)，task 的默认 name 为该 app 的 packagename(包名)。
 
+　　task 是一系列被操作的 activity 的集合，用户进行操作时将与这些 activity 进行交互。这些 activity 按照启动顺序排队存入一个栈。
+
+　　大部分 task 都启动自 Home 屏幕。当用户触摸 application launcher 中的图标（或 Home 屏幕上的快捷图标）时，应用程序的 task 就进入前台。如果该应用不尊在 task (最近没有使用过此应用)，则会新建一个 task ，该应用的 “main” activity 作为栈的根 activity 被打开。
+
+　　当用户返回到 home 屏幕执行另一个 task 时，一个 task 被移动到后台执行，此时它的返回栈（back statck） 也被保存在后台，同时 android 为新 task 创建一个新的返回栈（back stack），当它被再次运行从而返回前台时，它的返回栈(back stack)被移到前台，并回复其之前执行的 activity 。如果后台有太多运行 task ，系统将会杀死一些 task 释放内存。
+
 　　任务是指在执行特定作业时与用户交互的一系列 Activity 。这些 Activity 按照各自的打开顺序排列在堆栈中。
 
 #### 开启一个 task
@@ -105,10 +111,37 @@
 
 　　关于 onNewIntent() 方法的验证，可以查看 [onNewIntent方法的实践验证](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/onNewIntent%E6%96%B9%E6%B3%95%E7%9A%84%E9%AA%8C%E8%AF%81/onNewIntent%E6%96%B9%E6%B3%95%E7%9A%84%E5%AE%9E%E8%B7%B5%E9%AA%8C%E8%AF%81.md) 文章。
 
-## TaskAffinity属性与allowTaskReparenting
-　　Affinity 指示了 Activity 更倾向于属于哪个 Task。
+## 关联任务
+　　“关联”指示 Activity 优先属于哪个任务，默认情况下，同一个应用的 Activity 倾向于在同一个 task 中。可以通过 < activity > 标签的 taskAffinity 来修改这种行为。
 
-　　默认情况下，同一个应用的 Activity 倾向于在同一个 task 中。可以通过 <activity> 标签的 taskAffinity 来修改这种行为。
+　　taskAffinity 属性取字符串值，该值必须不同于在 < manifest > 元素中声明的默认软件包名称，因为西永使用该名称标识应用的默认任务关联。
+
+　　在两种情况下，关联会起作用：
+
+* 启动 Activity 的 Intent 包含 FLAG_ACTIVITY_NEW_TASK 标志。
+　　默认情况下，新 Activity 会启动到调用 startActivity() 的 Activity 任务中。它将推入与调用方相同的返回栈。但是，如果传递给 startActivity() 的 Intent 包含 FLAG_ACTIVITY_NEW_TASK 标志，则系统会寻找其他任务来存储新 Activity。这通常是新任务，但未做强制要求。如果现有任务与新 Activity 具有相同关联，则会将 Activity 启动到该任务中，否则，将开始新任务。
+
+　　如果此标志导致 Activity 开始新任务，且用户按 home 键离开，则必须为用户提供导航回任务的方式。有些实体（如通知管理器）始终在外部任务中启动 Activity，而从不作为其自身的一部分启动 Activity ，因此它们始终将 FLAG_ACTIVITY_NEW_TASK 放入传递给 startActivity() 的 Intent 中。请注意，如果 Activity 能够由可以使用此标志的外部实体调用，则用户可以通过独立方式返回到启动的任务，例如，使用启动器图标（任务的根 Activity 具有 CATEGORY_ACTIVITY Intent 过滤器）
+
+* Activity 将其 allowTaskReparenting 属性设置为“true”
+
+　　在这种情况下，Activity 可以从其启动的任务移动到与其具有关联的任务（如果该任务出现在前台）。
+
+　　例如，假设将报告所选城市天气状况的 Activity 定义为旅行应用的一部分。它与同一应用中的其他 Activity 具有相同的关联（默认应用关联），并允许利用此属性重定父级。当你的一个 Activity 启动天气预报 Activity 时，它最初所属的任务与你的 Activity 相同。但是，当旅游应用的任务出现在前台时，系统会将天气预报 Activity 重新分配给该任务并显示在其中。
+
+## 清理返回栈
+　　如果用户长时间离开任务，则系统会清除所有 Activity 的任务，根 Activity 除外。当用户再次返回到任务时，仅恢复根 Activity 。系统这样做的原因是，经过很长一段时间后，用户可能已经放弃之前执行的操作。返回到任务是要开始执行新的操作。
+
+　　可以使用下列几个 Activity 属性修改此行为：
+
+#### alwaysRetainTaskState
+　　如果在任务的根 Activity 中将此属性设置为 “true”，则不会发生刚才所述的默认行为。即使在很长一段时间后，任务仍将所有 Activity 保留在其堆栈中。
+
+#### clearTaskOnLaunch
+　　如果在任务的根 Activity 中将该属性设置为 “true”，则每当用户离开任务然后返回时，系统都会将堆栈清除到只剩下根 Activity 。换而言之，它与 alwaysRetainTaskState 正好相反。即使只离开任务片刻时间，用户也始终会返回到任务的初始状态。
+
+#### finishOnTaskLaunch
+　　此属性类似于 clearTaskOnLaunch ，但它对单个 Activity 起作用，而非整个任务。此外，它还有可能会导致任何 Acivity 停止，包括根 Activity 。设置为 “true” 时，Activity 仍是任务的一部分，但是仅限于当前会话。如果用户离开然后返回任务，则任务将不复存在。
 
 ## launchMode 与 Intent 的 flags 的对比
 1. Intent 的 flags 的优先于要高于 launchMode 。
@@ -121,3 +154,5 @@
 1. [老生常谈-Activity](https://juejin.im/post/5adab7b6518825670c457de3)
 2. [全面了解 Activity](https://juejin.im/entry/589847f7128fe10058ebd803)
 3. [Activity 必知必会]https://juejin.im/post/5aef0d215188253dc612991b
+4. [Android之Activity系列总结(二)--任务和返回栈](https://www.cnblogs.com/jycboy/p/6367330.html)
+5. [Android四大组件之Activity详解](https://www.cnblogs.com/caobotao/p/4987015.html)

@@ -126,7 +126,11 @@
 | smallestScreenSize | 设备的物理尺寸发生改变，这个和屏幕方向没关系，比如切换到外部显示设备 -API13 新添加 |
 | layoutDirection | 当布局方向发生改变的时候，正常情况下无法修改布局的 layoutDirection 的属性-API17 新添加 |
 
-　　最常用的就是 screenLayout 与 screenSize 属性，在横竖屏切换时防止资源的重建。
+　　可以在属性中声明多个配置值，方法使用 “|” 字符分割这些配置值。
+
+　　API 级别 13 或更高版本的应用时，若要避免由于设备方向改变而导致运行时重启，则除了 “orientation” 值之外，还必须添加 "screenSize" 值。
+
+　　当其中一个配置发生变化时，Activity 不会重启。相反，Activity 会收到对 onConfigurationChanged() 的调用。向此方法传递 Configuration 对象指定新设备配置。可以通过读取 Configuration 中的字段，确定新配置，然后通过更新界面中使用的资源进行适当的更改。
 
 　　异常状态下生命周期与异常情况下的处理的的验证可以在 [Activity关于生命周期一些问题的实践验证](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E9%97%AE%E9%A2%98%E9%AA%8C%E8%AF%81/Activity%E5%85%B3%E4%BA%8E%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98%E7%9A%84%E5%AE%9E%E8%B7%B5%E9%AA%8C%E8%AF%81.md) 文章中查看。
 
