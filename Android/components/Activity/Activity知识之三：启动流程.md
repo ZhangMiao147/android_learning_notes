@@ -172,6 +172,28 @@ public abstract class ApplicationThreadNative extends Binder
 ```
 　　可以看到 ApplicationThreadNative 继承于 Binder ，所以 ApplicationThreadNative 是一个 Binder，同事也实现了 IAPPlicationThread 接口，所以 ApplicationThreadNative 也是一个 IApplicationThread 。
 
+4. 查看 attachInterface() 方法
+```
+    public void attachInterface(IInterface owner, String descriptor) {
+        mOwner = owner;
+        mDescriptor = descriptor;
+    }
+```
+　　attachInterface() 方法没有什么，只是简单的赋值。
+
+5. 查看 IApplicationThread 类
+```
+public interface IApplicationThread extends IInterface {
+    ...
+    String descriptor = "android.app.IApplicationThread";
+	...
+```
+　　IApplicationThread 实现了 IInterface 接口，
+
+　　ApplicationThread 作为 IApplicationThread 的一个实例，承担了最后发送 Activity 生命周期以及它一些消息的任务，也就是说发送消息。
+
+　　至于为什么在 ActivityThread 中已经创建出了 ApplicationThread 了还要绕弯路发消息，是为了让系统根据情况来控制这个过程。
+
 
 
 
