@@ -153,6 +153,6 @@
 ## 参考文章：
 1. [老生常谈-Activity](https://juejin.im/post/5adab7b6518825670c457de3)
 2. [全面了解 Activity](https://juejin.im/entry/589847f7128fe10058ebd803)
-3. [Activity 必知必会]https://juejin.im/post/5aef0d215188253dc612991b
+3. [Activity 必知必会](https://juejin.im/post/5aef0d215188253dc612991b)
 4. [Android之Activity系列总结(二)--任务和返回栈](https://www.cnblogs.com/jycboy/p/6367330.html)
 5. [Android四大组件之Activity详解](https://www.cnblogs.com/caobotao/p/4987015.html)
