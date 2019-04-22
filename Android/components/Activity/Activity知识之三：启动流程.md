@@ -47,7 +47,7 @@ public static void main(String[] args) {
 ## 创建 Application 的消息是如何发送的呢？
 　　在 ActivityThread 类中的 main() 方法中调用了 attach() 方法，这个方法最终的目的是发送一条创建 Application 的消息-H.BIND_APPLICATION 到主线程的主 Handler 中。
 
-　　acctch() 方法的关键代码：
+　　attach() 方法的关键代码：
 ```
     private void attach(boolean system) {
         ...
@@ -170,7 +170,7 @@ public abstract class ApplicationThreadNative extends Binder
     }
 }
 ```
-　　可以看到 ApplicationThreadNative 继承于 Binder ，所以 ApplicationThreadNative 是一个 Binder，同事也实现了 IAPPlicationThread 接口，所以 ApplicationThreadNative 也是一个 IApplicationThread 。
+　　可以看到 ApplicationThreadNative 继承于 Binder ，所以 ApplicationThreadNative 是一个 Binder，同时也实现了 IAPPlicationThread 接口，所以 ApplicationThreadNative 也是一个 IApplicationThread 。
 
 4. 查看 attachInterface() 方法
 ```
@@ -194,7 +194,199 @@ public interface IApplicationThread extends IInterface {
 
 　　至于为什么在 ActivityThread 中已经创建出了 ApplicationThread 了还要绕弯路发消息，是为了让系统根据情况来控制这个过程。
 
+#### ActivityManagerService 调度发送初始化消息
+　　ActivityManagerService 的 attachApplicationLocked() 方法
+```
+    private final boolean attachApplicationLocked(IApplicationThread thread,
+            int pid) {
+		...
+            thread.bindApplication(processName, appInfo, providers, app.instrumentationClass,
+                    profilerInfo, app.instrumentationArguments, app.instrumentationWatcher,
+                    app.instrumentationUiAutomationConnection, testMode,
+                    mBinderTransactionTrackingEnabled, enableTrackAllocation,
+                    isRestrictedBackupMode || !normalMode, app.persistent,
+                    new Configuration(mConfiguration), app.compat,
+                    getCommonServicesLocked(app.isolated),
+                    mCoreSettingsObserver.getCoreSettingsLocked());
+        ...
+    }
+```
 
+　　ApplicationThread （是 ActivityThread 的内部类）以 IApplicationThread 的身份到了 ActivityManagerService 中，经过一系列的操作，最终被调用了自己的 bindApplication() 方法，发出初始化 Application 的消息。
+```
+        public final void bindApplication(String processName, ApplicationInfo appInfo,
+                List<ProviderInfo> providers, ComponentName instrumentationName,
+                ProfilerInfo profilerInfo, Bundle instrumentationArgs,
+                IInstrumentationWatcher instrumentationWatcher,
+                IUiAutomationConnection instrumentationUiConnection, int debugMode,
+                boolean enableBinderTracking, boolean trackAllocation,
+                boolean isRestrictedBackupMode, boolean persistent, Configuration config,
+                CompatibilityInfo compatInfo, Map<String, IBinder> services, Bundle coreSettings) {           ...
+				sendMessage(H.BIND_APPLICATION, data);
+        }
+```
+　　在方法中发出了一条 H.BIND_APPLICATION  消息，接着程序开始了。
+
+#### 收到初始化消息之后
+　　在 bindApplication() 方法中发送 H.BIND_APPLICATION  消息之后，接收到这个消息就开始创建 Application 了。这个过程是在 handleBindApplication() 中完成的。
+```
+    private void handleBindApplication(AppBindData data) {
+       ...
+	   	  // 通过反射初始化一个 Instrumentation 仪表。
+          final ClassLoader cl = instrContext.getClassLoader();
+          mInstrumentation = (Instrumentation)
+          cl.loadClass(data.instrumentationName.getClassName()).newInstance();
+		...
+            // 通过 LoadedApp 命令创建 Application 实例
+            Application app = data.info.makeApplication(data.restrictedBackupMode, null);
+            mInitialApplication = app;
+			...
+
+         try {
+  //让 mInstrumentation 调用 Application 的 onCreate() 方法
+  				mInstrumentation.callApplicationOnCreate(app);
+            } catch (Exception e) {
+                ...
+            }
+        } finally {
+        	...
+        }
+    }
+```
+
+#### Instrumentation 仪表是什么？
+　　Instrumentation 会在应用程序的任何代码运行之前被实例化，它能够允许你监视应用程序和系统的所有交互。
+
+###### Instrumentation 是如何实现监视应用程序和系统交互的？
+　　Instrumentation 类将 Application 的创建、Activity 的创建以及生命周期这些操作包装起来，通过操作 Instrumentation 进而实现上述操作。
+
+###### Instrumentation 封装有什么好处？
+　　Instrumentation 作为抽象，放约定好需要实现的功能之后，只需要给 Instrumentation 仪表添加这些抽象功能，然后调用就好了。关于怎么实现这些功能，都会交给 Instrumentation 仪器的实现对象就好了。这就是多态的运用，依赖抽象，不依赖具体的实践。就是上层提出需求，底层定义接口，即依赖倒置原则的践行。
+
+　　在代码里，实例化 Instrumentation 方法的反射，而反射的 ClassName 是来自于从 ActivityManagerService 中传过来的 Binder 的，就是为了隐藏具体的实现对象。但是这样耦合性会很低。
+
+###### 查看 callApplicationOnCreate() 的方法
+```
+    public void callApplicationOnCreate(Application app) {
+        app.onCreate();
+    }
+```
+　　只是调用了一个 Application 的 onCreate() 方法。
+
+#### LoadedApk 就是 data.info
+　　查看 makeApplication 的方法：
+```
+    public Application makeApplication(boolean forceDefaultAppClass,
+            Instrumentation instrumentation) {
+        ...
+        String appClass = mApplicationInfo.className;
+        ...
+        ContextImpl appContext = ContextImpl.createAppContext(mActivityThread, this);
+		//通过仪表创建 Application
+        app = mActivityThread.mInstrumentation.newApplication(cl, appClass, appContext);
+        ...
+    }
+```
+　　从方法中看到：在取得 Application 的实际类名之后，最后的创建工作还是交由 Instrumentation 去完成。
+
+#### 查看 Instrumentation 的 newApplication() 方法
+```
+    static public Application newApplication(Class<?> clazz, Context context) throws InstantiationException, IllegalAccessException,
+            ClassNotFoundException {
+        //反射创建
+		Application app = (Application)clazz.newInstance();
+		//绑定 Context
+        app.attach(context);
+        return app;
+    }
+```
+　　newApplication() 方法中就是反射创建 Application 对象，并调用 attach() 方法绑定 Context。
+
+#### LaunchActivity
+　　当 Application 初始化完成后，系统会根据 Manifests 中的配置的启动 Activity 发送一个 Intent 去启动相应的 Activity。
+
+　　收到一条 LAUNCH_ACTIVITY 的消息，然后开始初始化 Activity 。收到消息后，真正处理是在 ActivityThread 中的 handleLaunchActivity() 中进行的。
+```
+    private void handleLaunchActivity(ActivityClientRecord r, Intent customIntent, String reason) {
+        ...
+		//创建 Activity
+        Activity a = performLaunchActivity(r,customIntent);
+        if (a != null) {
+            ...
+			//Activity 创建成功，处理 onResume()		handleResumeActivity(r.token, false, r.isForward,!r.activity.mFinished && !r.startsNotResumed, r.lastProcessedSeq, reason);
+            ...
+		}
+    }
+```
+
+###### 查看 performLaunchActivity() 方法
+```
+private Activity performLaunchActivity(ActivityClientRecord r, Intent customIntent) {
+       ...
+	   //通过仪表来创建 Activity
+            activity = mInstrumentation.newActivity(cl, component.getClassName(), r.intent);
+           ...
+		   //获取 Application
+            Application app = r.packageInfo.makeApplication(false, mInstrumentation);
+            ...
+               activity.attach(appContext, this, getInstrumentation(), r.token,
+                        r.ident, app, r.intent, r.activityInfo, title, r.parent,
+                        r.embeddedID, r.lastNonConfigurationInstances, config,
+                        r.referrer, r.voiceInteractor, window);
+				...
+				//根据是否可持久化选择 onCreate() 方法
+                if (r.isPersistable()) {
+                    mInstrumentation.callActivityOnCreate(activity, r.state, r.persistentState);
+                } else {
+                    mInstrumentation.callActivityOnCreate(activity, r.state);
+                }
+               ...
+    }
+```
+
+###### 查看 newActivity() 方法
+```
+    public Activity newActivity(ClassLoader cl, String className, Intent intent) throws InstantiationException,IllegalAccessException,ClassNotFoundException {
+		//反射实例化 Activity
+        return (Activity)cl.loadClass(className).newInstance();
+    }
+```
+　　newActivity() 方法主要就是反射实例化 Activity。
+
+###### 查看 Instrumentation.callActivityOnCreate() 方法
+```
+    public void callActivityOnCreate(Activity activity, Bundle icicle) {
+        prePerformCreate(activity);
+        activity.performCreate(icicle);
+        postPerformCreate(activity);
+    }
+    public void callActivityOnCreate(Activity activity, Bundle icicle, PersistableBundle persistentState) {
+        prePerformCreate(activity);
+		activity.performCreate(icicle, persistentState);
+        postPerformCreate(activity);
+    }
+```
+　　callActivityOnCreate() 方法调用了 Activity 的 performCreate() 方法。
+
+###### 查看 Activity 的 performCreate() 方法
+```
+    final void performCreate(Bundle icicle) {
+        restoreHasCurrentPermissionRequest(icicle);
+        onCreate(icicle);
+        mActivityTransitionState.readState(icicle);
+        performCreateCommon();
+    }
+
+    final void performCreate(Bundle icicle, PersistableBundle persistentState) {
+        restoreHasCurrentPermissionRequest(icicle);
+        onCreate(icicle, persistentState);
+        mActivityTransitionState.readState(icicle);
+        performCreateCommon();
+    }
+```
+　　performCreate() 方法调用了我们常用的 onCreate() 方法。
+
+　　所以 handleLaunchActivity() 方法，创建 Activity 之后，就调用了 Activity 的 onCreate() 方法。
 
 
 ## 参考文章：
