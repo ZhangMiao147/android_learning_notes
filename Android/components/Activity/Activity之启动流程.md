@@ -3,6 +3,10 @@
 	 本文内容
 
 
+## 热启动与冷启动
+　　所谓冷启动就是启动该应用时，后台没有该应用的进程，此时系统会创建一个进程分配给它，之后会创建和初始化 Application，然后通过反射执行 ActivityThread 中的 main 方法。而热启动则是，当启动应用的时候，后台已经存在该应用的进程，比如按 home 键返回主界面再打开该应用，此时会从已有的进程中来启动应用，这种方式下，不会重新走 Application 这一步。
+
+
 ## 启动任务
 　　通过为 Activity 提供一个以 “android.intent.action.MAIN” 为指定操作、以 “android.intent.category.LAUNCHER” 为执行类别的 Intent 过滤器，可以将 Activity 设置为任务的入口点。
 
