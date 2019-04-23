@@ -16,10 +16,12 @@
 
 #### BroadcastReceive
 1. 广播有几种？广播是观察者模式？跨进程广播也是观察者模式吗？
+2. 两个应用同时注册一个广播，优先级都一样，哪个会先收到广播？（有序广播？）
+
 
 #### Service
 1. bindService 和 startService 生命周期有啥不同？
-2. 两个应用同时注册一个广播，优先级都一样，哪个会先收到广播？（有序广播？）
+
 
 #### ContentProvider
 1. contentprovider 怎么升级维护

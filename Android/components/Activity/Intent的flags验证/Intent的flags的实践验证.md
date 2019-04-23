@@ -132,10 +132,69 @@
 #### FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_CLEAR_TOP
 　　如果被使用给栈的根 activity ，activity 会成为前台 activity，并且将其清除到根状态。这是特别有用的，比如，从通知管理器开启 activity 。
 
+* 将 SecondActivity 界面跳转 FirstActivity 的 Intent 设置 flag 为 FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TOP。
+
+* 点击打开 MainActivity ，跳转 FirstActivity ,在 FirstActivity 界面跳转 SecondActivity 。
+![](./NEW_TASK_AND_CLEAR_TOP栈1.png)
+　　当前栈中情况是（从栈底到栈顶）：MainActivity -> FirstActivity -> SecondActivity，没有设置栈的亲和性，所以是默认的亲和性，三个 Activity 都在一个栈中 。
+
+* 在 SecondActivity 界面点击跳转 FirstActivity 。
+![](./NEW_TASK_AND_CLEAR_TOP栈2.png)
+　　当前栈中情况是（从栈底到栈顶）：MainActivity -> FirstActivity 。跳转 FirstActivity 时，FirstActivity 已经在栈中存在，所以将 FirstActivity 所在的栈移到前台，并将 FirstActivity 之上的 activities 移出。还需要注意一个问题，FirstActivity 实例对象是 d9a6727 ，而上一步的 FirstActivity 的实例对象是 12c1dc70 ，所以 FirstActivity 是被移除然后重新创建的。
+
+#### FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+　　如果设置 FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS ，则新的 activity 将不会被保留在最近启动 activities 的列表中。
+
+* 在 MainActivity 界面跳转 FirstActivity 的 Intent 设置 flag 为 FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS，设置 FirstActivity 的 taskAffinity 值为 “android.task.browser” 。
+
+* 打开 MainActivity 界面跳转到 FirstActivity 界面，查看多任务管理器（双击 home 键或者是长按 home 键）。
+![](./NEW_TASK_AND_EXCLUDE_FROM_RECENTS栈1.png)
+　　可以看到在多任务管理器列表中只有 MainActivity 所在的任务栈，并没有 FirstActivity 所在的任务栈。所以在 FirstActivity 的界面按 home 键退出应用后，再次打开界面只会回到 MainActivity 界面。
+
+　　但是这个标志与使用 FLAG_ACTIVITY_NO_HISTORY 标志不同，使用 FLAG_ACTIVITY_NO_HISTORY 标志时，在 FirstActivity 调转到 SecondActivity 界面后，点击 back 键就会回到 MainActivity 界面，而 FLAG_ACTIVITY_NEW_TASK 和 FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS 一起使用时，在 FirstActivity 界面点击跳转 SecondActivity ，在 SecondActivity 点击 back 返回，还是会回到 FirstActivity 界面的。
+
+#### FLAG_ACTIVITY_REORDER_TO_FRONT
+　　如果通过 Context.startActivity() 的 Intent 设置此标志，如果 activity 已经在栈中运行，将会把 activity 带到栈的顶部。
+
+* 在 SecondActivity 界面跳转 FirstActivity 的 Intent 设置 flag 为 FLAG_ACTIVITY_REORDER_TO_FRONT 。
+
+* 打开应用，在 MainActivity 点击跳转 FirstActivity ，在 FirstActivity 点击跳转 SecondActivity 。
+![](./REORDER_TO_FRONT栈1.png)
+
+　　当前栈中情况是（从栈底到栈顶）：MainActivity -> FirstActivity -> SecondActivity。
+
+* 在 SecondActivity 点击跳转 FirstActivity 。
+![](./REORDER_TO_FRONT栈2.png)
+　　当前栈中情况是（从栈底到栈顶）：MainActivity -> SecondActivity -> FirstActivity 。使用 FLAG_ACTIVITY_REORDER_TO_FRONT 标志就会将栈中要启动的 Activity 移到栈顶。
+
+#### FLAG_ACTIVITY_FORWARD_RESULT
+　　如果设置这个标志并用于启动一个新的 activity 从源活动，则源活动的回复对象转移到新活动上。
+　　新活动调用 android.app.Activity#setResult 方法，这个结果数据将会返回给源 activity 。
+
+* 在 FirstActivity 界面跳转 SecondActivity 的 Intent 设置 flag 为 FLAG_ACTIVITY_FORWARD_RESULT 。MainActivity 使用 startActivityForResult(intent，10001) 方法跳转 FirstActivity，并且打印 onActivityResult() 的日志。FirstActivity 使用 startActivity() 方法跳转 SecondActivity ，并在之后调用 finish() 方法结束 FirstActivity 。SecondActivity 添加一个“返回值”按钮，点击按钮调用 setResult(30002) 方法，并调用 finish() 方法结束。
+
+* 打开应用，在 MainActivity 点击跳转 FirstActivity ，在 FirstActivity 点击跳转 SecondActivity ，然后点击 SecondActivity 的“返回值”按钮，查看 MainActivity 的 onActivityForResult() 方法的打印。
+![](./FORWARD_RESULT1.png)
+　　MainActivity 接收到了 SecondActivity 的返回结果。
+
+* 如果 FirstActivity 在跳转 SecondActivity 时不 finish() 会怎么样？
+![](./FORWARD_RESULT2.png)
+　　在 SecondActivity 界面点击“返回值”按钮回到 FirstActivity 界面，在 FirstActivity 界面点击 back 返回到 MainActivity 界面，MainActivity 收到了 SecondActivity 的返回值。
+
+* 如果 FirstActivity 在跳转 SecondActivity 时不 finish() ，并且复写 onActivityResult() 方法，并打印日志，会怎么样？
+![](./FORWARD_RESULT3.png)
+　　在 SecondActivity 界面点击“返回值”按钮回到 FirstActivity 界面，FirstActivity 并没有回调 onActivityResult() 方法。在 FirstActivity 界面点击 back 返回到 MainActivity 界面，MainActivity 收到了 SecondActivity 的返回值。
+
+* 如果 FirstActivity 在跳转 SecondActivity 时 finish() ，并且在 finish() 方法之前调用 setResult(20002) 方法，会怎么样？
+![](./FORWARD_RESULT4.png)
+　　在 FirstActivity 界面点击跳转 SecondActivity 时，MainActivity 的 onActivityResult() 并没有回调。在 SecondActivity 界面点击“返回值”按钮回到 MainActivity 界面，MainActivity 收到了 SecondActivity 的返回值。
 
 #### FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_MULTIPLE_TASK 与 FLAG_ACTIVITY_MULTIPLE_TASK & FLAG_ACTIVITY_NEW_DOCUMENT
 　　FLAG_ACTIVITY_MULTIPLE_TASK 用于创建新的 task ，并在 task 中启动 activity，此 flag 经常与 FLAG_ACTIVITY_NEW_DOCUMENT  或者 FLAG_ACTIVITY_NEW_TASK 一起使用。单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 或 FLAG_ACTIVITY_NEW_TASK 时，会先从存在的栈中搜索匹配 Intent 的栈 ，如果没有栈被发现则创建新的栈。当与 FLAG_ACTIVITY_MULTIPLE_TASK 配合使用时，会跳过搜索匹配的栈而是直接开启一个新栈。
 　　如果使用了 FLAG_ACTIVITY_NEW_TASK 就不要使用此标签，除非你启动的是应用的 launcher 。
+
+
+
 
 #### FLAG_ACTIVITY_NEW_DOCUMENT
 　　此标志被用于基于 Intent 的 activity 活动开一个新的任务记录。通过使用这个标志或者它的同含义属性 android.R.attr#documentLaunchMode ，同一个 activity 的不同实例将会在最近的任务列表中显示不同的记录。
@@ -144,8 +203,7 @@
 #### FLAG_ACTIVITY_NEW_DOCUMENT & FLAG_ACTIVITY_MULTIPLE_TASK
 　　相当于在 manifest 中 Activity 定义 android.R.attr#docucumentLaunchMode = “always”。
 
-#### FLAG_ACTIVITY_REORDER_TO_FRONT
-　　如果通过 Context.startActivity() 的 Intent 设置此标志，如果 activity 已经在栈中运行，将会把 activity 带到栈的顶部。
+
 
 
 #### FLAG_ACTIVITY_REORDER_TO_FRONT & FLAG_ACTIVITY_CLEAR_TOP
@@ -155,21 +213,13 @@
 　　默认情况下，进入最近任务栈的记录由 FLAG_ACTIVITY_NEW_DOCUMENT 创建，当用户关闭 activity （使用 back 键 或者他调用 finish()）时记录将会被移除，如果你想要允许记录保留在最近方便它能被重新启动，你可以使用此标志。
 　　接收活动可以请求 android.R.attr#autoRemoveFromRecents 或者通过调用 Activity.finishAndRemoveTask() 来覆盖本请求。
 
-#### FLAG_ACTIVITY_FORWARD_RESULT
-　　如果设置这个标志并用于启动一个新的 activity 从源活动，则源活动的回复对象转移到新活动上。
-　　新活动调用 android.app.Activity#setResult 方法，这个结果数据将会返回给源 activity 。
-
 #### FLAG_ACTIVITY_PREVIOUS_IS_TOP
 　　如果设置此标签，并且用于启动一个新的 activity 从源活动，当前 activity 不会被视为栈顶活动，无论是传递新的 intent 给栈顶还是启动一个新的 activity 。如果当前的 activity 将立即结束，则上一个 activity 将作为栈顶。
 
-#### FLAG_ACTIVITY_BROUGHT_TO_FRONT
-　　此标签通常不由应用代码设置，当 launchmode 为 singleTask 模式时由系统设置。
+
 
 #### FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
 　　如果设置此标志，activity 要么在新的任务中被启动要么将存在的 activity 移到存在任务的顶部，而 activity 将作为任务的前门被启动。这将导致与应用相关联的活动在适当的状态下需要拥有这个任务（无论是移动活动进入或者是移除），或者在需要的时候重置任务到初始状态。
-
-#### FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
-　　此标志通常不由应用代码设置，当 activity 从历史记录中启动（长按 home 键）时，系统就会为你设置。
 
 #### FLAG_ACTIVITY_NO_USER_ACTION
 　　如果设置此标志，在 activity 被前台的新启动的 activity 造成 paused 之前，将会阻止当前最顶部的 activity 的 onUserLeaveHint 回调。
@@ -179,12 +229,20 @@
 #### FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_TASK_ON_HOME
 　　如果通过 startActivity 的 Intent 设置此标志，这个标志将会导致最新启动的任务位于当前主页活动任务（假设这里有）的顶部。换句话说，当任务点击 back 键，将总是返回用户的主页，无论主页是否是用户看到的上一个界面。此标志只能与 FLAG_ACTIVITY_NEW_TASK 一起使用。
 
+（没有验证成功）
+
 #### FLAG_ACTIVITY_LAUNCH_ADJACENT & FLAG_ACTIVITY_NEW_TASK
 　　此标志仅用于分屏多窗口模式。新活动将被显示在启动它的活动的旁边。这个标志只能与 FLAG_ACTIVITY_NEW_TASK 联合使用。此外，如果想要创建一个已存在的活动的新实例，那么设置 FLAG_ACTIVITY_MULTIPLE_TASK 标签。
+（暂不验证）
 
-#### FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
-　　如果设置这个 flag，则新的 activity 将不会被保留在最近启动 activities 的列表中。
-　　经过测试单独使用并没有用，上网查询，和 FLAG_ACTIVITY_NEW_TASK 联合使用。
+#### FLAG_ACTIVITY_BROUGHT_TO_FRONT
+　　此标签通常不由应用代码设置，当 launchmode 为 singleTask 模式时由系统设置。
+(验证失败)
+
+#### FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
+　　此标志通常不由应用代码设置，当 activity 从历史记录中启动（长按 home 键）时，系统就会为你设置。
+（验证失败）
+
 
 ## 参考文章：
 1. [Intent.addFlags() 启动Activity的20种flags全解析](https://blog.csdn.net/blueangle17/article/details/79712229)
