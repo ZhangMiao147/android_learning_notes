@@ -68,7 +68,7 @@
 
 　　初次之外，CardView 还有其他属性：
 * CardView_cardBackgroundColor：设置背景色。
-* CardView_cardElevation：设置 Z 轴阴影。 
+* CardView_cardElevation：设置 Z 轴阴影。
 * CardView_cardMaxElevation：设置 Z 轴最大高度值。
 * CardView_cardUseCompatPadding：是否使用 CompadPadding。
 * CardView_cardPreventComerOverlap：是否使用 PreventCornerOverlap。
@@ -130,7 +130,78 @@
 ###### 1. 应用权限管理
 　　在 Android 6.0 中，应用许可提示可以自定义了。它允许对应用的权限进行高度管理，比如应用能否使用位置、相机、网络和通信录等，这些都开放给开发者和用户。此前的 Android 系统的应用权限管理只能靠第三方应用来实现，在 Android 6.0 中应用权限管理成为系统级的功能。
 
+###### 2. Android Pay
+　　Android Pay 是 Android 支付统一标准。Android 6.0 系统中集成了 Android Pay，其特性在于简洁、安全和可选性。它是一个开放性平台，用户可以选择谷歌的服务或者使用银行的 App 来使用它。Android Pay 支持 Android 4.4 以后的系统设备并且可以使用指纹来进行支付。
 
+###### 3. 指纹支持
+　　虽然很多厂商的 Android 手机实现了指纹的支持，但是这些手机都使用了非谷歌认证的技术。这一次谷歌提供的指纹识别支持，旨在统一指纹识别的技术方案。
+
+###### 4. Doze 电量管理
+　　Android 6.0 自带 Doze 电量管理功能。手机静止不动一段时间后，会进入 Doze 电量管理模式。谷歌表示，当屏幕处于关闭状态时，平均续航时间可提高 30%。
+
+###### 5. App Links
+　　Android 6.0 加强了软件间的关联，允许开发者将 App 和他们的 Web 域名关联。
+
+###### 6. Now on Tap
+　　在桌面或 App 的任意界面，长按 Home 键即可激活 Now on Tap，它会识别当前屏幕上的内容并创建 Now 卡片。
+
+#### 1.2.2 运行时权限机制
+　　在 Android 6.0 时，将不会在安装的时候授予权限；取而代之的是，App 不得不在运行时一个一个询问用户来授予权限。
+
+###### 1. Android 6.0 之前版本的应对之策
+　　Android 6.0 系统默认为 targetSdkVersion 小于 23 的应用授予了所申请的所有权限，所以如果你以前的 App 设置的 targetSdkVersion 低于 23，在运行时也不会崩溃。
+
+###### 2. Normal Permissions 与 Dangerous Permission
+　　Google 将权限分为两类，一类是 Normal Permissions，这类权限一般不涉及用户隐式，是无须用户进行授权的，比如手机振动、访问网络等，这些权限只需要在 AndroidManifest.xml 中简单声明就好，安装时就授权，无须每次使用时都检查权限，而且用户不能取消以上授权；另一类是 Dangerous Permission，一般会设计用户隐私，需要用户进行授权，比如读取 adcard、访问通信录等。
+
+| Normal Permissions |
+|--------|
+| android.permission.ACCESS_LOCATION_EXTRA_COMMANDS |
+| android.permission.ACCESS_NETWORK_STATE |
+| android.permission.ACCESS_NOTIFICATION_POLICY |
+| android.permission.ACCESS_WIFI_STATE |
+| android.permission.ACCESS_WIMAX_STATE |
+| android.permission.BLUETOOTH |
+| android.permission.BLUETOOTH_ADMIN |
+| android.permission.BROADCAST_STICKY |
+| android.permission.CHANGE_NETWORK_STATE |
+| android.permission.CHANGE_WIFI_MULTICAST_STATE |
+| android.permission.CHANGE_WIFI_STATE |
+| android.permission.KILL_BACKGROUND_PROCESSED |
+| android.permission.MODIFY_AUDIO_SETTINGS |
+| android.permission.NFC |
+| android.permission.READ_SYNC_SETTINGS |
+| android.permission.READ_SYNC_STATS |
+| android.permission.RECEIVE_BOOT_COMPLETED |
+| android.permission.REORDER_TASKS |
+| android.permission.REQUEST_INSTALL_PACKAGES |
+| android.permission.SET_TIME_ZONE |
+| android.permission.SET_WALLPAPER |
+| android.permission.SET_WALLPAPER_HINTS |
+| android.permission.TRANSMIT_IR |
+| android.permission.USE_FINGERPRINT |
+| android.permission.VIBRATE |
+| android.permission.WAKE_LOCK |
+| android.permission.WRITE_SYNC_SETTINGS |
+| com.android.alarm.permission.SET_ALARM |
+| com.android.launcher.permission.INSTALL_SHORTCUT |
+| com.android.launcher.permission.UNINSTALL_SHORTCUT |
+
+　　Dangerous Permission
+
+| Permission Group | Permissions |
+|--------|--------|
+| android.permission-group.CALENDAR | android.permission.READ_CALENDAR android.permission.WRITE_CALENDAR |
+| android.permission-group.CAMERA | android.permission.CAMERA |
+| android.permission-group.LOCATION | android.permission.ACCESS_FINE_LOCATION android.permission.ACCESS_COARSE_LOCATION|
+| android.permission-group.PHONE| android.permission.READ_PHOTO_STATE android.permission.CALL_PHOTO android.permission.READ_CALL_LOG android.permission.WRITE_CALL_LOG com.android.voicemail.permission.ADD_VOICEMAIL android.permission.USE_SIP android.permission.PROCESS_OUTGOING_CALLS|
+| android.permission-group.SENSORS | android.permission.BODY_SENSORS |
+| android.permission-group.SMS | android.permission.SEND_SMS android.permission.RECEIVE_SMS android.permission.READ_SMS android.permission.RECEIVE_WAP_PUSH android.permission.RECEIVE_MMS android.permission.READ_CELL_BROADCASTS |
+| android.permission-group.STORAGE | android.permission.READ_EXTERNAL_STORAGE android.permission.WRITE_EXTERNAL_STORAGE |
+
+　　同一组的任何一个权限被授权了，其他权限也自动被授权。此外，对于申请时弹出的提示框上面的文本说明也是对整个权限组的说明，而不是单个权限的说明。
+
+#### 3. 实现支持运行时权限
 
 
 
