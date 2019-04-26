@@ -1,25 +1,13 @@
 # Activity 知识之三：启动流程
 
 	 本文内容
+	 1. Activity 的启动流程图
+	 2. 看源码查看启动流程
 
-
-## 热启动与冷启动
-　　所谓冷启动就是启动该应用时，后台没有该应用的进程，此时系统会创建一个进程分配给它，之后会创建和初始化 Application，然后通过反射执行 ActivityThread 中的 main 方法。而热启动则是，当启动应用的时候，后台已经存在该应用的进程，比如按 home 键返回主界面再打开该应用，此时会从已有的进程中来启动应用，这种方式下，不会重新走 Application 这一步。
-
-
-## 启动任务
-　　通过为 Activity 提供一个以 “android.intent.action.MAIN” 为指定操作、以 “android.intent.category.LAUNCHER” 为执行类别的 Intent 过滤器，可以将 Activity 设置为任务的入口点。
-
-　　此类 Intent 过滤器会使 Activity 的图标和标签显示在应用启动器中，让用户能够启动 Activity 并在启动之后随时返回到创建的任务中。
-
-　　用户必须能够在离开任务后，再使用此 Activity 启动器返回该任务。因此，只有在 Activity 具有 ACTION_MAIN 和  CATEGORY_LAUNCHER 过滤器时，才应该使用将 Activity 标记为“始终启动任务“的两种启动模式，即 ”singleTask“ 和 ”singleInstance“。
-
-　　如果并不想用户能够返回到 Activity ，对于这些情况，可以将 < activity > 元素的 finishOnTaskLaunch 设置为 ”true“ 。
-
-## Activity 的启动流程图
+## 1. Activity 的启动流程图
 ![](./Activity启动流程图.jpg)
 
-## 开始：ActivtyThread.java 中的 main() 方法
+## 2. 看源码查看启动流程
 　　Android 中，一个应用程序的开始可以说就是从 ActivityThread.java 中的 main() 方法开始的。
 
 　　从 Activity 的启动流程图可以看到，main() 方法中主要做的事情有：
@@ -394,6 +382,5 @@ private Activity performLaunchActivity(ActivityClientRecord r, Intent customInte
 
 
 ## 参考文章：
-1. [Android之Activity系列总结(二)--任务和返回栈](https://www.cnblogs.com/jycboy/p/6367330.html)
-2. [3分钟看懂Activity启动流程](https://www.jianshu.com/p/9ecea420eb52)
+1. [3分钟看懂Activity启动流程](https://www.jianshu.com/p/9ecea420eb52)
 
