@@ -378,5 +378,8 @@
 ```
 　　FLAG_ACTIVITY_LAUNCH_ADJACENT 标志仅用于分屏多窗口模式。新活动将被显示在启动它的活动的旁边。这个标志只能与 FLAG_ACTIVITY_NEW_TASK 联合使用。此外，如果想要创建一个已存在的活动的新实例，那么设置 FLAG_ACTIVITY_MULTIPLE_TASK 标志。
 
+## 验证
+　　关于 flag 的验证，可以查看 [Intent 的 flags 的实践验证](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Intent%E7%9A%84flags%E9%AA%8C%E8%AF%81/Intent%E7%9A%84flags%E7%9A%84%E5%AE%9E%E8%B7%B5%E9%AA%8C%E8%AF%81.md) 文章。
+
 ## 参考文章：
 1. [Intent.addFlags() 启动Activity的20种flags全解析](https://blog.csdn.net/blueangle17/article/details/79712229)

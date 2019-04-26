@@ -189,46 +189,112 @@
 ![](./FORWARD_RESULT4.png)
 　　在 FirstActivity 界面点击跳转 SecondActivity 时，MainActivity 的 onActivityResult() 并没有回调。在 SecondActivity 界面点击“返回值”按钮回到 MainActivity 界面，MainActivity 收到了 SecondActivity 的返回值。
 
-#### FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_MULTIPLE_TASK 与 FLAG_ACTIVITY_MULTIPLE_TASK & FLAG_ACTIVITY_NEW_DOCUMENT
-　　FLAG_ACTIVITY_MULTIPLE_TASK 用于创建新的 task ，并在 task 中启动 activity，此 flag 经常与 FLAG_ACTIVITY_NEW_DOCUMENT  或者 FLAG_ACTIVITY_NEW_TASK 一起使用。单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 或 FLAG_ACTIVITY_NEW_TASK 时，会先从存在的栈中搜索匹配 Intent 的栈 ，如果没有栈被发现则创建新的栈。当与 FLAG_ACTIVITY_MULTIPLE_TASK 配合使用时，会跳过搜索匹配的栈而是直接开启一个新栈。
-　　如果使用了 FLAG_ACTIVITY_NEW_TASK 就不要使用此标签，除非你启动的是应用的 launcher 。
-
-
-
 
 #### FLAG_ACTIVITY_NEW_DOCUMENT
-　　此标志被用于基于 Intent 的 activity 活动开一个新的任务记录。通过使用这个标志或者它的同含义属性 android.R.attr#documentLaunchMode ，同一个 activity 的不同实例将会在最近的任务列表中显示不同的记录。
+　　此标志被用于基于 Intent 的 activity 活动开一个新的任务。通过使用这个标志或者它的同含义属性 android.R.attr#documentLaunchMode ，同一个 activity 的不同实例将会在最近的任务列表中显示不同的记录。
 　　相当于在 manifest 中 Activity 定义 android.R.attr#docucumentLaunchMode  = “intoExisting”。
 
+* 设置 MainActivity 的启动模式为 singleTask (方便进入 FirstActivity 的任务后回到 MainActvity 的任务)，在 MainActivity 界面跳转 FirstActivity 的 Intent 设置 flag 为 FLAG_ACTIVITY_NEW_DOCUMENT。
+
+* 点击打开 MainActivity 。
+![](./NEW_DOCUMENT栈1.png)
+　　当前栈中情况是（从栈底到栈顶）：MainActivity，现在只有一个栈。
+
+* 在 MainActivity 界面点击跳转 FirstActivity 。
+![](./NEW_DOCUMENT栈2.png)
+　　当前栈中情况是（从栈底到栈顶）：有两个栈，一个栈中是：MainActivity，另一个栈中是：FirstActivity 。
+
+* 在 FirstActivity 界面点击跳转 SecondActivity 。
+![](./NEW_DOCUMENT栈3.png)
+　　当前栈中情况是（从栈底到栈顶）：依然有两个栈，一个栈中是：MainActivity，另一个栈中是：FirstActivity -> SecondActivity 。在 FirstActivity 界面点击跳转了 SecondActivity ，SecondActivity 就会进入 FirstActivity 所在的栈。
+
+* 在 SecondActivity 界面点击跳转 MainActivity 。
+![](./NEW_DOCUMENT栈4.png)
+　　当前栈中情况是（从栈底到栈顶）：依然有两个栈，一个栈中是：MainActivity，另一个栈中是：FirstActivity -> SecondActivity 。
+
+* 在 MainActivity 界面点击跳转 FirstActivity 。
+![](./NEW_DOCUMENT栈5.png)
+　　当前栈中情况是（从栈底到栈顶）：依然有两个栈，一个栈中是：MainActivity，另一个栈中是：FirstActivity -> SecondActivity 。而且注意，虽然我们点击跳转的是 FirstActivity ，但是当前显示的是 SecondActivity 界面。点击返回键一次显示的界面是：SecondActivity -> FirstActivity -> MainActivity 。
+
+　　FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_NEW_TASK 都是在没有符合的任务栈时，创建了新的任务栈，并且之后的启动 activity 也会进入新的任务栈中，当已经存在符合任务，则将整个任务栈都移到前台，但是 FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_NEW_TASK 有一点不同就是，FLAG_ACTIVITY_NEW_DOCUMENT 是直接创建任务栈，而 FLAG_ACTIVITY_NEW_TASK 是没有亲和性的任务栈时才创建。
+
 #### FLAG_ACTIVITY_NEW_DOCUMENT & FLAG_ACTIVITY_MULTIPLE_TASK
+　　FLAG_ACTIVITY_MULTIPLE_TASK 用于创建新的任务栈 ，并在任务栈中启动 activity，此 flag 经常与 FLAG_ACTIVITY_NEW_DOCUMENT  或者 FLAG_ACTIVITY_NEW_TASK 一起使用。单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 或 FLAG_ACTIVITY_NEW_TASK 时，会先从存在的任务栈中搜索匹配 Intent 的栈 ，如果没有任务栈被发现则创建新的任务栈。当与 FLAG_ACTIVITY_MULTIPLE_TASK 配合使用时，会跳过搜索匹配的任务栈而是直接开启一个新任务栈。
+　　如果使用了 FLAG_ACTIVITY_NEW_TASK 就不要使用此标签，除非你启动的是应用的 launcher 。
 　　相当于在 manifest 中 Activity 定义 android.R.attr#docucumentLaunchMode = “always”。
 
+* 设置 MainActivity 的启动模式为 singleTask (方便进入 FirstActivity 的任务后回到 MainActvity 的任务)，在 MainActivity 界面跳转 FirstActivity 的 Intent 设置 flag 为 FLAG_ACTIVITY_NEW_DOCUMENT | FLAG_ACTIVITY_MULTIPLE_TASK。
 
+* 点击打开 MainActivity ，在 MainActivity 界面点击跳转 FirstActivity ，在 FirstActivity 界面点击跳转 SecondActivity，在 SecondActivity 界面点击跳转 MainActivity。
+　　这一系列操作与上一个验证 FLAG_ACTIVITY_NEW_DOCUMENT 的结果是相同的。
 
+　　当前栈中情况是（从栈底到栈顶）：依然有两个栈，一个栈中是：MainActivity，另一个栈中是：FirstActivity -> SecondActivity 。
 
-#### FLAG_ACTIVITY_REORDER_TO_FRONT & FLAG_ACTIVITY_CLEAR_TOP
-　　如果 FLAG_ACTIVITY_REORDER_TO_FRONT 与 FLAG_ACTIVITY_CLEAR_TOP 同时设置，那么 FLAG_ACTIVITY_REORDER_TO_FRONT 无效。
+* 在 MainActivity 界面点击跳转 FirstActivity 。
+![](./NEW_DOCUMENT_AND_MULTIPLE_TASK栈1.png)
+　　当前栈中情况是（从栈底到栈顶）：有三个栈，一个栈中是：MainActivity，一个栈中是：FirstActivity -> SecondActivity，一个栈中是：FirstActivity。
+
+　　所以 FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_MULTIPLE_TASK 联合使用，相比较 FLAG_ACTIVITY_NEW_DOCUMENT 的单独使用就是，不管是否存在 activity 所在的任务栈，都新建任务栈。
+
+#### FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_MULTIPLE_TASK
+
+　　单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 或 FLAG_ACTIVITY_NEW_TASK 时，会先从存在的任务栈中搜索匹配 Intent 的栈 ，如果没有任务栈被发现则创建新的任务栈。当与 FLAG_ACTIVITY_MULTIPLE_TASK 配合使用时，会跳过搜索匹配的任务栈而是直接开启一个新任务栈。
+
+　　FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_MULTIPLE_TASK 联合使用的情况和 FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_MULTIPLE_TASK 联合使用的情况基本相同，不同的点就在于 FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_NEW_DOCUMENT 的不同上。这里就不验证 FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_MULTIPLE_TASK 的联合使用了。
 
 #### FLAG_ACTIVITY_RETAIN_IN_RECENTS
-　　默认情况下，进入最近任务栈的记录由 FLAG_ACTIVITY_NEW_DOCUMENT 创建，当用户关闭 activity （使用 back 键 或者他调用 finish()）时记录将会被移除，如果你想要允许记录保留在最近方便它能被重新启动，你可以使用此标志。
+　　默认情况下，进入最近任务栈的记录由 FLAG_ACTIVITY_NEW_DOCUMENT 创建，当用户关闭 activity （使用 back 键 或者他调用 finish()）时任务栈就会被移除，如果你想要允许任务栈保留在最近方便它能被重新启动，你可以使用此标志。
 　　接收活动可以请求 android.R.attr#autoRemoveFromRecents 或者通过调用 Activity.finishAndRemoveTask() 来覆盖本请求。
 
-#### FLAG_ACTIVITY_PREVIOUS_IS_TOP
-　　如果设置此标签，并且用于启动一个新的 activity 从源活动，当前 activity 不会被视为栈顶活动，无论是传递新的 intent 给栈顶还是启动一个新的 activity 。如果当前的 activity 将立即结束，则上一个 activity 将作为栈顶。
+* 在 MainActivity 界面跳转 FirstActivity 的 Intent 设置 flag 为 FLAG_ACTIVITY_NEW_DOCUMENT | FLAG_ACTIVITY_RETAIN_IN_RECENTS。
+
+* 打开 MainActivity ，点击进入 FirstActivity 。
+![](./RETAIN_IN_RECENTS栈1.png)
+　　当前栈中情况是（从栈底到栈顶）：有两个栈，一个栈中是：MainActivity，另一个栈中是：FirstActivity 。
+
+* 在 FirstActivity 点击 back 键。
+![](./RETAIN_IN_RECENTS栈2.png)
+　　当前栈中情况是（从栈底到栈顶）：只剩下一个栈了，栈中是：MainActivity 。
 
 
+* 点击 home 键回到桌面。
+![](./RETAIN_IN_RECENTS栈3.png)
+　　当前栈中情况是（从栈底到栈顶）：只剩下一个栈了，栈中是：MainActivity 。当前界面是 launch。
 
-#### FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
-　　如果设置此标志，activity 要么在新的任务中被启动要么将存在的 activity 移到存在任务的顶部，而 activity 将作为任务的前门被启动。这将导致与应用相关联的活动在适当的状态下需要拥有这个任务（无论是移动活动进入或者是移除），或者在需要的时候重置任务到初始状态。
+* 长按 home 键，查看最近使用的任务栈。
+![](./RETAIN_IN_RECENTS栈4.png)
+　　查看最近使用的任务栈有两个，一个是 MainActivity，一个是 FirstActivity。
+
+　　对比只使用 FLAG_ACTIVITY_NEW_DOCUMENT 标志的情况（只是用 FLAG_ACTIVITY_NEW_DOCUMENT 标志，然后做上面相同的操作）：
+![](./RETAIN_IN_RECENTS栈4-1.png)
+　　查看最近使用的任务栈只有一个，是 MainActivity。
+
+　　使用 FLAG_ACTIVITY_RETAIN_IN_RECENTS 标志会将启动的任务栈在结束的时候仍然保留在最近的任务栈中。
 
 #### FLAG_ACTIVITY_NO_USER_ACTION
 　　如果设置此标志，在 activity 被前台的新启动的 activity 造成 paused 之前，将会阻止当前最顶部的 activity 的 onUserLeaveHint 回调。
 　　通常，当 activity 在用户的操作下被移除前面则会调用 onUserLeaveHint 回调。这个回调标志着 activity 的生命周期的一个点，以便隐藏任何 “ 直到用户看到他们 ” 的通知，比如闪烁的 LED 灯。
+
 　　如果 accitivity 曾经通过任何非用户操作启动（例如来电或闹铃启动），就应该通过 startActivity 添加此标签，确保暂停时 activity 不认为用户确认了它的通知。
+
+* 在 MainActivity 的onUserLeaveHint() 方法中打印日志，不设置任何标志，观察在 MainActivity 点击跳转 FirstActivity 时，MainActivity 的 onUserLeaveHint() 的回调。
+![](./NO_USER_ACTION1.png)
+　　查看日志的打印可以看到，在 MainActivity 的 onPause() 方法之前回调了 onUserLeveHint() 方法。
+
+* 在 MainActivity 界面跳转 FirstActivity 的 Intent 设置 flag 为 FLAG_ACTIVITY_NO_USER_ACTION，观察在 MainActivity 点击跳转 FirstActivity 时，MainActivity 的 onUserLeaveHint() 的回调。
+![](./NO_USER_ACTION2.png)
+　　查看日志的打印可以看到，使用 FLAG_ACTIVITY_NO_USER_ACTION 标志，在 MainActivity 的 onPause() 方法之前没有回调 onUserLeveHint() 方法。
+
+#### FLAG_ACTIVITY_PREVIOUS_IS_TOP
+　　如果设置此标签，并且用于启动一个新的 activity 从源活动，当前 activity 不会被视为栈顶活动，无论是传递新的 intent 给栈顶还是启动一个新的 activity 。如果当前的 activity 将立即结束，则上一个 activity 将作为栈顶。
+（验证失败）
+
+#### FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+　　如果设置此标志，activity 要么在新的任务中被启动要么将存在的 activity 移到存在任务的顶部，而 activity 将作为任务的前门被启动。这将导致与应用相关联的活动在适当的状态下需要拥有这个任务（无论是移动活动进入或者是移除），或者在需要的时候重置任务到初始状态。
+（验证失败）
 
 #### FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_TASK_ON_HOME
 　　如果通过 startActivity 的 Intent 设置此标志，这个标志将会导致最新启动的任务位于当前主页活动任务（假设这里有）的顶部。换句话说，当任务点击 back 键，将总是返回用户的主页，无论主页是否是用户看到的上一个界面。此标志只能与 FLAG_ACTIVITY_NEW_TASK 一起使用。
-
 （没有验证成功）
 
 #### FLAG_ACTIVITY_LAUNCH_ADJACENT & FLAG_ACTIVITY_NEW_TASK
