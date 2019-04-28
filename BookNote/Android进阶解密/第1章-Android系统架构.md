@@ -53,9 +53,102 @@
 　　如果是编译后的源码目录，会多一个 out 文件夹，用来存储编译产生的文件。
 
 Android 8.0.0 的系统根目录结构说明
+
 | Android 源码根目录 | 描述 |
 |--------|--------|
-| art |  |
+| art | 全新的 ART 运行环境 |
+| bionic | 系统 C 库 |
+| bootable | 启动引导相关代码 |
+| build | 存放系统编译规则及 generic 等基础开发包配置 |
+| cts | Android 兼容性测试套件标准 |
+| dalvik | Dalvik 虚拟机 |
+| developers | 开发者目录 |
+| development | 与应用程序开发相关 |
+| device | 设备相关配置 |
+| docs | 参考文档目录 |
+| external | 开源模组相关文件 |
+| frameworks | 应用程序框架，Android 系统核心部分，由 Java 和 C++ 编写 |
+| hardware | 主要是硬件抽象层的代码 |
+| libcore | 核心库相关文件 |
+| libnativehelper | 动态库，实现 JNI 库的基础 |
+| out | 编译完成后代码在此目录输出 |
+| pdk | Plug Development Kit 的缩写，本地开发套件 |
+| platform_testing | 平台测试 |
+| prebuilts | X86 和 ARM 架构下预编译的一些资源 |
+| sdk | SDK 和模拟器 |
+| packages | 应用程序包 |
+| system | 底层文件系统库、应用和组件 |
+| toolchain | 工具链文件 |
+| tools | 工具文件 |
+| makefile | 全局 Makefile 文件，用来定义编译规则 |
+
+#### 1.2.2 应用层部分
+　　应用层位于整个 Android 系统的最上层，开发者开发的应用程序以及系统内置的应用程序都在应用层。源码根目录中的 packages 目录对应着系统应用层。
+
+　　packages 目录结构
+
+| packages 目录 | 描述 |
+|--------|--------|
+| apps | 核心应用程序 |
+| experimental | 第三方应用程序 |
+| inputmethods | 输入法目录 |
+| providers | 内容提供者目录 |
+| screensavers | 屏幕保护 |
+| services | 通信服务 |
+| wallpapers | 墙纸 |
+
+#### 1.2.3 应用框架部分
+　　应用框架层是系统的核心部分，一方面向上提供接口给应用层调用，另一方面向下与 C/C++ 程序库及硬件抽象层等进行衔接。应用框架层的主要实现代码在 framework/base 和 frameworks/av 目录下。
+
+　　frameworks/base 目录
+
+| frameworks/base 目录 | 描述 | frameworks/base 目录 | 描述 |
+|--------|--------|--------|--------|
+| api | 定义 API | cmds | 重要命令：am、app_proce 等 |
+| core | 核心库 | data | 字体和声音等数据文件 |
+| docs | 文档 | graphics | 与图形图像相关 |
+| include | 头文件 | keystore | 与数据签名证书相关 |
+| libs | 库 | location | 地理位置相关库 |
+| media | 多媒体相关库 | native | 本地库 |
+| nfc-extras | 与 NFC 相关 | obex | 蓝牙传输 |
+| opengl | 2D/3D 图形 API | packages | 设置、TTS、VPN 程序 |
+| sax | XML 解析器 | services | 系统服务 |
+| telephony | 电话通信管理 | test-runner | 测试工具相关 |
+| tests | 与测试相关 | tools | 工具 |
+| vr | 与 VR 相关 | wifi | Wi-Fi 无限网络 |
+
+#### 1.2.4 C/C++ 程序库部分
+　　系统运行库层（Native）中的 C/C++ 程序库的类型繁多，功能强大，C/C++ 程序库并不完全在一个目录中。
+
+　　C/C++ 程序库所在的目录位置
+
+| 目录位置 | 描述 |
+|--------|--------|
+| bionic | Google 开发的系统 C 库，以 BSD 许可形式开源 |
+| frameworks/av/media | 系统媒体库 |
+| frameworks/native/opengl | 第三方图形渲染库 |
+| frameworks/native/services/surfaceflinger | 图形显示库，主要负责图形的渲染、叠加和绘制等功能 |
+| external/sqlite | 轻量级关系型数据库 SQLite 的 C++ 实现 |
+
+　　Android 运行时库的代码在 art/目录中，硬件抽象层的代码在 hardware/目录中，这是手机厂商改动最大的部分，根据手机终端锁采用的硬件平台不同会有不同的实现。
+
+## 1.3 源码阅读
+　　系统源码的阅读有很多种方式，总的来说分为两种：一种是在线阅读；另一种是下载源码到本地用软件工具阅读。
+
+#### 1.3.1 在线阅读
+　　Android 在西安阅读源码的网站有很多，比如 http://www.grepcode.com、http://androidxref.com、http://www.androidos.cn 等，推荐使用 http://androidxref.com 进行在线阅读，网站提供了 Android 1.6 到 Android 8.0.0 的源码。
+
+#### 1.3.2 使用 Source Insight
+　　本地阅读源码可以采用 Android Studio、Eclipse、Sublime 和 Source Insight 等软件，这里推荐使用 Source Insight。
+
+## 1.4 本章小结
+
+
+
+
+
+
+
 
 
 
