@@ -6,9 +6,11 @@
 ## 关于启动模式的问题
 
 #### 启动模式
-　　启动模式相关的问题请查看[Activity之启动模式]()文章。
+　　启动模式相关的问题请查看[Activity之启动模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Activity%E4%B9%8B%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%BC%8F.md)文章。
+
 #### onNewIntent() 的调用时机
 　　启动一个 Activity 时，没有新建实例，而是复用任务中的 activity，会将新的 Intent 传递给复用的 activity 的 onNewIntent() 方法。
+
 #### a-b-c界面，其中b是singleinstance的，那么c界面点back返回a界面，为什么？怎么管理栈的？
 　　singleinstance 启动模式会新建任务栈，b 就会在一个单独的栈中，而 a-c 是在一个栈中，在 b 跳转 c 的时候，b 就会销毁，b 所在的栈也销毁，所以 c 点击 back 返回后，栈顶是 a。
 
