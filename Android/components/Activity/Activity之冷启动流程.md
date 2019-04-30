@@ -485,6 +485,8 @@ public final class Launcher extends Activity
                     new Configuration(mConfiguration), app.compat,
                     getCommonServicesLocked(app.isolated),
                     mCoreSettingsObserver.getCoreSettingsLocked());
+				...
+				mStackSupervisor.attachApplicationLocked(app);
 	...
 	}
 
@@ -525,10 +527,65 @@ public final class Launcher extends Activity
 
 ```
 
+#### ActivityStackSupervisor 的 attachApplicationLocked(app) 方法（接 ActivityManagerService 的 attachApplication() 方法）
+```
+    boolean attachApplicationLocked(ProcessRecord app) throws RemoteException {
+        ...
+        if (realStartActivityLocked(hr, app, true, true)) {
+        ...
+    }
 
+    final boolean realStartActivityLocked(ActivityRecord r, ProcessRecord app,
+            boolean andResume, boolean checkConfig) throws RemoteException {
+		...
+		     app.thread.scheduleLaunchActivity(new Intent(r.intent), r.appToken,
+                    System.identityHashCode(r), r.info, new Configuration(mService.mConfiguration),
+                    new Configuration(task.mOverrideConfig), r.compat, r.launchedFromPackage,
+                    task.voiceInteractor, app.repProcState, r.icicle, r.persistentState, results,
+                    newIntents, !andResume, mService.isNextTransitionForward(), profilerInfo);
+		...
+	}
+```
 
+#### ActivityThread 的 scheduleLaunchActivity() 方法
+```
+        @Override
+        public final void scheduleLaunchActivity(Intent intent, IBinder token, int ident,
+                ActivityInfo info, Configuration curConfig, Configuration overrideConfig,
+                CompatibilityInfo compatInfo, String referrer, IVoiceInteractor voiceInteractor,
+                int procState, Bundle state, PersistableBundle persistentState,
+                List<ResultInfo> pendingResults, List<ReferrerIntent> pendingNewIntents,
+                boolean notResumed, boolean isForward, ProfilerInfo profilerInfo) {
+		...
+		sendMessage(H.LAUNCH_ACTIVITY, r);
+		}
+```
 
+#### 查看 H.LAUNCH_ACTIVITY 的消息处理
+```
+        public void handleMessage(Message msg) {
+            if (DEBUG_MESSAGES) Slog.v(TAG, ">>> handling: " + codeToString(msg.what));
+            switch (msg.what) {
+                case LAUNCH_ACTIVITY: {
+                    Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "activityStart");
+                    final ActivityClientRecord r = (ActivityClientRecord) msg.obj;
 
+                    r.packageInfo = getPackageInfoNoCheck(
+                            r.activityInfo.applicationInfo, r.compatInfo);
+                    handleLaunchActivity(r, null, "LAUNCH_ACTIVITY");
+                    Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+                } break;
+			...
+		}
+
+    private void handleLaunchActivity(ActivityClientRecord r, Intent customIntent, String reason) {
+		...
+		handleResumeActivity(r.token, false, r.isForward,
+                    !r.activity.mFinished && !r.startsNotResumed, r.lastProcessedSeq, reason);
+		...
+	}
+
+```
 
 
 
