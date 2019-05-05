@@ -21,6 +21,18 @@
 #### 2.3 在 MainActivity 中添加启动和停止 MyService。
 
 
+## 使用 Bind Service 完成 Service 和 Activity 之间的通信
+　　可以使用 Bind Service 让 Activity 与 Service 建立关联。
+
+#### Bind Service 的介绍
+　　应用程序组件（客户端）通过调用 bindService（）方法能够绑定服务，然后 Android 系统会调用服务的 onBind() 回调方法，这个方法会返回一个跟服务器端交互的 Binder 对象。
+
+　　这个绑定是异步的，bindService() 方法立即返回，并且不给客户端返回 IBinder 对象。要接收 IBinder 对象，客户端必须创建一个 ServiceConnection 类的实例，并且把这个实例传递给 bindService() 方法。ServiceConnection 对象包含了一个系统调用的传递 IBinder 对象的回调方法。
+
+　　注意：只有 Activity、Service、Content Provider 能够绑定服务；BroadcastReceiver 广播接收器不能绑定服务。
+
+
+
 
 ## IntentService
 　　服务不会自动开启线程，服务中的代码默认是运行在主线程中，如果直接在服务里执行一些耗时操作，容易造成 ANR(Application Not Responding)异常，为了可以简单的创建一个异步的、会自动停止的服务，Android 专门提供了一个 IntentService 类。可以启动 IntentService 多次，而每一个耗时操作会以工作队列的方式在 IntentService 的 onHandleIntent() 回调方法中执行，并且每次只会执行一个工作线程，执行完第一个，再执行第二个，以此类推。
@@ -29,6 +41,19 @@
 
 
 ## start 服务与 bind 服务的区别
+
+#### 区别一：生命周期
+　　通过 started 方式的服务会一直运行在后台，需要由组件本身或外部组件来停止服务才会以结束结束。
+
+　　bind 方式的服务，生命周期就会依赖绑定的组件。
+
+#### 区别二：参数传递
+　　started 服务可以给启动的服务对象传递参数，但无法获取服务中方法的返回值。
+
+　　bind 服务可以给启动的服务对象传递参数，也可以用过绑定的业务对象获取返回结果。
+
+#### 实际中使用
+　　第一次先使用 started 方式来启动一个服务，之后可以使用 bind 的方式绑定服务，从而可以直接调用业务方法获取返回值。
 
 ## Service 的生命周期
 
