@@ -385,21 +385,20 @@ public final class ActivityManagerService extends ActivityManagerNative
 
 ## 关于 ApplicationThread
 
-1. 在 ActivityThread 的成员变量中对发现 mAppThread
-```
-final ApplicationThread mAppThread = new ApplicationThread();
-```
-　　ApplicationThread 是作为 ActivityThread 中的一个常量出现的。这表明系统不喜欢这个变量中途被修改，可见这个变量具有特定而十分重要的作用。
-
-2. 查看 ApplicationThread 类
+#### 查看 ApplicationThread 类
 ```
     private class ApplicationThread extends ApplicationThreadNative {
 		...
     }
 ```
 　　ApplicationThread 是 ActivityThread 中的一个内部类，并且 ApplicationThread 是继承 ApplicationThreadNative 类的。
+　　并且在 ActivityThread 的成员变量中对发现 mAppThread。
+```
+final ApplicationThread mAppThread = new ApplicationThread();
+```
+　　ApplicationThread 是作为 ActivityThread 中的一个常量出现的。这表明系统不喜欢这个变量中途被修改，可见这个变量具有特定而十分重要的作用。
 
-3. 查看 ApplicationThreadNative 类
+#### 查看 ApplicationThreadNative 类
 ```
 public abstract class ApplicationThreadNative extends Binder
         implements IApplicationThread {
@@ -409,21 +408,40 @@ public abstract class ApplicationThreadNative extends Binder
 		//这是 Binder 的方法
         attachInterface(this, descriptor);
     }
-}
-```
-　　可以看到 ApplicationThreadNative 继承于 Binder ，所以 ApplicationThreadNative 是一个 Binder，同时也实现了 IAPPlicationThread 接口，所以 ApplicationThreadNative 也是一个 IApplicationThread 。
 
-4. 查看 attachInterface() 方法
-```
     public void attachInterface(IInterface owner, String descriptor) {
         mOwner = owner;
         mDescriptor = descriptor;
     }
+
+	static public IApplicationThread asInterface(IBinder obj) {
+        if (obj == null) {
+            return null;
+        }
+        IApplicationThread in =
+            (IApplicationThread)obj.queryLocalInterface(descriptor);
+        if (in != null) {
+            return in;
+        }
+
+        return new ApplicationThreadProxy(obj);
+    }
+}
 ```
-　　attachInterface() 方法没有什么，只是简单的赋值。
+　　可以看到 ApplicationThreadNative 继承于 Binder ，所以 ApplicationThreadNative 是一个 Binder，同时也实现了 IAPPlicationThread 接口，所以 ApplicationThreadNative 也是一个 IApplicationThread 。
+　　看到 ApplicationThreadNative 的 asInterface() 方法返回一个 ApplicationThreadProxy 实例，所以 ApplicationThread 也是代理模式。
 
 5. 查看 IApplicationThread 类
 ```
+/**
+ * System private API for communicating with the application.  This is given to
+ * the activity manager by an application  when it starts up, for the activity
+ * manager to tell the application about things it needs to do.
+
+用于与应用程序通信的系统私有 API。当一个应用程序启动时，将传递消息给活动管理器，为了活动管理器告知应用需要做的事情。
+ *
+ * {@hide}
+ */
 public interface IApplicationThread extends IInterface {
     ...
     String descriptor = "android.app.IApplicationThread";

@@ -1,4 +1,4 @@
-# Android 之测试
+# Android 调试技巧之模拟内存不足
 
 ## 参考文章
 https://blog.csdn.net/anyanyan07/article/details/79396293

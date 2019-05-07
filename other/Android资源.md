@@ -63,6 +63,17 @@
 4. 动态配置manifest文章完成 （记录到记录文章列表中）
 * 参考文章 https://www.jianshu.com/p/e64f0b89e570  https://blog.csdn.net/DG_summer/article/details/53678247
 
+## 架构
+书籍：《程序员必读之软件架构》
+[用于软件架构的C4模型](https://www.infoq.cn/article/C4-architecture-model)
+[c4官网](https://c4model.com/)
+[如何画出一张合格的技术架构图？](https://mp.weixin.qq.com/s/1hPZacqJuUeElyHiMxa9rw)
+
 
 ## 收集的文章
 [收集Android方方面面的经典知识, 最新技术](https://github.com/itheima1/Android#%E5%A4%9A%E5%AA%92%E4%BD%93%E7%BC%96%E7%A8%8B)
+[Kotlin 资源大全 - 学 Kotlin 看这一篇教程就够了](https://juejin.im/post/591dd9f544d904006c9fbb96?tdsourcetag=s_pctim_aiomsg)
+
+2. 查看源码用到的网址：
+http://androidxref.com/7.0.0_r1/
+http://androidxref.com/7.0.0_r1/xref/ 代码目录

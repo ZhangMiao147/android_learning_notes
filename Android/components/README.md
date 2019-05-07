@@ -38,7 +38,7 @@
 **相关文章：**
 　　关于 Handler、Message、Looper 的常见面试题
 
-## 5. Binder
+## 6. Binder
 **相关文章：**
 　　关于 Binder 的常见面试题
 
