@@ -1,4 +1,4 @@
-# Activity 之生命周期
+# 关于 Activity 的生命周期，来看一看这篇
 	本文内容：
 	1. Activity 介绍
 	2. Activity 的生命周期

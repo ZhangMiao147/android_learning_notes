@@ -1,4 +1,4 @@
-# onNewIntent 方法的实践验证
+# onNewIntent 方法何时回调呢
 
 ## 关于 onNewIntent
 　　onNewIntent() 方法会在 activity 复用的时候调用，也就是说调用 activity ，并不会常见 activity 的新实例，而是复用栈中的 activity ，复用时就会调用 onNewIntent() 方法，将新的 Intent 传递给 oNewIntent() 方法。

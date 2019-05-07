@@ -1,4 +1,4 @@
-# Activity 之使用
+# Activity 的使用走起来
 
 	本文内容
 	1. 使用 Activity 显式简单界面

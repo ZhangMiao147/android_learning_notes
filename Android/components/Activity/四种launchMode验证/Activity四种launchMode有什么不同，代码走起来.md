@@ -1,4 +1,4 @@
-# Activity 四种 launchMode 的实践验证
+# Activity 四种 launchMode 有什么不同，代码走起来
 	本文内容：
 	1. 如何验证
 	2. 如何设置 Activity 的启动模式

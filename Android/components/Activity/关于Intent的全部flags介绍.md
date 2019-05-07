@@ -1,4 +1,4 @@
-# Intent 的 20 个 flags
+# 关于 Intent 的全部 flags 介绍
 
 ## 简介
 　　除了 4 种 launchMode 可以设置 Activity 与 task 的关系之外，还可以通过 startActivity 方法的 Intent 添加 Flag 来设置 Activity 与 task 的关系。本片只是将 20 个 flags 罗列出来，并简单介绍描述。

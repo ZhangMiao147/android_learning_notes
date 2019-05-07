@@ -1,6 +1,6 @@
-# Intent 的 flags 的实践验证
+# 将 Intent 的 flags 使用一下呀呀呀
 
-## 关于如何验证
+## 关于如何使用 flag
 　　创建一个 MainActivity 、 FirstActivity 与 SecondActivity 类，MainActivity 是项目的主界面，任何一个 Activity 都可以跳转包括自己的任意一个 Activiity ，通过在代码中跳转 FirstActivity 时设置 flag 。
 
 　　通过执行 `adb shell dumpsys activity` 命令观察任务栈中 Activity 的入栈和出栈情况。
