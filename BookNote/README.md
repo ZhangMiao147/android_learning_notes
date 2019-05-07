@@ -84,6 +84,13 @@
 
 	* 第 1 章 [走进 Java](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA/%E7%AC%AC1%E7%AB%A0-%E8%B5%B0%E8%BF%9BJava.md)
 
+
+- **Android 进阶之光**
+	* 第 1 章 [Android 新特性](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android%E8%BF%9B%E9%98%B6%E4%B9%8B%E5%85%89/%E7%AC%AC1%E7%AB%A0-Android%E6%96%B0%E7%89%B9%E6%80%A7.md)
+
+- **Android 进阶解密**
+	* 第 1 章 [ Android 系统架构](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android%E8%BF%9B%E9%98%B6%E8%A7%A3%E5%AF%86/%E7%AC%AC1%E7%AB%A0-Android%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84.md)
+
 - **Android 开发艺术探索**
 
 
