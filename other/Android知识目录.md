@@ -1,36 +1,4 @@
-# Android 知识目录
-
-## 四大组件
-#### Activity
-1. onNewIntent()的调用时机
-2. 启动模式
-3. Activity 的内部机制
-4. Activity 的冷启动流程
-5. AMS 的作用
-6. a-b-c界面，其中b是singleinstance的，那么c界面点back返回a界面，为什么？怎么管理栈的？\
-7. 在oncreate里面可以得到view的宽高吗？
-8. 从framework 的角度将 activity 的启动流程（冷启动）
-9. 为什么要 引入 activity 这个组件？
-10. a启动b，b启动c,怎么样可以在c界面点back返回到a？
-11. 在 SingleTop 模式中，如果打开一个已经存在栈顶的 Activity，他的生命流程是怎样的？ onPause() -> onNewIntent() -> onResume()
-
-#### BroadcastReceive
-1. 广播有几种？广播是观察者模式？跨进程广播也是观察者模式吗？
-2. 两个应用同时注册一个广播，优先级都一样，哪个会先收到广播？（有序广播？）
-
-
-#### Service
-1. bindService 和 startService 生命周期有啥不同？
-
-
-#### ContentProvider
-1. contentprovider 怎么升级维护
-2. contentprovider 已经是进程间通信，为什么还要引入 broadcastreceiver？
-
-## fragment
-1. fragment 的基本知识
-2. fragment 与 Activity 的对比
-3. DialogFragment
+# Android 面试题收集
 
 ## UI
 1. ListView
@@ -129,7 +97,7 @@
 [Android照片墙应用实现，再多的图片也不怕崩溃](http://blog.csdn.net/guolin_blog/article/details/9526203)
 [Android多点触控技术实战，自由地对图片进行缩放和移动](http://blog.csdn.net/guolin_blog/article/details/11100327)
 [Android 高清加载巨图方案 拒绝压缩图片](http://blog.csdn.net/lmj623565791/article/details/49300989)
-[Android 优化Bitmap避免OutOfMemoryError\](http://chjmars.iteye.com/blog/1157137)
+[Android 优化Bitmap避免OutOfMemoryError](http://chjmars.iteye.com/blog/1157137)
 
 #### Retrofit
 1. Retrofit 官方文档翻译
@@ -199,19 +167,9 @@
 #### 性能优化怎么弄？
 1. 避免内存泄漏，为什么说handler用成员内部类会内存泄漏？activity不是已经到gcroot被切断了吗？还有静态context持有activity的引用会内存泄漏，必须要持有怎么办？（及时释放）
 
-## 测试
-1. Android 单元测试之一：基本概念
-2. Android 单元测试之二：本地测试
-3. Android 单元测试之三：使用模拟框架模拟依赖
-4. Android 单元测试之四：仪器化测试
-
 ## 混淆
 1. Progrard 介绍
 2. 为什么要使用代码混淆
-
-## 版本控制
-1. git 的基本知识
-2. git 的基本使用
 
 ## 线程与进程
 1. 线程间通信和进程间通信有什么不同
@@ -240,10 +198,6 @@
 
 
 ## 平时开发遇到的系列问题记录
-1. Bitmap too larget to be uploaded into a texture 的解决方法
-2. Config with dependency 'com.android.supportsupport-annotations' in project 'xxx',.Resolved version for app (25.4.0) test app (27.1.1) differ 问题解决
-3. You need to use a Theme.AppCompat theme (or descendant) with this activity 问题解决
-4. Animator 动画第一次播放正常，之后播放不正常的问题解决
 5. app闪退的原因有哪些？每种情况简述分析过程？
 6. 如何避免out of menmory 和 anr?
 
