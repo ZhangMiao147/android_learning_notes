@@ -13,8 +13,8 @@
 　　[关于 Intent 的全部 flags 介绍](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E5%85%B3%E4%BA%8EIntent%E7%9A%84%E5%85%A8%E9%83%A8flags%E4%BB%8B%E7%BB%8D.md)
 　　[将 Intent 的 flags 使用一下呀呀呀](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Intent%E7%9A%84flags%E9%AA%8C%E8%AF%81/%E5%B0%86Intent%E7%9A%84flags%E4%BD%BF%E7%94%A8%E4%B8%80%E4%B8%8B%E5%91%80%E5%91%80%E5%91%80.md)
 　　[Activity 的使用走起来](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Activity%E7%9A%84%E4%BD%BF%E7%94%A8%E8%B5%B0%E8%B5%B7%E6%9D%A5.md)
-　　启动流程
-　　关于 Activity 的常见面试题
+　　[Activity 启动流程的代码追踪](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E7%9A%84%E4%BB%A3%E7%A0%81%E8%BF%BD%E8%B8%AA.md)
+　　[Activity 的常见面试题，大家一起来看呀](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Activity%E7%9A%84%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98%EF%BC%8C%E5%A4%A7%E5%AE%B6%E4%B8%80%E8%B5%B7%E6%9D%A5%E7%9C%8B%E5%91%80.md)关于 Activity 的常见面试题
 
 
 ## 2. Service
