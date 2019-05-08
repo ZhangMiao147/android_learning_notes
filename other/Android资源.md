@@ -74,6 +74,8 @@
 [收集Android方方面面的经典知识, 最新技术](https://github.com/itheima1/Android#%E5%A4%9A%E5%AA%92%E4%BD%93%E7%BC%96%E7%A8%8B)
 [Kotlin 资源大全 - 学 Kotlin 看这一篇教程就够了](https://juejin.im/post/591dd9f544d904006c9fbb96?tdsourcetag=s_pctim_aiomsg)
 
+https://m.nowcoder.com/discuss/146655?type=2&order=4&pos=12&page=1&headNav=www&from=singlemessage 面经贴
+
 2. 查看源码用到的网址：
 http://androidxref.com/7.0.0_r1/
 http://androidxref.com/7.0.0_r1/xref/ 代码目录
