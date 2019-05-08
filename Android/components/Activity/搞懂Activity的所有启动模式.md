@@ -123,8 +123,8 @@
 　　操作中的 A,B,C 表示不同的 Activity，A->B 表示从 A 跳转到 B，栈情况中的 t1,t2 表示不同的栈，栈中的记录都是记录的从栈底到栈顶的顺序。
 
 | 使用标志 | 解释 | 举例 | 其他 |
-| -------- | -------- | -------- | --------
-| FLAG_ACTIVITY_CLEAR_TOP | 如果设置此标签，activity 已经在栈中，则不会启动 activity 的新实例，而是将栈中 activity 之上的 activities 进行出栈关闭，Intent 将被传递给旧的 activity 作为新的 Intent 。 | C 跳转 B 的 flag 设置为 FLAG_ACTIVITY_CLEAR_TOP ，当前栈中（从栈底到栈顶）的情况是：A->B->C，然后 C 跳转 B，栈的情况就成了：A->B |  |
+| -------- | -------- | -------- | -------- |
+| FLAG_ACTIVITY_CLEAR_TOP | 如果设置此标签，activity 已经在栈中，会将栈中 activity 之上的 activities 包括 activity 本身进行出栈关闭，然后将启动的 activity 新实例入栈 。 | C 跳转 B 的 flag 设置为 FLAG_ACTIVITY_CLEAR_TOP ，当前栈中（从栈底到栈顶）的情况是：A->B->C，然后 C 跳转 B，栈的情况就成了：A->B（新实例） |  |
 | FLAG_ACTIVITY_NO_HISTORY | 如果这只此 flag，则启动的 activity 将不会保留在历史栈中，一旦用户离开它，activity 将结束。 | A 跳转 B 的 flag 设置为 FLAG_ACTIVITY_NO_HISTORY，B 跳转 C，在 C 界面点击返回键，则会直接回到 A 界面。 | |
 | FLAG_ACTIVITY_NO_ANIMATION | 设置此标签，则跳转启动的 activity 动画不会显示 | A 跳转 B 设置 FLAG_ACTIVITY_NO_ANIMATION，则 A 跳转 B 时，没有动画。 | |
 | FLAG_ACTIVITY_NEW_TASK | 设置 FLAG_ACTIVITY_NEW_TASK 标签后，首先会查找是否存在和被启动的 activity 具有相同亲和性的任务栈，如果没有，则新建一个栈让 activity 入栈；如果有，则保持栈中 activity 的顺序不变，如果栈中没有 activity，将 activity 入栈，如果栈中有 activity，则将整个栈移动到前台。 | 设置 A 跳转 B 的 flag 为 FLAG_ACTIVITY_NEW_TASK，设置 B 的 taskAffinity 的值。A 跳转 B ，B 跳转 C，C 跳转回到 A，A 跳转 B,会显示 C 界面。 |  |

@@ -52,7 +52,7 @@
 
 * 在 SecondActivity 点击跳转 FirstActivity 。
 ![](./CLEAR_TOP栈2.png)
-　　当前栈中情况是（从栈底到栈顶）：MainActivity -> FirstActivity。当将标记设置为 FLAG_ACTIVITY_CLEAR_TOP 时，会将栈内 FirstActivity 上面的 SecondActivity 移除栈，然后复用栈内的 FirstActivity 。
+　　当前栈中情况是（从栈底到栈顶）：MainActivity -> FirstActivity。注意看上图的 FirstActiivty 的对象是 1b4114f2，当前的 FirstAcivity 的对象是 338a5cb8，所以当将标记设置为 FLAG_ACTIVITY_CLEAR_TOP 时，会将栈内 FirstActivity 上面的 SecondActivity 移除栈，也会将栈中原来的 FirstActivity 移除，然后新建 FirstActivity 实例入栈。
 
 * 在 FirstActivity 界面点击跳转 FirstActivity 。
 ![](./CLEAR_TOP栈3.png)
