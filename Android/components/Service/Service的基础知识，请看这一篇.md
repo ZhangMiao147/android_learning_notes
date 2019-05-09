@@ -83,6 +83,21 @@ b. 先启动服务后绑定服务
 #### onDestory()
 　　当服务不在使用且被销毁时，系统将调用此方法，服务应该实现此方法来清理所有的资源，如线程、注册的监听器、接收器等，这是服务接受的最后一个调用。
 
+#### 启动服务和绑定服务的生命周期
+
+###### 启动服务生命周期
+　　第一次调用 startService() 启动服务，会调用 onCreate() 和 onStartCommand() 方法，之后调用 startService() 启动服务，只会调用 onStartCommand() 方法。调用 stopService() 方法停止服务，会调用 onDestory() 方法。停止服务之后再次 startService() 启动服务，会再次调用 onCreate() 和 onStartCommand() 方法。
+
+###### 绑定服务生命周期
+　　第一次调用 bindService() 启动服务，调用 onCreate() 和 onBind() 方法，之后调用 bindService() 没有任何方法调用，调用 unbindService() 方法解绑服务，会调用 onUnbind() 和 onDestory() 方法。在 Activity 退出的时候不调用 unbindService() 解绑的话会报错。
+
+###### 启动并绑定服务生命周期
+　　先调用 startService() 方法，调用 onCreate() 和 onStartCommand() 方法，（之后再调用 startService() 方法，只会回调 onStartCommand() 方法）再调用 bindService() 方法，调用 onBind() 方法，调用 unbindService() 方法解绑，调用 onUnbind() 方法，再调用 stopService() 方法，调用 onDestory() 方法，如果是先调用 stopService() 没有方法回调，再调用 unbindService() 方法解绑会调用 onUnbind() 和 onDestory() 方法。
+
+　　先调用 bindService() 方法，调用 onCreate() 和 onBind() 方法，再调用 startService() 方法，调用 onStartCommand() 方法，调用 unbindService() 方法解绑，调用 onUnbind() 方法，再调用 stopService() 方法，调用 onDestory() 方法，如果是先调用 stopService() 没有方法回调，再调用 unbindService() 方法解绑会调用 onUnbind() 和 onDestory() 方法。
+
+　　在调用 startService() 和 bindService() 方法之后，如果 Service 的 onUnbind() 返回的是 true，调用 unbindService() 解绑之后，再次调用 bindService() 绑定服务，会调用 Service 的 onRebind() 方法，而不是 什么方法都不调用（会回调 ServiceConnection 的 onServiceConnected() 方法）。
+
 ## Service 的使用
 
 #### 在 AndroidManifest.xml 文件中配置 Service。
@@ -107,8 +122,28 @@ b. 先启动服务后绑定服务
 ## IntentService
 　　服务不会自动开启线程，服务中的代码默认是运行在主线程中，如果直接在服务里执行一些耗时操作，容易造成 ANR(Application Not Responding)异常，为了可以简单的创建一个异步的、会自动停止的服务，Android 专门提供了一个 IntentService 类。可以启动 IntentService 多次，而每一个耗时操作会以工作队列的方式在 IntentService 的 onHandleIntent() 回调方法中执行，并且每次只会执行一个工作线程，执行完第一个，再执行第二个，以此类推。
 
+## 前台服务
+　　前台服务被认为是用户主动意识到的一种服务，因此在内存不足时，系统也不会考虑将其终止。前台服务必须为状态栏提供通知，状态栏位于“正在进行”标题下方，这意味着除非服务停止或从前台删除，否则不能清除通知。例如将从服务播放音乐的音乐播放器设置为在前台运行，这是因为用户明确意识到其操作。状态栏中的通知可能表示正在播放的歌曲，并允许用户启动 Activity 来与音乐播放器进行交互。
+
+　　startForeground() 和 stopForeground() 方法分别将服务设置为前台服务和从前台删除服务。`startForeground(int id,Notification notification)`的作用是把当前服务设置为前台服务，其中 id 参数代表唯一标识通知的整型数，需要注意的是提供给 startForeground() 的整型 ID 不得为 0 ，而 notification 是一个状态栏的通知。`stopForeground(boolean removeNotification)`用来从前台删除服务，此方法传入一个布尔值，指示是否也删除状态栏通知，true 为删除。注意该方法并不会停止服务。但是，如果在服务正在前台运行时将其停止，则通知也会被删除。
+
+## 服务 Service 与线程 Thread
+#### 概念不同
+　　Thread 是程序执行的最小单元，它是分配 CPU 的基本单位， android 系统中 UI 线程䦹线程的一种，当然 Thread 还可以用于执行一些耗时异步操作。
+
+　　Service 是 Android 的一种机制，服务是运行在主线程上的，它是由系统进程托管。它与其他组件之间的通信类似于 client 和 server，是一种轻量级的 IPC 通信，这种通信的载体是 binder ，它是在 linux 层交互信息的一种 IPC。
+
+#### 执行任务不同
+　　在 Android 系统中，线程一般指的是工作线程（即后台线程），而主线程是一种特殊的工作线程，他负责将事件分配给相应的用户界面小工具，如绘图事件及事件响应，因此为了保证应用 UI 的响应能力，主线程上不可执行耗时操作。如果执行的操作不能很快完成，则应确保它们在单独的工作线程执行。
+
+　　Service 则是 Android 系统中的组件，一般情况下他运行于主线程，因此在 Service 中不可执行耗时操作，否则系统会报 ANR 异常。如果需要让 Service 执行耗时任务，可在 Servce 中开始单独线程去执行。
+
+#### 使用场景
+
+　　当要执行耗时的网络或者数据库查询以及其他阻塞 UI 线程或密集使用 CPU 的任务时，都应该改使用工作线程（Thread），这样才能保证 UI 线程不被占用而影响用户体验。
+
+　　在应用程序中，如果需要长时间的在后台运行，而且不需要交互的情况下，使用服务。比如播放音乐，通过 Service + Notification 方式在后台执行，同时在通知栏显示着。
+
 ## 参考文章
 1.[Android组件系列----Android Service组件深入解析](https://www.cnblogs.com/smyhvae/p/4070518.html)
-
-
 2.[Android编程开发Android Service详解](https://www.2cto.com/kf/201802/721726.html)
