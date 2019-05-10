@@ -157,9 +157,19 @@
 　　Android 中的广播使用了设计模式中的观察者模式：基于消息的发布 / 订阅事件模型。Android 将广播的发送者和接受者解耦，使得系统方便集成、更易扩展。
 
 #### 模型讲解
-
 　　模型中有 3 个角色：1.消息订阅者（广播接受者），2.消息发布者（广播发布者），3.消息中心（AMS，即 Activity Manager Service）。
 ![](广播原理图.png)
+
+#### 静态广播的注册
+　　静态广播是通过 PackageManagerService 在启动的时候扫描已安装的应用去注册的。
+
+　　在 PackageManagerservice 的构造方法中，会去扫描应用安装目录，顺序是先扫描系统应用安装目录再去扫描第三方应用安装目录。
+
+　　PaackageManagerService.scanDirLI 就是用于扫描目录的方法：
+```
+
+```
+
 
 
 
