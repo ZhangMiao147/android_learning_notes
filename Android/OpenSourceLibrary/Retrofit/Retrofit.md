@@ -37,6 +37,108 @@
 | 应用场景 |  1.作者已经停止对该项目维护；2.Android 5.0 后不推荐使用 HttpClient；所以不推荐在项目中使用。 | 1.适合轻量级网络交互：网络请求频繁、传输数据量小；2.不能进行大数据量的网络操作（比如下载视频、音频），所以不适合用来上传文件。 | 1.重量级网络交互场景：网络请求频繁、传输数据量大（其实会更推荐 Retrofit，反正 Retrofit 是基于 Okhttp 的）。 | 1.任何场景下优先选择，特别是：后台 Api 遵循 RESTful 的风格 & 项目中使用 RxJava。 |
 | 备注 |  | Volley 的 request 和 response 都是把数据放到 byte 数组里，不支持输入输出流，把数据放到数组中，如果大文件多了，数组就会非常的大且多，消耗内存，所以不如直接返回 Stream 那样具备可操作性，比如下载一个大文件，不可能把整个文件都缓存内存之后再写到文件里。 | Android 4.4 的源码中可以看到 HttpURLConnection 已经替换成 OkHttp 实现了，所以有理由相信 OkHttp 的强大。 |  |
 
+## 注解说明
+
+#### 第一类：网络请求方法
+![](./网络请求方法.png)
+　　Retrofit 把网络请求的 URL 分成了两部分设置：第 1 部分：在网络请求接口的注解设置，第 2 部分：在创建 Retrofit 实例时通过 .baseUrl() 设置。
+
+* 网络请求的完整 Url = 在创建 Retrofit 实例时通过 .baseUrl() 设置 + 网络请求接口的注解设置（path）。
+
+　　具体整合的规则如下：
+
+| 类型 | 具体使用 |
+|--------|--------|
+| path = 完整的 Url | Url = "http://host:port/aa/apath"，其中：path = "http://port/aa/apath"，baseUrl = 不设置（即如果接口里的 url 是一个完整的网址，那么在创建 Retrofit 实例时可以不设置 URL） |
+| path = 绝对路径 | Url = "http://host:port/apath"，其中：path = "/apath"，baseUrl = "http://host:port/a/b" |
+| path = 相对路径 baseUrl = 目录形式 | Url = "http://host:port/a/b/apath"，其中：path = "apath"，baseUrl = "http://host:port/a/b/" |
+| path = 相对路径 baseUrl = 文件形式 | Url = "http://host:port/a/apath"，其中：path = "apath"，baseUrl = "http://host:port/a/b" |
+
+　　建议采用第三种方式来配置，并尽量使用同一种路径形式。
+
+　　@HTTP 替换 @GET、@POST、@PUT、@DELETE、@HEAD 注解的作用及更多功能的扩展，通过属性 method、path、hasBody 进行设置。
+* method：网络请求的方法（区分大小写）
+* path：网络请求地址路径
+* hasBody：是否有请求体
+
+#### 第二类：标记
+![](./标记类.png)
+
+###### @FormUrlEncoded
+* 作用：表示发送 form-encoded 的数据
+
+　　每个键值对需要用 @Field 来注解键名，随后的对象需要提供值。
+
+###### @Multipart
+* 作用：表示发送 form-encoded 的数据（适用于有文件上传的场景）
+
+　　每个键值对需要用 @ Part 来注解键名，随后的对象需要提供值。
+
+#### 第三类：网络请求参数
+![](网络请求参数.png)
+
+###### 详细说明
+**1. @Header & @Headers**
+* 作用：添加请求头 & 添加不固定的请求头
+* @Header 与 @Headers 的效果是一样的，区别在于使用场景和使用方式上：a.使用场景：@Header 用于添加不固定的请求头，@Headers 用于添加固定的请求头。b.使用方式：@Header 作用于方法的参数；@Headers 作用于方法。
+
+**2.@Body**
+* 作用：以 Post 方式传递自定义数据类型给服务器。
+* 特别注意：如果提交的是一个 Map，那么作用相当于 #Field。
+* Map 要经过 FormBody.Builder 类处理成为符合 OkHttp 格式的表单。
+
+**3.@Field & @FieldMap**
+* 作用：发送 Post 请求时提交请求的表单字段。
+* 具体使用：与 @FormUrlEncoded 注解配合使用。
+
+**4.@Part & @PartMap**
+* 作用：发送 Post 请求时提交请求的表单字段。
+* 与 @Field 的区别：功能相同，但携带的参数类型更加丰富，包括数据流，所以适用于有文件上传的场景。
+* 具体使用：与 @Multipart 注解配合使用。
+
+**5.@Query & @QueryMap**
+* 作用：用于 @GET 方法的查询参数（@Query = Url 中 '?' 后面的 key-value）。如 url=http://www.println.net-android，其中，Query = cate。
+* 具体使用：配置时只需要在接口方法中增加一个参数即可。
+
+**6.@Path**
+* 作用：URL 地址的缺省值。
+
+**7.@Url**
+* 作用：直接传入一个请求的 URL 变量用于 URL 设置。
+
+## 创建 Retrofit 实例
+```
+Retrofit retrofit = new Retrofit.Builder()
+				.naseUrl("http://fanyi.youdao.com/") //设置网络请求的 Url 地址
+				.addConverterFactory(GsonConverterFactory.create()) //设置数据解析器
+				.addCallAdapterFactory(RxJavaCallAdapterFactory.create()) //支持 RxJava 平台
+				.build();
+```
+
+#### 关于数据解析器（Converter）
+* Retrofit 支持多种数据解析方式
+* 使用时需要在 Gradle 添加依赖
+
+| 数据解析器 | Gradle 依赖 |
+|--------|--------|
+| Gson | com.squareup.retrofit2:converter-gson:2.0.2 |
+| Jackson | com.squareup.retrofit2:converter-jackson:2.0.2 |
+| Simple XML | com.squareup.retrofit2:converter-simplexml:2.0.2 |
+| Protobuf | com.squareup.retrofit2:converter-protobuf:2.0.2 |
+| Moshi | com.squareup.retrofit2:converter-moshi:2.0.2 |
+| Wire | com.squareup.retrofit2:converter-wire:2.0.2 |
+| Scalars | com.squareup.retrofit2:converter-scalars:2.0.2 |
+
+###### 关于网络请求适配器（CallAdapter）
+* Retrofit 支持多种网络请求适配方式：guava、Java8 和 rxJava。
+* 使用时，若使用的是 Android 默认的 CallAdapter，则不需要添加网络请求适配器的依赖，否则则需要按照需求进行添加 Retrofit 提供的 CallAdapter。
+* 使用时需要在 Gradle 添加依赖：
+| 网络请求适配器 | Gradle 依赖 |
+|--------|--------|
+| guava | com.squareup.retrofit2:adapter-guava:2.0.2 |
+| Java8 | com.squareup.retrofit2:adapter-java8:2.0.2 |
+| rxjava | com.squareup.retrofit2:adapter-rxjava:2.0.2 |
+
 
 ## 参考文章
 [这是一份很详细的 Retrofit 2.0 使用教程（含实例讲解）](https://blog.csdn.net/carson_ho/article/details/73732076)
