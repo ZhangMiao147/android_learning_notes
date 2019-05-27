@@ -71,7 +71,7 @@ public class Observable< T > {
             subscriber = new SafeSubscriber<T>(subscriber);
         }
 
-        // The code below is exactly the same an unsafeSubscribe but not used because it would 
+        // The code below is exactly the same an unsafeSubscribe but not used because it would
         // add a significant depth to already huge call stacks.
         try {
             // allow the hook to intercept and/or decorate
@@ -205,7 +205,7 @@ public final class OperatorSubscribeOn<T> implements OnSubscribe<T> {
                             inner.unsubscribe();
                         }
                     }
-                    
+
                     @Override
                     public void onCompleted() {
                         try {
@@ -214,7 +214,7 @@ public final class OperatorSubscribeOn<T> implements OnSubscribe<T> {
                             inner.unsubscribe();
                         }
                     }
-                    
+
                     @Override
                     public void setProducer(final Producer p) {
                         subscriber.setProducer(new Producer() {
@@ -303,6 +303,280 @@ new Subscriber<String>() {
 ```
 　　到这里流程就走完了，注意一下，从调用 OperatorSubscribeOn 的 call 方法，我们自己写的 OnSubscribe1 对象的 call() 方法和 Subscriber 的 onNext() 方法都是在线程中运行，所以如果你只设置一个 subscribeOn 会导致 OnSubscribe1 对象的 call() 方法和 Subscriber 的 onNext() 方法都在线程中运行，而且 subscribeOn() 方法的 OnSubscribe1 只是指调用 subscribeOn() 方法的 Observable 对象，之后的 Observable 对象是没有用的。
 
+## 3. observeOn(AndroidSchedulers.mainThread()) 流程分析
+
+```
+        Observable.create(new Observable.OnSubscribe<String>() {
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+                Log.d(TAG, "call subscriber:" + subscriber );
+                Thread th=Thread.currentThread();
+                System.out.println("call Tread name:"+th.getName());
+                subscriber.onNext("Hello");
+                subscriber.onCompleted();
+            }
+        })
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<String>() {
+                    @Override
+                    public void onCompleted() {
+                        Log.d(TAG, "onCompleted");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d(TAG, "onError");
+                    }
+
+                    @Override
+                    public void onNext(String s) {
+                        Thread th=Thread.currentThread();
+                        System.out.println("onNext Tread name:"+th.getName());
+                        Log.d(TAG, "onNext s:" + s);
+                    }
+                });
+```
+　　将 create() 方法传入的参数 Observable.OnSubscribe 记为 OnSubscribe1，将 subscribe() 方法的参数 Subscriber 记为 Subscriber1（为了后面的分析）。
+
+#### 3.1. AndroidSchedulers.mainThread() 返回的是什么？
+```
+public final class AndroidSchedulers {
+	//单例模式，返回 AndroidSchedulers 的实例
+    private static AndroidSchedulers getInstance() {
+        for (;;) {
+            AndroidSchedulers current = INSTANCE.get();
+            if (current != null) {
+                return current;
+            }
+            current = new AndroidSchedulers();
+            if (INSTANCE.compareAndSet(null, current)) {
+                return current;
+            }
+        }
+    }
+
+    private AndroidSchedulers() {
+        RxAndroidSchedulersHook hook = RxAndroidPlugins.getInstance().getSchedulersHook();
+
+        Scheduler main = hook.getMainThreadScheduler();
+        if (main != null) {
+            mainThreadScheduler = main;
+        } else {
+			// 设置 mainThreadScheduler 为 LooperScheduler 的实例对象
+			// 将住线程的 Looper 传入 LooperScheduler 的构造方法作为参数
+            mainThreadScheduler = new LooperScheduler(Looper.getMainLooper());
+        }
+    }
+
+    public static Scheduler mainThread() {
+        return getInstance().mainThreadScheduler;
+    }
+
+
+}
+```
+　　mainThread 返回的是一个 LooperScheduler(Looper.getMainLooper()) 的实例对象。
+```
+class LooperScheduler extends Scheduler {
+    private final Handler handler;
+
+    LooperScheduler(Looper looper) {
+		// 创建一个 handler ，用于发送和处理消息
+		// 再次强调，looper 是主线程的 looper
+        handler = new Handler(looper);
+    }
+
+    LooperScheduler(Handler handler) {
+        this.handler = handler;
+    }
+
+    @Override
+    public Worker createWorker() {
+        return new HandlerWorker(handler);
+    }
+
+    static class HandlerWorker extends Worker {
+        private final Handler handler;
+        private final RxAndroidSchedulersHook hook;
+        private volatile boolean unsubscribed;
+
+        HandlerWorker(Handler handler) {
+            this.handler = handler;
+            this.hook = RxAndroidPlugins.getInstance().getSchedulersHook();
+        }
+
+        @Override
+        public void unsubscribe() {
+            unsubscribed = true;
+            handler.removeCallbacksAndMessages(this /* token */);
+        }
+
+        @Override
+        public boolean isUnsubscribed() {
+            return unsubscribed;
+        }
+
+        @Override
+        public Subscription schedule(Action0 action, long delayTime, TimeUnit unit) {
+            if (unsubscribed) {
+                return Subscriptions.unsubscribed();
+            }
+
+            action = hook.onSchedule(action);
+
+            ScheduledAction scheduledAction = new ScheduledAction(action, handler);
+
+            Message message = Message.obtain(handler, scheduledAction);
+            message.obj = this; // Used as token for unsubscription operation.
+			//使用 handler 发送消息出去
+			//发送的消息会进入主线程的 MessageQueue 中，在 Looper.loop() 方法中会将 message 取出，然后调用 scheduledAction 的 run() 方法对消息进行处理
+            handler.sendMessageDelayed(message, unit.toMillis(delayTime));
+
+            if (unsubscribed) {
+                handler.removeCallbacks(scheduledAction);
+                return Subscriptions.unsubscribed();
+            }
+
+            return scheduledAction;
+        }
+
+        @Override
+        public Subscription schedule(final Action0 action) {
+            return schedule(action, 0, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    static final class ScheduledAction implements Runnable, Subscription {
+        private final Action0 action;
+        private final Handler handler;
+        private volatile boolean unsubscribed;
+
+        ScheduledAction(Action0 action, Handler handler) {
+            this.action = action;
+            this.handler = handler;
+        }
+
+		//接收到消息进行处理
+        @Override public void run() {
+            try {
+				// 调用 ScheduledAction 的 call 方法
+                action.call();
+            } catch (Throwable e) {
+                // nothing to do but print a System error as this is fatal and there is nowhere else to throw this
+                IllegalStateException ie;
+                if (e instanceof OnErrorNotImplementedException) {
+                    ie = new IllegalStateException("Exception thrown on Scheduler.Worker thread. Add `onError` handling.", e);
+                } else {
+                    ie = new IllegalStateException("Fatal Exception thrown on Scheduler.Worker thread.", e);
+                }
+                RxJavaPlugins.getInstance().getErrorHandler().handleError(ie);
+                Thread thread = Thread.currentThread();
+                thread.getUncaughtExceptionHandler().uncaughtException(thread, ie);
+            }
+        }
+
+        @Override public void unsubscribe() {
+            unsubscribed = true;
+            handler.removeCallbacks(this);
+        }
+
+        @Override public boolean isUnsubscribed() {
+            return unsubscribed;
+        }
+    }
+}
+
+```
+
+#### 3.2. observeOn(AndroidSchedulers.mainThread()) 方法：
+```
+public class Observable<T> {
+    public final Observable<T> observeOn(Scheduler scheduler) {
+        return observeOn(scheduler, RxRingBuffer.SIZE);
+    }
+
+    public final Observable<T> observeOn(Scheduler scheduler, int bufferSize) {
+        return observeOn(scheduler, false, bufferSize);
+    }
+
+    public final Observable<T> observeOn(Scheduler scheduler, boolean delayError, int bufferSize) {
+        if (this instanceof ScalarSynchronousObservable) {
+            return ((ScalarSynchronousObservable<T>)this).scalarScheduleOn(scheduler);
+        }
+        return lift(new OperatorObserveOn<T>(scheduler, delayError, bufferSize));
+    }
+}
+```
+　　observeOn(AndroidSchedulers.mainThread()) 方法最后返回了 lift(new OperatorObserveOn<T>(scheduler, delayError, bufferSize)) 方法的返回值。
+
+#### 3.3. lift() 方法
+```
+public class Observable<T> {
+    public final <R> Observable<R> lift(final Operator<? extends R, ? super T> operator) {
+        return new Observable<R>(new OnSubscribeLift<T, R>(onSubscribe, operator));
+    }
+}
+```
+　　将 onSubscribe （也就是 onSubscribe1 ）与 operator (也就是 OperatorObserveOn )作为参数，创建 onSubscribeList，当前的 Observable 的 onSubscribe 成了 OnSubscribeLift 对象，而 onSubscribe1 成为 OnSubscribeLift 的 parent 变量，而 OperatorObserOn 成为 OnSubscribeLift 的 operator 变量。
+
+#### 3.4. subscribe() 方法流程
+　　从 RxJava 的简单流程可知 subscribe() 方法调用 Observable 的 onSubscribe 的 call() 方法，也就是 onSubscribe 的 call() 方法，即 OnSubscribeLift 的 call() 方法。
+```
+public final class OnSubscribeLift<T, R> implements OnSubscribe<R> {
+
+    static final RxJavaObservableExecutionHook hook = RxJavaPlugins.getInstance().getObservableExecutionHook();
+
+    final OnSubscribe<T> parent;
+
+    final Operator<? extends R, ? super T> operator;
+
+    public OnSubscribeLift(OnSubscribe<T> parent, Operator<? extends R, ? super T> operator) {
+        this.parent = parent;
+        this.operator = operator;
+    }
+
+    @Override
+    public void call(Subscriber<? super R> o) {
+        try {
+            Subscriber<? super T> st = hook.onLift(operator).call(o);
+            try {
+                // new Subscriber created and being subscribed with so 'onStart' it
+                st.onStart();
+                parent.call(st);
+            } catch (Throwable e) {
+                ...
+            }
+        } catch (Throwable e) {
+            ...
+        }
+    }
+}
+```
+　　先调用了 OperatorObserOn 的 call 方法，然后又调用了 onSubscribe1 的 call 方法。而参数 o 就是自己写的 Subscriber1。
+
+###### 3.4.1. OperatorObserOn 的 call 方法
+```
+    @Override
+    public Subscriber<? super T> call(Subscriber<? super T> child) {
+        if (scheduler instanceof ImmediateScheduler) {
+            // avoid overhead, execute directly
+            return child;
+        } else if (scheduler instanceof TrampolineScheduler) {
+            // avoid overhead, execute directly
+            return child;
+        } else {
+            ObserveOnSubscriber<T> parent = new ObserveOnSubscriber<T>(scheduler, child, delayError, bufferSize);
+            parent.init();
+            return parent;
+        }
+    }
+```
+　　创建了一个 ObserveOnSubscriber 实例对象，并且调用 init() 方法。
+
+###### 3.4.2.
+
+#### 3.5. OperatorObserveOn 类
 
 ## 参考文章
 [拆轮子系列：拆 RxJava](https://blog.piasy.com/2016/09/15/Understand-RxJava/index.html)
