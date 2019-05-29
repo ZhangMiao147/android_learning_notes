@@ -521,7 +521,7 @@ public class Observable<T> {
 　　将 onSubscribe （也就是 onSubscribe1 ）与 operator (也就是 OperatorObserveOn )作为参数，创建 onSubscribeList，当前的 Observable 的 onSubscribe 成了 OnSubscribeLift 对象，而 onSubscribe1 成为 OnSubscribeLift 的 parent 变量，而 OperatorObserOn 成为 OnSubscribeLift 的 operator 变量。
 
 #### 3.4. subscribe() 方法流程
-　　从 RxJava 的简单流程可知 subscribe() 方法调用 Observable 的 onSubscribe 的 call() 方法，也就是 onSubscribe 的 call() 方法，即 OnSubscribeLift 的 call() 方法。
+　　从 RxJava 的简单流程可知 subscribe() 方法调用 Observable 的 onSubscribe 的 call() 方法，也就是  OnSubscribeLift 的 call() 方法。
 ```
 public final class OnSubscribeLift<T, R> implements OnSubscribe<R> {
 
@@ -553,9 +553,9 @@ public final class OnSubscribeLift<T, R> implements OnSubscribe<R> {
     }
 }
 ```
-　　先调用了 OperatorObserOn 的 call 方法，然后又调用了 onSubscribe1 的 call 方法。而参数 o 就是自己写的 Subscriber1。
+　　先调用了 OperatorObserOn 的 call 方法，然后又调用了 onSubscribe1 的 call 方法。而参数 o 就是自己写的 Subscriber1。将这里生成的 Subscriber st 记录为 Subscriber2。
 
-###### 3.4.1. OperatorObserOn 的 call 方法
+##### 3.4.1. OperatorObserOn 的 call 方法
 ```
     @Override
     public Subscriber<? super T> call(Subscriber<? super T> child) {
@@ -566,17 +566,168 @@ public final class OnSubscribeLift<T, R> implements OnSubscribe<R> {
             // avoid overhead, execute directly
             return child;
         } else {
+			//创建 ObserveOnSubscriber 对象
             ObserveOnSubscriber<T> parent = new ObserveOnSubscriber<T>(scheduler, child, delayError, bufferSize);
+			//调用 init() 方法
             parent.init();
             return parent;
         }
     }
 ```
-　　创建了一个 ObserveOnSubscriber 实例对象，并且调用 init() 方法。
+　　创建了一个 ObserveOnSubscriber 实例对象，并且调用 init() 方法。child 参数就是 Subscriber1。而 scheduler 是 调用 observeOn()传入的 Scheduler 参数，也就是 LooperScheduler 对象，将创建的 ObserveOnSubscriber 返回了，而上面提到的 Subscriber2 就是 ObserveOnSubscriber。
 
-###### 3.4.2.
+###### 3.4.1.1 查看 OperatorObserveOn 类
+　　OperatorObserveOn 类是 OperatorObserveOn 的内部类
+```
+ /** Observe through individual queue per observer. */
+    private static final class ObserveOnSubscriber<T> extends Subscriber<T> implements Action0 {
+        final Subscriber<? super T> child; //Subscriber1
+        final Scheduler.Worker recursiveScheduler; //HandlerWorker
 
-#### 3.5. OperatorObserveOn 类
+        public ObserveOnSubscriber(Scheduler scheduler, Subscriber<? super T> child, boolean delayError, int bufferSize) {
+            this.child = child;
+            this.recursiveScheduler = scheduler.createWorker();
+            this.delayError = delayError;
+            this.on = NotificationLite.instance();
+            int calculatedSize = (bufferSize > 0) ? bufferSize : RxRingBuffer.SIZE;
+            // this formula calculates the 75% of the bufferSize, rounded up to the next integer
+            this.limit = calculatedSize - (calculatedSize >> 2);
+            if (UnsafeAccess.isUnsafeAvailable()) {
+                queue = new SpscArrayQueue<Object>(calculatedSize);
+            } else {
+                queue = new SpscAtomicArrayQueue<Object>(calculatedSize);
+            }
+            // signal that this is an async operator capable of receiving this many
+			//在构造方法中调用了 Subscriber 类实现的 request() 方法
+            request(calculatedSize);
+        }
+
+        void init() {
+            // don't want this code in the constructor because `this` can escape through the 
+            // setProducer call
+            Subscriber<? super T> localChild = child;
+			//调用 Subscriber 的
+            localChild.setProducer(new Producer() {
+
+                @Override
+                public void request(long n) {
+                    if (n > 0L) {
+                        BackpressureUtils.getAndAddRequest(requested, n);
+                        schedule();
+                    }
+                }
+
+            });
+            localChild.add(recursiveScheduler);
+            localChild.add(this);
+        }
+}
+```
+　　创建了 ObserveOnSubscriber 实例对象，调用 init() 方法主要是做了一下初始化工作，启动 ObserveOnSubScriber 的 child 变量是 Subscriber1。
+
+#### 3.4.2. parent 的 call() 方法
+　　调用 parent 的 call() 方法其实调用的就是 onSubscribe1 的 call 方法，传递的参数是 ObserveOnSubscriber 对象：
+```
+new Observable.OnSubscribe<String>() {
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+                Log.d(TAG, "call subscriber:" + subscriber );
+                Thread th=Thread.currentThread();
+                System.out.println("call Tread name:"+th.getName());
+                subscriber.onNext("Hello");
+                subscriber.onCompleted();
+            }
+        }
+```
+　　解决查看 ObserveOnSubscriber 的 onNext() 方法：
+```
+        @Override
+        public void onNext(final T t) {
+            if (isUnsubscribed() || finished) {
+                return;
+            }
+            if (!queue.offer(on.next(t))) {
+                onError(new MissingBackpressureException());
+                return;
+            }
+            schedule();
+        }
+
+```
+　　调用了 schedule() 方法(onError() 与 onComplete() 方法都会调用 schedule() 方法)，而 schedule() 方法会在主线程发送 message 出去，最终会调用 ObserveOnSubscriber 的 call() 方法：
+```
+    private static final class ObserveOnSubscriber<T> extends Subscriber<T> implements Action0 {
+        // only execute this from schedule()
+        @Override
+        public void call() {
+            long missed = 1L;
+            long currentEmission = emitted;
+
+            // these are accessed in a tight loop around atomics so
+            // loading them into local variables avoids the mandatory re-reading
+            // of the constant fields
+            final Queue<Object> q = this.queue;
+            final Subscriber<? super T> localChild = this.child;
+            final NotificationLite<T> localOn = this.on;
+            
+            // requested and counter are not included to avoid JIT issues with register spilling
+            // and their access is is amortized because they are part of the outer loop which runs
+            // less frequently (usually after each bufferSize elements)
+            
+            for (;;) {
+                long requestAmount = requested.get();
+                
+                while (requestAmount != currentEmission) {
+                    boolean done = finished;
+                    Object v = q.poll();
+                    boolean empty = v == null;
+                    
+                    if (checkTerminated(done, empty, localChild, q)) {
+                        return;
+                    }
+                    
+                    if (empty) {
+                        break;
+                    }
+                    //调用了 localChild.onNext()方法
+                    localChild.onNext(localOn.getValue(v));
+
+                    currentEmission++;
+                    if (currentEmission == limit) {
+                        requestAmount = BackpressureUtils.produced(requested, currentEmission);
+                        request(currentEmission);
+                        currentEmission = 0L;
+                    }
+                }
+                
+                ...
+            }
+        }
+	}
+```
+　　在 ObserveOnSubscriber 的 call() 方法中调用了 localChild 的 onNext() 方法，而 localChild 是什么呢？就是在创建 ObserveOnSubscriber 时传递的参数，也就是 Subscriber1。
+```
+new Subscriber<String>() {
+                    @Override
+                    public void onCompleted() {
+                        Log.d(TAG, "onCompleted");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d(TAG, "onError");
+                    }
+
+                    @Override
+                    public void onNext(String s) {
+                        Thread th=Thread.currentThread();
+                        System.out.println("onNext Tread name:"+th.getName());
+                        Log.d(TAG, "onNext s:" + s);
+                    }
+                }
+```
+　　这样也就调用到了我们自己书写的代码，而 ObserveOnSubscriber 的 onNext 是通过 handler 向主线程发送消息，处理消息是在主线程，所以 Subscriber1 的 onNext() 就会运行在主线程（onError() 与 onComplete() 方法相同）。
+
 
 ## 参考文章
 [拆轮子系列：拆 RxJava](https://blog.piasy.com/2016/09/15/Understand-RxJava/index.html)
