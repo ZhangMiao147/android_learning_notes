@@ -1,5 +1,5 @@
 # 设计模式
-* [设计模式]()  -知识总结
+* [设计模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F.md)  -文章整理
 
 ## 创建型模式
 　　创建型模式（Creational Pattern）对类的实例化过程进行了抽象，能够将软件模块中对象的创建和对象的使用分离。为了使软件的结构更加清晰，外界对于这些对象只需要知道他们公共的结构，而不清楚其具体的实现细节，使整个系统的设计更加符合单一职责原则。
@@ -10,7 +10,7 @@
 - 抽象工厂模式（Abstract Method）
 - 建造者模式（Builder）
 - 原型模式（Prototype）
-- 单例模式（Singleton）
+- [单例模式（Singleton）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F.md)  - 代码实现
 
 ## 结构型模式
 　　结构型模式（Structural Pattern）描述如何将类或者对象结合在一起行程更大的结构，就像搭积木，可以通过简单积木的组合行程复杂的、功能更为强大的结构。
@@ -44,6 +44,6 @@
 
 
 
-* 参考文章
-	* [图说设计模式](https://design-patterns.readthedocs.io/zh_CN/latest/index.html)
+## 参考文章
+* [图说设计模式](https://design-patterns.readthedocs.io/zh_CN/latest/index.html)
 
