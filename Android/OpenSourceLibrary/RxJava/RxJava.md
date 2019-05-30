@@ -113,9 +113,10 @@ new Subscriber<String>() {
         	}
        }
 ```
-　　到这里流程就过完了。方法的主导只要由 Observable 来，在创建 Observable 的时候，会将 OnSubscribe(订阅操作)传给 Observable(被观察) 作为成员变量，在调用 subscribe 的方法（订阅）时，将 Subcriber (观察者)作为变量传入，将 Subcriber （观察者）作为参数调用 onSubscribe 的 call 方法来处理订阅的事件，并且会调用 Subcriber 的相关方法（通知观察者）。
+　　到这里流程就过完了。方法的主导只要由 Observable 来，在创建 Observable 的时候，会将 OnSubscribe(订阅操作)传给 Observable(被观察者) 作为成员变量，在调用 subscribe 的方法（订阅）时，将 Subscriber (观察者)作为变量传入，将 Subscriber （观察者）作为参数调用 onSubscribe 的 call 方法来处理订阅的事件，并且会调用 Subcriber 的相关方法（通知观察者）。
 
-## subscribeOn(Schedulers.computation()) 流程分析
+## 2. subscribeOn(Schedulers.computation()) 流程分析
+　　subscribeOn(Schedulers.computation()) 方法让 OnSubscribe()（订阅操作） 运行在计算线程。
 　　简单使用：
 ```
         Thread th=Thread.currentThread();
@@ -214,7 +215,7 @@ public final class OperatorSubscribeOn<T> implements OnSubscribe<T> {
                             inner.unsubscribe();
                         }
                     }
-
+					//同时设置了 observeOn() 方法，setProducer 方法会被调用，从而确保 OnSubscribe 的 call 方法运行在指定的线程中
                     @Override
                     public void setProducer(final Producer p) {
                         subscriber.setProducer(new Producer() {
@@ -727,6 +728,10 @@ new Subscriber<String>() {
                 }
 ```
 　　这样也就调用到了我们自己书写的代码，而 ObserveOnSubscriber 的 onNext 是通过 handler 向主线程发送消息，处理消息是在主线程，所以 Subscriber1 的 onNext() 就会运行在主线程（onError() 与 onComplete() 方法相同）。
+　　**总结：ObserveOn() 方法会生成 OperatorObserveOn 对象，并且将其设置为 Observable 的 onSubscribe 对象，并且将下游的 Subscriber 作为对象进行封装，在调用 onNext()、onError()、onComplete() 方法时通过向主线程发送 message 消息，在主线程中处理消息，从而确保Subscriber 的 onNext()、onError()、onComplete() 运行在主线程。**
+
+## 概括
+　　RxJava 主要采用的是观察者模式，Observable 作为被观察者，负责接收原始的 Observable 发出的事件，并在处理后发送给给 Observer，Observer 作为观察者。Observable 并不是在创建的时候就立即开始发送事件，而是在它被订阅的时候，也就是 subscribe() 方法执行的时候开始。subscribeOn() 方法会使用 OperatorSubscribeOn 类作为 Observable 的 onSubscribe 对象，将上游的 Observable 进行封装，从而确保上游的 OnSubscribe 的 call() 方法运行在指定线程。ObserveOn() 方法会使用 OperatorObserveOn 类作为 Observable 的 onSubscribe 对象，将下游的 Subscriber 进行封装，从而确保 Subscriber 的 onNext()、onError()、onComplete() 运行在指定的线程。
 
 
 ## 参考文章
