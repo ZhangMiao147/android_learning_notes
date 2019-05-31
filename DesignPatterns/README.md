@@ -5,7 +5,7 @@
 　　创建型模式（Creational Pattern）对类的实例化过程进行了抽象，能够将软件模块中对象的创建和对象的使用分离。为了使软件的结构更加清晰，外界对于这些对象只需要知道他们公共的结构，而不清楚其具体的实现细节，使整个系统的设计更加符合单一职责原则。
 　　创建型模式在创建什么（What）、由谁创建（Who）、何时创建（When）等方面都为软件设计者提供了尽可能大的灵活性。创建型模式隐藏了类的实例的创建细节，通过隐藏对象如何被创建和组合在一起达到使整个系统独立的目的。
 
-- 简单工厂模式（Simple Factory）
+- [简单工厂模式（Simple Factory）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/%E7%AE%80%E5%8D%95%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F.md)
 - 工厂方法模式（Factory Method）
 - 抽象工厂模式（Abstract Method）
 - 建造者模式（Builder）
@@ -36,7 +36,7 @@
 - 迭代器模式（Iterator）
 - 中介者模式（Mediator）
 - 备忘录模式（Memento）
-- [观察者模式（Observer）]()  --代码实现
+- [观察者模式（Observer）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F.md)  --代码实现
 - 状态模式（State）
 - 策略模式（Strategy）
 - 模板方法模式（Template Method）
