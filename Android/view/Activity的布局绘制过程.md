@@ -239,9 +239,338 @@ public abstract class LayoutInflater {
 ```
 　　子元素的处理同样也是 createViewFromTag() 方法来创建 View 的实例，调用 rInflateChildren() 方法来查找当前 View 下的子元素，每次递归完成后则将这个 View 添加到父布局当中。
 
-　　这样的话，把整个布局文件都解析完成后就形成了一个完整的 DOM 结构，最终会把最顶层的根布局返回，至此 inflate() 过程全部结束。
+　　这样的话，把整个布局文件都解析完成后就形成了一个完整的 DOM 结构，最终会把最顶层的根布局返回，至此 inflate() 过程全部结束。setContentView() 的方法在 onCreate() 方法中调用完成之后，随后会进入 resume 状态，接下来继续去 ActivityThread 查看 resume 的处理。
 
+## 从 ActivityThread 的 resume 处理开始
+```
+public final class ActivityThread {
+    final void handleResumeActivity(IBinder token,
+            boolean clearHide, boolean isForward, boolean reallyResume, int seq, String reason) {
+        ActivityClientRecord r = mActivities.get(token);
+        if (!checkAndUpdateLifecycleSeq(seq, r, "resumeActivity")) {
+            return;
+        }
 
+        // If we are getting ready to gc after going to the background, well
+        // we are back active so skip it.
+        unscheduleGcIdler();
+        mSomeActivitiesChanged = true;
+
+        // TODO Push resumeArgs into the activity for consideration
+        r = performResumeActivity(token, clearHide, reason);
+
+        if (r != null) {
+            final Activity a = r.activity;
+
+            final int forwardBit = isForward ?
+                    WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION : 0;
+
+            // If the window hasn't yet been added to the window manager,
+            // and this guy didn't finish itself or start another activity,
+            // then go ahead and add the window.
+            boolean willBeVisible = !a.mStartedActivity;
+            if (!willBeVisible) {
+                try {
+                    willBeVisible = ActivityManagerNative.getDefault().willActivityBeVisible(
+                            a.getActivityToken());
+                } catch (RemoteException e) {
+                    throw e.rethrowFromSystemServer();
+                }
+            }
+            if (r.window == null && !a.mFinished && willBeVisible) {
+                r.window = r.activity.getWindow();
+                View decor = r.window.getDecorView();
+                decor.setVisibility(View.INVISIBLE);
+                ViewManager wm = a.getWindowManager();
+                WindowManager.LayoutParams l = r.window.getAttributes();
+                a.mDecor = decor;
+                l.type = WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
+                l.softInputMode |= forwardBit;
+                if (r.mPreserveWindow) {
+                    a.mWindowAdded = true;
+                    r.mPreserveWindow = false;
+                    // Normally the ViewRoot sets up callbacks with the Activity
+                    // in addView->ViewRootImpl#setView. If we are instead reusing
+                    // the decor view we have to notify the view root that the
+                    // callbacks may have changed.
+                    ViewRootImpl impl = decor.getViewRootImpl();
+                    if (impl != null) {
+                        impl.notifyChildRebuilt();
+                    }
+                }
+                if (a.mVisibleFromClient && !a.mWindowAdded) {
+                    a.mWindowAdded = true;
+					//将视图添加上去
+                    wm.addView(decor, l);
+                }
+            ...
+        } else {
+            ...
+        }
+    }
+}
+
+```
+　　handleResumeActivity() 方法中调用 ViewMananger 的 addView() 添加视图，而 ViewManager 是一个接口，WindowManangerImpl 是实现它的类，所以查看 WindowManagerImpl 的 addView() 方法：
+```
+public final class WindowManagerImpl implements WindowManager {
+    @Override
+    public void addView(@NonNull View view, @NonNull ViewGroup.LayoutParams params) {
+        applyDefaultToken(params);
+        mGlobal.addView(view, params, mContext.getDisplay(), mParentWindow);
+    }
+}
+```
+　　WindowManagerImpl 的 addView() 接着调用了 WindowManagerGlobal 的 addView() 方法：
+```
+public final class WindowManagerGlobal {
+    public void addView(View view, ViewGroup.LayoutParams params,
+            Display display, Window parentWindow) {
+        //只贴出了关键的代码
+		...
+
+        // do this last because it fires off messages to start doing things
+		//设置 ViewRoot 的视图
+        try {
+            root.setView(view, wparams, panelParentView);
+        } catch (RuntimeException e) {
+            ...
+        }
+    }
+}
+```
+　　WindowMnanagerGolder 的 addView() 方法向 ViewRoot 添加视图：
+```
+public final class ViewRootImpl implements ViewParent,
+        View.AttachInfo.Callbacks, ThreadedRenderer.HardwareDrawCallbacks {
+    /**
+     * We have one child
+     */
+    public void setView(View view, WindowManager.LayoutParams attrs, View panelParentView) {
+        synchronized (this) {
+            if (mView == null) {
+                mView = view;
+
+                mAttachInfo.mDisplayState = mDisplay.getState();
+                mDisplayManager.registerDisplayListener(mDisplayListener, mHandler);
+
+                mViewLayoutDirectionInitial = mView.getRawLayoutDirection();
+                mFallbackEventHandler.setView(view);
+                mWindowAttributes.copyFrom(attrs);
+                if (mWindowAttributes.packageName == null) {
+                    mWindowAttributes.packageName = mBasePackageName;
+                }
+                attrs = mWindowAttributes;
+                setTag();
+
+                // Keep track of the actual window flags supplied by the client.
+                mClientWindowLayoutFlags = attrs.flags;
+
+                setAccessibilityFocus(null, null);
+
+                if (view instanceof RootViewSurfaceTaker) {
+                    mSurfaceHolderCallback =
+                            ((RootViewSurfaceTaker)view).willYouTakeTheSurface();
+                    if (mSurfaceHolderCallback != null) {
+                        mSurfaceHolder = new TakenSurfaceHolder();
+                        mSurfaceHolder.setFormat(PixelFormat.UNKNOWN);
+                    }
+                }
+
+                // Compute surface insets required to draw at specified Z value.
+                // TODO: Use real shadow insets for a constant max Z.
+                if (!attrs.hasManualSurfaceInsets) {
+                    attrs.setSurfaceInsets(view, false /*manual*/, true /*preservePrevious*/);
+                }
+
+                CompatibilityInfo compatibilityInfo =
+                        mDisplay.getDisplayAdjustments().getCompatibilityInfo();
+                mTranslator = compatibilityInfo.getTranslator();
+
+                // If the application owns the surface, don't enable hardware acceleration
+                if (mSurfaceHolder == null) {
+                    enableHardwareAcceleration(attrs);
+                }
+
+                boolean restore = false;
+                if (mTranslator != null) {
+                    mSurface.setCompatibilityTranslator(mTranslator);
+                    restore = true;
+                    attrs.backup();
+                    mTranslator.translateWindowLayout(attrs);
+                }
+                if (DEBUG_LAYOUT) Log.d(mTag, "WindowLayout in setView:" + attrs);
+
+                if (!compatibilityInfo.supportsScreen()) {
+                    attrs.privateFlags |= WindowManager.LayoutParams.PRIVATE_FLAG_COMPATIBLE_WINDOW;
+                    mLastInCompatMode = true;
+                }
+
+                mSoftInputMode = attrs.softInputMode;
+                mWindowAttributesChanged = true;
+                mWindowAttributesChangesFlag = WindowManager.LayoutParams.EVERYTHING_CHANGED;
+                mAttachInfo.mRootView = view;
+                mAttachInfo.mScalingRequired = mTranslator != null;
+                mAttachInfo.mApplicationScale =
+                        mTranslator == null ? 1.0f : mTranslator.applicationScale;
+                if (panelParentView != null) {
+                    mAttachInfo.mPanelParentWindowToken
+                            = panelParentView.getApplicationWindowToken();
+                }
+                mAdded = true;
+                int res; /* = WindowManagerImpl.ADD_OKAY; */
+
+                // Schedule the first layout -before- adding to the window
+                // manager, to make sure we do the relayout before receiving
+                // any other events from the system.
+                requestLayout();
+                if ((mWindowAttributes.inputFeatures
+                        & WindowManager.LayoutParams.INPUT_FEATURE_NO_INPUT_CHANNEL) == 0) {
+                    mInputChannel = new InputChannel();
+                }
+                mForceDecorViewVisibility = (mWindowAttributes.privateFlags
+                        & PRIVATE_FLAG_FORCE_DECOR_VIEW_VISIBILITY) != 0;
+                try {
+                    mOrigWindowType = mWindowAttributes.type;
+                    mAttachInfo.mRecomputeGlobalAttributes = true;
+                    collectViewAttributes();
+                    res = mWindowSession.addToDisplay(mWindow, mSeq, mWindowAttributes,
+                            getHostVisibility(), mDisplay.getDisplayId(),
+                            mAttachInfo.mContentInsets, mAttachInfo.mStableInsets,
+                            mAttachInfo.mOutsets, mInputChannel);
+                } catch (RemoteException e) {
+                    mAdded = false;
+                    mView = null;
+                    mAttachInfo.mRootView = null;
+                    mInputChannel = null;
+                    mFallbackEventHandler.setView(null);
+                    unscheduleTraversals();
+                    setAccessibilityFocus(null, null);
+                    throw new RuntimeException("Adding window failed", e);
+                } finally {
+                    if (restore) {
+                        attrs.restore();
+                    }
+                }
+
+                if (mTranslator != null) {
+                    mTranslator.translateRectInScreenToAppWindow(mAttachInfo.mContentInsets);
+                }
+                mPendingOverscanInsets.set(0, 0, 0, 0);
+                mPendingContentInsets.set(mAttachInfo.mContentInsets);
+                mPendingStableInsets.set(mAttachInfo.mStableInsets);
+                mPendingVisibleInsets.set(0, 0, 0, 0);
+                mAttachInfo.mAlwaysConsumeNavBar =
+                        (res & WindowManagerGlobal.ADD_FLAG_ALWAYS_CONSUME_NAV_BAR) != 0;
+                mPendingAlwaysConsumeNavBar = mAttachInfo.mAlwaysConsumeNavBar;
+                ...
+
+                if (view instanceof RootViewSurfaceTaker) {
+                    mInputQueueCallback =
+                        ((RootViewSurfaceTaker)view).willYouTakeTheInputQueue();
+                }
+                if (mInputChannel != null) {
+                    if (mInputQueueCallback != null) {
+                        mInputQueue = new InputQueue();
+                        mInputQueueCallback.onInputQueueCreated(mInputQueue);
+                    }
+                    mInputEventReceiver = new WindowInputEventReceiver(mInputChannel,
+                            Looper.myLooper());
+                }
+
+                view.assignParent(this);
+                mAddedTouchMode = (res & WindowManagerGlobal.ADD_FLAG_IN_TOUCH_MODE) != 0;
+                mAppVisible = (res & WindowManagerGlobal.ADD_FLAG_APP_VISIBLE) != 0;
+
+                if (mAccessibilityManager.isEnabled()) {
+                    mAccessibilityInteractionConnectionManager.ensureConnection();
+                }
+
+                if (view.getImportantForAccessibility() == View.IMPORTANT_FOR_ACCESSIBILITY_AUTO) {
+                    view.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+                }
+
+                // Set up the input pipeline.
+                CharSequence counterSuffix = attrs.getTitle();
+                mSyntheticInputStage = new SyntheticInputStage();
+                InputStage viewPostImeStage = new ViewPostImeInputStage(mSyntheticInputStage);
+                InputStage nativePostImeStage = new NativePostImeInputStage(viewPostImeStage,
+                        "aq:native-post-ime:" + counterSuffix);
+                InputStage earlyPostImeStage = new EarlyPostImeInputStage(nativePostImeStage);
+                InputStage imeStage = new ImeInputStage(earlyPostImeStage,
+                        "aq:ime:" + counterSuffix);
+                InputStage viewPreImeStage = new ViewPreImeInputStage(imeStage);
+                InputStage nativePreImeStage = new NativePreImeInputStage(viewPreImeStage,
+                        "aq:native-pre-ime:" + counterSuffix);
+
+                mFirstInputStage = nativePreImeStage;
+                mFirstPostImeInputStage = earlyPostImeStage;
+                mPendingInputEventQueueLengthCounterName = "aq:pending:" + counterSuffix;
+            }
+        }
+    }
+}
+```
+
+　　ViewRootImpl 的 setView() 方法代码这么多，其实对于我们来说只需要看到它里面调用了 requestLayout() 方法即可。requestLayout() 用来重绘页面，视图的 measure、layout、draw 都会重新调用:
+```
+public final class ViewRootImpl implements ViewParent,
+        View.AttachInfo.Callbacks, ThreadedRenderer.HardwareDrawCallbacks {
+
+    final class TraversalRunnable implements Runnable {
+        @Override
+        public void run() {
+            doTraversal();
+        }
+    }
+    final TraversalRunnable mTraversalRunnable = new TraversalRunnable();
+
+    @Override
+    public void requestLayout() {
+        if (!mHandlingLayoutInLayoutRequest) {
+            checkThread();
+            mLayoutRequested = true;
+            scheduleTraversals();
+        }
+    }
+
+	void scheduleTraversals() {
+        if (!mTraversalScheduled) {
+            mTraversalScheduled = true;
+            mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBarrier();
+            mChoreographer.postCallback(
+                    Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
+            if (!mUnbufferedInputDispatch) {
+                scheduleConsumeBatchedInput();
+            }
+            notifyRendererOfFramePending();
+            pokeDrawLockIfNeeded();
+        }
+    }
+
+    void doTraversal() {
+        if (mTraversalScheduled) {
+            mTraversalScheduled = false;
+            mHandler.getLooper().getQueue().removeSyncBarrier(mTraversalBarrier);
+
+            if (mProfile) {
+                Debug.startMethodTracing("ViewAncestor");
+            }
+
+            performTraversals();
+
+            if (mProfile) {
+                Debug.stopMethodTracing();
+                mProfile = false;
+            }
+        }
+    }
+
+}
+```
+　　ViewRootImpl 的 requestLayout() 最终会调用到 performTraversals() 方法，requestLayout() 方法会先调用 scheduleTraversals() 方法，scheduleTraversals() 方法调用 Choreographer 的 postCallBack() 方法向主线程（UI 线程）发送重绘页面的消息，等到主线程处理处理该消息时会调用 mTraversalRunnable 的 run() 方法，调用到 doTraversal() 方法，在 doTraversal() 方法中调用了 performTraversals() 方法，在 performTraversals() 方法中会依次调用 View 的 measure、layout、draw 方法将视图显示到屏幕上。
+
+　　**总结：**setContentView 会将整个布局文件都解析完成并行程一个完整的 Dom 结构，并设置最顶部的根布局。在 resume 的时候才会进行视图的绘制操作，通过调用 requestLayout() 最终调用到 performTraversales() 方法，performTraversales() 方法会一次调用 View 的 measure、layout、draw 步骤将视图显示在屏幕上。
 
 
 ## 参考文章
