@@ -1,16 +1,19 @@
 # 第 4 章 Lock 的使用
 
 ## 本章主要内容
-	
+	ReentrantLocal 类的使用。
+	ReentrantReadWriteLock 类的使用。
 
 ## 4.1 使用 ReentrantLock 类
-　　
+　　在 Java 多线程中，可以使用 synchronized 关键字来实现线程之间同步互斥，但在 JDK 1.5 中新增加了 ReentrantLock 类也是达到同样的效果，并且在扩展功能上也更加强大，比如具有嗅探锁定、多路分支通知等功能，而且在使用上也比 synchronized 更加的灵活。
 
 #### 4.1.1 使用 ReentrantLock 实现同步：测试 1
-　　
+　　调用 ReentrantLock 对象的 lock() 方法获得锁，调用 unlock() 方法释放锁。
+
+　　当前线程打印完毕之后将锁进行释放，其他线程才可以继续打印。线程打印的数据是分组打印（一个线程打印的数据在一块），因为当前线程已经持有锁，但线程之间打印的顺序是随机的。
 
 #### 4.1.2 使用 ReentrantLock 实现同步：测试 2
-　　
+　　调用 lock.lock() 代码的线程就持有了“对象监视器”，其他线程只有等待锁被释放时再次争抢。效果和使用 synchronized 关键字一样，线程之间还是顺序执行的。
 
 #### 4.1.3 使用 Condition 实现等待 / 通知：错误用法与解决
 　　
