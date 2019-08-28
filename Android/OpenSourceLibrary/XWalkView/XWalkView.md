@@ -21,4 +21,6 @@ Execution failed for task ':app:processReadboyDebugResources'.
 
 ## 参考文章
 [用 Crosswalk 的 XWalkView 做混合式 App](https://www.jianshu.com/p/93f88e87f34f)
+[有关 XWalkView 技术分享](https://blog.csdn.net/tluffy/article/details/93771926)
 [腾讯 x5 内核集成，优化 web 加载速度](https://www.jianshu.com/p/4cf6dff6657b)
+[Crosswalk 学习笔记](https://www.jianshu.com/p/372731b31f5c)
