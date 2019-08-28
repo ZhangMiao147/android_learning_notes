@@ -166,7 +166,7 @@ public final static int MAX_PRIORITY = 10;
 　　setDaemon(true)将线程设置为守护线程。
 
 ## 1.12 本章小结
-　　本章介绍了 Thread 类的 API，在使用这些 API 的过程中，会粗线一些意想不到的情况，其实这也是多线程具有不可预知性的一个体现。
+　　本章介绍了 Thread 类的 API，在使用这些 API 的过程中，会出现一些意想不到的情况，其实这也是多线程具有不可预知性的一个体现。
 
 
 
