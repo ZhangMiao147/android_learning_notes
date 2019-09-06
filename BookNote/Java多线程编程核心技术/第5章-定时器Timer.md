@@ -9,12 +9,12 @@
 　　在 JDK 库中 Timer 类主要负责计划任务的功能，也就是在指定的时间开始执行某一个任务。
 
 　　Timer 类的方法列表：
-（图）
+![](./类Timer的方法列表.png)
 
 　　Timer 类的主要作用就是设置计划任务，但封装任务的类却是 TimerTask。
 
-　　Time 的类结构：
-（图）
+　　类 TimeTask 类相关的信息：
+![](./类TimerTask类相关的信息.png)
 
 　　执行计划任务的代码要放入 TimerTask 的子类中，因为 TimerTask 是一个抽象类。
 
