@@ -269,3 +269,6 @@
 　　设置 `android:resizeableAcivity` 属性为 false ，当长按 Overview 按钮想要进入多窗口模式时，会发现项目无法进入多窗口模式，并会弹出 Toast 来提醒用户当前应用不支持多窗口模式。
 
 ## 1.4 本章小结
+　　本章学习了 Android 5.0、Android 6.0 和 Android 7.0 的部分新特性。
+
+
