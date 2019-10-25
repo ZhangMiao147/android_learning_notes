@@ -1,4 +1,6 @@
 # 设计模式
+　　软件模式是将模式的一般概念应用于软件开发领域，即软件开发的总体指导思路或参照样板。软件模式并非仅限于设计模式，还包括架构模式、分析模式和过程模式等，实际上，在软件生存期的每一个阶段都存在着一些被认可的模式。
+
 * [UML类图](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F.md)
 
 ## 创建型模式
