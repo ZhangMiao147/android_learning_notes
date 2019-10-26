@@ -1,7 +1,7 @@
 # 设计模式
 　　软件模式是将模式的一般概念应用于软件开发领域，即软件开发的总体指导思路或参照样板。软件模式并非仅限于设计模式，还包括架构模式、分析模式和过程模式等，实际上，在软件生存期的每一个阶段都存在着一些被认可的模式。
 
-* [UML类图](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F.md)
+* [UML类图](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/UML%E7%B1%BB%E5%9B%BE.md)
 
 ## 创建型模式
 　　创建型模式（Creational Pattern）对类的实例化过程进行了抽象，能够将软件模块中对象的创建和对象的使用分离。为了使软件的结构更加清晰，外界对于这些对象只需要知道他们公共的结构，而不清楚其具体的实现细节，使整个系统的设计更加符合单一职责原则。
@@ -18,7 +18,7 @@
 　　结构型模式（Structural Pattern）描述如何将类或者对象结合在一起行程更大的结构，就像搭积木，可以通过简单积木的组合行程复杂的、功能更为强大的结构。
 　　结构型模式可以分为类结构型模式和对象结构式模式：类结构型关心类的组合，由多个类可以组合成一个更大的系统，在类结构型模式中一般只存在继承关系和实现关系；对象结构型模式关心类与对象的组合，通过关联关系使得在一个类中定义另一个类的实例对象，然后通过该对象调用其方法。根据“合成复用原则”，在系统中尽量使用关联关系来替代继承关系，因此大部分结构型模型都是对象结构型模式。
 
-- 适配器模式（Adapter）
+- [适配器模式（Adapter）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F.md)
 - 桥接模式（Bridge）
 - 组合模式（Composite）
 - 装饰模式（Decorator）
