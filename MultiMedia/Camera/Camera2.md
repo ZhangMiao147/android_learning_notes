@@ -130,6 +130,18 @@
 
 * set(Ket< T > key,T value)
 	设置执行的参数值。
+
+　　可以通过 CameraDevice.createCaptureRequest() 方法创建一个 CaptureRequest.Builder 对象，该方法只有一个参数 templateType 用于指定使用何种模板创建 CaptureRequest.Builder 对象。因为 CaptureRequest 可以配置的参数很多。Camera2 根据使用场景的不同，事先配置好了一些常用的参数模板：
+* TEMPLATE_PREVIEW：适用于配置预览的模板。
+* TEMPLATE_RECORD：适用于视频录制的模板。
+* TEMPLATE_STILL_CAPTURE：适用于拍照的模板。
+* TEMPLATE_VIDEO_SNAPSHOT：适用于在录制视频过程中支持拍照的模版。
+* TEMPLATE_MANUAL：适用于希望自己手动配置大部分参数的模版。
+
+
+
+
+
 ```
 //自动对焦
 captureRequestBuilder.set(Cap)
@@ -214,6 +226,24 @@ captureRequestBuilder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,CameraChara
 6.官方说 Camera2 的性能会更好，但是在较早期的一些机器上运行 Camera2 的性能并没有比 Camera1 好。
 7.当设备的 Supported Handware Level 低于 FULL 的时候，建议还是使用 Camera1，因为 FULL 级别以下的 Camera2 能提供的功能几乎和 Camera1 一样，所以倒不如选择更加稳定的 Camera1。
 
+## 使用
+1.预览尺寸并不是直接从 CameraCharacteristics 获取的，而是先通过 SCALER_STREAM_CONFIGURATION_MAP 获取 StreamConfigurationMap.getOutputSizes() 方法获取尺寸列表，该方法会要求传递一个 Class 类型，然后根据这个类型返回对应的尺寸列表，如果给定的类型不支持，则返回 null，可以通过 StreamConfigurationMap.isOutputSupportedFor() 方法判断某一个类型是否被支持，常见的类型有：
+* ImageReader：常用来拍照或接收 YUV 数据。
+* MediaRecorder：常用来录制视频。
+* MediaCodec：常用来录制视频。
+* SurfaceHolder：常用开显示预览画面。
+* SurfaceTexture：常用来显示预览画面。
+
+2. 在配置尺寸方面，Camera2 和 Camera1 有着很大的不同，Camera1 是将所有的尺寸信息都设置给相机，而 Camera2 则是把尺寸信息设置给 Surface，例如接收预览画面的 SurfaceTexture，或者是接收拍照图片的 ImageReader，相机在输出图像数据的时候会根据 Surface 配置的 Buffer 大小输出对应尺寸的画面。
+
+ 
+
+
+
+
+
+
+
 
 ## 其他
 　　因为打开相机和创建会话等都是耗时操作，所以需要启动一个 HandlerThread 在子线程中处理。
@@ -226,8 +256,8 @@ captureRequestBuilder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,CameraChara
 
 　　
 ## 查阅资料
-1.[Android Camera2 教程 · 第一章 · 概览](https://www.jianshu.com/p/9a2e66916fcb)
-2.[Android Camera2 教程 · 第二章 · 开关相机](https://www.jianshu.com/p/df3c8683bb90)
+1.[Android Camera2 教程 · 第一章 · 概览](https://www.jianshu.com/p/9a2e66916fcb) - 已阅读
+2.[Android Camera2 教程 · 第二章 · 开关相机](https://www.jianshu.com/p/df3c8683bb90) - 已阅读
 3.[Android Camera2 教程 · 第三章 · 预览](https://www.jianshu.com/p/067889611ae7)
 4.[Android Camera2 教程 · 第四章 · 拍照](https://www.jianshu.com/p/2ae0a737c686)
 5.[Android:Camera2开发详解(上)：实现预览、拍照、保存照片等功能](https://www.jianshu.com/p/0ea5e201260f) - 已阅读
