@@ -1,11 +1,48 @@
 # Camera2
+　　Camera2 的出现给相机应用程序带来了巨大的改革，因为它的目的是为了给应用层提供更多的相机控制权限，从而构建出更高质量的相机应用程序。
 
 ## Camera2 框架概述
+
+#### Pipeline
+　　Camera2 的 API 模型被设计成一个 Pipeline(管道)，它按顺序处理每一帧的请求结果给客户端。
+
+　　Pipeline 的官方工作流程图：
+
+![](./pipeline的工作流程.png)
+
+　　当拍摄两张不同尺寸的图片时，在拍摄的过程中闪光灯必须亮起来，整个拍摄流程如下：
+1. 创建一个用于从 Pipeline 获取图片的 CaptureRequest。
+2. 修改 CaptureRequest 的闪光灯配置，让闪光灯在拍照过程中亮起来。
+3. 创建两个不同尺寸的 Surface 用于接收图片数据，并且将它们添加到 CaptureRequest 中。
+4. 发送配置好的 CaptureRequest 到 Pipeline 中等待它返回拍照结果。
+
+　　一个新的 CaptureRequest 会被放入一个被称作 Pending Request Queue 的队列中等待被执行，当 In-Flight Capture Queue 队列空闲的时候就会从 Pending Request Queue 获取若干个待处理的 CaptureRequest，并且根据每一个 CaptureRequest 的配置进行 Capture 操作。最后我们从不同尺寸的 Surface 中获取图片数据并且还会得到一个包含了很多与本次拍照相关的信息的 CaptureResult，流程结束。
+
+#### Supported Handware Level
+　　相机功能的强大是否和硬件息息相关，不同厂商对 Camera2 的支持程度不同，所以 Camera2 定义了一个叫做 Supported Hardware Level 的重要概念，其作用是将不同设备上的 Camera2 根据功能的支持情况划分成多个不同级别以便开发者能够了解当前设备上 Camera2 的支持情况。截止到 Android P 为止，从低到高一共有 LEGACY、LIMITED、FULL 和 LEVEL_3 四个级别：
+
+1. LEGACY：向后箭筒的级别，处于改级别的设备意味着它只支持 Camera1 的功能，不具备任何 Camera2 高级特性。
+2. LIMITED：除了支持 Camera1 的基本功能之外，还支持部分 Camera2 高级特性的级别。
+3. FULL：支持所有 Camera2 的高级特性。
+4. LEVEL_3：新增更多 Camera2 高级特性，例如 YUV 数据的后处理等。
+
+#### Capture
+　　相机的所有操作和参数配置最终都是服务于图像捕获，例如对焦是为了让某一区域的图像更加清晰，调节曝光补偿是为了调节图像的亮度。因此，在 Camera2 里面所有的相机操作和参数配置都被抽象成 Capture(捕获)，所以不要简单的把 Capture 直接理解成拍照，因为 Capture 操作可能仅仅是为了让预览画面更清晰而进行对焦而已。Camera1 的 setFlashMode()、setFocusMode() 和 takePicture() 都是通过 Capture 来实现的。
+
+　　Capture 从执行方式上又被细分为【单次模式】、【多次模式】和【重复模式】三种：
+* **单次模式（One-shot）：**指的是只执行一次的 Capture 操作，例如设置闪光灯
+模式、对焦模式和拍一张照片等，多个一次性
+
+
+#### Camera2
+
 　　Camera2 架构图：
 
 ![](./Camera2流程示意图.jpg)
 
 　　Camera2 引用了管道的概念将安卓设备和摄像头之间联通起来，系统向摄像头发送 Capture 请求，而摄像头会返回 CanmeraMetadata。这一切建立在一个叫作 CameraCaptureSession 的会话中。
+
+　　管道（Pipeline），它按顺序处理每一帧的请求并返回请求结果给客户端。
 
 　　Camera2 拍照流程图：
 ![](./Camera2拍照流程图.png)
@@ -137,5 +174,5 @@ captureRequestBuilder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,CameraChara
 2.[Android Camera2 教程 · 第二章 · 开关相机](https://www.jianshu.com/p/df3c8683bb90)
 3.[Android Camera2 教程 · 第三章 · 预览](https://www.jianshu.com/p/067889611ae7)
 4.[Android Camera2 教程 · 第四章 · 拍照](https://www.jianshu.com/p/2ae0a737c686)
-5.[Android:Camera2开发详解(上)：实现预览、拍照、保存照片等功能](https://www.jianshu.com/p/0ea5e201260f)
-6.[Android:Camera2开发详解(下)：实现人脸检测功能并实时显示人脸框](https://www.jianshu.com/p/331af6dc2772)
+5.[Android:Camera2开发详解(上)：实现预览、拍照、保存照片等功能](https://www.jianshu.com/p/0ea5e201260f) - 已阅读
+6.[Android:Camera2开发详解(下)：实现人脸检测功能并实时显示人脸框](https://www.jianshu.com/p/331af6dc2772) - 已阅读
