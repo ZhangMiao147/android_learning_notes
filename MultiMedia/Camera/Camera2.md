@@ -272,11 +272,43 @@ captureRequestBuilder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,CameraChara
 
 　　客户端在显示图片的时候一定要去检查 Exif 的 ORIENTATION 标签的值，并且根据这个值对图片进行对应角度的旋转才能保证图片显示方向是正确的。
 
-8.相机在输出 JPEG 图片的时候，同时会根据我们通过 CaptureRequest.JPEG_THUMBNAIL_SIZE 配置的缩略图尺寸生成一张缩略图写入图片的 Exif 信息里。在设置缩略图尺寸之前，我们首先要获取相机支持哪些缩略图尺寸，与获取预览尺寸或照片尺寸列表方式不一样的是，缩略图尺寸列表是直接通过 CameraCharacteristics.JPEG_AVAILABLE_THUMBNAIL_SIZES 获取的。
+####缩略图
+　　相机在输出 JPEG 图片的时候，同时会根据我们通过 CaptureRequest.JPEG_THUMBNAIL_SIZE 配置的缩略图尺寸生成一张缩略图写入图片的 Exif 信息里。在设置缩略图尺寸之前，我们首先要获取相机支持哪些缩略图尺寸，与获取预览尺寸或照片尺寸列表方式不一样的是，缩略图尺寸列表是直接通过 CameraCharacteristics.JPEG_AVAILABLE_THUMBNAIL_SIZES 获取的。
 
 　　在获取图片缩略图的时候，我们不能总是假设图片一定会在 Exif 写入缩略图，当 Exif 里面没有缩略图数据的时候，要转而直接 Decode 原图获取缩略图，另外无论是原图还是缩略图，都要根据 Exif 的 ORIENTATION 角度进行矫正才能正确显示。
 
-9.拍照的时候，通常都会在图片的 Exit 写入定位信息，可以通过 CaptureRequest.JPEG_GPS_LOCATION 配置定位信息。
+#### 设置定位信息
+　　拍照的时候，通常都会在图片的 Exit 写入定位信息，可以通过 CaptureRequest.JPEG_GPS_LOCATION 配置定位信息。
+
+#### 播放快门音效
+　　在进行拍照之前，还需要配置拍照时播放的快门音效，因为 Camera2 和 Camera1 不一样，拍照时不会有任何声音，需要在适当的时候通过 MediaSoundPlayer 播放快门音效，通常情况是在 CaptureStateCallback.onCaptureStarted() 回调的时候播放快门音效。
+
+
+#### 前置摄像头拍照的镜像问题
+　　如果使用前置摄像头进行拍照，虽然照片的方向已经被矫正了，但是画面却是相反的。出现这个问题的原因是默认情况下相机不会对 LPEG 图像进行镜像操作，导致输出的原始画面是非镜像的。解决这个问题的一个办法是拿到 JPEG 数据之后再次对图像进行镜像操作，然后才保存图片。
+
+#### 如何连续拍摄多张图片
+　　在用户双击快门按钮的时候连续拍摄 10 张图片，其实现原理就是采用了多次模式的 Capture，所有的配置流程和拍摄单张图片一样，唯一的区别是使用 CameraCaptureSession.captureBurst() 进行拍照，改方法要求传递三个参数：
+* requests：按顺序连续执行的 CaptureRequest 对象列表，每一个 CaptureRequest 对象都可以有自己的配置。
+* listener：监听 Capture 状态的回调接口，需要注意的是有多少和 CaptureRequest 对象就会回调该接口多少次。
+* handler：回调 Capture 状态监听接口的 Handler 对象。
+
+#### 如何连拍
+　　使用重复模式的Capture 就可以轻松实现连拍功能。
+
+　　停止连拍有以下两种方式：
+1. 调用 CameraCaptureSession.stopRepeating() 方法停止重复模式的 Capture，但是这会导致预览也停止。
+2. 调用 CameraCaptureSesion.setReadtingRequest() 方法并且使用预览的 CaptureRequest 对象，停止输出照片。
+
+#### 如何切换前后置摄像头
+　　按照以下顺序进行操作就可以轻松实现前后置摄像头的切换：1.关闭当前摄像头；2.开启新的摄像头；3.创建新的 Session；4.开启预览。
+
+#### 拍照模式的建议
+1. 重复模式和多次模式都可以实现连拍功能，其中重读模式适合没有连拍上限的情况，而多次模式适合有连拍上限的情况。
+2. 一个 CaptureRequest 可以添加多个 Surface，这就意味着可以同时拍摄多张照片。
+3. 拍照获取 CaptureResult 和 Image 对象走的是两个不同的回调接口，灵活运用子线程的阻塞操作可以简化代码逻辑。
+
+
 
 ## 其他
 　　因为打开相机和创建会话等都是耗时操作，所以需要启动一个 HandlerThread 在子线程中处理。
