@@ -37,6 +37,18 @@
 
 * **重复模式（Repeating）：**指的是不断重复执行指定的 Capture 操作，当有其他模式的 Capture 提交时会暂停该模式，转而执行其他模式的 Capture，当其他模式的 Capture 执行完毕后又会自动恢复继续执行该模式的 Capture，例如显示预览画面就是不断 Capture 获取每一帧画面。该模式的 Capture 是全局唯一的，也就是新提交的重复模式 Capture 会覆盖旧的重复模式 Capture。
 
+　　例如：假设相机应用程序开启了预览，所以会提交一个重复模式的 Capture 用于不断获取预览画面，然后再提交一个单词模式的 Capture，接着又提交了一组连续三次的单词模式的 Capture，这些不同模式的 Capture 会按照下图所示被执行：
+
+![](./Capture工作原理.png)
+
+　　下面是几个重要的注意事项：
+1.无论 Capture 以何种模式被提交，它们都是按顺序串行执行的，不存在并行执行的情况。
+2.重复模式是一个比较特殊的模式，因为它会保留提交的 CaptureRequest 对象用于不断重复执行 Capture 操作，所以大多数情况下重复模式的 CaptureRqequest 和其他模式的 CaptureRequest 是独立的，这就会导致重复模式的参数和其他模式的参数会有一定的差异，例如重复模式不会配置 CaptureRequest.AF_TRIGGER_START，因为这会导致相机不断触发对焦的操作。
+3.如果某一次的 Capture 没有配置预览的 Surface，例如拍照的时候，就会导致本次 Capture 不会降画面输出到预览的 Surface 上，进而导致预览画面卡顿的情况，所以大部分情况下我们会将预览的 Surface 添加到所有的 CaptureRequest 里。
+
+
+
+
 #### Surface
 　　Surface 是一块用于填充图像数据的内存空间，例如可以使用 SurfaceView 的 Surface 接收每一帧预览数据用于显示预览画面，也可以使用 ImageReader 的 Surface 接收 JPEG 或 YUV 数据，每一个 Surface 都可以有自己的尺寸和数据格式，可以从 CameraCharacteristics 获取某一个数据格式支持的尺寸列表。
 
@@ -236,14 +248,35 @@ captureRequestBuilder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,CameraChara
 
 2. 在配置尺寸方面，Camera2 和 Camera1 有着很大的不同，Camera1 是将所有的尺寸信息都设置给相机，而 Camera2 则是把尺寸信息设置给 Surface，例如接收预览画面的 SurfaceTexture，或者是接收拍照图片的 ImageReader，相机在输出图像数据的时候会根据 Surface 配置的 Buffer 大小输出对应尺寸的画面。
 
- 
+3. 在 Camera2 里，预览本质是不断重复执行的 Capture 操作，每一次 Capture 都会把预览画面输出到对应的 Surface 上，涉及的方法是 CameraCaptureSession.setRepeatingRequest()，该方法有三个参数：
+* request：在不断重复执行 Capture 时使用的 CaptureRequest 对象。
+* callback：监听每一次 Capture 状态的 CameraCaptureSession.CaptureCallback 对象，例如 onCaptureStarted() 意味着一次 Capture 的开始，而 onCaptureCompleted() 意味着一次 Capture 的结束。
+* hander：用于执行 CameraCaptureSession.CaptureCallback 的 Handler 对象，可以是异步线程的 Handler，也可以是主线程的 Handler。
 
+4. 预览比例的适配方式：
+（1）根据预览比例修改 TextureView 的宽高，比如用户选择了 4:3 的预览比例，这个时候会选取 4:3 的预览尺寸并且把 TextureView 修改成 4:3 的比例，从而让画面不会变形。
+（2）使用固定的预览比例，然后根据比例去选取适合的预览尺寸，例如固定 4:3 的比例，选择 1440x1080 的尺寸，并且把 TextureView 的宽高也设置成 4:3。
+（3）固定 TextureView 的宽高，然后根据预览比例使用 TextureView.setTransform() 方法修改预览画面绘制在 TextureView 上的方式，从而让预览画面不变形，这跟 ImageView.setImageMatrix() 如出一辙。
 
+　　简单来说，解决预览画面变形的问题，本质上就是解决画面和画布比例不一致的问题。
 
+5. Camera2 不需要竞购任何预览画面方向的矫正，就可以正确显示画面，而 Camera1 则需要根据摄像头传感器的方向进行预览画面方向的矫正。其实，Camera2 也需要进行预览画面的矫正，只不过系统帮做了而已，当使用 TextureView 或者 SurfaceView 进行画面预览的时候，系统会根据【设备自然方向】、【摄像传感器方向】和【显示方向】自然矫正预览画面的方向，并且该矫正规则只适用于显示方向和设备自然方向一致的情况下。当使用一个 GLSurfaceView 显示预览画面或者使用 ImageReader 接收推向数据的时候，系统都不会进行画面的自动矫正。
 
+　　在矫正画面方向的时候要同时考虑两个因素，即摄像头传感器方向和显示方向。
 
+6. 如何拍摄单张图片：拍摄单张图片是最简单的拍照模式，它使用的就是单次模式的 Capture，会使用 ImageReader 创建一个接收照片的 Surface，并且把它添加到 CaptureRequest 里提交给相机进行拍照，最后通过 ImageReader 的回调获取 Image 对象，进而获取 JPEG 图像数据进行保存。
 
+7. 计算出图片的矫正角度后，要通过 CaptureRequest.JPEG_ORIENTATION 配置这个角度，相机在拍照输出 JPEG 图像的时候会参考这个角度值从以下两种方式选一种进行图像方向矫正：
+（1）直接对图像进行旋转，并且将 Exif 的 ORIENTATION 标签赋值为 0 。
+（2）不对图像进行旋转，而是将旋转信息写入 Exif 的 ORIENTATION 标签里。
 
+　　客户端在显示图片的时候一定要去检查 Exif 的 ORIENTATION 标签的值，并且根据这个值对图片进行对应角度的旋转才能保证图片显示方向是正确的。
+
+8.相机在输出 JPEG 图片的时候，同时会根据我们通过 CaptureRequest.JPEG_THUMBNAIL_SIZE 配置的缩略图尺寸生成一张缩略图写入图片的 Exif 信息里。在设置缩略图尺寸之前，我们首先要获取相机支持哪些缩略图尺寸，与获取预览尺寸或照片尺寸列表方式不一样的是，缩略图尺寸列表是直接通过 CameraCharacteristics.JPEG_AVAILABLE_THUMBNAIL_SIZES 获取的。
+
+　　在获取图片缩略图的时候，我们不能总是假设图片一定会在 Exif 写入缩略图，当 Exif 里面没有缩略图数据的时候，要转而直接 Decode 原图获取缩略图，另外无论是原图还是缩略图，都要根据 Exif 的 ORIENTATION 角度进行矫正才能正确显示。
+
+9.拍照的时候，通常都会在图片的 Exit 写入定位信息，可以通过 CaptureRequest.JPEG_GPS_LOCATION 配置定位信息。
 
 ## 其他
 　　因为打开相机和创建会话等都是耗时操作，所以需要启动一个 HandlerThread 在子线程中处理。
@@ -258,7 +291,7 @@ captureRequestBuilder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,CameraChara
 ## 查阅资料
 1.[Android Camera2 教程 · 第一章 · 概览](https://www.jianshu.com/p/9a2e66916fcb) - 已阅读
 2.[Android Camera2 教程 · 第二章 · 开关相机](https://www.jianshu.com/p/df3c8683bb90) - 已阅读
-3.[Android Camera2 教程 · 第三章 · 预览](https://www.jianshu.com/p/067889611ae7)
+3.[Android Camera2 教程 · 第三章 · 预览](https://www.jianshu.com/p/067889611ae7) - 已阅读
 4.[Android Camera2 教程 · 第四章 · 拍照](https://www.jianshu.com/p/2ae0a737c686)
 5.[Android:Camera2开发详解(上)：实现预览、拍照、保存照片等功能](https://www.jianshu.com/p/0ea5e201260f) - 已阅读
 6.[Android:Camera2开发详解(下)：实现人脸检测功能并实时显示人脸框](https://www.jianshu.com/p/331af6dc2772) - 已阅读
