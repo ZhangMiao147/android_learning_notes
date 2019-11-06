@@ -239,34 +239,40 @@ captureRequestBuilder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,CameraChara
 7.当设备的 Supported Handware Level 低于 FULL 的时候，建议还是使用 Camera1，因为 FULL 级别以下的 Camera2 能提供的功能几乎和 Camera1 一样，所以倒不如选择更加稳定的 Camera1。
 
 ## 使用
-1.预览尺寸并不是直接从 CameraCharacteristics 获取的，而是先通过 SCALER_STREAM_CONFIGURATION_MAP 获取 StreamConfigurationMap.getOutputSizes() 方法获取尺寸列表，该方法会要求传递一个 Class 类型，然后根据这个类型返回对应的尺寸列表，如果给定的类型不支持，则返回 null，可以通过 StreamConfigurationMap.isOutputSupportedFor() 方法判断某一个类型是否被支持，常见的类型有：
+#### 预览尺寸
+　　预览尺寸并不是直接从 CameraCharacteristics 获取的，而是先通过 SCALER_STREAM_CONFIGURATION_MAP 获取 StreamConfigurationMap.getOutputSizes() 方法获取尺寸列表，该方法会要求传递一个 Class 类型，然后根据这个类型返回对应的尺寸列表，如果给定的类型不支持，则返回 null，可以通过 StreamConfigurationMap.isOutputSupportedFor() 方法判断某一个类型是否被支持，常见的类型有：
 * ImageReader：常用来拍照或接收 YUV 数据。
 * MediaRecorder：常用来录制视频。
 * MediaCodec：常用来录制视频。
 * SurfaceHolder：常用开显示预览画面。
 * SurfaceTexture：常用来显示预览画面。
 
-2. 在配置尺寸方面，Camera2 和 Camera1 有着很大的不同，Camera1 是将所有的尺寸信息都设置给相机，而 Camera2 则是把尺寸信息设置给 Surface，例如接收预览画面的 SurfaceTexture，或者是接收拍照图片的 ImageReader，相机在输出图像数据的时候会根据 Surface 配置的 Buffer 大小输出对应尺寸的画面。
+#### 配置尺寸
+　　在配置尺寸方面，Camera2 和 Camera1 有着很大的不同，Camera1 是将所有的尺寸信息都设置给相机，而 Camera2 则是把尺寸信息设置给 Surface，例如接收预览画面的 SurfaceTexture，或者是接收拍照图片的 ImageReader，相机在输出图像数据的时候会根据 Surface 配置的 Buffer 大小输出对应尺寸的画面。
 
-3. 在 Camera2 里，预览本质是不断重复执行的 Capture 操作，每一次 Capture 都会把预览画面输出到对应的 Surface 上，涉及的方法是 CameraCaptureSession.setRepeatingRequest()，该方法有三个参数：
+#### 预览本质
+　　在 Camera2 里，预览本质是不断重复执行的 Capture 操作，每一次 Capture 都会把预览画面输出到对应的 Surface 上，涉及的方法是 CameraCaptureSession.setRepeatingRequest()，该方法有三个参数：
 * request：在不断重复执行 Capture 时使用的 CaptureRequest 对象。
 * callback：监听每一次 Capture 状态的 CameraCaptureSession.CaptureCallback 对象，例如 onCaptureStarted() 意味着一次 Capture 的开始，而 onCaptureCompleted() 意味着一次 Capture 的结束。
 * hander：用于执行 CameraCaptureSession.CaptureCallback 的 Handler 对象，可以是异步线程的 Handler，也可以是主线程的 Handler。
 
-4. 预览比例的适配方式：
+#### 预览比例的适配方式：
 （1）根据预览比例修改 TextureView 的宽高，比如用户选择了 4:3 的预览比例，这个时候会选取 4:3 的预览尺寸并且把 TextureView 修改成 4:3 的比例，从而让画面不会变形。
 （2）使用固定的预览比例，然后根据比例去选取适合的预览尺寸，例如固定 4:3 的比例，选择 1440x1080 的尺寸，并且把 TextureView 的宽高也设置成 4:3。
 （3）固定 TextureView 的宽高，然后根据预览比例使用 TextureView.setTransform() 方法修改预览画面绘制在 TextureView 上的方式，从而让预览画面不变形，这跟 ImageView.setImageMatrix() 如出一辙。
 
 　　简单来说，解决预览画面变形的问题，本质上就是解决画面和画布比例不一致的问题。
 
-5. Camera2 不需要竞购任何预览画面方向的矫正，就可以正确显示画面，而 Camera1 则需要根据摄像头传感器的方向进行预览画面方向的矫正。其实，Camera2 也需要进行预览画面的矫正，只不过系统帮做了而已，当使用 TextureView 或者 SurfaceView 进行画面预览的时候，系统会根据【设备自然方向】、【摄像传感器方向】和【显示方向】自然矫正预览画面的方向，并且该矫正规则只适用于显示方向和设备自然方向一致的情况下。当使用一个 GLSurfaceView 显示预览画面或者使用 ImageReader 接收推向数据的时候，系统都不会进行画面的自动矫正。
+#### 画面矫正
+　　Camera2 不需要任何预览画面方向的矫正，就可以正确显示画面，而 Camera1 则需要根据摄像头传感器的方向进行预览画面方向的矫正。其实，Camera2 也需要进行预览画面的矫正，只不过系统帮做了而已，当使用 TextureView 或者 SurfaceView 进行画面预览的时候，系统会根据【设备自然方向】、【摄像传感器方向】和【显示方向】自然矫正预览画面的方向，并且该矫正规则只适用于显示方向和设备自然方向一致的情况下。当使用一个 GLSurfaceView 显示预览画面或者使用 ImageReader 接收推向数据的时候，系统都不会进行画面的自动矫正。
 
 　　在矫正画面方向的时候要同时考虑两个因素，即摄像头传感器方向和显示方向。
 
-6. 如何拍摄单张图片：拍摄单张图片是最简单的拍照模式，它使用的就是单次模式的 Capture，会使用 ImageReader 创建一个接收照片的 Surface，并且把它添加到 CaptureRequest 里提交给相机进行拍照，最后通过 ImageReader 的回调获取 Image 对象，进而获取 JPEG 图像数据进行保存。
+#### 如何拍摄单张图片
+　　如何拍摄单张图片：拍摄单张图片是最简单的拍照模式，它使用的就是单次模式的 Capture，会使用 ImageReader 创建一个接收照片的 Surface，并且把它添加到 CaptureRequest 里提交给相机进行拍照，最后通过 ImageReader 的回调获取 Image 对象，进而获取 JPEG 图像数据进行保存。
 
-7. 计算出图片的矫正角度后，要通过 CaptureRequest.JPEG_ORIENTATION 配置这个角度，相机在拍照输出 JPEG 图像的时候会参考这个角度值从以下两种方式选一种进行图像方向矫正：
+#### 图片矫正
+　　计算出图片的矫正角度后，要通过 CaptureRequest.JPEG_ORIENTATION 配置这个角度，相机在拍照输出 JPEG 图像的时候会参考这个角度值从以下两种方式选一种进行图像方向矫正：
 （1）直接对图像进行旋转，并且将 Exif 的 ORIENTATION 标签赋值为 0 。
 （2）不对图像进行旋转，而是将旋转信息写入 Exif 的 ORIENTATION 标签里。
 
