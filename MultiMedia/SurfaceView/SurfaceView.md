@@ -27,6 +27,12 @@
 
 　　如果自定义 View 需要频繁刷新，或者刷新时数据处理量比较大，就可以考虑使用 SurfaceView 来取代 View 了。
 
+　　SurfaceView 的绘制效率非常高，因为 SurefaceView 的窗口刷新的时候不需要重绘应用程序的窗口（android普通窗口的视图绘制机制时一层一层的，任何一个资源素或者是局部的刷新都会导致整个试图结构全部重绘一次，因此效率非常低下）。
+
+　　SurfaceFling 服务是系统服务，负责绘制 Android 应用程序的 UI，SurfaceFling 服务运行在 Android 系统的 System 进程中，它负责管理 Android 系统的帧缓冲区（Frame Buffer），Android 应用程序为了能够将自己的 UI 绘制在系统的帧缓冲区上，它们就必须要与 SurfaceFling 服务进行通信，它们采用 Binder 进程间通信机制来进行通信，每一个 Android 应用程序与 SurfaceFling 服务都有一个连接，这个连接通过一个类型为 Client 的 Binder 对象来描述，有了这些 Binder 代理接口之后，Android 应用程序就可以通知 SurfaceFling 服务来绘制自己的 UI 了。
+
+　　应用程序在通知 SurfaceFling 服务来绘制自己的 UI 的时候，需要将 UI 元数据传递给 SurfaceFling 服务，例如，要绘制 UI 的区域、位置等信息，一个 Android 应用程序可能会有很多个窗口，而每一个窗口都有自己的 UI 元数据，因此，Android 应用程序需要传递给 SurfaceFlinger 服务的 UI 元数据是相当可观的。在这种情况下，通过 Binder 进程间通信机制来在 Android 应用程序与 SurfaceFlinger 服务之间传递 UI 元数据是不合适的，真正使用的是 Android 系统的共享内存机制（Anonymous Shared Memory），在每一个 Android 应用程序与 SurfaceFling 服务之间的连接上加上一块用来传递 UI 元数据的匿名共享内存。
+
 ## SurfaceView 的使用模板
 　　SurfaceView 使用过程有一套模板代码，大部分的 SurfaceView 都可以套用。
 
