@@ -25,6 +25,9 @@
 　　4.View 在绘图时没有使用双缓冲机制，而 Surface 在底层实现机制中就已经实现了双缓冲机制。
 　　5.因为 SurfaceView 的定义和使用比 View 复杂，占用的资源也比较多，除非使用 View 不能完成，才使用 SurfaceView，否则最好使用 View 。
 
+
+　　双缓冲：SurfaceView 在更新视图时用了两个Canvas，一张 frontCanvas 和一张 backCanvas，每次实际显示的是 frontCanvas，backCanvas 存储的是上一次更改前的视图，当使用 lockCanvas（） 获取画布时，得到的实际上是 backCanvas 而不是正在显示的 frontCanvas，当你在获取到的 backCanvas 上绘制完成后，再使用 unlockCanvasAndPost(canvas) 提交 backCanvas 视图，那么这张 backCanvas 将替换正在显示的 frontCanvas 被显示出来，原来的 frontCanvas 将切换到后台作为 backCanvas，这样做的好处是在绘制期间不会出现黑屏。
+
 　　如果自定义 View 需要频繁刷新，或者刷新时数据处理量比较大，就可以考虑使用 SurfaceView 来取代 View 了。
 
 　　SurfaceView 的绘制效率非常高，因为 SurefaceView 的窗口刷新的时候不需要重绘应用程序的窗口（android普通窗口的视图绘制机制时一层一层的，任何一个资源素或者是局部的刷新都会导致整个试图结构全部重绘一次，因此效率非常低下）。
@@ -43,7 +46,27 @@
 
 　　当 Android 应用程序需要更新一个 Surface 的时候，它就会找到与它所对应的 SharedBufferStack，并且从它的空闲缓冲区列表的尾部取出一个空闲的 Buffer，接下来 Android 应用程序就请求 SurfaceFlinger 服务为这个 Buffer 分配一个图形缓冲区 GraphicBuffer，分配好以后将这个图形缓冲区 GraphicBuffer 返回给应用程序访问，应用程序得到了图形缓冲区 GraphicBuffer 之后，就可以利用 Surface 的 Canvas 往里面绘制写入 UI 数据，写完之后，就将与 GraphicBuffer 所对应的缓冲区 Buffer，插入到对应的 SharedBufferStack 的缓冲区列表的头部去，这一步完成之后，应用程序就通知 SurfaceFling 服务去绘制 GraphicBuffer 的内容了。
 
-　　由于 SharedBufferStack 是在应用程序
+　　由于 SharedBufferStack 是在应用程序和 SurfaceFling 服务之间共享的，应用程序关心的是它里面可以写入数据的空闲缓冲区列表，而 SurfaceFlinger 服务关心的是它里面的已经使用了的缓冲区列表，保存在 SharedBufferStack 中的已经使用了的缓冲区其实就是在排队等待渲染的数据。
+
+　　可以将 Surface 理解为一个绘图表面，在 Android 应用程序这一侧，每一个绘图表面都使用一个 Surface 对象来描述，Android 应用程序负责往这个绘图表面填内容，在 SurfaceFlinger 服务这一侧，每一个窗口的绘图表面使用 Layer 类来描述，而 SurfaceFlinger 服务负责将这个绘图表面的内容取出来，并且渲染在显示屏上，有了 Surface 之后，Android 应用程序就可以在上面绘制自己的 UI 了，接着再请求 SurfaceFling 服务将这个已经绘制好了 UI 的 Surface 渲染到设备显示屏上去。
+
+　　Android 系统每隔 16 ms 发出 VSYNC 信号，触发 GPU 对 UI 进行渲染，如果每次渲染都成功结束，就能够达到流畅的画面锁需要的 60 fps，这意味着程序的操作都必须在 16ms 内完成，如果某个操作花费时间是 24ms，系统在得到 VSYNC 信号的时候就无法进行正常渲染，用户在 32ms 内看到的回事同一帧画面，这样就发生了丢帧（卡顿现象）。
+
+　　将更新分为两类：
+1. 被动更新：比如棋类，用 View 就好，因为画面的更新是依赖于 onTouch 来更新，可以使用使用 invalidate。
+2. 主动更新：比如一个人在一直跑动，这就需要一个单独的 Thread 不停的重绘人的状态，避免阻塞 main UI thread。
+
+　　SurfaceView 从 API Level 1 时就有，继承自 View，拥有 View 的特性，SurfaceView 可以嵌入到 View 结构树中，因此它能够叠加在其他的视图中，它拥有一个专门绘制的 Surface，它的目的是给应用窗口提供一个额外的 Surface。
+
+　　每个 Activity 包含多个 View 会组成的 View hierachy 树形结构窗口，但是只有最顶层的根布局 DecorView，才拥有一个 Surface 用来展示窗口内的所有内容，才是对 SurfaceFlinger 可见的，才在 SurfaceFlinger 中有一个对应的 Layer，这个 Surface 是根布局 ViewRootImpl 的一个成员变量。
+
+　　每个 SurfaceView 也有一个自己的绘图表面 Surface，内部也有一个 Surface 成员变量，区别于它的宿主窗口的绘图表面，在 SurfaceFlinger 服务中也对应有一个独立的 Layer，SurefaceView 可以控制它的 Surface 的格式和尺寸，以及 Surface 的绘制位置。
+
+　　SurfaceView 里面镶嵌的 Surface 是在包含 SurfaceView 的宿主 Activity 窗口（顶层视图对应的 Surface）后面，用来描述 SurfaceView 的 Layer 的 Z 轴位置是小于用来描述其宿主 Activity 窗口的 Layer 的 Z 轴位置，这样 SurfaceView 的 Layer 就被挡住看不见了，SurfaceView 提供了一个可见区域，只有在这个可见区域内的 surface 部分内容才可见，就好像 SurfaceView 会在宿主 Activity 窗口上面挖一个 “洞”出来，以便它的 UI 可以漏出来对用户可见，实际上，SurfaceView 只不过是在其宿主 Activity 窗口上设置了一块透明区域。
+
+　　虽然布局中的 SurfaceView 在 View hierachy 树结构中，但它的 Surface 与 宿主窗口是分离的，因此这个 Surface 不在 View hierachy 中，它的显示也不受 View 的属性控制，所以和普通的 View 不同的地方是不能执行 Transition、Rotation、Scale 等转换，不能进行 Alpha 透明度运算，一些 View 中的特性也无法使用。
+
+　　SurfaceView 类的成员变量 mRequestedType 描述的是 Surfa
 
 ## SurfaceView 的使用模板
 　　SurfaceView 使用过程有一套模板代码，大部分的 SurfaceView 都可以套用。
@@ -53,6 +76,27 @@
 　　对 SurfaceView 执行绘制方法就是操作 Surface，使用 SurfaceHolder 来处理 Surface 的生命周期。也就是说 SurfaceView 的生命周期其实就是 Surface 的生命周期，而 SurfaceHolder 保存对 Surface 的引用，所以使用 SurfaceHolder 来处理生命周期的初始化。
 
 ## 使用 SurfaceView
+
+　　SurfaceView 、Surface 和 SurfaceHolder，他们三者之间的关系实质上就是 MVC，Model 就是数据模型的意思也就是 Surface，View 即视图也就是 SurfaceView，SurfaceHolder 就是 Controll （ 控制器 ）。
+
+　　在 SurfaceView 中可以通过 SurfaceHolder 接口访问它内部的 surface，而执行绘制的方法就是操作这个 Surface 内部的 Canvas，处理 Canvas 画的效果、动画、大小、像素等，getHolder() 方法可以得到 SurfaceHolder，通过 SurfaceHolder 来控制 surface 的尺寸和格式，或者修改监视 surface 的变化等等。
+
+　　SurfaceHolder 有三个回调方法可以监听 SurfaceView 中的 surface 的声明周期，SurfaceView 一开始创建出来后，它拥有的 Surface 不一定会一起创建出来，SurfaceView 变得可见时，surface 被创建，SurfaceView 隐藏时，surface 被销毁，被创建了表示可以准备绘制了，而被销毁后就要释放其他资源，SurfaceView 一般会继承 SurfaceHolder 的 Callback 接口，SurfaceHolder.Callback 具有如下的方法：
+
+　　**surfaceVreate(SurfaceHolder holder)：**当 Surface 第一次创建后立即调用该函数，可以在该函数中做些和绘制界面相关的初始化工作，一般情况下都是在新线程来绘制界面，所以不要在这个函数中绘制 Surface。
+
+　　**surfaceChanged(SurfaceHolder holder,int format,int width,int height)：**当 Surface 的状态（ 大小和格式 ）发生变化的时候会调用该函数，在 surfaceCreate 调用后该函数至少会被调用一次。
+
+　　**surfaceDestoryed(SurfaceHolder holder)：**当 Surface 被摧毁前会调用该函数，该函数被调用后就不能继续使用 Surface 了，一般在该函数中来清理使用的资源。
+
+　　特别需要注意的是 SurfaceView 和 SurfaceHolder.Callback 的所有回调方法都是在主线程中回调的，在绘制前必须先合法的获取 Surface 才能开始绘制内容，SurfaceHolder.Callback.surfaceCreated() 和 SurfaceHolder.Callback.surfaceDestoryed() 之间的状态为合法的，在这之外使用 Surface 都会出错。
+
+　　在使用 SurfaceView 过程中不直接和 Surface 打交道，由 SurfaceHolder 的 Canvas.lockCanvas() 或者 Cnavas.lock(Rect dirty) 函数来锁定并且获得 Surface 中的 Canvas 画布对象，通过在 Canvas 上绘制内容来修改 Surface 中的数据，如果 Surface 被别的线程占用不可编辑或者尚未创建或者已经被销毁，调用该函数会返回 null。
+
+　　在 unlockCanvas() 和 lockCanvas() 之间 Surface 的内容是不缓存的，所以需要完全重绘 Surface 的内容，如果为了提高效率只重绘变化的部分则可以调用 lockCanvas(Rect dirty) 函数来指定一个 dirty 区域，这样该区域外的内容会缓存起来，只更新需要重绘的区域，相对部分内存要求比较高的游戏来说，不重画 dirty 外的其他区域的像素，可以提高速度。
+
+　　在调用 lockCanvas 函数获取 Surface 的 Canvas 后，SurfaceView 会利用 Surface 的一个同步锁锁住画布 Canvas，直到调用 unlockCanvasAndPost(Canvas canvas) 函数，才解锁画布并提交改变，将图形显示，这里的同步机制保证 Surface 的 Canvas 在绘制过程中不会被改变（被摧毁、修改），避免多个不同的线程同时操作同一个 Canvas 对象。
+
 
 
 #### 使用注意
