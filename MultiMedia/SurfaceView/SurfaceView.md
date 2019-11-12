@@ -29,9 +29,21 @@
 
 　　SurfaceView 的绘制效率非常高，因为 SurefaceView 的窗口刷新的时候不需要重绘应用程序的窗口（android普通窗口的视图绘制机制时一层一层的，任何一个资源素或者是局部的刷新都会导致整个试图结构全部重绘一次，因此效率非常低下）。
 
+#### SurfaceView 绘制的原理
+
 　　SurfaceFling 服务是系统服务，负责绘制 Android 应用程序的 UI，SurfaceFling 服务运行在 Android 系统的 System 进程中，它负责管理 Android 系统的帧缓冲区（Frame Buffer），Android 应用程序为了能够将自己的 UI 绘制在系统的帧缓冲区上，它们就必须要与 SurfaceFling 服务进行通信，它们采用 Binder 进程间通信机制来进行通信，每一个 Android 应用程序与 SurfaceFling 服务都有一个连接，这个连接通过一个类型为 Client 的 Binder 对象来描述，有了这些 Binder 代理接口之后，Android 应用程序就可以通知 SurfaceFling 服务来绘制自己的 UI 了。
 
 　　应用程序在通知 SurfaceFling 服务来绘制自己的 UI 的时候，需要将 UI 元数据传递给 SurfaceFling 服务，例如，要绘制 UI 的区域、位置等信息，一个 Android 应用程序可能会有很多个窗口，而每一个窗口都有自己的 UI 元数据，因此，Android 应用程序需要传递给 SurfaceFlinger 服务的 UI 元数据是相当可观的。在这种情况下，通过 Binder 进程间通信机制来在 Android 应用程序与 SurfaceFlinger 服务之间传递 UI 元数据是不合适的，真正使用的是 Android 系统的共享内存机制（Anonymous Shared Memory），在每一个 Android 应用程序与 SurfaceFling 服务之间的连接上加上一块用来传递 UI 元数据的匿名共享内存。
+
+　　这个共享内存是通过 SharedClient 来描述的，一个 SharedClient 对应一个应用程序，在每一个 SharedClient 里面，有很多歌 SharedBufferStack 共享缓冲区堆栈，是 Android 应用程序和 SurfaceFlinger 服务共享内存的地方，这个堆栈的内容是用来描述 UI 元数据的缓冲区，每一个 SharedBufferStack 在应用程序端都对应一个 Surface，在 SurfaceFlinger 端对应一个 Layer，而一个应用程序可能包含有多个 Surface，所以每一个 SharedClient 里面包含的是一系列 SharedBufferStack 而不是单个的 SharedBufferStack。
+
+　　Surface 是原始图像缓冲区 SharedBufferStack 的一个句柄，通过 Surface 就可以获取原始图像缓冲区中的 GraphicBuffer，Surface 可以理解为：它是共享内存中一块区域的一个句柄，当得到一个 Surface 对象时，同事会得到一个 Canvas(画布)对象，Canvas 的方法大多数是设置画布的大小、形状、画布背景颜色等等，要想在画布上面画画，一般要与 Paint 对象结合使用，Paint 就是画笔的风格、颜料的色彩之类的，所以得到了 Surface 这个句柄就可以得到其中的 Canvas，还有原生缓冲器的 GraphicBuffer，可以通过 Canvas 往 GraphicBuffer 填充绘制的图形数据，之后 GraphicBuffer 的数据会被 SurfaceFling 服务处理绘制到屏幕上。
+
+　　Canvas 与 Surface 的区别：Canvas 是由 Surface 产生的给 View 绘制用的画布，ViewGroup 会把自己的 Canvas 拆分成子 View，View 会在 onDraw 方法里将图形数据绘制在它获得的 Canvas 上，一个应用窗口对应一个 Surface，也就是窗口最顶层的 View（通常是 DecorView）对应一个 Surface，这个 Surface 是 ViewRoot 是一个成员变量，这个 Surface 在屏幕窗口建立时会被创建，SurfaceFling 服务会负责将各个应用窗口的 Surface 进行合成，然后绘制到屏幕上，最终屏幕上显示的 Ciew 都是通过 Surface 产生的 Canvas 把内容绘制到 GraphicBuffer 缓冲区中的，SurfaceFlinger 把 GraphicBuffer 缓冲区中的内容绘制在屏幕上然后才能被看到。
+
+　　当 Android 应用程序需要更新一个 Surface 的时候，它就会找到与它所对应的 SharedBufferStack，并且从它的空闲缓冲区列表的尾部取出一个空闲的 Buffer，接下来 Android 应用程序就请求 SurfaceFlinger 服务为这个 Buffer 分配一个图形缓冲区 GraphicBuffer，分配好以后将这个图形缓冲区 GraphicBuffer 返回给应用程序访问，应用程序得到了图形缓冲区 GraphicBuffer 之后，就可以利用 Surface 的 Canvas 往里面绘制写入 UI 数据，写完之后，就将与 GraphicBuffer 所对应的缓冲区 Buffer，插入到对应的 SharedBufferStack 的缓冲区列表的头部去，这一步完成之后，应用程序就通知 SurfaceFling 服务去绘制 GraphicBuffer 的内容了。
+
+　　由于 SharedBufferStack 是在应用程序
 
 ## SurfaceView 的使用模板
 　　SurfaceView 使用过程有一套模板代码，大部分的 SurfaceView 都可以套用。

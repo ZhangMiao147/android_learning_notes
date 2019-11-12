@@ -20,4 +20,4 @@
 * ffmpeg
 * x264
 * librtmp
-
+[Android 音视频深入](https://jianpanwuzhe.blog.csdn.net/article/category/9271854)

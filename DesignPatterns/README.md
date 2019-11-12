@@ -24,7 +24,7 @@
 - 装饰模式（Decorator）
 - 外观模式（Facade）
 - 享元模式（Flyweight）
-- [代理模式（Proxy）](https://github.com/ZhangMiao147/android_learning_notes)
+- [代理模式（Proxy）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F.md)
 
 ## 行为型模式
 　　行为型模式（Behavioral Pattern）是对在不同的对象之间划分责任和算法的抽象化。
