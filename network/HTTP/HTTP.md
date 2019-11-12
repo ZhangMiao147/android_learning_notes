@@ -175,13 +175,13 @@ Hello World! My payload includes a trailing CRLF.
 　　POST 方法用来传输实体的主体。虽然用 GET 方法也可以传输实体的主体，但一般不用 GET 方法进行传输，而是用 POST 方法；虽然 GET 方法和 POST 方法很相似，但是 POST 的主要目的并不是获取相应的主体内容。
 
 　　GET 方法和 POST 方法的区别：
-1.GET 方法用于信息获取，它是安全的（安全：指非修改信息，如数据库方面的信息），而 POST 方法是用于修改服务器上资源的请求；
-2.GET 请求的数据会附在 URL 之后，而 POST 方法提交的数据则放置在 HTTP 报文实体的主体里，所以 POST 方法的安全性比 GET 方法要高；
-3.GET 方法传输的数据量一般限制在 2 KB，其原因在于：GET 是通过 URL 提交数据，而 URL 本身对于数据没有限制，但是不同的浏览器对于 URL 是有限制的，比如 IE 浏览器对于 URL 的限制为 2 KB，而 chrome,FireFox 浏览器理论上对于 URL 是没有限制的，它真正的限制取决于操作系统本身；POST 方法对于数据大小是无限制的，真正影响到数据大小的是服务器处理程序的能力。
+1. GET 方法用于信息获取，它是安全的（安全：指非修改信息，如数据库方面的信息），而 POST 方法是用于修改服务器上资源的请求；
+2. GET 请求的数据会附在 URL 之后，而 POST 方法提交的数据则放置在 HTTP 报文实体的主体里，所以 POST 方法的安全性比 GET 方法要高；
+3. GET 方法传输的数据量一般限制在 2 KB，其原因在于：GET 是通过 URL 提交数据，而 URL 本身对于数据没有限制，但是不同的浏览器对于 URL 是有限制的，比如 IE 浏览器对于 URL 的限制为 2 KB，而 chrome,FireFox 浏览器理论上对于 URL 是没有限制的，它真正的限制取决于操作系统本身；POST 方法对于数据大小是无限制的，真正影响到数据大小的是服务器处理程序的能力。
 
 　　HEAD 方法与 GET 方法的区别：GET 方法有实体，HEAD 方法无实体。
 
-　　HEAD 放啊的主要用途：1.判断类型；2.查看响应中的状态码，看对象是否存在（响应：请求执行成功了，但是无数据返回）；3.测试资源是否被修改过。
+　　HEAD 方法的主要用途：1.判断类型；2.查看响应中的状态码，看对象是否存在（响应：请求执行成功了，但是无数据返回）；3.测试资源是否被修改过。
 
 ## HTTP 响应头信息
 　　HTTP 响应头提供了关于请求、响应或者其他的发送实体的信息。
@@ -196,8 +196,8 @@ Hello World! My payload includes a trailing CRLF.
 | Expires | 应该在什么时候认为文档已经过期，从而不再缓存它。 |
 | Last-Modified | 文档的最后改动时间。客户可以通过 If-Modified-Since 请求头提供一个日期，该请求将被视为一个条件 GET，只有改动时间迟于指定时间的文档才会返回，否则返回一个 304（Not Modified）状态。Last-Modified 也可用 setDateHeader 方法来设置。 |
 | Location | 表示客户应当到哪里去提取文档。Location 通常不是直接设置的，而是通过 HttpServletResponse 的 sendRedirect 方法，该方法同时设置状态代码为 302。 |
-| Refresh | 表示浏览器应该在多少时间之后刷新文档，以秒计。除了刷新当前文档之外，你还可以通过 setHeader("Refresh","5;URL=http://host/path") 让浏览器读取指定的页面。<a> </a>注意这种功能通常是通过设置 HTML 页面 HEAD 区的 < META HTTP-EQUIV="Refresh" CONTENT="5;URL=http://host/path"> 实现，这是因为，自动刷新或重定向对于那些不能使用 CGI 或 Servlet 的 HTML 编写者十分重要。但是，对于 Servlet 来说，直接设置 Refresh 头更加方便。
-注意 Refresh 的意义是 “N 秒之后刷新本页面或访问指定页面”，而不是“每隔 N 秒刷新本页面或访问指定页面”。因此，连续刷新要求每次都发送一个 Refresh 头，而发送 204 状态代码则可以阻止浏览器继续刷新，不管是使用 Refresh 头还是 < META HTTP-EQUIV="Refrsh"... > <a></a> 注意 Refrsh 头不属于 HTTP 1.1 正式规范的一部分，而是一个扩展，但 Netscape 和 IE 都支持它。|
+| Refresh | 表示浏览器应该在多少时间之后刷新文档，以秒计。除了刷新当前文档之外，你还可以通过 setHeader("Refresh","5;URL=http://host/path") 让浏览器读取指定的页面。注意这种功能通常是通过设置 HTML 页面 HEAD 区的 < META HTTP-EQUIV="Refresh" CONTENT="5;URL=http://host/path"> 实现，这是因为，自动刷新或重定向对于那些不能使用 CGI 或 Servlet 的 HTML 编写者十分重要。但是，对于 Servlet 来说，直接设置 Refresh 头更加方便。
+注意 Refresh 的意义是 “N 秒之后刷新本页面或访问指定页面”，而不是“每隔 N 秒刷新本页面或访问指定页面”。因此，连续刷新要求每次都发送一个 Refresh 头，而发送 204 状态代码则可以阻止浏览器继续刷新，不管是使用 Refresh 头还是 < META HTTP-EQUIV="Refrsh"... > 。注意 Refrsh 头不属于 HTTP 1.1 正式规范的一部分，而是一个扩展，但 Netscape 和 IE 都支持它。|
 | Server | 服务器名字。Servlet 一般不设置这个值，而是由 Web 服务器自己设置。 |
 | Set-Cookie | 设置和页面关联的 Cookie。Servlet 不应使用 response.setHeader("Set-Cookie",...)，而是应使用 HttpServletResponse 提供的专用方法 addCookie。|
 | WWW-Authenticate | 客户应该在 Authorization 头中提供什么类型的授权信息？在包含 401 （Unauthorized） 状态行的应答中这个头是必须的。例如，response.setHeader("WWW-Authenticate","BASIC realm="executives")。注意 Servlet 一般不进行这方面的处理，而是让 Web 服务器的专门机制来控制受密码保护页面的访问（例如 htaccess）。 |
@@ -255,7 +255,7 @@ Hello World! My payload includes a trailing CRLF.
 | 407 | Proxy Authentication required | 请求要求代理的身份认证，与 401 类似，但请求者应当使用代理进行授权 |
 | 408 | Request Timeout | 服务端等待客户端发送的请求时间过长，超时 |
 | 409 | Conflict | 服务器完成客户端的 PUT 请求时可能返回此代码，服务器处理请求时发生了冲突 |
-| 410 | Gone | 客户端请求的资源已经不存在。410 不同于 404，如果资源以前有现在被永久删除了可食用 404 代码，网站设计人员可通过 301 代码指定资源的位置 |
+| 410 | Gone | 客户端请求的资源已经不存在。410 不同于 404，如果资源以前有现在被永久删除了可使用 404 代码，网站设计人员可通过 301 代码指定资源的位置 |
 | 411 | Length Required | 服务器无法处理客户端发送的不带 Content-Length 的请求信息 |
 | 412 | Precondition Failed | 客户端请求信息的先决条件错误 |
 | 413 | Request Enity Too Large | 由于请求的实体过大，服务器无法处理，因此拒绝请求。为防止客户端的连续请求，服务器可能会关闭连接。如果只是服务器暂时无法处理，则会包含一个 Retry-After 的响应信息 |
@@ -282,7 +282,7 @@ Content-Type: multipart/form-data; boundary=something
 ```
 
 　　实例：
-![](./content-type实例.jpg)
+![](./image/content-type实例.jpg)
 
 　　常见的媒体格式类型如下：
 * text/html：HTML 格式
@@ -521,12 +521,12 @@ Content-Type: multipart/form-data; boundary=something
 ## 网络时延
 
 ## 参考文章
-[HTTP 教程](https://www.runoob.com/http/http-tutorial.html) - 详细内容
-[网络：HTTP](https://blog.csdn.net/oldwang1999/article/details/98526414) - 介绍
-[网络之 HTTP 协议](https://blog.csdn.net/qq_42725815/article/details/87892480) - 介绍
-[session 与 cookie 之间的关系](https://blog.csdn.net/qq_28296925/article/details/80921585) - 简单介绍
-[cookie 与 session 的区别是什么](https://baijiahao.baidu.com/s?id=1619095369231494766&wfr=spider&for=pc) - 区别
-[什么是RTT？计算机网络里的东西](https://zhidao.baidu.com/question/58798218.html)
+1. [HTTP 教程](https://www.runoob.com/http/http-tutorial.html) - 详细内容
+2. [网络：HTTP](https://blog.csdn.net/oldwang1999/article/details/98526414) - 介绍
+3. [网络之 HTTP 协议](https://blog.csdn.net/qq_42725815/article/details/87892480) - 介绍
+4. [session 与 cookie 之间的关系](https://blog.csdn.net/qq_28296925/article/details/80921585) - 简单介绍
+5. [cookie 与 session 的区别是什么](https://baijiahao.baidu.com/s?id=1619095369231494766&wfr=spider&for=pc) - 区别
+6. [什么是RTT？计算机网络里的东西](https://zhidao.baidu.com/question/58798218.html)
 
 
 
