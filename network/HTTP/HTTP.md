@@ -518,17 +518,9 @@ Content-Type: multipart/form-data; boundary=something
 
 　　如果需要经常登陆一个站点，最好用 cookie 来保存信息，不然每次登陆会特别麻烦，但是对于需要安全性高的站点以及控制数据的能力时需要用 session 效果更佳。
 
-## 网络时延
-
 ## 参考文章
 1. [HTTP 教程](https://www.runoob.com/http/http-tutorial.html) - 详细内容
 2. [网络：HTTP](https://blog.csdn.net/oldwang1999/article/details/98526414) - 介绍
 3. [网络之 HTTP 协议](https://blog.csdn.net/qq_42725815/article/details/87892480) - 介绍
 4. [session 与 cookie 之间的关系](https://blog.csdn.net/qq_28296925/article/details/80921585) - 简单介绍
 5. [cookie 与 session 的区别是什么](https://baijiahao.baidu.com/s?id=1619095369231494766&wfr=spider&for=pc) - 区别
-6. [什么是RTT？计算机网络里的东西](https://zhidao.baidu.com/question/58798218.html)
-
-
-
-
-
