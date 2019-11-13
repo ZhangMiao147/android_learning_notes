@@ -66,7 +66,18 @@
 
 　　虽然布局中的 SurfaceView 在 View hierachy 树结构中，但它的 Surface 与 宿主窗口是分离的，因此这个 Surface 不在 View hierachy 中，它的显示也不受 View 的属性控制，所以和普通的 View 不同的地方是不能执行 Transition、Rotation、Scale 等转换，不能进行 Alpha 透明度运算，一些 View 中的特性也无法使用。
 
-　　SurfaceView 类的成员变量 mRequestedType 描述的是 Surfa
+　　SurfaceView 类的成员变量 mRequestedType 描述的是 Surfacaview 的绘图表面 Surface 的类型，一般来说，它的值可能等于 SURFACE_TYPE_NORMAL 或者 SURFACE_TYPE_PUSH_BUFFERS，当一个 SurfaceView 的绘图表面的类型等于 SURFACE_TYPE_NORMAL 的时候，就表示该 SurfaceView 的绘图表面使用的内存是一块普通的内存，一般来说，这块内存是由 SurfaceFlinger 服务来分配的，我们可以在应用程序内部自由地访问它，即可以在它上面填充任意的 UI 数据，然后交给 SurfaceFlinger 服务来合成，并且显示在屏幕上，在这种情况下，在 SurfaceFlinger 服务一端使用一个 Layer 对象来描述该 SurfaceView 的绘图表面。
+
+　　当一个 SurfaceView 的绘图表面的类型等于 SURFACE_TYPE_PUSH_BUFFERS 的时候，就表示该 SurfaceView 的绘图表面所使用的内存不是由 SurfaceFlinger 服务分配的，我们不能够在应用程序内部对它进行操作，所以不能调用 lockCanvas 来获取 Canvas 对象进行了，例如当一个 SurfaceView 是用来显示摄像头预览或者视频播放的时候，我们就会将它的绘图表面的类型设置为 SURFACE_TYPE_PUSH_BUFFERS，这样摄像头服务或者视频播放服务就会为该 SurfaceView 绘图表面创建一块内存，并且将菜鸡的预览图像数据或者视频帧数据源源不断地填充懂啊内存中去，在这种情况下，在 SurfaceFlinger 服务一端使用一个 LayerBuffer 对象来描述该 SurfaceView 的绘图表面。
+
+　　所以，决定 surfaceView 的内存是普通内存（ 由开发者自己决定用来绘制什么 ）还是专用的内存（ 显示摄像头或者视频等，开发者无法使用这块内存 ）由 mRequestType 决定，我们在创建了一个 SurfaceView 之后，可以调用它的 SurfaceHolder 对象的成员函数 setType 来修改该 SurfaceView 的绘图表面的类型，绘图表面类型为 SURFACE_TYPE_PUSH_BUFFERS 的 SurfaceView 的 UI 是不能由应用程序来控制的，而是由专门的服务来控制的，例如，摄像头服务或者ship播放服务。
+
+　　SurfaceView 类的成员变量 mRequestedType 目前接收如下的参数：
+SURFACE_TYPE_NORMAL：用 RAM 缓存原生数据的普通 Surface。
+SURFACE_TYPE_HARDWARE：适用于 DMA(Direct memory access)引擎和硬件加速的 Surface。
+SURFACE_TYPE_GPU：适用于 GPU 加速的 Surface。
+SURFACE_TYPE_PUSH_BUFFERS：表明该 Surface 不包含原生数据，Surface 用到的数据由其他对象提供。
+
 
 ## SurfaceView 的使用模板
 　　SurfaceView 使用过程有一套模板代码，大部分的 SurfaceView 都可以套用。

@@ -499,16 +499,18 @@ Content-Type: multipart/form-data; boundary=something
 
 #### session 的实现机制
 1. 服务器如何判断客户端发送过来的请求术语同一个会话？
-　　用 session is 区分；session id 相同即认为是同一个会话。
+
+　　用 session id 区分；session id 相同即认为是同一个会话。
 
 　　在 tomcat 中 session id 中用 JSESSIONID 来表示。
 
 2. 服务器、客户端如何获取 sessionID?SessionID 在期间是如何传输的？
-　　服务器第一次接收到请求时，开辟了一块 Session 空间（创建了 Session 对象），同时生成一个 Session id，并通过响应头的 Set-Cookie：“JSESSIONID=XXXXXXX”命令，向客户端发送要求设置 cookie 的响应；客户端收到响应后，在本机客户端设置了一个 JSESSIONID=XXXXXXX 的 cookie 信息，该 cookie 的过期时间为浏览器会话结束；
 
-　　接下来客户端每次向同一个网站发送请求时，请求头都会带上该 cookie 信息（包含 Session id）；然后，服务器通过读取请求头中的 Cookie 信息，获取名称为 JSESSIONID 的值，得到此次请求的 Session id；
+　　服务器第一次接收到请求时，开辟了一块 Session 空间（创建了 Session 对象），同时生成一个 Session id，并通过响应头的 Set-Cookie：“JSESSIONID=XXXXXXX”命令，向客户端发送要求设置 cookie 的响应；客户端收到响应后，在本机客户端设置了一个 JSESSIONID=XXXXXXX 的 cookie 信息，该 cookie 的过期时间为浏览器会话结束。
 
-　　注意：服务器只会在客户端第一次请求响应的时候，在响应头上添加 Set-Cookie:"JSESSIONID=XXXXXXX" 信息们接下来在同一个会话的第二第三次响应头里，是不会添加 Set-Cookie:"JSESSIONID=XXXXXXX" 信息的；而客户端是会在每次请求头的 cookie 中带上 JSESSION 信息；。
+　　接下来客户端每次向同一个网站发送请求时，请求头都会带上该 cookie 信息（包含 Session id）；然后，服务器通过读取请求头中的 Cookie 信息，获取名称为 JSESSIONID 的值，得到此次请求的 Session id。
+
+　　注意：服务器只会在客户端第一次请求响应的时候，在响应头上添加 Set-Cookie:"JSESSIONID=XXXXXXX" 信息，接下来在同一个会话的第二第三次响应头里，是不会添加 Set-Cookie:"JSESSIONID=XXXXXXX" 信息的；而客户端是会在每次请求头的 cookie 中带上 JSESSION 信息。
 
 #### cookie 与 session 的区别
 1. cookie 以文本文件格式存储在浏览器中，而 session 存储在服务端。
