@@ -23,7 +23,10 @@
 　　2.SurfaceView 是放在其他最底层的视图层次中，所有其他视图层都在它上面，所以在它之上可以添加一些层，而且它不能是透明的。
 　　3.SurfaceView 执行动画的效率比 View 高，而且可以控制帧数，可以频繁地刷新。
 　　4.View 在绘图时没有使用双缓冲机制，而 Surface 在底层实现机制中就已经实现了双缓冲机制。
-　　5.因为 SurfaceView 的定义和使用比 View 复杂，占用的资源也比较多，除非使用 View 不能完成，才使用 SurfaceView，否则最好使用 View 。
+　　5.SurfaceView 的定义和使用比 View 复杂，占用的资源也比较多，在使用 View 不能满足性能和速度的要求下使用 SurfaceView 。
+　　6.View 主要适用于主动更新的情况下（调用 invalidate），而 SurfaceView 主要适用于被动更新（在新线程不停绘制），例如频繁地刷新，如果自定义 View 需要频繁刷新，或者刷新时数据处理量比较大，就可以考虑使用 SurfaceView 来取代 View 了。
+　　7.SurefaceView 具有独立的绘图表面，需要在宿主窗口上挖一个洞来显示自己。
+　　8.View 使用的是根部窗口的 Surface 在主线程中对画面进行刷新，而 SurfaceView 有自己的 Surface 通常会通过一个子线程来进行页面的刷新。
 
 
 　　双缓冲：SurfaceView 在更新视图时用了两个Canvas，一张 frontCanvas 和一张 backCanvas，每次实际显示的是 frontCanvas，backCanvas 存储的是上一次更改前的视图，当使用 lockCanvas（） 获取画布时，得到的实际上是 backCanvas 而不是正在显示的 frontCanvas，当你在获取到的 backCanvas 上绘制完成后，再使用 unlockCanvasAndPost(canvas) 提交 backCanvas 视图，那么这张 backCanvas 将替换正在显示的 frontCanvas 被显示出来，原来的 frontCanvas 将切换到后台作为 backCanvas，这样做的好处是在绘制期间不会出现黑屏。
@@ -32,7 +35,7 @@
 
 　　SurfaceView 的绘制效率非常高，因为 SurefaceView 的窗口刷新的时候不需要重绘应用程序的窗口（android普通窗口的视图绘制机制时一层一层的，任何一个资源素或者是局部的刷新都会导致整个试图结构全部重绘一次，因此效率非常低下）。
 
-#### SurfaceView 绘制的原理
+#### SurfaceView 实现原理
 
 　　SurfaceFling 服务是系统服务，负责绘制 Android 应用程序的 UI，SurfaceFling 服务运行在 Android 系统的 System 进程中，它负责管理 Android 系统的帧缓冲区（Frame Buffer），Android 应用程序为了能够将自己的 UI 绘制在系统的帧缓冲区上，它们就必须要与 SurfaceFling 服务进行通信，它们采用 Binder 进程间通信机制来进行通信，每一个 Android 应用程序与 SurfaceFling 服务都有一个连接，这个连接通过一个类型为 Client 的 Binder 对象来描述，有了这些 Binder 代理接口之后，Android 应用程序就可以通知 SurfaceFling 服务来绘制自己的 UI 了。
 
@@ -78,6 +81,230 @@ SURFACE_TYPE_HARDWARE：适用于 DMA(Direct memory access)引擎和硬件加速
 SURFACE_TYPE_GPU：适用于 GPU 加速的 Surface。
 SURFACE_TYPE_PUSH_BUFFERS：表明该 Surface 不包含原生数据，Surface 用到的数据由其他对象提供。
 
+#### SurfaceView 的实现过程
+　　SurfaceView 的实现过程包括：1.绘图表面的创建过程；2.在宿主窗口上面进行挖洞的过程；3.绘制过程。
+
+1. SurfaceView 的绘图表面的创建过程
+
+　　由于 SurfaceView 具有独立的绘图表面，因此，在它的 UI 内容可以绘制之前，首先要将它的绘图表面创建出来，尽管 SurfaceView 不与它的宿主窗口共享一个绘图表面，但是它仍然是属于宿主窗口的视图树的一个结点，也就是说，SurfaceView 仍然是会参加到宿主窗口的某些执行流程中去。
+
+　　每当一个窗口需要刷新 UI 时，就会调用 ViewRoot 类的成员函数 performTraversals，该函数在执行的过程中，如果发现应用窗口的成员变量 Surface 还没有创建或者已经失效了，那么就会请求 WindowManagerService 服务创建一个新的绘图表面作为本窗口的绘图表面，同时，如果布局里面使用了 SurfaceView，它还会让嵌入在窗口里面的 SurfaceView 通过调用 SyrfaceView.updateWindow() 方法创建它对应的 Surface。
+
+2. SurfaceView 的挖洞过程
+
+　　为了保证 SurfaceView 的 UI 是可见的，SurfaceView 需要在其宿主窗口的绘图表面上设置一块透明区域，以便可以将自己显示出来，SurfaceView 在被附加到宿主窗口之上的时候，会请求在宿主窗口上设置透明区域，而每当其宿主窗口刷新自己的 UI 的时候，就会将所有嵌入在它里面的 SurfaceView 所设置的透明区域收集起来，然后再通知 WindowManagerService 服务为其设置一个总的透明区域。
+
+3. SurfaceView 的绘制过程
+
+　　Surface 类的实现：
+```
+/**
+* Handle onto a raw buffer that is being managed by the screen compositor.
+*/
+public class Surface implements Parcelable {
+
+    long mNativeObject; // package scope only for SurfaceControl access
+
+    private String mName;
+
+    private final Canvas mCanvas = new CompatibleCanvas();
+
+    public Surface(SurfaceTexture surfaceTexture) {
+        if (surfaceTexture == null) {
+            throw new IllegalArgumentException("surfaceTexture must not be null");
+        }
+
+        synchronized (mLock) {
+            mName = surfaceTexture.toString();
+            setNativeObjectLocked(nativeCreateFromSurfaceTexture(surfaceTexture));
+        }
+    }
+
+
+
+    /**
+     * Gets a {@link Canvas} for drawing into this surface.
+     *
+     * After drawing into the provided {@link Canvas}, the caller must
+     * invoke {@link #unlockCanvasAndPost} to post the new contents to the surface.
+     *
+     * @param inOutDirty A rectangle that represents the dirty region that the caller wants
+     * to redraw.  This function may choose to expand the dirty rectangle if for example
+     * the surface has been resized or if the previous contents of the surface were
+     * not available.  The caller must redraw the entire dirty region as represented
+     * by the contents of the inOutDirty rectangle upon return from this function.
+     * The caller may also pass <code>null</code> instead, in the case where the
+     * entire surface should be redrawn.
+     * @return A canvas for drawing into the surface.
+     *
+     * @throws IllegalArgumentException If the inOutDirty rectangle is not valid.
+     * @throws OutOfResourcesException If the canvas cannot be locked.
+     */
+    public Canvas lockCanvas(Rect inOutDirty)
+            throws Surface.OutOfResourcesException, IllegalArgumentException {
+        synchronized (mLock) {
+            checkNotReleasedLocked();
+            if (mLockedObject != 0) {
+                // Ideally, nativeLockCanvas() would throw in this situation and prevent the
+                // double-lock, but that won't happen if mNativeObject was updated.  We can't
+                // abandon the old mLockedObject because it might still be in use, so instead
+                // we just refuse to re-lock the Surface.
+                throw new IllegalArgumentException("Surface was already locked");
+            }
+            mLockedObject = nativeLockCanvas(mNativeObject, mCanvas, inOutDirty);
+            return mCanvas;
+        }
+    }
+
+
+    /**
+     * Posts the new contents of the {@link Canvas} to the surface and
+     * releases the {@link Canvas}.
+     *
+     * @param canvas The canvas previously obtained from {@link #lockCanvas}.
+     */
+    public void unlockCanvasAndPost(Canvas canvas) {
+        synchronized (mLock) {
+            checkNotReleasedLocked();
+
+            if (mHwuiContext != null) {
+                mHwuiContext.unlockAndPost(canvas);
+            } else {
+                unlockSwCanvasAndPost(canvas);
+            }
+        }
+    }
+
+    private void unlockSwCanvasAndPost(Canvas canvas) {
+        if (canvas != mCanvas) {
+            throw new IllegalArgumentException("canvas object must be the same instance that "
+                    + "was previously returned by lockCanvas");
+        }
+        if (mNativeObject != mLockedObject) {
+            Log.w(TAG, "WARNING: Surface's mNativeObject (0x" +
+                    Long.toHexString(mNativeObject) + ") != mLockedObject (0x" +
+                    Long.toHexString(mLockedObject) +")");
+        }
+        if (mLockedObject == 0) {
+            throw new IllegalStateException("Surface was not locked");
+        }
+        try {
+            nativeUnlockCanvasAndPost(mLockedObject, canvas);
+        } finally {
+            nativeRelease(mLockedObject);
+            mLockedObject = 0;
+        }
+    }
+
+    private static native long nativeLockCanvas(long nativeObject, Canvas canvas, Rect dirty)
+            throws OutOfResourcesException;
+    private static native void nativeUnlockCanvasAndPost(long nativeObject, Canvas canvas);
+
+}
+```
+　　Surface 了有三个成员变量 mNativeObject、mCanvas 和 mName，它们的类型分别是 long、Canvas 和 String。其中，mNativeObject 保存的是 jni 层的一个 SurfaceControl 对象的地址值，mName 用来描述当前正在创建的一个绘图表面的名称，每一个 Surface 对象内部都有一块画布，这块画布是通过它的成员变量 mCanvas 所指向的一个 JCompatiableCanvas 对象来描述的。
+
+　　Surface 的成员函数 lockCanvas 调用 lockCanvasNative 来创建一块画布 Canvas，它通过 JNI 方法获得一个图形缓冲区，并且将这个图像缓冲区封装在一块类型为 Canvas 的画布中返回给调用者使用，你可以调用 Canvas 类所提供的绘图函数来绘制任意的 UI，绘制完成以后，通过 Surface 的成员函数 unlockCanvasAndPost() 来调用 JNI 方法，nativeUnlockCanvasAndPost() 将 Canvas 所描述的图形缓冲区提交给 SurfaceFlinger 服务处理。
+
+　　SurfaceView 虽然具有独立的绘图表面，不过它仍然是宿主窗口的视图结构中的一个结点，因此，它仍然是可以参与到宿主窗口的绘制流程中取得，如果要在一个 Surface 上进行 UI 绘制，那么就顺序执行以下操作：
+（1）在 Surface 的基础上获得一个 Canvas 对象。
+（2）利用 Canvas 类提供的绘图接口在前面获得的画布上绘制任意的 UI。
+（3）将 Canvas 已经填充了 UI 数据的缓冲区提交给 SurfaceFlinger 服务，以便 SurfaceFlinger 服务可以合成到屏幕上去。
+
+　　SurfaceView 通过 SurfaceHolder 接口就可以执行第 1 和 第 3 个操作，示例如下：
+```
+SurfaceView sv = (SurfaceView)findViewById(R.id.surface_view)；
+SurfaceHolder sh = sv.getHolder();
+Canvas canvas = sh.lockCanvas();
+
+//Draw something on canvas ...
+
+sh.unlockCanvasAndPost(canvas);
+```
+　　SurfaceView 类的成员函数 getHolder 将一个 SurfaceHolder 独享返回给调用者，而 SurfaceHolder 类的成员函数 lockCanvas 通过调用函数 internalLockCanvas 来在当前正在处理的 SurfaceView 的绘图表面上建立一块画布返回给调用者。
+
+```
+public class SurfaceView extends View {
+    final ReentrantLock mSurfaceLock = new ReentrantLock();
+    final Surface mSurface = new Surface();       // Current surface in use
+
+
+
+    private final SurfaceHolder mSurfaceHolder = new SurfaceHolder() {
+
+        /**
+         * Gets a {@link Canvas} for drawing into the SurfaceView's Surface
+         *
+         * After drawing into the provided {@link Canvas}, the caller must
+         * invoke {@link #unlockCanvasAndPost} to post the new contents to the surface.
+         *
+         * The caller must redraw the entire surface.
+         * @return A canvas for drawing into the surface.
+         */
+        @Override
+        public Canvas lockCanvas() {
+            return internalLockCanvas(null);
+        }
+        private final Canvas internalLockCanvas(Rect dirty) {
+			mSurfaceLock.lock();
+            Canvas c = null;
+            if (!mDrawingStopped && mWindow != null) {
+                try {
+                    c = mSurface.lockCanvas(dirty);
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, "Exception locking surface", e);
+                }
+            }
+			...
+
+            if (c != null) {
+                mLastLockTime = SystemClock.uptimeMillis();
+                return c;
+            }
+			...
+            mSurfaceLock.unlock();
+
+            return null;
+		}
+		...
+        @Override
+        public void unlockCanvasAndPost(Canvas canvas) {
+            mSurface.unlockCanvasAndPost(canvas);
+            mSurfaceLock.unlock();
+        }
+	}
+	...
+    @Override
+    public void draw(Canvas canvas) {
+        if (mWindowType != WindowManager.LayoutParams.TYPE_APPLICATION_PANEL) {
+            // draw() is not called when SKIP_DRAW is set
+            if ((mPrivateFlags & PFLAG_SKIP_DRAW) == 0) {
+                // punch a whole in the view-hierarchy below us
+                canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+            }
+        }
+        super.draw(canvas);
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        if (mWindowType != WindowManager.LayoutParams.TYPE_APPLICATION_PANEL) {
+            // if SKIP_DRAW is cleared, draw() has already punched a hole
+            if ((mPrivateFlags & PFLAG_SKIP_DRAW) == PFLAG_SKIP_DRAW) {
+                // punch a whole in the view-hierarchy below us
+                canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+            }
+        }
+        super.dispatchDraw(canvas);
+    }
+}
+```
+
+　　SurfaceHolder 将当前正在处理的 SurfaceView 的 Surface 的 Canvas 返回给调用者访问和控制，而这块画布不是线程安全的，因此，就需要对当前正在处理的 SurfaceView 的绘图表面 Surface 进行加锁保护，这是通过它的成员变量 mSurfaceLock 来实现的。
+
+　　SurfaceView 类继承自 View，所以它的成员函数 draw 和 dispatchDraw 的参数 canvas 是宿主窗口的绘图表面上的画布分配的，因此，在这块画布上绘制的任何 UI 都是出现在宿主窗口的绘图表面上的，但是这里可以看到，如果当前正在处理的 SurfaceView 不是用作宿主窗口面板的时候，即其成员变量 mWindowType 的值不等于 WindowManager.LayoutParams.TYPE_APPLICATION_PANEL 的时候，SurfaceView 类的成员函数 draw 只是简单地将它所占据的区域绘制为黑色。
+
+　　调用者在画布上绘制完成所需要的 UI 之后，就可以将这块画布的图形缓冲区的 UI 数据提交给 SurfaceFlinger 服务来处理了，这是通过调用 SurfaceHolder 类的成员函数 unlockCanvasAndPost 来实现的，它通过调用 SurfaceFlinger 服务处理，以便 SurfaceFlinger 服务可以在合适的时候将该图形缓冲区合成到屏幕上去显示，这样就可以将对应的 SurfaceView 的 UI 展现出来了，提交完成之后，再调用 SurfaceView 的成员变量 mSurfaceLock 来解锁当前正在处理的绘图表面，因为在前面曾经将该绘图表面锁住了。
 
 ## SurfaceView 的使用模板
 　　SurfaceView 使用过程有一套模板代码，大部分的 SurfaceView 都可以套用。
@@ -109,7 +336,6 @@ SURFACE_TYPE_PUSH_BUFFERS：表明该 Surface 不包含原生数据，Surface �
 　　在调用 lockCanvas 函数获取 Surface 的 Canvas 后，SurfaceView 会利用 Surface 的一个同步锁锁住画布 Canvas，直到调用 unlockCanvasAndPost(Canvas canvas) 函数，才解锁画布并提交改变，将图形显示，这里的同步机制保证 Surface 的 Canvas 在绘制过程中不会被改变（被摧毁、修改），避免多个不同的线程同时操作同一个 Canvas 对象。
 
 
-
 #### 使用注意
 1. 因为 SurfaceView 允许自定义的线程操作 Surface 对象执行绘制方法，而有可能同时定义多个线程执行绘制，所以当获取 SurfaceHolder 中的 Canvsa 对象时记得加同步操作，避免两个不同的线程同时操作同一个 Canvas 对象，当操作完成后记得调用 SurfaceHolder.unlockCanvasAndPost 方法释放掉 Canvas 锁。
 2. 在调用 doDraw 执行绘制时，因为 SurfaceView 的特点，它会保留之前绘制的图形，所以需要先清空掉上一次绘制时留下的图形（View 则不会，它会默认在调用 View.onDraw() 方法时自动清空掉视图里的东西）。
@@ -119,6 +345,6 @@ SURFACE_TYPE_PUSH_BUFFERS：表明该 Surface 不包含原生数据，Surface �
 
 ## 查阅资料
 1.[Android SurfaceView 入门学习](https://www.cnblogs.com/senior-engineer/p/7867783.html) - 简单概念与手里实现案例
-2.[android SurfaceView 详解](https://blog.csdn.net/TuGeLe/article/details/79199119)
+2.[android SurfaceView 详解](https://blog.csdn.net/TuGeLe/article/details/79199119) - SurfaceView 的原理
 3.[Android 中 SurfaceView 的使用详解](https://www.xuebuyuan.com/3236956.html) - 简单概念与使用画圆
 4.[SurfaceView - Android SDK | Android Developers](https://www.android-doc.com/reference/android/view/SurfaceView.html) - 官方文档
