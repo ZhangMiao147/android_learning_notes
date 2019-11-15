@@ -75,6 +75,8 @@
 [Kotlin 资源大全 - 学 Kotlin 看这一篇教程就够了](https://juejin.im/post/591dd9f544d904006c9fbb96?tdsourcetag=s_pctim_aiomsg)
 [写给 Android App 开发人员看的 Android 底层知识](https://www.cnblogs.com/Jax/category/513688.html)
 
+[Android 学习资料汇总](https://blog.csdn.net/qq_32175491/article/details/77888194)
+
 https://m.nowcoder.com/discuss/146655?type=2&order=4&pos=12&page=1&headNav=www&from=singlemessage 面经贴
 
 https://github.com/Ellen2018/AndroidFaceInterview 面试题以及答案
