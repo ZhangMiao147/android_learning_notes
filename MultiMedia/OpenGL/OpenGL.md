@@ -177,10 +177,21 @@ public void onDrawFrame(GL10 unused) {
 }
 ```
 
+#### 成形面（shape faces）和扭曲（winding）
+　　在 OpenGL，形状的面是由三维空间中的三个或者多个点定义的曲面。一组三个或者多个三维点（在 OpenGL 中称为顶点）由一个正面和一个反面。你如何知道哪个是正面和哪个是反面？答案是与扭曲有关，或者与定义形状点的方向有关。
 
-　　
+![图为转换为逆时针绘制顺序的坐标列表](./image/ccw-winding.png)
 
+　　在示例中，三角形的点是按逆时针方向定义的顺序绘制的。这个坐标的绘制顺序定义了形状的扭曲方向。默认情况下，在 OpenGL，逆时针绘制的面是正面。上图中所示的三角形定义是：你可以看到形状的正面（由 OpenGL 解释），而另一边是反面。
 
+　　为什么知道一个形状的哪个面是正面很重要？答案与 OpenGL 的一个常用特性有关，称为面剔除（face culling）。面剔除是 OpenGL 环境的一个选项，它允许渲染管道忽略（不计算和绘制）形状的反面，节省时间、内存和处理周期。
+
+```
+// enable face culling feature
+gl.glEnable(GL10.GL_CULL_FACE);
+// specify which faces to not draw
+gl.glCullFace(GL10.GL_BACK);
+```
 
 ## 查阅资料
 1. [Learn OpenGL](learnopengl.com)
