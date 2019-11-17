@@ -68,7 +68,118 @@
 ##### 纹理压缩要求
 　　如果应用程序使用纹理压缩格式，则必须使用 < supports-gl-texture > 在清单文件中声明应用程序支持的格式。
 
-　　在清单中声明纹理压缩会要求
+　　在清单中声明纹理压缩会要求向不具有支持至少一种声明压缩类型的设备用户隐藏应用程序。
+
+##### 绘制对象的映射坐标
+　　在 Android 设备上显示徒刑又一个基本问题就是它们的屏幕大小和形状可能是不同的。OpenGL 假设的是一个正方形、同一的坐标系，并且在通常情况下，将典型的非正方形的屏幕上，将它作为完美的正方形一样将左边绘制上去。
+
+![默认 OpenGL 坐标系（左）映射到典型的 Android 设备屏幕（右）](./image/coordinates.png)
+
+　　上图左侧显示了 OpenGL 框架的同一坐标系，以及这些坐标实际上是如何映射到右侧横向的典型设备屏幕上。为了解决这个问题，你需要应用 OpenGL 投影模式和相机视图来变换坐标，以便你的图形对象在任何显示上都有一个正确的比例。
+
+　　为了使用投影和相机视图，需要你创建一个投影矩阵和一个相机视图举证，并且在 OpenGL 渲染管道上应用它们。投影矩阵重新计算图形的坐标，以便它们正确的映射到 Android 设备屏幕上。相机视图矩阵创建了一个变换，该变换从从特定的眼睛位置渲染对象。
+
+###### OpenGL ES 1.0 中的投影和相机视图
+　　在 ES 1.0 API 中，通过创建每个矩阵，将它们添加到 OpenGL 环境中，使用投影和相机视图。
+
+1.投影矩阵--使用设备屏幕的几何图形创建一个投影矩阵，为了计算对象坐标以便正确的比例绘制它们。下面的示例代码演示如何去实现 GLSurfaceView.Renderder 的 onSurfaceChanged() 方法，创建一个根据屏幕纵横比的映射矩阵，并且在 OpenGL 渲染环境下使用它。
+```
+public void onSurfaceChanged(GL10 gl, int width, int height) {
+    gl.glViewport(0, 0, width, height);
+
+    // make adjustments for screen ratio
+    float ratio = (float) width / height;
+    gl.glMatrixMode(GL10.GL_PROJECTION);        // set matrix to projection mode
+    gl.glLoadIdentity();                        // reset the matrix to its default state
+    gl.glFrustumf(-ratio, ratio, -1, 1, 3, 7);  // apply the projection matrix
+}
+```
+
+2.相机变换矩阵--使用投影举证调整过坐标系之后，你还必须使用相机视图。下面的示例代码展示了如何去实现 GLSurfaceView.Renderer 的 onDrawFrame() 方法去饮用一个模型视图，并使用 GLU.gluLookAt() 模拟一个相机位置的视图转换。
+
+```
+public void onDrawFrame(GL10 gl) {
+    ...
+    // Set GL_MODELVIEW transformation mode
+    gl.glMatrixMode(GL10.GL_MODELVIEW);
+    gl.glLoadIdentity();                      // reset the matrix to its default state
+
+    // When using GL_MODELVIEW, you must set the camera view
+    GLU.gluLookAt(gl, 0, 0, -5, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+    ...
+}
+```
+
+##### OpenGL ES 2.0 以及更高版本的映射和相机视图
+　　在 ES 2.0 和 3.0 API 上，你使用映射和相机视图，首先需要将矩阵成员添加到图形对象的顶点着色器，添加矩阵成员后，可以生成并且使用映射和相机视图矩阵到对象上。
+
+1.添加矩阵到顶点着色器--为视图投影矩阵创建一个变量，并且将它作为着色器位置的倍增。在下面的顶点着色器示例代码中，报刊的 uMVPMatrix 成员允许将映射和相机视图矩阵应用于使用找色齐的对象坐标。
+
+```
+private final String vertexShaderCode =
+
+    // This matrix member variable provides a hook to manipulate
+    // the coordinates of objects that use this vertex shader.
+    "uniform mat4 uMVPMatrix;   \n" +
+
+    "attribute vec4 vPosition;  \n" +
+    "void main(){               \n" +
+    // The matrix must be included as part of gl_Position
+    // Note that the uMVPMatrix factor *must be first* in order
+    // for the matrix multiplication product to be correct.
+    " gl_Position = uMVPMatrix * vPosition; \n" +
+
+    "}  \n";
+```
+
+　　注意：上面的示例定义了顶点找色齐的一个单例转换举证成员，你可以使用组合投影举证和相机视图举证。根据你应用需要，可能需要在顶点着色器中定义单独的投影矩阵和相机视图矩阵成员，方便独立的去改变它们。
+
+2.访问着色器矩阵--在对你的顶点着色器使用映射和相机视图创建一个钩（hook）之后，你就可以访问应用投影和相机视图矩阵的比边框。下面的代码展示了如何去实现 GLSurfaceView.Renderer 的 onSurfaceCreated() 方法，以访问上面顶点着色器定义的矩阵变量。
+```
+public void onSurfaceCreated(GL10 unused, EGLConfig config) {
+    ...
+    muMVPMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix");
+    ...
+}
+```
+
+3.创建投影和相机视图矩阵-生成投影和视图剧中应用于图形对象。下面的示例代码展示了如何使用 GLSurfaceView.Renderer 的 onSurfaceCreate() 和 onSurfaceChanged() 方法，创建根据设备屏幕纵横比的相机视图矩阵和投影矩阵。
+```
+public void onSurfaceCreated(GL10 unused, EGLConfig config) {
+    ...
+    // Create a camera view matrix
+    Matrix.setLookAtM(vMatrix, 0, 0, 0, -3, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+}
+
+public void onSurfaceChanged(GL10 unused, int width, int height) {
+    GLES20.glViewport(0, 0, width, height);
+
+    float ratio = (float) width / height;
+
+    // create a projection matrix from device screen geometry
+    Matrix.frustumM(projMatrix, 0, -ratio, ratio, -1, 1, 3, 7);
+}
+```
+
+4.应用投影和相机视图矩阵--为了使用投影和相机视图转换，将矩阵相乘，然后设置给顶点着色器。下面的示例代码展示了如何使用 GLSurfaceView.Renderer 的 onDraeFrame() 方法，将创建的投影矩阵和相机视图组合起来，然后将其应用于由 OpenGL 呈现的图形对象。
+
+```
+public void onDrawFrame(GL10 unused) {
+    ...
+    // Combine the projection and camera view matrices
+    Matrix.multiplyMM(vPMatrix, 0, projMatrix, 0, vMatrix, 0);
+
+    // Apply the combined projection and camera view transformations
+    GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, vPMatrix, 0);
+
+    // Draw objects
+    ...
+}
+```
+
+
+　　
+
 
 
 ## 查阅资料
