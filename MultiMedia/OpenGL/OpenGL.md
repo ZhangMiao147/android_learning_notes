@@ -249,10 +249,66 @@ String extensions = gl.glGetString(GL10.GL_EXTENSIONS);
 
 　　AEP 还改进了对图像的支持、着色器存储缓冲和片段着色器的原子计算。
 
-　　
+　　要使应用程序可以使用 AEP，应用程序的清单必须声明 AEP 。此外，平板版本必须支持它。
+
+　　在清单中声明 AEP 要求如下：
+```
+<uses feature android:name="android.hardware.opengles.aep"
+              android:required="true" />
+```
+
+　　要验证平台版本是否支持 AEP，使用 hasSystemFeature(String) 方法，传入 FEATURE_OPENGLES_EXTENSION_PACK 作为参数。下面的代码片段展示了如何执行此操作的示例：
+
+```
+boolean deviceSupportsAEP = getPackageManager().hasSystemFeature
+     (PackageManager.FEATURE_OPENGLES_EXTENSION_PACK);
+```
+
+　　如果方法返回 true，则支持 AEP。
 
 #### 检查 OpenGL ES 版本
-　　
+　　Android 设备上有几个版本的 OpenGL ES，你可以在清单中指定应用程序所需的 API 的最低版本，但是同时也渴望可以用到新的 API 的功能。例如，OpenGL ES 3.0 API 是向下兼容 API 的 2.0 版本的，所以你也许想要使用 OpenGL ES 3.0 功能去编写你的程序，但是 3.0 API 是不可用的，所以返回使用 2.0 API。
+
+　　在使用高于应用程序清单中要求的最低版本的 OpenGL ES 功能之前，应用程序应该检查设备上可用的 API 版本。你可以通过下面两种方式之一来执行操作：
+
+1.尝试创建高版本的 OpenGL ES 上下文（EGLContext）并检查结果。
+2.创建支持的最低版本 OpenGL ES 上下本并检查版本值。
+
+　　下面的示例代码演示如何通过创建 EGLContext 并检查结果来查看可用的 OpenGL ES 版本。此例显示如何检查 OpenGL ES 3.0 版本：
+
+```
+private static double glVersion = 3.0;
+
+private static class ContextFactory implements GLSurfaceView.EGLContextFactory {
+
+  private static int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
+
+  public EGLContext createContext(
+          EGL10 egl, EGLDisplay display, EGLConfig eglConfig) {
+
+      Log.w(TAG, "creating OpenGL ES " + glVersion + " context");
+      int[] attrib_list = {EGL_CONTEXT_CLIENT_VERSION, (int) glVersion,
+              EGL10.EGL_NONE };
+      // attempt to create a OpenGL ES 3.0 context
+      EGLContext context = egl.eglCreateContext(
+              display, eglConfig, EGL10.EGL_NO_CONTEXT, attrib_list);
+      return context; // returns null if 3.0 is not supported;
+  }
+}
+```
+
+　　如果上面显示的 createContext() 方法返回 null，那么你的代码应该创建一个 OpenGL ES 2.0 上下文去代替，并且返回到仅使用该 API。
+
+　　下面的代码示例演示如何通过先创建最小支持的版本上下本，然后检查版本字符串来检查 OpenGL ES 版本：
+```
+// Create a minimum supported OpenGL ES context, then check:
+String version = gl.glGetString(GL10.GL_VERSION);
+Log.w(TAG, "Version: " + version );
+// The version format is displayed as: "OpenGL ES <major>.<minor>"
+// followed by optional content provided by the implementation.
+```
+
+　　使用这种方法，如果你发现设备支持的最高级别的 API 版本后，你就可以销毁最小的 OpenGL ES 上下文，并且创建一个新的更高可用 API 版本的上下文。
 
 ## 选择 OpenGL API 版本
 
