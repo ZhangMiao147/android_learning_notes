@@ -4,7 +4,64 @@
 　　
 
 
-## 
+## 判断是否支持 OpenGL ES 2
+```
+
+public static boolean isSupportEs2(Context context){
+    //检查是够支持 2.0
+    ActivityManager activityConfigurationInfo = actiivtyManager.getDeviceConfigurationInfo();
+    if (activityManager != null){
+        ConfigurationInfo  deviceConfigurationInfo = activityManager.getDeviceConfigurationInfo()；
+        int reqGlEsVersion = deviceConfigurationInfo.reqGlEsVersion;
+        return reqGlEsVersion >= GLES_VERSION_2 || 
+        (Build.VERSION_SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1
+        && (Build.FINGERPRINT.startsWith("generic")
+        || Build.FINGERPRINT.startsWith("unknow")
+        || Build.MODEL.contains("google_sdk")
+        || Build.MODEL.contains("Emulator")
+        || Build.MODEL.contains("Android SDK build for x86")
+        ));
+    } else {
+        return false;
+    }
+}
+```
+
+## 创建 GLSurfaceView
+```
+//创建一个 GLSurfaceView
+glSurfaceView = new GLSurfaceView(this);
+glSurfaceView.setEGLContextClientVersion(2);
+//设置自己的 Render，Render 内进行图形的绘制
+glSurfaceView.setRenderer(new TriangleShapeRender(this));
+isRenderSet = true;
+setContextView(glSurfaceView);
+```
+
+　　在 Activity 对应的生命周期内，来调用 GLSurfaceView 的方法：
+
+```
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (isRenderSet) {
+            glSurfaceView.onPause();
+        }
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (isRenderSet) {
+            glSurfaceView.onResume();
+        }
+
+    }
+```
+
+　　因为 Android 中的 GLSurfaceView 的操作，都是在 GLThread 中进行，所以生命周期的毁掉也都在 GLThread 线程中，所有 OpenGL 的操作也都需要在该线程中。 
+
 　　
 
 
