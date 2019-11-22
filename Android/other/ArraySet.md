@@ -1,7 +1,6 @@
 # ArraySet
 
 ## 介绍
-**（ArraySet 官方文档翻译）**
 　　ArraySet 是一种通用的 Set 数据结构，它的设计比传统的 HashSet 更节省内存。ArraySet 的设计和 ArrayMap 很相似，ArraySet 和 ArrayMap 的特点是一样的。但是，ArraySet 和 ArrayMap 的实现是分来的，因此，ArraySet 的对象数组中只包含了集合中每个项的一个项（而不是映射的一对项）。
 
 

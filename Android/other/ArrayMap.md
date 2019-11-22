@@ -1,7 +1,6 @@
 # ArrayMap
 
 ## 介绍
-**（ArrayMap 官方文档翻译）**
 　　ArrayMap 是一种通用的 key -> value 映射数据结构，它要比传统的 HashMap 更节省内存。ArrayMap 是 Android 平台实现的一个版本，也可以在旧版本的平台上使用。ArrayMap 将映射保存在数组数据结构 --- 一个整数数组是每一项的哈希值，一个对象数组是键值对。这样 ArrayMap 就避免了为存储在映射表中的每个条目创建额外的对象，并且 ArrayMap 更加积极的尝试控制数组大小的增长（在数组大小增长时，只需要复制数组条目，而不需要重建映射表）。
 
 　　如果不需要这里提供的标准 Java 容器 API(迭代器等)，请考虑使用 SimpleArrayMap 替换。
