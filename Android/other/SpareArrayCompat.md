@@ -1,9 +1,9 @@
 # SparseArrayCompat
 
 ## 介绍
-**基本是官网文档的翻译**
+**(基本是官网文档的翻译)**
 
-　　SparseArrays 是一个和 HashMap 一样的映射表，但是不同的是 SparseArrays 的 key 是 Integer 类型。当使用 Integer 为 key 值去映射对象时，使用 SparseArrays 要比使用 HashMao 更加高效。这是因为 SparseArrays 避免了自动装箱，并且它的数据结构也不依赖额外的对象在各个映射中查找匹配。
+　　SparseArrays 是一个和 HashMap 一样的映射表，但是不同的是 SparseArrays 的 key 是 Integer 类型。当使用 Integer 为 key 值去映射对象时，使用 SparseArrays 要比使用 HashMap 更节省内存，这是因为 SparseArrays 避免了自动装箱，并且它的数据结构对于每个映射不依赖额外的存储对象。
 
 　　注意：SparseArrays 将其映射保存在一个数组数据结构中，使用二分检索法来查找键。如果存储大量的数据，SparseArrays 是不适合的，这种情况下，它要比使用 HashMap 还要慢，这是因为查找是采用二分检索法，添加和删除需要在数组中插入和删除数据。对于在几百个之内的数据，SparseArray 和 HashMap 之间的性能差异不大，小于 50%。
 
