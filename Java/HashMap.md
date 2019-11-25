@@ -35,6 +35,9 @@
 　　以 Java 1.7 源码为例，分析 HashMap 的实现。
 
 　　HashMap 继承 AbstractMap，并且实现 Map、Cloneable、Serializable 接口。
+
+　　HashMap 的主干是一个 HashMapEntry 数组。HashMapEntry 是 HashMap 的基本组成单元，每一个 HashMapEntry 包含一个 key-value 键值对。 
+
 #### 关键参数
 ```
     /**
@@ -268,6 +271,8 @@
         return h & (length-1);
     }
 ```
+
+　　h & (length-1) 保证获取的 index 一定在数组范围内。
 
 #### get() 方法
 ```
