@@ -1,7 +1,7 @@
 # HashMap
 　　HashMap 是一个哈希表，它存储的内容是键值对（key-value）映射。
 
-　　HashMao 由数组+链表组成，数组是 HashMap 的主体，链表则是主要为了解决哈希冲突的。
+　　HashMap 由数组+链表组成，数组是 HashMap 的主体，链表则是主要为了解决哈希冲突的。
 
 ## 哈希表
 　　哈希表（Hash Table，也叫散列表），是根据键（key）而直接访问在内存存储位置的数据结构。也就是说，它通过计算一个关于键值的函数，将所需查询的数据映射到表中一个位置来访问记录，这加快了查找速度。这个映射函数称为哈希函数，存放记录的数组称为哈希表。
@@ -96,7 +96,6 @@
 　　HashMap 有 4 个构造函数，无参构造函数和一个 initialCapacity 参数的构造函数都会调用 HashMap(int initialCapacity, float loadFactor) 这个构造函数。还有一个构造函数的参数是 Map。
 
 ```
-    
     public HashMap(int initialCapacity, float loadFactor) {
         if (initialCapacity < 0)
             throw new IllegalArgumentException("Illegal initial capacity: " +
@@ -135,6 +134,10 @@
         putAllForCreate(m);
     }
 ```
+
+　　当指定的初始容量 < 0 时抛出 IllegalArgumentException 异常，当指定的初始容量 > MAX_CAPACITY 时，就让初始容量 = MAX_CAPACITY。当负载因子小于 0 或者不是数字时，抛出 IllegalArgumentException 异常。
+
+
 
 ##### inflateTable(int toSize) 方法
 ```
@@ -194,6 +197,7 @@
 
 ##### singleWordWangJenkinsHash(Object k) 方法
 ```
+    //对 key 的 hashcode 进一步进行计算以及二进制位的调整等来保证最终获取的存储位置尽量分布均匀
     public static int singleWordWangJenkinsHash(Object k) {
         int h = k.hashCode();
 
@@ -237,14 +241,14 @@
 			//初始化映射数组
             inflateTable(threshold);
         }
-		//允许 key 为 null
+		//允许 key 为 null，如果 key 为 null，存储位置为 table[0] 或 table[0] 的冲突链上
         if (key == null)
             return putForNullKey(value);
-		//得到 hash 数值
+		//对 key 的 hashcode 进行进一步计算得到 hash 数值，确保散列均匀
         int hash = sun.misc.Hashing.singleWordWangJenkinsHash(key);
 		//获取存储数据的数组下标
         int i = indexFor(hash, table.length);
-		//如果已经有 key 对应的数据，则覆盖
+		//如果已经有 key 对应的数据，则覆盖，并返回旧的 value
         for (HashMapEntry<K,V> e = table[i]; e != null; e = e.next) {
             Object k;
             if (e.hash == hash && ((k = e.key) == key || key.equals(k))) {
@@ -272,7 +276,9 @@
     }
 ```
 
-　　h & (length-1) 保证获取的 index 一定在数组范围内。
+　　h & (length-1) 保证获取的 index 一定在数组范围内。位运算对计算机来说，性能更高一些（HashMap 中有大量位运算）。
+
+##### addEnter() 方法
 
 #### get() 方法
 ```
@@ -308,10 +314,10 @@
 ```
 
 
-## Java 1.7 和 Java 1.8 HashMap 的区别
+## JDK 1.7 和 JDK 1.8 HashMap 的区别
 　　这里简单罗列一下 Java 1.8 的 HashMap 与 Java 1.7 的不同之处。
 
-
+1. JDK 1.8 在 JDK 1.7 在基础上增加了红黑树来进行优化，即当链表超过 8 时，链表旧转换为红黑树，利用红黑树快速增删改查的特点提高 HashMap 的性能，其中会用到红黑树的插入、删除、查找等算法。
 
 
 ## 总结
