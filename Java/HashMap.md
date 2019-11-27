@@ -449,6 +449,7 @@ void resize(int newCapacity) {
 #### get() 方法
 ```
     public V get(Object key) {
+        //如果 key 为 null，则直接去 tab[0] 处去检索即可。
         if (key == null)
             return getForNullKey();
         Entry<K,V> entry = getEntry(key);
@@ -457,15 +458,18 @@ void resize(int newCapacity) {
     }
 ```
 
+　　get 方法通过 key 值返回对应 value，如果 key 为 null，则直接去 table[0] 处检索。
+
 ##### getEntry(Object key) 方法
 ```
     final Entry<K,V> getEntry(Object key) {
         if (size == 0) {
             return null;
         }
-
+        //通过 key 的 hashCode 值计算 hash 值
         int hash = (key == null) ? 0 : sun.misc.Hashing.singleWordWangJenkinsHash(key);
 		//循环遍历下标下面的链表
+        // indexFor (hash&length-1) 获取最终数组索引，然后遍历链表，通过 equals 方法比对找出对应记录
         for (HashMapEntry<K,V> e = table[indexFor(hash, table.length)];
              e != null;
              e = e.next) {
@@ -478,7 +482,7 @@ void resize(int newCapacity) {
         return null;
     }
 ```
-
+　　在根据 key 值获取对应的值时，判断时需要 hash 值相同，并且 key 值相同才判断为是同一个 key 值，为什么除了判断 key 值相同还要保证 hash 值相同，这是因为如果传入的 key 对象重写了 equals 方法却没有重写 hashCode ，而恰巧此对象定位到这个数组位置，如果仅仅用 equals 判断可能时相等的，但其 hashCode 和当前对象时不一致的，这种情况，根据 Object 的 hashCode 的约定，不能返回当前对象，而应该返回 null。
 
 ## JDK 1.7 和 JDK 1.8 HashMap 的区别
 　　这里简单罗列一下 Java 1.8 的 HashMap 与 Java 1.7 的不同之处。
