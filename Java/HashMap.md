@@ -92,7 +92,12 @@
 
 ```
 
+![HashMap的总体结构](./image/HashMap的总体结构.png)
+
+
+
 #### 构造函数
+
 　　HashMap 有 4 个构造函数，无参构造函数和一个 initialCapacity 参数的构造函数都会调用 HashMap(int initialCapacity, float loadFactor) 这个构造函数。还有一个构造函数的参数是 Map。
 
 ```
@@ -141,10 +146,12 @@
 
 ##### inflateTable(int toSize) 方法
 
+　　inflateTable() 方法用于为主干数组 table 在内存中分配存储空间，通过 roundUpToPowerOf2(toSize) 可以确保 capacity 为大于或等于 toSize 的最接近 toSize 的二次幂。
+
 ```
     private void inflateTable(int toSize) {
         // Find a power of 2 >= toSize
-		// capacity 是初始的 threshold 值的最接近 2 的倍数的向上取值
+		// roundUpToPowerOf2 返回一个比给定整数大且最接近 2 的幂次方整数，所以 capacity 必然是 2 的幂
         int capacity = roundUpToPowerOf2(toSize);
         
         // 可以看出 threshold 通常是等于 capacity * loadFactor，并且 threshold 不会朝超过 MAXIMUM_CAPACITY
@@ -230,6 +237,8 @@
 　　HashMapEntry 结构的 hash 值是将 key 的 hashCode() 值进行一系列的位移操作作为 hash 值的。
 
 
+
+
 ##### roundUpToPowerOf2(int number)方法
 ```
     private static int roundUpToPowerOf2(int number) {
@@ -254,6 +263,7 @@
 #### put() 方法
 ```
     public V put(K key, V value) {
+    	//如果 table 数组为空数组{}，进行数组填充（为 table 分配实际内存空间），参数为 threshold
         if (table == EMPTY_TABLE) {
 			//初始化映射数组
             inflateTable(threshold);
@@ -275,7 +285,7 @@
                 return oldValue;
             }
         }
-
+		//保证并发访问时，若 HashMap 内部结构发生变化，快速响应失败
         modCount++;
 		//创建新的 HashMapEntry 结构，插入到合适的位置
         addEntry(hash, key, value, i);
@@ -341,11 +351,17 @@ int hash32() {
 
 　　h & (length-1) 保证获取的 index 一定在数组范围内。位运算对计算机来说，性能更高一些（HashMap 中有大量位运算）。
 
+　　所以最终存储位置确认流程为：
+
+![最终位置的确定流程](./image/最终位置的确定流程.png)
+
+
+
 ##### addEnter() 方法
 
 ```
     void addEntry(int hash, K key, V value, int bucketIndex) {
-    	//如果 size 小于了阈值，则将数组的大小扩充为当前的两倍
+    	//如果 size 超过了阈值，则将数组的大小扩充为当前的两倍，也就是扩容
         if ((size >= threshold) && (null != table[bucketIndex])) {
             resize(2 * table.length);
             hash = (null != key) ? hash(key) : 0;
@@ -355,6 +371,8 @@ int hash32() {
         createEntry(hash, key, value, bucketIndex);
     }
 ```
+
+　　当 HashMap 的 size 大于或等于 threshold ，就要进行 resize，也就是扩容。
 
 ##### resize(int newCapacity) 方法
 
@@ -375,13 +393,15 @@ void resize(int newCapacity) {
     }
 ```
 
+　　当数组长度发生变化时，存储位置 index = h & (length-1)，index 也可能会发生变化，小樱桃重新计算 index。
+
 ##### transfer() 方法
 
 ```
     //数组扩容后，重新调整位置
     void transfer(Entry[] newTable, boolean rehash) {
         int newCapacity = newTable.length;
-        //重新调整位置
+        //for 循环中的代码，逐个遍历链表，重新计算索引位置，将老数组数据复制到新数组中去（数组不存储实际数据，所以仅仅是拷贝引用而已）
         for (Entry<K,V> e : table) {
             while(null != e) {
                 Entry<K,V> next = e.next;
@@ -389,6 +409,7 @@ void resize(int newCapacity) {
                     e.hash = null == e.key ? 0 : hash(e.key);
                 }
                 int i = indexFor(e.hash, newCapacity);
+                //将当前 entry 的 next 链指向新的索引位置，newTable[i] 有可能为空，有可能也是个 entry 链，如果是 entry 链，直接在链表头部插入
                 e.next = newTable[i];
                 newTable[i] = e;
                 e = next;
@@ -397,9 +418,31 @@ void resize(int newCapacity) {
     }
 ```
 
+　　这个方法将老数组中的数据逐个链表的遍历，扔到新的扩容后的数组中，数组索引的计算是通过对 key 的 hashCode 进行 hash 运算后，再通过和 length-1 进行位运算得到最终数组索引位置。
 
 
 
+
+
+
+
+　　当发生哈希冲突并且 size 大于阈值的时候，需要进行数组扩容，扩容时，需要新建一个长度为之前数组 **2** 倍的新数组，然后将当前的 Entry 数组中的元素全部传输过去，扩容后的新数组长度为之前的 2 倍，所以**扩容相对来说是个耗资源的操作**。
+
+
+
+##### HashMap 的数组长度为什么一定要保持为 2 的次幂？
+
+1. 扩容后减少数组数组的移动
+
+　　将 HashMao 的数组长度保持为 2 的次幂，在扩容后，与之前的 length-1 相比，只有最高位的一位差异，这样在通过 h & (length-1) 的时候，只要 h 对应的最高位的一位的差异位为 0 ，就能保证保证得到的新的数组索引和老数组索引一直（减少了之前已经散列好的老数组的数据位置重新调换。）
+
+![数组长度为何为2](./image/数组长度为何为2.png)
+
+2. 使索引更加均匀
+
+　　数组长度保持 2 的次幂，length-1 的低位都为 1，会使得获得的数组索引 index 更加均匀。高位不会对结果产生影响，但是对于 h  的低位部分，任何一位的变化都会对结果产生影响。
+
+![数组索引更加均匀](./image/数组索引更加均匀.png)
 
 
 
@@ -494,13 +537,28 @@ void resize(int newCapacity) {
 
 
 
+2. hash() 方法不同
+
+```
+    static final int hash(Object key) {
+        int h;
+        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+    }
+```
+
+　　这个 hash() 方法可以将 hashCode 的高位和地位的值进行混合做异或运算，而且混合后，低等的信息中加入了高位的信息，这样高位的信息被保留了下来。掺杂的元素多了，那么生成的 hash 值的随机性会增大。
 
 
 
+3. 插入的方式不同
 
 
 
+4. 扩容后数据存储位置的计算方式不同
 
+
+
+5. 
 
 
 ## 总结
