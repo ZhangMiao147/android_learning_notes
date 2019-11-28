@@ -210,6 +210,7 @@
     	////获取当前 bucketIndex 位置的 Entry
         Entry<K,V> e = table[bucketIndex];
         //创建新的 Entry 对象，将其插入到 backetIndex 位置
+        //将数据插入到了链表的头部，头插法
         table[bucketIndex] = new Entry<>(hash, key, value, e);
         //存储数量加 1
         size++;
@@ -312,8 +313,6 @@
         return h ^ (h >>> 7) ^ (h >>> 4);
     }
 ```
-
-
 
 ##### stringHash32() 方法
 
@@ -420,12 +419,6 @@ void resize(int newCapacity) {
 
 　　这个方法将老数组中的数据逐个链表的遍历，扔到新的扩容后的数组中，数组索引的计算是通过对 key 的 hashCode 进行 hash 运算后，再通过和 length-1 进行位运算得到最终数组索引位置。
 
-
-
-
-
-
-
 　　当发生哈希冲突并且 size 大于阈值的时候，需要进行数组扩容，扩容时，需要新建一个长度为之前数组 **2** 倍的新数组，然后将当前的 Entry 数组中的元素全部传输过去，扩容后的新数组长度为之前的 2 倍，所以**扩容相对来说是个耗资源的操作**。
 
 
@@ -485,33 +478,45 @@ void resize(int newCapacity) {
 　　在根据 key 值获取对应的值时，判断时需要 hash 值相同，并且 key 值相同才判断为是同一个 key 值，为什么除了判断 key 值相同还要保证 hash 值相同，这是因为如果传入的 key 对象重写了 equals 方法却没有重写 hashCode ，而恰巧此对象定位到这个数组位置，如果仅仅用 equals 判断可能时相等的，但其 hashCode 和当前对象时不一致的，这种情况，根据 Object 的 hashCode 的约定，不能返回当前对象，而应该返回 null。
 
 ## JDK 1.7 和 JDK 1.8 HashMap 的区别
-　　这里简单罗列一下 Java 1.8 的 HashMap 与 Java 1.7 的不同之处。
+　　这里简单罗列一下 JDK 1.8 的 HashMap 与 JDK 1.7 的不同之处。
 
-1. JDK 1.8 在 JDK 1.7 在基础上增加了红黑树来进行优化，即当链表超过 8 时，链表旧转换为红黑树，利用红黑树快速增删改查的特点提高 HashMap 的性能，其中会用到红黑树的插入、删除、查找等算法。
+1. **JDK 1.8 是数组 + 链表 + 树的结构，JDK 是 数组 + 链表的结构 **
+
+   　　JDK 1.8 在 JDK 1.7 在基础上增加了红黑树来进行优化，即当链表超过 8 时，将链表转换为红黑树，利用红黑树快速增删改查的特点提高 HashMap 的性能，其中会用到红黑树的插入、删除、查找等算法。当小于 UNTREEIFY_THRESHOLD(默认为6) 时，又会转回链表以达到性能均衡。
 
 ```
     //Java 1.8 put 方法的具体实现
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                    boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
-        // 如果底层数组table没有初始化，则通过resize方法初始化数组
+        // 如果 table 为空或者长度为 0，则 resize()
         if ((tab = table) == null || (n = tab.length) == 0)
             n = (tab = resize()).length;
+        //确定插入 table 的位置，算法是 （n-1）&hash，在 n 为 2 的幂时，相当于取模操作。
+        //找到 key 值对应的槽并且时第一个，直接加入
         if ((p = tab[i = (n - 1) & hash]) == null)
             tab[i] = newNode(hash, key, value, null);
+        //在 table 的 i 位置发生碰撞，有两种情况，1.key 值是一样的，替换 value 值
+        //2.key 值不一样的有两种处理方式：2.1.存储在 i 位置的链表；2.2.存储在红黑树中
         else {
             Node<K,V> e; K k;
+            //第一个 node 的 hash 值即为要加入元素的 hash
             if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k))))
                 e = p;
-            // TODO 如果节点是树节点
+            // 2.2 如果节点是树节点
             else if (p instanceof TreeNode)
                 e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
+            //2.1
             else {
+            	//不是 TreeNode，即为链表，遍历链表
                 for (int binCount = 0; ; ++binCount) {
+              		//链表的尾端也没有找到 key 值相同的节点，则生成一个新的 node
+              		//并且判断链表的结点个数是不是到达转换成红黑树的上限，达到则转换成红黑树
                     if ((e = p.next) == null) {
+                    	//将新数据插入到链表的最末端，尾插法
                         p.next = newNode(hash, key, value, null);
-                        // TODO 新添加一个数据之后，如果数据的数量已经超过了或者等于 TREEIFY_THRESHOLD - 1 就会将链表转换成平衡树
+                        // TODO 新添加一个数据之后，如果数据的数量已经超过了或者等于 TREEIFY_THRESHOLD - 1 就会将链表转换成红黑树
                         //static final int TREEIFY_THRESHOLD = 8;
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
                             treeifyBin(tab, hash);
@@ -523,6 +528,7 @@ void resize(int newCapacity) {
                     p = e;
                 }
             }
+            //如果 e 不为空就替换旧的 oldValue 值
             if (e != null) { // existing mapping for key
                 V oldValue = e.value;
                 if (!onlyIfAbsent || oldValue == null)
@@ -539,9 +545,9 @@ void resize(int newCapacity) {
     }
 ```
 
+　　hash 冲突发生的集中情况：1.两节点 key 值相同（hash 值一定相同），导致冲突；2.两节点 keu 值不同，由于 hash 函数的局限性导致 hash 值相同，冲突；3.两节点 keu 值不同，hash 值不同，但是 hash 值对数组长度取模后相同（hash&(length-1)），冲突。
 
-
-2. hash() 方法不同
+2. **hash() 方法不同**
 
 ```
     static final int hash(Object key) {
@@ -550,24 +556,177 @@ void resize(int newCapacity) {
     }
 ```
 
-　　这个 hash() 方法可以将 hashCode 的高位和地位的值进行混合做异或运算，而且混合后，低等的信息中加入了高位的信息，这样高位的信息被保留了下来。掺杂的元素多了，那么生成的 hash 值的随机性会增大。
+　　JDK 1.8 的 hash() 方法可以将 hashCode 的高位和地位的值进行混合做异或运算，而且混合后，低等的信息中加入了高位的信息，这样高位的信息被保留了下来。掺杂的元素多了，那么生成的 hash 值的随机性会增大。
+
+　　JDK 1.7 的 hash() 方法是将 key 的 hashCode 值进行了一系列的位移运算获取的 hash 值。
+
+3. **插入的方式不同**
+
+　　JDK 1.7 采用的是头插法，而 JDK 1.8 及之后使用的都是尾插法。这是因为 JDK 1.7 是用单链表进行的纵向延伸，采用头插法能够提高插入的效率，但是也会容易出现逆序且环形链表死循环问题。在 JDK 1.8 之后是因为加入了红黑树使用尾插法，能够你面出现逆序且链表死循环的问题。
+
+4. **扩容后数据存储位置的计算方式不同**
+
+　　在 JDK 1.7 的时候是直接用 hash 值和需要扩容的二进制数进行 & （hash 值 & length-1）。
+
+　　而在 JDK 1.8 的时候直接使用了 JDK 1.7 计算的规律，就是扩容前的原始位置 + 扩容的大小值 = JDK 1.8 的计算方式，而不再是 JDK 1.7 的那种异或的方法。凡是这种方式就相当于只需要判断 Hash 值的新增参加运算的位是 0 还是 1就直接迅速计算出扩容后的存储方式。
+
+　　JDK 1.8 的 resize() 方法
 
 
 
-3. 插入的方式不同
+```
+    final Node<K,V>[] resize() {
+        // 保存当前 table
+        Node<K,V>[] oldTab = table;
+        //保存当前 table 的容量
+        int oldCap = (oldTab == null) ? 0 : oldTab.length;
+        //保存当前阈值
+        int oldThr = threshold;
+        // 初始化新的 table 容量和阈值
+        int newCap, newThr = 0;
+        // 1. resize() 函数在 size > threshold 时倍调用。oldCap 大于 0 道标原来的 table 表非空，oldCap 为原表的大小，oldThr(threashold) 为 oldCap * load_factor
+        if (oldCap > 0) {
+            //若旧 table 容量已超过最大容量，更新阈值为 Integer.MAX_VALUE(最大整形值)，这样以后就不会自动扩容了。
+            if (oldCap >= MAXIMUM_CAPACITY) {
+                threshold = Integer.MAX_VALUE;
+                return oldTab;
+            }
+            // 容量翻倍，使用左移，效率更高
+            else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY &&
+                     oldCap >= DEFAULT_INITIAL_CAPACITY)
+                //阈值翻倍
+                newThr = oldThr << 1; // 门限值*2
+        }
+        //2.resize() 函数在 table 为空被调用。oldCap 小于等于 0 且 oldThr 大于 0 ，代表用户创建了一个 HashMap，但是使用的构造函数为 HashMap(int initialCapacity,float loadFactor)或 Hash(int initialCapacoty) 或 HashMap（Map<? extends K,? extends v> m） 导致 oldTab 为 null，oldCap 为 0，oldThr 为用户指定的 HashMap 的初始容量。
+        else if (oldThr > 0) // 使用门限值初始化容量
+        	//当 table 没初始化时，threashold 持有初始容量。
+            newCap = oldThr;
+        // 3. resize() 函数在 table 为空被调用。oldCap 小于等于 0 且 oldThr 等于 0 ，用户调用 HashMap() 构造函数创建的 HashMap，所有值均采用默认值。
+        else {               // zero initial threshold signifies using defaults
+            newCap = DEFAULT_INITIAL_CAPACITY;
+            newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
+        }
+        //新阈值为 0
+        if (newThr == 0) {
+            float ft = (float)newCap * loadFactor;
+            newThr = (newCap < MAXIMUM_CAPACITY && ft < (float)MAXIMUM_CAPACITY ?
+                      (int)ft : Integer.MAX_VALUE);
+        }
+        threshold = newThr;
+
+        @SuppressWarnings({"rawtypes","unchecked"})
+        //初始化 table
+        Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
+        table = newTab;
+        if (oldTab != null) {
+            // 把 oldTab 中的节点 reHash 到 newTab 中去
+            for (int j = 0; j < oldCap; ++j) {
+                Node<K,V> e;
+                if ((e = oldTab[j]) != null) {
+                    oldTab[j] = null;
+                    //若节点是单个节点，直接在 newTab 中进行重定位
+                    if (e.next == null)
+                        newTab[e.hash & (newCap - 1)] = e;
+                    //若节点是 ThreeNode 节点，要进行红黑树的 reHash 操作
+                    else if (e instanceof TreeNode)
+                        ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
+                    else { // preserve order
+                        Node<K,V> loHead = null, loTail = null;
+                        Node<K,V> hiHead = null, hiTail = null;
+                        Node<K,V> next;
+                        //将同一桶中的元素根据（e.hash & oldCap）是否为 0 进行分割，分成不同的链表，染成 rehash
+                        do {
+                            next = e.next;
+                            //根据算法，e.hash & oldCap 判断节点位置 rehash 后是否发生改变
+                            //最高位 == 0，这是索引不点的链表
+                            if ((e.hash & oldCap ) == 0) {
+                                if (loTail == null)
+                                    loHead = e;
+                                else
+                                    loTail.next = e;
+                                loTail = e;
+                            }
+                            //最高位 == 1（这是索引发生改变的链表）
+                            else {
+                                // TODO 重新创建高位链表
+                                if (hiTail == null)
+                                    hiHead = e;
+                                else
+                                    hiTail.next = e;
+                                hiTail = e;
+                            }
+                        } while ((e = next) != null);
+
+                        if (loTail != null) { //原 bucket 位置为尾指针部位空（即还有 node）
+                            loTail.next = null; //链表最后有个 null
+                            newTab[j] = loHead; //链表头指针放在新桶的相同下表 j 处
+                        }
+      
+                        if (hiTail != null) {
+                            hiTail.next = null;
+                            //rehash 后节点新的位置一定为原来基础上加上 oldCap。
+                            newTab[j + oldCap] = hiHead; 
+                        }
+                    }
+                }
+            }
+        }
+        return newTab;
+    }
+```
+
+　　长度扩展为原来的 2 被，使用的是 2 次幂的扩展，所以，元素的位置要么是在原位置，要么是在原位置再移动 2 次幂的位置。
+
+![JDK1.8扩展下标解释](./image/JDK1.8扩展下标解释.webp)
+
+　　(a) 是扩容前的 key1 和 key2 两种 key 确定索引位置，（b）是扩容后 key1 和 key2 两种 key 确定索引位置。
+
+　　元素在重新计算 hash 之后，因为 n 变为 2 倍，那么 n-1 的二进制的高位就多了 1 bit，因此新的 index 就会发生下面变化：
+
+![](./image/JDK1.8扩容下标.webp)
+
+　　因此，扩容的时候，只需要看原来的 hash 值新增的那个 bit 是 1 还是 0 就好了，是 0 的话索引没变，是 1 的话索引变成->原索引+ oldCap。
+
+![](./image/JDK1.8扩容例图.webp)
 
 
 
-4. 扩容后数据存储位置的计算方式不同
+
+
+5. **将 capacity 设置为 2 的次幂的方式不同**
+
+　　JDK 1.8 的是调用 tableSizeFor(int cap) 方法来返回一个比给定整数大且最接近的 2 的幂次方整数的：
+
+```
+    static final int tableSizeFor(int cap) {
+    	//为了防止 cap 已经是 2 的幂时
+        int n = cap - 1;
+        n |= n >>> 1;
+        n |= n >>> 2;
+        n |= n >>> 4;
+        n |= n >>> 8;
+        n |= n >>> 16;
+        return (n < 0) ? 1 : (n >= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;
+    }
+```
 
 
 
-5. 
+![tableSizeFor示例图](./image/tableSizeFor示例图.webp)
+
 
 
 ## 总结
 
+1. HashMap 不是线程安全的。
+2. HashMap 在 JDK 1.7 的时候结构是数组+链表，在 JDK 1.8 的时候结构是 数组+链表+树。
+3. HashMap 的数组长度达到阈值时，会将当前数组的容量扩容到之前数组容量的 2 倍，将之前的数据重新存储到新的结构中。
+4. 在 HashMap 引起哈希冲突的原因有三个：key 值，计算后的 hash 值，hash & (length-1) 的值。
+5. 如果将一个自定义的类作为 key 值，重写 equals() 方法的同时也要重写 hashCode() 方法。
+6. 为何 HashMap 的数组容量要是 2 的次幂？a.扩容后减少数组数据的移动；b.使索引更加均匀，hash 数值低位的每一位都对索引产生影响。
+
 ## 参考文章
+
 1. [一文读懂 HashMap](https://www.jianshu.com/p/ee0de4c99f87)
 2. [Java 集合之一 -- HashMap - 深入浅出学 Java -- HashMap](https://blog.csdn.net/woshimaxiao1/article/details/83661464)
 3. [散列表](https://zh.wikipedia.org/wiki/%E5%93%88%E5%B8%8C%E8%A1%A8)
