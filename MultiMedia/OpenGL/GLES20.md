@@ -21,7 +21,7 @@
 
 ```
 GLES20.glEnableVertexAttribArray(glHPosition);
-GLES20.GLEnbaleVertexAttribArray(glHCoordinate);
+GLES20.glDisableVertexAttribArray(glHCoordinate);
 ```
 　　如果启用，那么当 GLES20.glDrawArrays 或者 GLES20.glDraeElements 被调用时，顶点属性数组会被使用。
 
@@ -56,7 +56,126 @@ void glActiveTexture(int texture)
 
 　　GLES20.glActiveTexture() 确定了后续的纹理状态改变影响哪个纹理，纹理单元的数量是一句所被支持的具体实现。
 
+#### GLES20.glClearColor(float var0, float var1, float var2, float var3)
+
+
+
+#### GLES20.glClear(int var0)
+
+
+
+#### GLES20.glUniformMatrix4fv(int var0, int var1, boolean var2, float[] var3, int var4)
+
+
+
+
+
+#### GLES20.glActiveTexture(int var0)
+
+
+
+#### GLES20.glBindTexture(int var0, int var1)
+
+
+
+
+
+#### GLES20.glUniform1i(int var0, int var1)
+
+
+
+#### GLES20.glCreateProgram()
+
+
+
+#### GLES20.glAttachShader(int var0, int var1)
+
+
+
+#### GLES20.glLinkProgram(int var0)
+
+
+
+#### GLES20.glGetProgramiv(int var0, int var1, int[] var2, int var3)
+
+
+
+#### GLES20.glDeleteProgram(int var0)
+
+
+
+#### GLES20.glCreateShader(int var0)
+
+
+
+#### GLES20.glShaderSource(int var0, String var1)
+
+
+
+
+
+#### GLES20.glCompileShader(int var0)
+
+
+
+#### GLES20.glGetShaderiv(int var0, int var1, int[] var2, int var3)
+
+
+
+
+
+#### GLES20.glDeleteShader(int var0)
+
+
+
+#### GLES20.glDeleteRenderbuffers(int var0, int[] var1, int var2)
+
+
+
+#### GLES20.glDeleteFramebuffers(int var0, int[] var1, int var2)
+
+
+
+#### GLES20.glDeleteTextures(int var0, int[] var1, int var2)
+
+
+
+
+
+#### GLES20.glDisable(int var0)
+
+
+
+#### GLES20.glTexParameterf()
+
+
+
+#### GLES20.glBindFramebuffer(int target,int framebuffer)
+
+
+
+#### GLES20.glFramebufferTexture2D(int target,int attachment,int textarget,int texture,int level)
+
+
+
+#### GLES20.glFramebufferRenderbuffer()
+
+
+
+#### GLES20.glGenTextures(int var0, int[] var1, int var2)
+
+
+
+#### GLES20.glTexImage2D()
+
+
+
+
+
+
+
 ## 查阅资料
+
 1. [OpenGL ES之八——GLES20类和Matrix类](https://blog.csdn.net/gongxiaoou/article/details/89367319)
 
 
