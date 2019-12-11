@@ -2,13 +2,17 @@
 
 ### 功能
 
-
+　　清除预设值的缓冲区。
 
 ### 方法
 
+```
+public static native void glClear(int mask);
+```
 
 
-#### 参数
+
+##### 参数
 
 
 
@@ -39,7 +43,9 @@
 
 
 
+### 原文地址
 
+[glClear](https://www.khronos.org/registry/OpenGL-Refpages/es2.0/xhtml/glClear.xml)
 
 
 
