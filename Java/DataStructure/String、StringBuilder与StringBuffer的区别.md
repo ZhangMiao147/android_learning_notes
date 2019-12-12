@@ -22,14 +22,29 @@
 
 　　如果一个 StringBuffer 对象在字符串缓冲区被多个线程使用时，StringBuffer 中很多方法可以带有 synchronized 关键字，所以可以保证线程是安全的，但 StringBuilder 的方法则没有该关键字，所以不能保证线程安全，有可能会出现一些错误的操作。所以如果要进行的操作是多线程的，那么就要使用 StringBuffer，但是在但线程的情况下，还是建议使用速度比较快的 StringBuilder。
 
-```
-StringBuffer 与 StringBuilder 的源码比较
+```java
+StringBuffer 与 StringBuilder 的 append 源码比较
+StringBuffer：
+    //StringBuffer 的方法都加了 synchronized 关键字
+    public synchronized StringBuffer append(Object obj) {
+        super.append(String.valueOf(obj));
+        return this;
+    }
+
+StringBuilder：
+    public StringBuilder append(Object obj) {
+        return append(String.valueOf(obj));
+    }
 ```
 
 #### 其他区别
-**实现接口：**　　StringBuffer 与 StringBuilder 实现了 Serializable 和 CharSequare 两个接口，String 除了这两个接口，还实现了 Comparable<String> 接口，所以 String 的实例可以通过 compareTo 方法进行比较，而 StringBuffer 与 StringBuilder 不行。
+**实现接口：**　　
 
-**初始化：**String 可以空赋值，而 StringBuffer 和 StringBuilder 是不可以的。
+　　StringBuffer 与 StringBuilder 实现了 Serializable 和 CharSequare 两个接口，String 除了这两个接口，还实现了 Comparable<String> 接口，所以 String 的实例可以通过 compareTo 方法进行比较，而 StringBuffer 与 StringBuilder 不行。
+
+**初始化：**
+
+　　String 可以空赋值，而 StringBuffer 和 StringBuilder 是不可以的。
 
 ## 总结
 **String：**适用于少量的字符串操作的情况。

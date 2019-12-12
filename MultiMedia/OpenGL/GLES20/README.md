@@ -2,12 +2,12 @@
 
 * [glActiveTexture](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glActiveTexture.md) - 选择活动纹理单元。
 * [glAttachShader](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glAttachShader.md) - 将着色器对象附加到对象上。
-* glBindFramebuffer - 绑定命名的帧缓冲区对象。
+* [glBindFramebuffer](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glBindFramebuffer.md) - 绑定命名的帧缓冲区对象。
 * [glBindTexture](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glBindTexture.md) - 将命名纹理绑定到纹理目标上。
-* glClear
+* [glClear](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glClear.md) - 清除预设值的缓冲区。
 
-* glClearColor
-* glCompileShader
+* [glClearColor](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glClearColor.md) - 为颜色缓冲区直送清除值。
+* glCompileShader - 编译着色器对象
 * glCreateProgram
 * glCreateShader
 * glDeleteFramebuffers
@@ -15,7 +15,7 @@
 * glDeleteRenderbuffers
 * glDeleteShader
 * glDeleteTextures
-* glDisableVertexAttribArray
+* glDisableVertexAttribArray 与 glEnableVertexAttribArray - 启动或禁用通用顶点属性数组。
 * glDrawArrays
 * glDisable
 * glEnableAttribArray
