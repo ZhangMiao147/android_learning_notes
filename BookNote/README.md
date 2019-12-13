@@ -110,3 +110,8 @@
 
 	* 第 7 章 [拾遗增补](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/%E7%AC%AC7%E7%AB%A0-%E6%8B%BE%E9%81%97%E5%A2%9E%E8%A1%A5.md)
 
+* 设计模式之禅
+  * 第 1 章 [单一职责原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC1%E7%AB%A0-%E5%8D%95%E4%B8%80%E8%81%8C%E8%B4%A3%E5%8E%9F%E5%88%99.md)
+
+
+

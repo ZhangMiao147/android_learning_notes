@@ -7,16 +7,16 @@
 * [glClear](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glClear.md) - 清除预设值的缓冲区。
 
 * [glClearColor](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glClearColor.md) - 为颜色缓冲区直送清除值。
-* glCompileShader - 编译着色器对象
-* glCreateProgram
-* glCreateShader
-* glDeleteFramebuffers
-* glDeleteProgram
-* glDeleteRenderbuffers
-* glDeleteShader
-* glDeleteTextures
+* glCompileShader - 编译着色器对象。
+* glCreateProgram - 创建 program 对象。
+* glCreateShader - 创建着色器对象。
+* glDeleteFramebuffers - 删除命名 framebuffer ( 帧缓冲区 ) 对象。
+* glDeleteProgram - 删除一个 program 对象。 
+* glDeleteRenderbuffers - 删除命名的 renderbuffer 对象。 
+* glDeleteShader - 删除 shader (着色器)对象。 
+* glDeleteTextures - 删除命名纹理。 
 * glDisableVertexAttribArray 与 glEnableVertexAttribArray - 启动或禁用通用顶点属性数组。
-* glDrawArrays
+* glDrawArrays - 从数组数据中渲染图元。
 * glDisable
 * glEnableAttribArray
 * glFramebufferRenderbuffer

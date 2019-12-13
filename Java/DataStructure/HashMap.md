@@ -11,25 +11,25 @@
 #### 哈希冲突
 　　对不同的关键字可能得到同一哈希地址，这种现象称为**哈希冲突**。
 
-　　若对于关键字集合中的任一个关键字，经哈希函数映射到地址集合中任何一个地址的概率是相等的，则称此类哈希函数为均匀哈希函数（Uniform Hash function），这就使关键字经过散列函数得到一个“随机的地址”，从而减少冲突。
+　　若对于关键字集合中的任一个关键字，经哈希函数映射到地址集合中任何一个地址的概率是相等的，则称此类哈希函数为**均匀哈希函数（Uniform Hash function）**，这就使关键字经过哈希函数得到一个“随机的地址”，从而减少冲突。
 
 ##### 处理冲突
-　　处理冲突一方面可以重新选用其他的散列函数，或者就是对冲突的结果进行处理。一般来说，很难去确保一个散列函数绝对没有冲突，所以通常是对冲突结果进行处理。
+　　处理冲突一方面可以重新选用其他的哈希函数，或者就是对冲突的结果进行处理。一般来说，很难去确保一个散列函数绝对没有冲突，所以通常是对冲突结果进行处理。
 
-1.开放定址法
+**1.开放定址法**
 
-　　查询地址表，直到查找到一个空单元，把哈希地址存放在该空单元。散列到散列表中的关键字可能需要查找多次试选单元才能插入表中，解决冲突，造成时间浪费，后续的查找也是多次定位才能找到正确的位置。
+　　查询地址表，直到查找到一个空单元，把哈希地址存放在该空单元。散列到散列表中的关键字可能需要查找多次试选单元才能插入表中，从而解决冲突，造成时间浪费，后续的查找也是多次定位才能找到正确的位置。
 
-2.单独链表法
+**2.单独链表法**
 
-　　将哈希到同一个存储位置的所有元素保存在一个链表中。HashMap 就是采用这种方法。
+　　将哈希到同一个存储位置的所有元素保存在一个链表中。**HashMap** 就是采用这种方法。
 
-3.再散列
+**3.再散列**
 
 　　将冲突的哈希函数地址产生新的哈希函数地址，直到冲突不在发生，但增加了计算时间。
 
-#### 载荷因子
-　　哈希表的载荷因子定义为：a = 填入表中的元素合数 / 哈希表的长度。
+#### 负载因子
+　　哈希表的负载因子（也称为载荷因子）定义为：a = 填入表中的元素合数 / 哈希表的长度。负载因子越大，意味着哈希表越满，越容易导致冲突，性能也就越低。一般情况下，当负载因子大于某个常量值（HashMap 是 0.75）时，会对哈希表进行扩容。
 
 ## 源码分析
 　　HashMap 继承 AbstractMap，并且实现 Map、Cloneable、Serializable 接口。
@@ -39,9 +39,9 @@
 　　HashMap 的主干是一个 Entry 数组。Entry 是 HashMap 的基本组成单元，每一个 Entry 包含一个 key-value 键值对。 
 
 #### 关键参数
-```
+```java
     /**
-     HashMap 的主干是一个 HashMaoEnter 数组，初始值是空数组，数组的长度必须是 2 的倍数。
+     HashMap 的主干是一个 HashMapEnter 数组，初始值是空数组，数组的长度必须是 2 的倍数。
      */
    transient Entry<K,V>[] table = (Entry<K,V>[]) EMPTY_TABLE;
 
@@ -50,10 +50,14 @@
      */
     transient int size;
 
-	// 阈值，当 table == {} 时，该值为初始容量（初始容量默认为 16）；当 table 被填充了，也就是为 table 分配内存空间后，threshold 一般为 capacity * loadFactory。HashMap 在进行扩容时需要参考 threshold。
+    /**
+    阈值，当 table == {} 时，该值为初始容量（初始容量默认为 16）；当 table 被填充了，也就是为 table 分配内存空间后，threshold 一般为 capacity * loadFactory。HashMap 在进行扩容时需要参考 threshold。
+    */
     int threshold;
 
-	//负载因子，代表了 table 的填充度是多少，默认是 0.75。
+    /** 
+    负载因子，代表了 table 的填充度是多少，默认是 0.75。
+    */
     final float loadFactor;
 ```
 
@@ -100,7 +104,9 @@
 
 　　HashMap 有 4 个构造函数，无参构造函数和一个 initialCapacity 参数的构造函数都会调用 HashMap(int initialCapacity, float loadFactor) 这个构造函数。还有一个构造函数的参数是 Map。
 
-```
+#### 1. HashMap 构造方法
+
+```java
     public HashMap(int initialCapacity, float loadFactor) { 
     	//当指定的初始容量 < 0 时抛出 IllegalArgumentException 异常
        	if (initialCapacity < 0)
@@ -136,23 +142,21 @@
         this(Math.max((int) (m.size() / DEFAULT_LOAD_FACTOR) + 1,
                       DEFAULT_INITIAL_CAPACITY), DEFAULT_LOAD_FACTOR);
 		//初始化 table
-        inflateTable(threshold);
+        inflateTable(threshold); //1.1 解析方法
 		//将参数 m 的值添加到 table 中
-        putAllForCreate(m);
+        putAllForCreate(m); //1.2 解析该方法
     }
 ```
 
-
-
-##### inflateTable(int toSize) 方法
+#### 1.1. inflateTable(int toSize) 方法
 
 　　inflateTable() 方法用于为主干数组 table 在内存中分配存储空间，通过 roundUpToPowerOf2(toSize) 可以确保 capacity 为大于或等于 toSize 的最接近 toSize 的二次幂。
 
-```
+```java
     private void inflateTable(int toSize) {
         // Find a power of 2 >= toSize
 		// roundUpToPowerOf2 返回一个比给定整数大且最接近 2 的幂次方整数，所以 capacity 必然是 2 的幂
-        int capacity = roundUpToPowerOf2(toSize);
+        int capacity = roundUpToPowerOf2(toSize); //1.1.1 解析方法
         
         // 可以看出 threshold 通常是等于 capacity * loadFactor，并且 threshold 不会朝超过 MAXIMUM_CAPACITY
         threshold = (int) Math.min(capacity * loadFactor, MAXIMUM_CAPACITY + 1);
@@ -163,20 +167,40 @@
     }
 ```
 
+##### #### 1.1.1. roundUpToPowerOf2(int number)方法
 
-##### putAllForCreate(Map<? extends K, ? extends V> m) 方法
+```java
+    private static int roundUpToPowerOf2(int number) {
+        int rounded = number >= MAXIMUM_CAPACITY
+                ? MAXIMUM_CAPACITY
+                : (rounded = Integer.highestOneBit(number)) != 0
+                    ? (Integer.bitCount(number) > 1) ? rounded << 1 : rounded
+                    : 1;
+
+        return rounded;
+    }
 ```
+
+　　Integer.highestOneBit(number)) 返回的是数值的最高位数值，例如 0010 1101 返回的则是 0010 0000，而 Integer.bitCount(number) 返回的是二进制中为 1 的数量，如果最高位数值不为 0 ，并且二进制中 1 的数量也是大于 1 的，那么会返回 rounded << 1 的高一位数值。
+
+　　所以 capacity 一定是 2 的倍数。
+
+
+
+##### 1.2. putAllForCreate(Map<? extends K, ? extends V> m) 方法
+
+```java
     private void putAllForCreate(Map<? extends K, ? extends V> m) {
     	//遍历参数 m,将 m 中的数组依次添加到映射表中
         for (Map.Entry<? extends K, ? extends V> e : m.entrySet())
-            putForCreate(e.getKey(), e.getValue());
+            putForCreate(e.getKey(), e.getValue()); //1.2.1 解析方法
     }
 
 ```
 
-##### putForCreate(K key,V value) 方法
+##### #### 1.2.1. putForCreate(K key,V value) 方法
 
-```
+```java
     //向映射表中添加关键字为 key，映射值为 value 
     private void putForCreate(K key, V value) {
         int hash = null == key ? 0 : hash(key);
@@ -197,15 +221,15 @@
             }
         }
 		//创建新的 Entry 对象，将其插入合适的位置
-        createEntry(hash, key, value, i);
+        createEntry(hash, key, value, i); // 1.2.1.1 解析方法
     }
 ```
 
 
 
-##### createEntry(int hash, K key, V value, int bucketIndex) 方法
+##### #### 1.2.1.1. createEntry(int hash, K key, V value, int bucketIndex) 方法
 
-```
+```java
     void createEntry(int hash, K key, V value, int bucketIndex) {
     	////获取当前 bucketIndex 位置的 Entry
         Entry<K,V> e = table[bucketIndex];
@@ -219,63 +243,25 @@
 
 
 
-##### singleWordWangJenkinsHash(Object k) 方法
-
-```
-    //对 key 的 hashcode 进一步进行计算以及二进制位的调整等来保证最终获取的存储位置尽量分布均匀
-    public static int singleWordWangJenkinsHash(Object k) {
-        int h = k.hashCode();
-
-        h += (h <<  15) ^ 0xffffcd7d;
-        h ^= (h >>> 10);
-        h += (h <<   3);
-        h ^= (h >>>  6);
-        h += (h <<   2) + (h << 14);
-        return h ^ (h >>> 16);
-    }
-```
-
-　　HashMapEntry 结构的 hash 值是将 key 的 hashCode() 值进行一系列的位移操作作为 hash 值的。
-
-
-
-
-##### roundUpToPowerOf2(int number)方法
-```
-    private static int roundUpToPowerOf2(int number) {
-        int rounded = number >= MAXIMUM_CAPACITY
-                ? MAXIMUM_CAPACITY
-                : (rounded = Integer.highestOneBit(number)) != 0
-                    ? (Integer.bitCount(number) > 1) ? rounded << 1 : rounded
-                    : 1;
-
-        return rounded;
-    }
-```
-
-　　Integer.highestOneBit(number)) 返回的是数值的最高位数值，例如 0010 1101 返回的则是 0010 0000，而 Integer.bitCount(number) 返回的是二进制中为 1 的数量，如果最高位数值不为 0 ，并且二进制中 1 的数量也是大于 1 的，那么会返回 rounded << 1 的高一位数值。
-
-　　所以 capacity 一定是 2 的倍数。
-
 ##### 构造方法总结
 1. 除了参数为 map 的构造方法，HashMap 在构造方法中是不会初始化映射数组的。
 2. HashMap 中用一个数组来保存映射数组，用链表来存储映射的数值。
 
-#### put() 方法
-```
+#### 2. put() 方法
+```java
     public V put(K key, V value) {
     	//如果 table 数组为空数组{}，进行数组填充（为 table 分配实际内存空间），参数为 threshold
         if (table == EMPTY_TABLE) {
 			//初始化映射数组
-            inflateTable(threshold);
+            inflateTable(threshold); //1.1 解析方法
         }
 		//允许 key 为 null，如果 key 为 null，存储位置为 table[0] 或 table[0] 的冲突链
         if (key == null)
             return putForNullKey(value);
 		//对 key 的 hashcode 进行进一步计算得到 hash 数值，确保散列均匀
-        int hash = hash(key);
+        int hash = hash(key); // 2.1 解析方法
 		//获取存储数据的数组下标
-        int i = indexFor(hash, table.length);
+        int i = indexFor(hash, table.length); // 2.2 解析方法
 		//如果已经有 key 对应的数据，则覆盖，并返回旧的 value
         for (Entry<K,V> e = table[i]; e != null; e = e.next) {
             Object k;
@@ -289,18 +275,16 @@
 		//保证并发访问时，若 HashMap 内部结构发生变化，快速响应失败
         modCount++;
 		//创建新的 HashMapEntry 结构，插入到合适的位置
-        addEntry(hash, key, value, i);
+        addEntry(hash, key, value, i); //2.3 解析方法
         return null;
     }
 ```
 
 　　在 put 方法中，如果数组还是空的，则会调用 inflateTable() 方法初始化数组，所以在除去 map 参数的构造方法外，其他的构造方法会在 put() 方法中初始化数据。
 
+##### 2.1. hash(Object k) 方法
 
-
-##### hash(Object k) 方法
-
-```
+```java
    //对 key 的 hashcode 进一步进行计算以及二进制位的调整等来保证最终获取的存储位置尽量分布均匀
    final int hash(Object k) {
         int h = hashSeed;
@@ -314,11 +298,11 @@
     }
 ```
 
-##### stringHash32() 方法
+##### 2.1.1. stringHash32() 方法
 
 sun.misc.Hashing.stringHash32((String) k) 实际调用的是 String.hash32 方法：
 
-```
+```java
 int hash32() {
     int h = hash32;
     //h==0表示未计算过hash code
@@ -337,11 +321,9 @@ int hash32() {
 }
 ```
 
+#### 2.2. indexFor(int h, int length) 方法
 
-
-#### indexFor(int h, int length) 方法
-
-```
+```java
     static int indexFor(int h, int length) {
 		// 下标是 hash & (数组长度-1)
         return h & (length-1);
@@ -356,26 +338,27 @@ int hash32() {
 
 
 
-##### addEnter() 方法
+##### 2.3. addEnter() 方法
 
-```
+```java
     void addEntry(int hash, K key, V value, int bucketIndex) {
     	//如果 size 超过了阈值，则将数组的大小扩充为当前的两倍，也就是扩容
         if ((size >= threshold) && (null != table[bucketIndex])) {
-            resize(2 * table.length);
+            //数组被扩大为原来的二倍
+            resize(2 * table.length); // 2.3.1 解析方法
             hash = (null != key) ? hash(key) : 0;
-            bucketIndex = indexFor(hash, table.length);
+            bucketIndex = indexFor(hash, table.length); //2.2 解析方法
         }
 
-        createEntry(hash, key, value, bucketIndex);
+        createEntry(hash, key, value, bucketIndex); // 1.2.1.1 解析方法
     }
 ```
 
 　　当 HashMap 的 size 大于或等于 threshold ，就要进行 resize，也就是扩容。
 
-##### resize(int newCapacity) 方法
+##### 2.3.1. resize(int newCapacity) 方法
 
-```
+```java
 //重新设置数组大小
 void resize(int newCapacity) {
         Entry[] oldTable = table;
@@ -386,7 +369,7 @@ void resize(int newCapacity) {
         }
 
         Entry[] newTable = new Entry[newCapacity];
-        transfer(newTable, initHashSeedAsNeeded(newCapacity));
+        transfer(newTable, initHashSeedAsNeeded(newCapacity)); //2.3.1.1 解析方法
         table = newTable;
         threshold = (int)Math.min(newCapacity * loadFactor, MAXIMUM_CAPACITY + 1);
     }
@@ -394,9 +377,9 @@ void resize(int newCapacity) {
 
 　　当数组长度发生变化时，存储位置 index = h & (length-1)，index 也可能会发生变化，小樱桃重新计算 index。
 
-##### transfer() 方法
+##### 2.3.1.1. transfer() 方法
 
-```
+```java
     //数组扩容后，重新调整位置
     void transfer(Entry[] newTable, boolean rehash) {
         int newCapacity = newTable.length;
@@ -421,17 +404,15 @@ void resize(int newCapacity) {
 
 　　当发生哈希冲突并且 size 大于阈值的时候，需要进行数组扩容，扩容时，需要新建一个长度为之前数组 **2** 倍的新数组，然后将当前的 Entry 数组中的元素全部传输过去，扩容后的新数组长度为之前的 2 倍，所以**扩容相对来说是个耗资源的操作**。
 
-
-
 ##### HashMap 的数组长度为什么一定要保持为 2 的次幂？
 
-1. 扩容后减少数组数组的移动
+1. **扩容后减少数组数组的移动**
 
-　　将 HashMao 的数组长度保持为 2 的次幂，在扩容后，与之前的 length-1 相比，只有最高位的一位差异，这样在通过 h & (length-1) 的时候，只要 h 对应的最高位的一位的差异位为 0 ，就能保证保证得到的新的数组索引和老数组索引一直（减少了之前已经散列好的老数组的数据位置重新调换。）
+　　将 HashMao 的数组长度保持为 2 的次幂，在扩容后，与之前的 length-1 相比，只有最高位的一位差异，这样在通过 h & (length-1) 的时候，只要 h 对应的最高位的一位的差异位为 0 ，就能保证保证得到的新的数组索引和老数组索引一致（减少了之前已经散列好的老数组的数据位置重新调换。）
 
 ![数组长度为何为2](./image/数组长度为何为2.png)
 
-2. 使索引更加均匀
+2. **使索引更加均匀**
 
 　　数组长度保持 2 的次幂，length-1 的低位都为 1，会使得获得的数组索引 index 更加均匀。高位不会对结果产生影响，但是对于 h  的低位部分，任何一位的变化都会对结果产生影响。
 
@@ -439,13 +420,13 @@ void resize(int newCapacity) {
 
 
 
-#### get() 方法
-```
+#### 3. get() 方法
+```java
     public V get(Object key) {
         //如果 key 为 null，则直接去 tab[0] 处去检索即可。
         if (key == null)
             return getForNullKey();
-        Entry<K,V> entry = getEntry(key);
+        Entry<K,V> entry = getEntry(key); //3.1 解析方法
 
         return null == entry ? null : entry.getValue();
     }
@@ -453,14 +434,14 @@ void resize(int newCapacity) {
 
 　　get 方法通过 key 值返回对应 value，如果 key 为 null，则直接去 table[0] 处检索。
 
-##### getEntry(Object key) 方法
-```
+##### 3.1. getEntry(Object key) 方法
+```java
     final Entry<K,V> getEntry(Object key) {
         if (size == 0) {
             return null;
         }
         //通过 key 的 hashCode 值计算 hash 值
-        int hash = (key == null) ? 0 : sun.misc.Hashing.singleWordWangJenkinsHash(key);
+        int hash = (key == null) ? 0 : sun.misc.Hashing.singleWordWangJenkinsHash(key); //3.1.1 解析方法
 		//循环遍历下标下面的链表
         // indexFor (hash&length-1) 获取最终数组索引，然后遍历链表，通过 equals 方法比对找出对应记录
         for (HashMapEntry<K,V> e = table[indexFor(hash, table.length)];
@@ -475,6 +456,26 @@ void resize(int newCapacity) {
         return null;
     }
 ```
+
+
+##### 3.1.1. singleWordWangJenkinsHash(Object k) 方法 
+
+```java
+    //对 key 的 hashcode 进一步进行计算以及二进制位的调整等来保证最终获取的存储位置尽量分布均匀，返回值就是 hash 值
+    public static int singleWordWangJenkinsHash(Object k) {
+        int h = k.hashCode();
+
+        h += (h <<  15) ^ 0xffffcd7d;
+        h ^= (h >>> 10);
+        h += (h <<   3);
+        h ^= (h >>>  6);
+        h += (h <<   2) + (h << 14);
+        return h ^ (h >>> 16);
+    }
+```
+
+　　HashMapEntry 结构的 hash 值是将 key 的 hashCode() 值进行一系列的位移操作作为 hash 值的。
+
 　　在根据 key 值获取对应的值时，判断时需要 hash 值相同，并且 key 值相同才判断为是同一个 key 值，为什么除了判断 key 值相同还要保证 hash 值相同，这是因为如果传入的 key 对象重写了 equals 方法却没有重写 hashCode ，而恰巧此对象定位到这个数组位置，如果仅仅用 equals 判断可能时相等的，但其 hashCode 和当前对象时不一致的，这种情况，根据 Object 的 hashCode 的约定，不能返回当前对象，而应该返回 null。
 
 ## JDK 1.7 和 JDK 1.8 HashMap 的区别
@@ -482,9 +483,9 @@ void resize(int newCapacity) {
 
 1. **JDK 1.8 是数组 + 链表 + 树的结构，JDK 是 数组 + 链表的结构 **
 
-   　　JDK 1.8 在 JDK 1.7 在基础上增加了红黑树来进行优化，即当链表超过 8 时，将链表转换为红黑树，利用红黑树快速增删改查的特点提高 HashMap 的性能，其中会用到红黑树的插入、删除、查找等算法。当小于 UNTREEIFY_THRESHOLD(默认为6) 时，又会转回链表以达到性能均衡。
+   　　JDK 1.8 在 JDK 1.7 在基础上增加了红黑树来进行优化，即当链表超过 **TREEIFY_THRESHOLD（默认为8）** 时，将链表转换为红黑树，利用红黑树快速增删改查的特点提高 HashMap 的性能，其中会用到红黑树的插入、删除、查找等算法。当小于 **UNTREEIFY_THRESHOLD(默认为6)** 时，又会转回链表以达到性能均衡。
 
-```
+```java
     //Java 1.8 put 方法的具体实现
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                    boolean evict) {
@@ -545,11 +546,11 @@ void resize(int newCapacity) {
     }
 ```
 
-　　hash 冲突发生的集中情况：1.两节点 key 值相同（hash 值一定相同），导致冲突；2.两节点 keu 值不同，由于 hash 函数的局限性导致 hash 值相同，冲突；3.两节点 keu 值不同，hash 值不同，但是 hash 值对数组长度取模后相同（hash&(length-1)），冲突。
+　　hash 冲突发生的几种情况：1.两节点 key 值相同（hash 值一定相同），导致冲突；2.两节点 key 值不同，由于 hash 函数的局限性导致 hash 值相同，冲突；3.两节y点 key 值不同，hash 值不同，但是 hash 值对数组长度取模后相同（hash&(length-1)），冲突。
 
 2. **hash() 方法不同**
 
-```
+```java
     static final int hash(Object key) {
         int h;
         return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
@@ -562,11 +563,11 @@ void resize(int newCapacity) {
 
 3. **插入的方式不同**
 
-　　JDK 1.7 采用的是头插法，而 JDK 1.8 及之后使用的都是尾插法。这是因为 JDK 1.7 是用单链表进行的纵向延伸，采用头插法能够提高插入的效率，但是也会容易出现逆序且环形链表死循环问题。在 JDK 1.8 之后是因为加入了红黑树使用尾插法，能够你面出现逆序且链表死循环的问题。
+　　JDK 1.7 采用的是头插法，而 JDK 1.8 及之后使用的都是尾插法。这是因为 JDK 1.7 是用单链表进行的纵向延伸，采用头插法能够提高插入的效率，但是也会容易出现逆序且环形链表死循环问题。在 JDK 1.8 之后是因为加入了红黑树使用尾插法，能够避免出现逆序且链表死循环的问题。
 
 4. **扩容后数据存储位置的计算方式不同**
 
-　　在 JDK 1.7 的时候是直接用 hash 值和需要扩容的二进制数进行 & （hash 值 & length-1）。
+　　在 JDK 1.7 的时候是直接用 hash 值和需要扩容的二进制数进行 & 运算（hash 值 & length-1）。
 
 　　而在 JDK 1.8 的时候直接使用了 JDK 1.7 计算的规律，就是扩容前的原始位置 + 扩容的大小值 = JDK 1.8 的计算方式，而不再是 JDK 1.7 的那种异或的方法。凡是这种方式就相当于只需要判断 Hash 值的新增参加运算的位是 0 还是 1就直接迅速计算出扩容后的存储方式。
 
@@ -574,7 +575,7 @@ void resize(int newCapacity) {
 
 
 
-```
+```java
     final Node<K,V>[] resize() {
         // 保存当前 table
         Node<K,V>[] oldTab = table;
@@ -691,13 +692,11 @@ void resize(int newCapacity) {
 
 
 
-
-
 5. **将 capacity 设置为 2 的次幂的方式不同**
 
 　　JDK 1.8 的是调用 tableSizeFor(int cap) 方法来返回一个比给定整数大且最接近的 2 的幂次方整数的：
 
-```
+```java
     static final int tableSizeFor(int cap) {
     	//为了防止 cap 已经是 2 的幂时
         int n = cap - 1;
