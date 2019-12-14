@@ -32,6 +32,8 @@ public static native void glGetIntegerv(int pname,java.nio.IntBuffer params);
 
 **GL_ALIASED_LINE_WIDTH_RANGE：**params 返回两个值，即锯齿线的最小和最大支持宽度。范围必须包括宽度 1。
 
+**GL_ALIASED_POINT_SIZE_RANGE：**params 返回两个值，即别名点支持的最大和最小的尺寸。范围必须包括 1 号。
+
 
 
 

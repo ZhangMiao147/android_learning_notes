@@ -16,11 +16,11 @@
 * [glDeleteTextures](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glDeleteTextures.md) - 删除命名纹理。 
 * [glDisableVertexAttribArray 与 glEnableVertexAttribArray]([https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glDisableVertexAttribArray%E4%B8%8EglEnableVertextAttribArray.md](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glDisableVertexAttribArray与glEnableVertextAttribArray.md)) - 启动或禁用通用顶点属性数组。
 * [glDrawArrays](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glDrawArrays.md) - 从数组数据中渲染图元。
-* glEnableVertexAttribArray与glDisableVertexAttribArray- 启用或者禁用通用顶点属性数组。
-* glEnable 与 glDisable - 启用或禁用服务器 GL 功能。
-* glFramebufferRenderbuffer
-* glFramebufferTexture2D
-* glGenTextures
+* [glEnableVertexAttribArray与glDisableVertexAttribArray](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glEnableVertexAttribArray%E4%B8%8EglDisableVertexAttribArray.md)- 启用或者禁用通用顶点属性数组。
+* [glEnable 与 glDisable](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glEnable%E4%B8%8EglDisable.md) - 启用或禁用服务器 GL 功能。
+* glFramebufferRenderbuffer - 将渲染缓冲区对象附着到帧缓冲区对象上。
+* glFramebufferTexture2D - 将纹理图像附加到帧缓冲区对象上。
+* glGenTextures - 生成纹理名称。
 * glGet
 * glGetAttribLocation
 * glGetProgramiv
