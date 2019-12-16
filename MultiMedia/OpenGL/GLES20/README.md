@@ -18,21 +18,20 @@
 * [glDrawArrays](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glDrawArrays.md) - 从数组数据中渲染图元。
 * [glEnableVertexAttribArray与glDisableVertexAttribArray](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glEnableVertexAttribArray%E4%B8%8EglDisableVertexAttribArray.md)- 启用或者禁用通用顶点属性数组。
 * [glEnable 与 glDisable](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glEnable%E4%B8%8EglDisable.md) - 启用或禁用服务器 GL 功能。
-* glFramebufferRenderbuffer - 将渲染缓冲区对象附着到帧缓冲区对象上。
-* glFramebufferTexture2D - 将纹理图像附加到帧缓冲区对象上。
-* glGenTextures - 生成纹理名称。
-* glGet
-* glGetAttribLocation
-* glGetProgramiv
-* glGetShaderiv
+* [glFramebufferRenderbuffer](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glFramebufferRenderbuffer.md) - 将渲染缓冲区对象附着到帧缓冲区对象上。
+* [glFramebufferTexture2D](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glFramebufferTexture2D.md) - 将纹理图像附加到帧缓冲区对象上。
+* [glGenTextures](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGenTextures.md) - 生成纹理名称。
+* [glGet](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGet.md) - 返回所选参数的一个或多个值。
+* glGetAttribLocation - 返回属性变量的位置。
+* glGetProgramiv - 从程序对象返回一个参数的值。
+* glGetShaderiv - 从着色器对象返回参数。
 * glGetUniformLocation
 * glLinkProgram
 * glShaderSource
 * glTexImage2D
-* glTexParameterf
+* glTexParameter
 * glUniform
 * glUseProgram
-* glUniformMatrix4fv
 * glVertexAttribPointer
 
 
