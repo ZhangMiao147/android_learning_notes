@@ -34,14 +34,18 @@
 
 　　Unsafe API 的大部分方法都是 native 实现，它由 105 个方法组成，主要包括以下几类：
 
-　　（1）Info 相关。主要返回某些低级别的内存存次：addressSize()、pageSize()。
+　　（1）Info 相关。主要返回某些低级别的内存信息：addressSize()、pageSize()。
 　　（2）Object 相关。主要提供 Object 和它的域操作方法：allocateInstance()、objectFieldOffset()。
 　　（3）Class 相关。主要提供 Class 和它的静态操纵方法：staticFieldOffset()、defineClass()、defineAnonymousClass()、ensureClassInitialized()。
 　　（4）Arrays 相关。数据操纵方法：arrayBaseOffset()、arrayIndexScale()。
 　　（5）Synchronization 相关。主要提供低级别同步原语（如基于 CPU 的 CAS(Compare-And-Swap)原语）：monitorEnter()、tryMonitorEnter()、monitorExit()、**compareAndSwapInt()**、putOrderedInt()。
 　　（6）Memory 相关。直接内存访问方法（绕过 JVM 堆直接操纵本地内存）：allocateMemory()、copyMemory()、getAddress()、getInt()、putInt()。
 
-　　Unsafe 的 
+　　Unsafe 分配的内存，不受 Integer.MAX_VALUE 的限制，并且分配到非堆内存，使用它时，需要非常谨慎：忘记手动回收时，会产生内存泄漏；非法的地址访问时，会导致 JVM 崩溃。在需要分配大的连续区域、实时编程（不能容忍 JVM 延迟）时，可以使用它。java.nio 使用这一技术。
+
+　　通过使用 Unsafe.compareAndSwap() 可以用来实现高效的无锁数据结构。
+
+　　Unsafe 的 compareAndSwap() 方法，而这个方法最终会对应到 cpu 的对应原语，因此，它的效率非常高。
 
 
 **AtomicBoolean  的其他方法**
