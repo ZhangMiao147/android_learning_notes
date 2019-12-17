@@ -25,9 +25,9 @@
 * glGetAttribLocation - 返回属性变量的位置。
 * glGetProgramiv - 从程序对象返回一个参数的值。
 * glGetShaderiv - 从着色器对象返回参数。
-* glGetUniformLocation
-* glLinkProgram
-* glShaderSource
+* glGetUniformLocation - 返回统一变量的位置。
+* glLinkProgram - 连接一个程序对象。
+* glShaderSource - 替换着色器对象中的源代码。
 * glTexImage2D
 * glTexParameter
 * glUniform
