@@ -22,12 +22,12 @@
 * [glFramebufferTexture2D](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glFramebufferTexture2D.md) - 将纹理图像附加到帧缓冲区对象上。
 * [glGenTextures](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGenTextures.md) - 生成纹理名称。
 * [glGet](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGet.md) - 返回所选参数的一个或多个值。
-* glGetAttribLocation - 返回属性变量的位置。
-* glGetProgramiv - 从程序对象返回一个参数的值。
-* glGetShaderiv - 从着色器对象返回参数。
-* glGetUniformLocation - 返回统一变量的位置。
-* glLinkProgram - 连接一个程序对象。
-* glShaderSource - 替换着色器对象中的源代码。
+* [glGetAttribLocation](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGetAttribLocation.md) - 返回属性变量的位置。
+* [glGetProgramiv](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGetProgramiv.md) - 从程序对象返回一个参数的值。
+* [glGetShaderiv](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGetShaderiv.md) - 从着色器对象返回参数。
+* [glGetUniformLocation](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGetUniformLocation.md) - 返回统一变量的位置。
+* [glLinkProgram](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glLinkProgram.md) - 连接一个程序对象。
+* [glShaderSource](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glShaderSource.md) - 替换着色器对象中的源代码。
 * glTexImage2D
 * glTexParameter
 * glUniform
