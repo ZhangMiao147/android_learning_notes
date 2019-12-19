@@ -28,7 +28,7 @@
 * [glGetUniformLocation](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGetUniformLocation.md) - 返回统一变量的位置。
 * [glLinkProgram](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glLinkProgram.md) - 连接一个程序对象。
 * [glShaderSource](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glShaderSource.md) - 替换着色器对象中的源代码。
-* glTexImage2D
+* glTexImage2D - 指定二维纹理图像。
 * glTexParameter
 * glUniform
 * glUseProgram
