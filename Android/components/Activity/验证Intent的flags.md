@@ -1,5 +1,32 @@
 # 验证 Intent 的 flags 
 
+```
+本文内容
+1. 如何使用flag	
+2. flag 的设置方法	
+3. 常用 flag 的实践验证	
+	3.1 FLAG_ACTIVITY_CLEAR_TOP	
+	3.2 FLAG_ACTIVITY_NO_HISTORY	
+	3.3 FLAG_ACTIVITY_NO_ANIMATION	
+	3.4 FLAG_ACTIVITY_NEW_TASK	
+	3.5 FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_CLEAR_TASK	
+	3.6 FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_CLEAR_TOP	
+	3.7 FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS	
+	3.8 FLAG_ACTIVITY_REORDER_TO_FRONT	
+	3.9 FLAG_ACTIVITY_FORWARD_RESULT	
+	3.10 FLAG_ACTIVITY_NEW_DOCUMENT	
+	3.11 FLAG_ACTIVITY_NEW_DOCUMENT & FLAG_ACTIVITY_MULTIPLE_TASK	
+	3.12 FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_MULTIPLE_TASK	
+	3.13 FLAG_ACTIVITY_RETAIN_IN_RECENTS	
+	3.14 FLAG_ACTIVITY_NO_USER_ACTION	
+	3.15 FLAG_ACTIVITY_PREVIOUS_IS_TOP -- 验证失败	
+	3.16 FLAG_ACTIVITY_RESET_TASK_IF_NEEDED -- 验证失败	
+	3.17 FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_TASK_NO_HOME -- 验证失败	
+	3.18 FLAG_ACTIVITY_LAUNCH_ADJACENT & FLAG_ACTIVITY_NEW_TASK -- 验证失败	
+	3.19 FLAG_ACTIVITY_BROUGHT_TO_FRONT -- 验证失败	
+	3.20 FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY -- 验证失败
+```
+
 [TOC]
 
 ## 1. 如何使用 flag
@@ -21,31 +48,30 @@
 ## 3. 常用 flag 的实践验证
 
 #### 3.1. FLAG_ACTIVITY_CLEAR_TOP
-　　**如果设置此标签，activity 已经在栈中，会将栈中 activity 之上的 activities 和本身 Activity 进行出栈关闭，然后新建 activity 实例加入栈中。**
+　　如果设置此标签，activity 已经在栈中，会将栈中 activity 之上的 activities 和本身 Activity 进行出栈关闭，然后新建 activity 实例加入栈中。
 
 * 设置 SecondActivity 跳转 FirstActivity 的 flag 为 FLAG_ACTIVITY_CLEAR_TOP。
 * 打开应用 MainActivity，点击跳转 FirstActivity ，在 FirstActivity 界面跳转 SecondActivity 。
 ![](image/CLEAR_TOP栈1.png)
 　　当前栈中情况是（从栈底到栈顶）：MainActivity -> FirstActivity -> SecondActivity。
-
 * 在 SecondActivity 点击跳转 FirstActivity 。
 ![](image/CLEAR_TOP栈2.png)
 　　当前栈中情况是（从栈底到栈顶）：MainActivity -> FirstActivity。注意看上图的 FirstActiivty 的对象是 1b4114f2，当前的 FirstAcivity 的对象是 338a5cb8，所以当将标记设置为 FLAG_ACTIVITY_CLEAR_TOP 时，会将栈内 FirstActivity 上面的 SecondActivity 移除栈，也会将栈中原来的 FirstActivity 移除，然后新建 FirstActivity 实例入栈。
-
 * 在 FirstActivity 界面点击跳转 FirstActivity 。
 ![](image/CLEAR_TOP栈3.png)
 　　当前栈中情况是（从栈底到栈顶）：MainActivity -> FirstActivity -> FirstActivity 。注意是在 FirstActivity 界面点击跳转的 FirstActivity ，在 FirstActivity 中跳转 FirstActivity 时并没有设置 flag 的值，使用的是默认值，所以会创建新的 activity 实例。
-
 * 再继续在 FirstActivity 界面点击跳转 SecondActivity 。
 ![](image/CLEAR_TOP栈4.png)
 　　当前栈中情况是（从栈底到栈顶）：MainActivity -> FirstActivity -> FirstActivity -> SecondActivity 。
-
 * 再次在SecondActivity 点击跳转 FirstActivity 。
-![](image/CLEAR_TOP栈5.png)
-　　当前栈中情况是（从栈底到栈顶）：MainActivity -> FirstActivity -> FirstActivity 。这是会发现 FLAG_ACTIVITY_CLEAR_TOP 并不是找到栈中从栈底向上最近的 activity ，而是从栈顶开始找，找到 activity 就会返回。
+  ![](image/CLEAR_TOP栈5.png)
+  　　当前栈中情况是（从栈底到栈顶）：MainActivity -> FirstActivity -> FirstActivity 。这是会发现 FLAG_ACTIVITY_CLEAR_TOP 并不是找到栈中从栈底向上最近的 activity ，而是从栈顶开始找，找到 activity 就会返回。
+
+　　如果启动模式是默认的（标准模式），设置了 FLAG_ACTIVITY_CLEAR_TOP 标志的 activity 会结束并重新创建；如果是其他模式或者 Intent 设置了 FLAG_ACTIVITY_SINGLE_TOP，则 activity 会将新的 intent 传递给栈中的 activity 的 onNewIntent() 放啊。
 
 #### 3.2. FLAG_ACTIVITY_NO_HISTORY
-　　**如果设置此 flag ，则新的 activity 将不会保留在历史栈中。一旦用户离开它，activity 将结束。**也可以通过 `android.R.styleable#AndroidManifestActivity_noHistory noHistory` 属性设置。
+
+　　如果设置此 flag ，则新的 activity 将不会保留在历史栈中。一旦用户离开它，activity 将结束。也可以通过 `android.R.styleable#AndroidManifestActivity_noHistory noHistory` 属性设置。
 
 　　如果设置此 flag ，当前的 activity 启动一个新的 activity ，新的 activity 设置返回值并结束，但旧的 activity 的 **onActivityResult()** 不会被触发。
 
@@ -73,17 +99,23 @@
 　　当前栈中情况是（从栈底到栈顶）：MainActivity。应用在恢复时也没有回到 FirstActivity ，而是恢复到了 MainActivity 界面。
 
 #### 3.3. FLAG_ACTIVITY_NO_ANIMATION
-　　**如果在 Context.startActivity 给 Intent 设置这个标签，将不会展示系统在 activity 从当前状态跳转到下一个 activity 的切换动画。**
+　　如果在 Context.startActivity 给 Intent 设置这个标签，将不会展示系统在 activity 从当前状态跳转到下一个 activity 的切换动画。
 
 * 设置 MainActivity 跳转 FirstActivity 的 flag 为 FLAG_ACTIVITY_NO_ANIMATION。
 * 查看从 MainActivity 跳转 FirstActivity 时的动画显示、FirstActivity 按 back 键返回 MainActivity 的动画显示以及 FirstActivty 跳转 FirstActivity 的动画显示。
 　　从 MainActivity 跳转 FirstActivity 时的动画并没有显示，FirstActivity 按 back 键返回 MainActivity 的动画显示正常，FirstActivty 跳转 FirstActivity 的动画显示正常。说明 FLAG_ACTIVITY_NO_ANIMATION 标签只能阻碍 startActivity 的动画，之后的返回与其他地方的 startActivity 并不会受到影响。
 
 #### 3.4. FLAG_ACTIVITY_NEW_TASK
-　　**如果设置这个标志，activity 将成为历史栈中的新任务的开始。**一个任务栈（从启动它的 activity 到下一个 activity）定义了一个用户操作的 activities 的原子组。栈可以被移动到前台和后台；包含 activity 的任务栈的所有 activities 总是保持相同的顺序。
+　　如果设置这个标志，activity 将成为历史栈中的新任务的开始。
+
+　　一个任务栈（从启动它的 activity 到下一个 activity）定义了一个用户操作的 activities 的原子组。栈可以被移动到前台和后台；包含 activity 的任务栈的所有 activities 总是保持相同的顺序。
+
 　　此标签通常被用于想要显示 “launcher” 类型行为的 activities，用户完成一系列的操作，并完全独立于启动他们的 activity 。
+
 　　当使用这个标志时，如果栈中已经包含了想要启动的 activity，那么，并不会启动一个新的 activity，而是将包含 activity 的任务栈移到屏幕的前面，并显示栈的最后一次的状态。可以查看 **FLAG_ACTIVITY_MULTIPLE_TASK** 标志禁止这种行为。
+
 　　当调用者 activity 想要从启动的 activity 请求到 result 时，这个标志不能使用。
+
 　　官方的解释其实不是很能明白 FLAG_ACTIVITY_NEW_TASK 的用途，所以查询所得：**设置 FLAG_ACTIVITY_NEW_TASK 标签后，首先会查找是否存在和被启动的 Activity 具有相同的亲和性的任务栈（即 taskAffinity，注意同一个应用程序中的 activity 的亲和性相同），如果有，则直接把这个栈整体移动到前台，并保持栈中旧 activity 的顺序不变，然后被启动的 activity 会被压入栈，如果没有，则新建一个栈来存放被启动的 activity。**
 
 ![](image/FLAG_ACTIVITY_NEW_TASK启动activity流程图.png)
@@ -136,7 +168,9 @@
 　　当前栈中情况是（从栈底到栈顶）：仍然有两个栈，一个栈中：MainActivity；另一个栈中：FirstActivity。注意看 FirstActivity 实例对象是 32364ec6 ,而上一步的 FirstActivity 的实例对象是 2b35cfae ，说明是将原来栈中的 activities 移除，将新的 activity 入栈的。栈 id 是没有变化的，所以栈是同一个。
 
 #### 3.6. FLAG_ACTIVITY_NEW_TASK & FLAG_ACTIVITY_CLEAR_TOP
-　　如果被使用给栈的根 activity ，activity 会成为前台 activity，并且将其清除到根状态。这是特别有用的，比如，从通知管理器开启 activity 。注意，如果 activity 在栈中，则会将之前的 activity 移除，创建新的 activity 入栈。
+　　如果被使用给栈的根 activity ，activity 会成为前台 activity，并且将其清除到根状态。
+
+　　这是特别有用的，比如，从通知管理器开启 activity 。注意，如果 activity 在栈中，则会将之前的 activity 移除，创建新的 activity 入栈。
 
 * 将 SecondActivity 界面跳转 FirstActivity 的 Intent 设置 flag 为 FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TOP。
 
@@ -175,6 +209,7 @@
 
 #### 3.9. FLAG_ACTIVITY_FORWARD_RESULT
 　　如果设置这个标志并用于启动一个新的 activity 从源活动，则源活动的回复对象转移到新活动上。
+
 　　新活动调用 android.app.Activity#setResult 方法，这个结果数据将会返回给源 activity 。
 
 * 在 FirstActivity 界面跳转 SecondActivity 的 Intent 设置 flag 为 FLAG_ACTIVITY_FORWARD_RESULT 。MainActivity 使用 startActivityForResult(intent，10001) 方法跳转 FirstActivity，并且打印 onActivityResult() 的日志。FirstActivity 使用 startActivity() 方法跳转 SecondActivity ，并在之后调用 finish() 方法结束 FirstActivity 。SecondActivity 添加一个“返回值”按钮，点击按钮调用 setResult(30002) 方法，并调用 finish() 方法结束。
@@ -197,7 +232,10 @@
 
 
 #### 3.10. FLAG_ACTIVITY_NEW_DOCUMENT
-　　此标志被用于基于 Intent 的 activity 活动开一个新的任务。通过使用这个标志或者它的同含义属性 android.R.attr#documentLaunchMode ，同一个 activity 的不同实例将会在最近的任务列表中显示不同的记录。
+　　此标志被用于基于 Intent 的 activity 活动开一个新的任务。
+
+　　通过使用这个标志或者它的同含义属性 android.R.attr#documentLaunchMode ，同一个 activity 的不同实例将会在最近的任务列表中显示不同的记录。
+
 　　相当于在 manifest 中 Activity 定义 android.R.attr#docucumentLaunchMode  = “intoExisting”。
 
 * 设置 MainActivity 的启动模式为 singleTask (方便进入 FirstActivity 的任务后回到 MainActvity 的任务)，在 MainActivity 界面跳转 FirstActivity 的 Intent 设置 flag 为 FLAG_ACTIVITY_NEW_DOCUMENT。
@@ -225,7 +263,9 @@
 　　FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_NEW_TASK 都是在没有符合的任务栈时，创建了新的任务栈，并且之后的启动 activity 也会进入新的任务栈中，当已经存在符合任务，则将整个任务栈都移到前台，但是 FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_NEW_TASK 有一点不同就是，**FLAG_ACTIVITY_NEW_DOCUMENT 是直接创建任务栈，而 FLAG_ACTIVITY_NEW_TASK 是没有亲和性的任务栈时才创建**。
 
 #### 3.11. FLAG_ACTIVITY_NEW_DOCUMENT & FLAG_ACTIVITY_MULTIPLE_TASK
-　　FLAG_ACTIVITY_MULTIPLE_TASK 用于创建新的任务栈 ，并在任务栈中启动 activity，此 flag 经常与 FLAG_ACTIVITY_NEW_DOCUMENT  或者 FLAG_ACTIVITY_NEW_TASK 一起使用。单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 或 FLAG_ACTIVITY_NEW_TASK 时，会先从存在的任务栈中搜索匹配 Intent 的栈 ，如果没有任务栈被发现则创建新的任务栈。当与 FLAG_ACTIVITY_MULTIPLE_TASK 配合使用时，会跳过搜索匹配的任务栈而是直接开启一个新任务栈。
+　　FLAG_ACTIVITY_MULTIPLE_TASK 用于创建新的任务栈 ，并在任务栈中启动 activity，此 flag 经常与 FLAG_ACTIVITY_NEW_DOCUMENT  或者 FLAG_ACTIVITY_NEW_TASK 一起使用。
+
+　　单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 或 FLAG_ACTIVITY_NEW_TASK 时，会先从存在的任务栈中搜索匹配 Intent 的栈 ，如果没有任务栈被发现则创建新的任务栈。当与 FLAG_ACTIVITY_MULTIPLE_TASK 配合使用时，会跳过搜索匹配的任务栈而是直接开启一个新任务栈。
 
 　　如果使用了 FLAG_ACTIVITY_NEW_TASK 就不要使用此标签，除非你启动的是应用的 launcher 。
 

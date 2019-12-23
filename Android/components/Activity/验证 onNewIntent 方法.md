@@ -1,6 +1,9 @@
 # 验证 onNewIntent 方法
 
+[TOC]
+
 ## 关于 onNewIntent
+
 　　onNewIntent() 方法会在 activity 复用的时候调用，也就是说调用 activity ，并不会创建 activity 的新实例，而是复用栈中的 activity ，复用时就会调用 onNewIntent() 方法，将新的 Intent 传递给 oNewIntent() 方法。
 
 ## 想要验证的问题

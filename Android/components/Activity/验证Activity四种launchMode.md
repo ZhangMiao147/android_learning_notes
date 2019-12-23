@@ -8,7 +8,10 @@
 	6. singleTask(栈内复用)
 	7. singleInstance(单例模式)
 
+[TOC]
+
 ## 1. 如何验证
+
 　　创建一个 MainActivity 、 FirstActivity 与 SecondActivity 类，MainActivity 是项目的主界面，任何一个 Activity 都可以跳转包括自己的任意一个 Activiity ，通过设置 FirstActivity 的 launchMode 的值来观察任务栈中的情况。
 
 　　通过执行 `adb shell dumpsys activity` 命令观察任务栈中 Activity 的入栈和出栈情况。
@@ -31,6 +34,7 @@
 　　打开应用，显示 MainActivity 之后的任务栈如下：
 ![](image/打开应用任务栈.png)
 　　从图中可以看到应用刚打开是，任务栈里只有一个 MainActivity 。
+
 　　**栈：（从栈底到栈顶）**：MainActivity 。
 
 ## 4. standard(标准模式)
@@ -98,3 +102,4 @@
 　　在 SecondActivity 界面点击返回键之后，栈中只剩下 MainActivity ，界面也回到 MainActivity 。
 
 　　**栈：（从栈底到栈顶）**：Task 163: MainActivity ; Task 164: 没有了。
+

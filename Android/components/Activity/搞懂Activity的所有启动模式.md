@@ -26,11 +26,14 @@
 	8. launchMode 与 Intent 的 flags 的对比
 
 
+
+[TOC]
+
+
+
 ## 1. 启动模式简述
 
-　　和生命周期一样， activity 的四种 launchMode 非常重要但也特别容易混淆，首先，activity 是以任务栈的形式创建和销毁的，栈是一种“后进先出”的数据结构，在默认情况下，启动第一个 actiivty 时，系统将会为它创建一个任务栈并将活动置于栈底，而从这个 activity 启动的其他 activity 将会依次入栈，当用户连续按下返回键时，任务栈中的 activity 会从栈顶开始依次销毁。
-
-　　Android 中的 activity 全都归属于 task 管理（task 是一个具有栈结构的容器），task 是一系列被操作的 activity 的集合，用户进行操作时将与这些 activity 进行交互。这些 activity 按照启动顺序排队存入一个栈。在默认情况下，启动一个 activity 的时候，会将 activity 入栈，当用户按下返回键的时候，activity 出栈并销毁。
+　　和生命周期一样， activity 的四种 launchMode 非常重要但也特别容易混淆，首先，activity 是以任务栈（task）的形式创建和销毁的，栈是一种“后进先出”的数据结构，是一系列被操作的 activities 的集合。在默认情况下，启动第一个 activity 时，系统将会为它创建一个任务栈并将活动置于栈底，而从这个 activity 启动的其他 activity 将会依次入栈，当用户连续按下返回键时，任务栈中的 activity 会从栈顶开始依次出栈并销毁。
 
 　　Android 默认情况下会为每个 App 维持一个 task 来存放 App 的所有 activities (在默认情况下)，task 的默认 name 为该 app 的 packagename(包名)。
 
@@ -47,7 +50,7 @@
 
 ## 2. 如何定义 Activity 的启动模式
 
-　　设置 Activity 的启动模式有两种方式，一种是在 AndroidManifest.xml 中设置，一种就是使用 Intent 标识设置 Activity 的启动模式。
+　　设置 Activity 的启动模式有两种方式，一种是在 AndroidManifest.xml 中设置，另一种就是使用 Intent 标识设置 Activity 的启动模式。
 
 #### 2.1. 在 AndroidManifest.xml 中设置 Activity 的启动模式
 
@@ -194,7 +197,7 @@
 
 3. 指定 launchMode 的 activity 被任何对象任何地方调用，启动模式都一样；而 Intent 的 flags 只对 startActivity 的 activity 有效，其他调用同样的 activity 可以设置其他的启动模式，并不会相互影响。
 
-## 参考文章：
+## 9. 参考文章
 1. [老生常谈-Activity](https://juejin.im/post/5adab7b6518825670c457de3)
 2. [全面了解 Activity](https://juejin.im/entry/589847f7128fe10058ebd803)
 3. [Activity 必知必会](https://juejin.im/post/5aef0d215188253dc612991b)

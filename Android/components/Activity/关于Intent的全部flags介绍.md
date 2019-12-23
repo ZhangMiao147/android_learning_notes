@@ -1,6 +1,7 @@
 # 关于 Intent 的全部 flags 介绍
 
 ## 简介
+
 　　除了 4 种 launchMode 可以设置 Activity 与 task 的关系之外，还可以通过 startActivity 方法的 Intent 添加 Flag 来设置 Activity 与 task 的关系。本片只是将 20 个 flags 罗列出来，并简单介绍描述。
 
 ## 20 个 flag 的描述
@@ -52,8 +53,11 @@
      */
 ```
 　　如果设置 FLAG_ACTIVITY_CLEAR_TOP 标志，activity 已经在栈中，则不会启动 activity 的新实例，而是清除栈中 activity 之上的 activities，Intent 将被传递新的 Intent 给栈内的 activity。
+
 　　例如，一个栈中包含 activities : A,B,C,D。如果 D 调用 startActivity() 去打开 activity B，并且 startActivity() 方法的 Intent 添加了 FLAG_ACTIVITY_CLEAR_TOP 标志，这时，c 和 D 出栈结束，B 会接收到给定的 Intent ，从而现在栈中是：A，B。
+
 　　上述例子中当前运行的 activity B 的 onNewInstent() 方法将会收到新的 intent。如果将启动模式声明为 “multiple”(默认)，并且没有在 Intent 上设置 FLAG_ACTIVITY_SINGLE_TOP，它将结束并重新创建，除此之外的其他启动模式或者 Intent 设置 FLAG_ACTIVITY_SINGLE_TOP ，将传递 Intent 给当前的 activity 实例的 onNewIntent() 方法。
+
 　　此 flag 还可以与 FLAG_ACTIVITY_NEW_TASK 一起使用起到更好的效果：如果被使用给栈的根 activity ，activity 会成为前台 activity，并且将其清除到根状态。这是特别有用的，比如，从通知管理器开启 activity 。
 
 #### 3. FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET
@@ -106,8 +110,11 @@
      */
 ```
 　　FLAG_ACTIVITY_MULTIPLE_TASK 标志用于创建新的任务，并在任务中启动 activity，FLAG_ACTIVITY_MULTIPLE_TASK 标志经常与 FLAG_ACTIVITY_NEW_DOCUMENT  或者 FLAG_ACTIVITY_NEW_TASK 一起使用。单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 或 FLAG_ACTIVITY_NEW_TASK 时，会先从存在的栈中搜索匹配 Intent 的栈 ，如果没有栈被发现则创建新的栈。当与 FLAG_ACTIVITY_MULTIPLE_TASK 配合使用时，会跳过搜索匹配的栈而是直接开启一个新栈。
+
 　　如果使用了 FLAG_ACTIVITY_NEW_TASK 就不要使用此标志，除非你启动的是应用的 launcher 。当与 FLAG_ACTIVITY_NEW_TASK 组合使用时，会防止将已存在的任务带到前台，总是会为 activity 开启一个新的任务，不管是否已经存在任务正在运行相同的事情。
+
 　　因为系统默认不会包含可视化的任务管理，因此不应该使用这个标志，除非给用户提供可以回到其他任务的方法。
+
 　　此标志不与 FLAG_ACTIVITY_NEW_TASK 或者 FLAG_ACTIVITY_NEW_DOCUMENT 配合使用时是没有效的。
 
 #### 5. FLAG_ACTIVITY_NEW_DOCUMENT
@@ -145,8 +152,11 @@
      */
 ```
 　　FLAG_ACTIVITY_NEW_DOCUMENT 标志通过启动 activity 的 Intent 打开一个新的任务记录。通过使用这个标志或者它的同含义属性 android.R.attr#documentLaunchMode ，同一个 activity 的不同实例将会在最近的任务列表中显示不同的记录。
+
 　　Intent 的标志要优先于对 activity 的属性使用 android.R.attr#documentLaunchMode。属性表单会为 Activity 的所有活动设置特殊的多记录行为，然而，标志需要在启动 Activity 的 Intent 上指定它。
+
 　　注意，这个标志的默认含义，在 activity 结束之后它的入口是否还会保留在在最近的列表中与 FLAG_ACTIVITY_NEW_TASK 和 android.R.attr#documentLaunchMode 是不同的，此标志是不会被移除的，而 FLAG_ACTIVITY_NEW_TASK 则会被移除 。如果使用 FLAG_ACTIVITY_NEW_TASK 创建一个新的入口，那么默认情况下当 activity 结束时入口将被移除，你可以使用 FLAG_ACTIVITY_RETAIN_IN_RECENTS 标志修改这个行为。
+
 　　FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_MULTIPLE_TASK 一起使用，当单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 相当于在 manifest 中 Activity 定义 android.R.attr#docucumentLaunchMode  = “intoExisting”；当和 FLAG_ACTIVITY_MULTIPLE_TASK 一起使用时，相当于在 manifest 中 Activity 定义 android.R.attr#docucumentLaunchMode = “always”。
 
 #### 6. FLAG_ACTIVITY_NEW_TASK
@@ -177,8 +187,11 @@
      */
 ```
 　　设置 FLAG_ACTIVITY_NEW_TASK 标志，activity 将成为历史栈中的新任务的开始。一个任务栈（从启动它的 activity 到下一个 activity）定义了一个用户操作的 activities 的原子组。栈可以被移动到前台和后台；包含 activity 的任务栈的所有 activities 总是保持相同的顺序。
+
 　　此标志通常被用于想要显示 “launcher” 类型行为的 activities，用户完成一系列的操作，并完全独立于启动他们的 activity 。
+
 　　当使用这个标志时，如果栈中已经包含了想要启动的 activity，那么，并不会启动一个新的 activity，而是将包含 activity 的任务栈移到屏幕的前面，并显示栈的最后一次的状态。可以使用 FLAG_ACTIVITY_MULTIPLE_TASK 标志禁止这种行为。
+
 　　当调用者 activity 想要从启动的 activity 请求到 result 时，这个标志不能使用。
 
 #### 7. FLAG_ACTIVITY_NO_ANIMATION
@@ -212,6 +225,7 @@
      */
 ```
 　　如果设置 FLAG_ACTIVITY_NO_HISTORY 标志，则新的 activity 将不会保留在历史栈中。一旦用户离开它，activity 将结束。也可以通过 `android.R.styleable#AndroidManifestActivity_noHistory noHistory` 属性设置。
+
 　　如果设置 FLAG_ACTIVITY_NO_HISTORY 标志，当前的 activity 启动一个新的 activity ，新的 activity 设置返回值并结束，但旧的 activity 的 onActivityResult() 不会被触发。
 
 #### 9. FLAG_ACTIVITY_REORDER_TO_FRONT
@@ -231,7 +245,9 @@
      */
 ```
 　　如果通过 Context.startActivity() 的 Intent 设置 FLAG_ACTIVITY_REORDER_TO_FRONT 标志，如果 activity 已经在栈中运行，将会把 activity 带到栈的顶部。
+
 　　例如。一个栈中包含四个 activities：A,B,C,D。如果 D 调用 startActivity() 方法，并且 Intent 设置 FLAG_ACTIVITY_REORDER_TO_FRONT 标志，启动 B，那么 B 将被带到历史栈的栈顶，所以其结果就是：A,C,D,B。
+
 　　如果此标志与 FLAG_ACTIVITY_CLEAR_TOP 同时设置，那么此标志无效。
 
 #### 10. FLAG_ACTIVITY_RETAIN_IN_RECENTS
@@ -252,6 +268,7 @@
      */
 ```
 　　默认情况下，进入最近任务栈的记录由 FLAG_ACTIVITY_NEW_DOCUMENT 创建，当用户关闭 activity （使用 back 键或者他调用 finish()）时记录将会被移除，如果你想要允许记录保留在最近方便它能被重新启动，你可以使用 FLAG_ACTIVITY_RETAIN_IN_RECENTS 标志。当设置了此标志并且任务中的 activity 已经结束，当用户重新启动它，界面将会保留最近的进入记录，就像是顶部应用进入一样。
+
 　　接收活动可以请求 android.R.attr#autoRemoveFromRecents 或者通过调用 Activity.finishAndRemoveTask() 来覆盖本请求。
 
 #### 11. FLAG_ACTIVITY_SINGLE_TOP
@@ -274,6 +291,7 @@
      */
 ```
 　　如果设置 FLAG_ACTIVITY_FORWARD_RESULT 标志并用于启动一个新的 activity，则启动活动的回复转移到被启动的活动上。
+
 　　被启动活动调用 android.app.Activity#setResult 方法，这个结果数据将会返回给启动 activity 的启动 Activity。
 
 #### 13. FLAG_ACTIVITY_PREVIOUS_IS_TOP
@@ -352,7 +370,9 @@
      */
 ```
 　　如果设置 FLAG_ACTIVITY_NO_USER_ACTION 标志，在 activity 被前台的新启动的 activity 造成 paused 之前，将会阻止当前最顶部的 activity 的 onUserLeaveHint 回调。
+
 　　通常，当 activity 在用户的操作下被移除前面则会调用 onUserLeaveHint 回调。这个回调标志着 activity 的生命周期的一个点，以便隐藏任何 “ 直到用户看到他们 ” 的通知，比如闪烁的 LED 灯。
+
 　　如果 accitivity 曾经通过任何非用户操作启动（例如来电或闹铃启动），就应该通过 startActivity 添加此标志，确保暂停时 activity 不认为用户确认了它的通知。
 
 #### 19. FLAG_ACTIVITY_TASK_ON_HOME
@@ -379,7 +399,7 @@
 　　FLAG_ACTIVITY_LAUNCH_ADJACENT 标志仅用于分屏多窗口模式。新活动将被显示在启动它的活动的旁边。这个标志只能与 FLAG_ACTIVITY_NEW_TASK 联合使用。此外，如果想要创建一个已存在的活动的新实例，那么设置 FLAG_ACTIVITY_MULTIPLE_TASK 标志。
 
 ## 验证
-　　关于 flag 的验证，可以查看 [将 Intent 的 flags 使用一下呀呀呀](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Intent%E7%9A%84flags%E9%AA%8C%E8%AF%81/%E5%B0%86Intent%E7%9A%84flags%E4%BD%BF%E7%94%A8%E4%B8%80%E4%B8%8B%E5%91%80%E5%91%80%E5%91%80.md) 文章。
+　　关于 flag 的验证，可以查看 [验证Intent的flags](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E9%AA%8C%E8%AF%81Intent%E7%9A%84flags.md) 文章。
 
 ## 参考文章：
 1. [Intent.addFlags() 启动Activity的20种flags全解析](https://blog.csdn.net/blueangle17/article/details/79712229)
