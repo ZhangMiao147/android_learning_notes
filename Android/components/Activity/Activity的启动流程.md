@@ -32,11 +32,12 @@
 ![](./冷启动流程图.png)
 
 　　图中设计的几个类：
+
 （1）Launcher：Launcher 本质上也是一个应用程序，和一个简单的 App 一样，也继承自 Activity，实现了点击、长按等回调接口，来接收用户的输入。
 
 （2）ActivityManagerServices：简称 AMS，服务端对象，负责系统中所有 Activity 的生命周期。
 
-（3）ActivityThread：App 的真正入口。当开启 App 之后，会调用 main() 开始运行，开启消息循环队列，这就是 UI线程（主线程）。与 ActivityManagerService 配合，一起完成 Activity 的管理工作。
+（3）ActivityThread：App 的真正入口。当开启 App 之后，会调用 main() 开始运行，开启消息循环队列，这就是 UI 线程（主线程）。与 ActivityManagerService 配合，一起完成 Activity 的管理工作。
 
 （4）ApplicationThread：用来实现 ActivityManagerService 与 ActivityThread 之间的交互。在 ActivityManangerService 需要管理相关 Application 中的 Activity 的生命周期时，通过 ApplicationThread 的代理对象与 ActivityThread 通讯。
 
@@ -53,6 +54,7 @@
 ## 3. 看源码分析冷启动流程
 
 　　在线查看源码地址：https://www.androidos.net.cn/sourcecode 。
+
 　　设备桌面就是一个 Launcher 类，是一个 Activity，在这个类中处理桌面上应用快捷图标的点击事件，所以从 Launcher 类开始追踪代码。
 
 ### 3.1. 从应用快捷图标点击开始
@@ -133,6 +135,7 @@ public final class Launcher extends Activity
                 }
             } else {
                 if (user == null || user.equals(android.os.Process.myUserHandle())) {
+                	//调用 startActivity 启动 activity
                     startActivity(intent);
                 } else {
                     launcherApps.startMainActivity(intent.getComponent(), user,
@@ -141,11 +144,7 @@ public final class Launcher extends Activity
             }
             return true;
         } catch (SecurityException e) {
-            Toast.makeText(this, R.string.activity_not_found, Toast.LENGTH_SHORT).show();
-            Log.e(TAG, "Launcher does not have the permission to launch " + intent +
-                    ". Make sure to create a MAIN intent-filter for the corresponding activity " +
-                    "or use the exported attribute for this activity. "
-                    + "tag="+ tag + " intent=" + intent, e);
+            ...
         }
         return false;
     }
@@ -177,6 +176,7 @@ public final class Launcher extends Activity
     public void startActivityForResult(@RequiresPermission Intent intent, int requestCode,
             @Nullable Bundle options) {
         ...
+        //调用了 mInstrumentation 的 execStartActivity 方法
         Instrumentation.ActivityResult ar =
              mInstrumentation.execStartActivity(
                  this, mMainThread.getApplicationThread(), mToken, this,
@@ -194,6 +194,7 @@ public final class Launcher extends Activity
             Context who, IBinder contextThread, IBinder token, Activity target,
             Intent intent, int requestCode, Bundle options) {
         ...
+        	//调用了 AMS 的 startActivity 方法
             int result = ActivityManagerNative.getDefault()
                 .startActivity(whoThread, who.getBasePackageName(), intent,
                         intent.resolveTypeIfNeeded(who.getContentResolver()),
@@ -224,6 +225,7 @@ public final class Launcher extends Activity
         userId = mUserController.handleIncomingUser(Binder.getCallingPid(), Binder.getCallingUid(),
                 userId, false, ALLOW_FULL_ONLY, "startActivity", null);
         // TODO: Switch to user app stacks here.
+        //调用了 ActivityStarter 的 startActivityMayWait 方法
         return mActivityStarter.startActivityMayWait(caller, -1, callingPackage, intent,
                 resolvedType, null, null, resultTo, resultWho, requestCode, startFlags,
                 profilerInfo, null, null, bOptions, false, userId, null, null,
@@ -272,8 +274,10 @@ public final class Launcher extends Activity
             IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
             int startFlags, boolean doResume, ActivityOptions options, TaskRecord inTask) {
 			...
-			mTargetStack.startActivityLocked(mStartActivity, newTask, mKeepCurTransition, mOptions);
+			//调用 TargetStack 的 startActivityLocked 方法
+            mTargetStack.startActivityLocked(mStartActivity, newTask, mKeepCurTransition, mOptions);
 			...
+			//调用 SctivityStackSupervisor 的 resumeFocusedStackTopActivityLocked 方法
 			mSupervisor.resumeFocusedStackTopActivityLocked(mTargetStack, mStartActivity,
                         mOptions);
 			...
@@ -283,10 +287,11 @@ public final class Launcher extends Activity
 　　ActivityStarter 的 startActivityMayWait() 方法最后调用到了 ActivityStack 的 startActivityLocked() 方法和 ActivityStackSupervisor 的 resumeFocusedStackTopActivityLocked（） 方法。
 
 #### 3.1.9. ActivityStackSupervisor 的 resumeFocusedStackTopActivityLocked（） 方法
-```
+```java
     boolean resumeFocusedStackTopActivityLocked(
             ActivityStack targetStack, ActivityRecord target, ActivityOptions targetOptions) {
         if (targetStack != null && isFocusedStack(targetStack)) {
+        //调用 ActivityStack 的 resumeTopActivityUncheckedLocked 方法
             return targetStack.resumeTopActivityUncheckedLocked(target, targetOptions);
         }
         final ActivityRecord r = mFocusedStack.topRunningActivityLocked();
@@ -299,7 +304,7 @@ public final class Launcher extends Activity
 　　调用了 ActivityStack 的 resumeTopActivityUncheckedLocked() 方法。
 
 #### 3.1.10. ActivityStack 的 resumeTopActivityUncheckedLocked() 方法
-```
+```java
     boolean resumeTopActivityUncheckedLocked(ActivityRecord prev, ActivityOptions options) {
         ...
             result = resumeTopActivityInnerLocked(prev, options);
@@ -315,12 +320,13 @@ public final class Launcher extends Activity
     final boolean startPausingLocked(boolean userLeaving, boolean uiSleeping,
             ActivityRecord resuming, boolean dontWait) {
 		...
+		//调用 ApplicationThread 的 schedulePauseActivity 方法
 		prev.app.thread.schedulePauseActivity(prev.appToken, prev.finishing,
                         userLeaving, prev.configChangeFlags, dontWait);
 		...
 	}
 ```
-　　ActivityStack 的 resumrTopActivityUncheckedLocked() 方法，先调用了 resumeTopActivityInnerLocked() 方法，而 resumeTopActivityInnerLocked() 方法调用了 ApplicationThread 的 schedulePauseActivity() 方法，接着查看 pplicationThread 的 schedulePauseActivity() 方法。
+　　ActivityStack 的 resumrTopActivityUncheckedLocked() 方法，先调用了 resumeTopActivityInnerLocked() 方法，而 resumeTopActivityInnerLocked() 方法调用了 ApplicationThread 的 schedulePauseActivity() 方法，接着查看 ApplicationThread 的 schedulePauseActivity() 方法。
 
 
 #### 3.1.11. 查看 ApplicationThread 类的 schedulePauseActivity() 方法
@@ -329,6 +335,7 @@ public final class Launcher extends Activity
                 boolean userLeaving, int configChanges, boolean dontReport) {
             int seq = getLifecycleSeq();
             ...
+            //发出 PAUSE_ACTIVITY 的消息
             sendMessage(
                     finished ? H.PAUSE_ACTIVITY_FINISHING : H.PAUSE_ACTIVITY,
                     token,
@@ -345,7 +352,7 @@ public final class Launcher extends Activity
 　　在 ApplicationThread 的 schedulePauseActivity() 方法中，发出一个一条 H.PAUSE_ACTIVITY 的消息，接下来查看 H.PAUSE_ACTIVITY 消息的处理。
 
 #### 3.1.12. 查看 H.PAUSE_ACTIVITY 消息的处理
-```
+```java
  public void handleMessage(Message msg) {
  	...
 	          case PAUSE_ACTIVITY:
@@ -364,6 +371,7 @@ public final class Launcher extends Activity
     private void handlePauseActivity(IBinder token, boolean finished,
             boolean userLeaving, int configChanges, boolean dontReport, int seq) {
         ...
+        //调用 AMS 的 activityPaused() 方法 
       	ActivityManagerNative.getDefault().activityPaused(token);
 		...
     }
@@ -372,10 +380,11 @@ public final class Launcher extends Activity
 　　ActivityManagerNative.getDefault() 获取的是一个实现 IActivityManager 接口的对象（ActivityMannagerService），调用了 ActivityManagerService 的 activityPaused() 方法。
 
 #### 3.1.13. 查看 ActivityManagerService 的 activityPaused() 方法
-```
+```java
     @Override
     public final void activityPaused(IBinder token) {
         ...
+        //调用 ActivityStack 的 activityPausedLocked 方法
         stack.activityPausedLocked(token, false);
         ...
     }
@@ -383,26 +392,24 @@ public final class Launcher extends Activity
 　　在 ActivityManagerService 的 activityPaused() 方法中调用了 ActivityStack 的 activityPauseLocked() 方法。
 
 #### 3.1.14. 查看 ActivityStack 的 activityPausedLocked() 方法
-```
+```java
     final void activityPausedLocked(IBinder token, boolean timeout) {
         ...
         completePauseLocked(true, null);
         ...
     }
 
-    private int startActivityUnchecked(final ActivityRecord r, ActivityRecord sourceRecord,
-            IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
-            int startFlags, boolean doResume, ActivityOptions options, TaskRecord inTask) {
-			...
-			mSupervisor.resumeFocusedStackTopActivityLocked();
-			...
+    private int completePauseLocked(boolean resumeNext,ActivityRecord resuming) {
+		...
+		mSupervisor.resumeFocusedStackTopActivityLocked();
+		...
 	}
 ```
 
-　　在 ActivityStack 的 activityPausedLocked() 方法中调用了 completePauseLocked() 方法，而在completePauseLocked() 方法中调用 ActivityStacjSupertvisor 的 resumeFocusedStackTopActivityLocked() 方法。
+　　在 ActivityStack 的 activityPausedLocked() 方法中调用了 completePauseLocked() 方法，而在completePauseLocked() 方法中调用 ActivityStackSupertvisor 的 resumeFocusedStackTopActivityLocked() 方法。
 
 #### 3.1.15. 查看 ActivityStackSupervisor 的 resumeFocusedStackTopActivityLocked() 方法
-```
+```java
     boolean resumeFocusedStackTopActivityLocked() {
         return resumeFocusedStackTopActivityLocked(null, null, null);
     }
@@ -414,6 +421,7 @@ public final class Launcher extends Activity
         }
         final ActivityRecord r = mFocusedStack.topRunningActivityLocked();
         if (r == null || r.state != RESUMED) {
+        	//调用 ActivityStack 的 resumeTopActivityUncheckedLocked
             mFocusedStack.resumeTopActivityUncheckedLocked(null, null);
         }
         return false;
@@ -424,7 +432,7 @@ public final class Launcher extends Activity
 
 #### 3.1.16. 查看 ActivityStack 的 resumeTopActivityUncheckedLocked（） 方法
 
-```
+```java
     /**
      * Ensure that the top activity in the stack is resumed.
      * 确定栈顶的 activity 是 resumed 状态。
