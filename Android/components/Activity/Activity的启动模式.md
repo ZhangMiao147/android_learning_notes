@@ -114,11 +114,11 @@ startActivity(intent);
 
 　　单例模式使用需要与程序分离开的页面。电话拨号页面，通过自己的应用或者其他应用打开拨打电话页面，只要系统的栈中存在该实例，那么就会直接调用，还有闹铃提醒。
 
-　　关于 launchMode 的四种模式验证，可以查看 [Activity四种launchMode有什么不同，代码走起来](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E5%9B%9B%E7%A7%8DlaunchMode%E9%AA%8C%E8%AF%81/Activity%E5%9B%9B%E7%A7%8DlaunchMode%E6%9C%89%E4%BB%80%E4%B9%88%E4%B8%8D%E5%90%8C%EF%BC%8C%E4%BB%A3%E7%A0%81%E8%B5%B0%E8%B5%B7%E6%9D%A5.md) 文章。
+　　关于 launchMode 的四种模式验证，可以查看 [验证Activity四种launchMode](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E9%AA%8C%E8%AF%81Activity%E5%9B%9B%E7%A7%8DlaunchMode.md) 文章。
 
 ## 4. Intent 的 flags
 
-　　Intent 的 flags 有 20 个，这里只列出了常用的flag。查看全部的 flags ，请查看 [关于 Intent 的全部 flags 介绍](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E5%85%B3%E4%BA%8EIntent%E7%9A%84%E5%85%A8%E9%83%A8flags%E4%BB%8B%E7%BB%8D.md) 。
+　　Intent 的 flags 有 20 个，这里只列出了常用的flag。查看全部的 flags ，请查看 [关于Intent的全部flags介绍](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E5%85%B3%E4%BA%8EIntent%E7%9A%84%E5%85%A8%E9%83%A8flags%E4%BB%8B%E7%BB%8D.md) 。
 
 #### 4.1. 常用的 flags 介绍
 
@@ -126,9 +126,9 @@ startActivity(intent);
 
 ##### 4.1.1. FLAG_ACTIVITY_CLEAR_TOP
 
-**描述**：如果设置此标签，activity 已经在栈中，会将栈中 activity 之上的 activities 包括 activity 本身进行出栈关闭，然后将启动的 activity 新实例入栈 。
+**描述**：设置此标志，如果 activity 已经在栈中，会将栈中 activity 之上的 activities 进行出栈关闭，如果启动模式是默认的（标准模式），设置了 FLAG_ACTIVITY_CLEAR_TOP 标志的 activity 会结束并重新创建；如果是其他模式或者 Intent 设置了 FLAG_ACTIVITY_SINGLE_TOP，则 activity 会将新的 intent 传递给栈中的 activity 的 onNewIntent() 方法。
 
-**举例**：C 跳转 B 的 flag 设置为 FLAG_ACTIVITY_CLEAR_TOP ，当前栈中（从栈底到栈顶）的情况是：A->B->C，然后 C 跳转 B，栈的情况就成了：A->B（新实例）。
+**举例**：C 跳转 B 的 flag 设置为 FLAG_ACTIVITY_CLEAR_TOP ，当前栈中（从栈底到栈顶）的情况是：A->B->C，然后 C 跳转 B，栈的情况就成了：A->B。
 
 ##### 4.1.2. FLAG_ACTIVITY_NO_HISTORY
 
@@ -150,7 +150,7 @@ startActivity(intent);
 
 ##### 4.1.5. FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_CLEAR_TASK
 
-**描述**：FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_CLEAR_TASK 联合使用时，首先会查找是否存在和被被启动的 activity 具有相同亲和性的任务栈，如果有则先将栈清空，将被启动的 activity 会入栈，并将栈整体移动到前台；如果没有，则新建栈来存放被启动的 activity。
+**描述**：FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_CLEAR_TASK 联合使用时，首先会查找是否存在和被启动的 activity 具有相同亲和性的任务栈，如果有则先将栈清空，将被启动的 activity 会入栈，并将栈整体移动到前台；如果没有，则新建栈来存放被启动的 activity。
 
 **举例**：设置 A 跳转 B 的 flag 为 FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_CLEAR_TASK，设置 B 的 taskAffinity 的值。A 跳转 B ，B 跳转 C，C 跳转回到 A，A 跳转 B，显示 B 界面。
 
@@ -188,7 +188,7 @@ startActivity(intent);
 
 **举例**：A 跳转 B 设置为 FALG_ACTIVITY_NEW_DOCUMENT，A 跳转 B，B 跳转 C，当前栈情况是：栈1（A），栈2（B->C）,C 跳转 A，A 跳转 B，当前栈情况是：栈1（A），栈2（B->C），显示 C 界面。
 
-**其他**：相当于在 manifest 中定义 android.R.attr#documentLaunchMode="intoExisting"。 FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_NEW_TASK 都是在没有符合的任务栈时，创建了新的任务栈，并且之后的启动 activity 也会进入新的任务栈中，当已经存在符合任务，则将整个任务栈都移到前台，但是 FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_NEW_TASK 有一点不同就是，FLAG_ACTIVITY_NEW_DOCUMENT 是直接创建任务栈，而 FLAG_ACTIVITY_NEW_TASK 是没有亲和性的任务栈时才创建。
+**其他**：相当于在 manifest 中定义 android.R.attr#documentLaunchMode="intoExisting"，如果之前已经打开过，则会打开之前的。FALG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_NEW_TASK 的不同点在于亲和性上，FLAG_ACTIVITY_NEW_TASK 会寻找与自己亲和性的栈，如果有，则进入，如果没有，则创建栈，而 FALG_ACTIVITY_NEW_DOCUMENT 是没有打开过，则直接创建栈。
 
 ##### 4.1.11.FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_MULITIPLE_TASK
 
@@ -196,7 +196,7 @@ startActivity(intent);
 
 **举例**：A 跳转 B 设置 FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_MULTIPLE_TASK 联合使用，A 跳转 B，B 跳转 C，C 跳转 A，当前栈情况是:栈1（A），栈2（B->C），A 跳转 B，当前栈情况是：栈1（A），栈2（B->C），栈3：B。
 
-**其他**：FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_MULTIPLE_TASK 联合使用，相比较 FLAG_ACTIVITY_NEW_DOCUMENT 的单独使用就是，不管是否存在 activity 所在的任务栈，都新建任务栈。
+**其他**：FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_MULTIPLE_TASK 联合使用，相比较 FLAG_ACTIVITY_NEW_DOCUMENT 的单独使用就是，不管是否存在 activity 所在的任务栈，都新建任务栈。效果等同于documentLaunchMode=“always”，不管之前有没有打开，都新创建一个。
 
 ##### 4.1.12. FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_MULITIPLE_TASK
 
@@ -216,13 +216,13 @@ startActivity(intent);
 
 **举例**：A 跳转 B 设置 FLAG_ACTIVITY_NO_USER_ACTION，A 跳转 B ,A 的 onUserLeaveHint() 方法没有被调用。
 
-　　关于 flag 的验证，可以查看 [将 Intent 的 flags 使用一下呀呀呀](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Intent%E7%9A%84flags%E9%AA%8C%E8%AF%81/%E5%B0%86Intent%E7%9A%84flags%E4%BD%BF%E7%94%A8%E4%B8%80%E4%B8%8B%E5%91%80%E5%91%80%E5%91%80.md) 文章。
+　　关于 flag 的验证，可以查看 [验证Intent的flags](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E9%AA%8C%E8%AF%81Intent%E7%9A%84flags.md) 文章。
 
 ## 5. onNewIntent() 方法与回调时机
 
 　　onNewIntent() 方法会在 activity 复用的时候调用，也就是说调用 activity ，并不会创建 activity 的新实例，而是复用栈中的 activity ，复用时就会调用 onNewIntent() 方法，将新的 Intent 传递给 oNewIntent() 方法。
 
-　　关于 onNewIntent() 方法的验证，可以查看 [onNewIntent 方法何时回调呢](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/onNewIntent%E6%96%B9%E6%B3%95%E7%9A%84%E9%AA%8C%E8%AF%81/onNewIntent%E4%BD%95%E6%97%B6%E5%9B%9E%E8%B0%83%E7%94%A8%E5%91%A2.md) 文章。
+　　关于 onNewIntent() 方法的验证，可以查看 [验证 onNewIntent 方法](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E9%AA%8C%E8%AF%81%20onNewIntent%20%E6%96%B9%E6%B3%95.md) 文章。
 
 ## 6. 关联任务
 
