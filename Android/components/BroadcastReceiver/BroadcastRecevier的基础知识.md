@@ -1,4 +1,4 @@
-# BroadcastReceiver 知识
+# BroadcastReceiver 的基础知识
 
 ## 介绍
 　　BroadcastReceiver ，广播接受者，用来接收来自系统和应用中的广播，是 Android 四大组件之一。
@@ -158,7 +158,7 @@
 
 #### 模型讲解
 　　模型中有 3 个角色：1.消息订阅者（广播接受者），2.消息发布者（广播发布者），3.消息中心（AMS，即 Activity Manager Service）。
-![](广播原理图.png)
+![](image/广播原理图.png)
 
 #### 静态广播的注册
 　　静态广播是通过 PackageManagerService 在启动的时候扫描已安装的应用去注册的。
@@ -988,10 +988,10 @@
 
 #### 总结
 　　广播队列传送广播给 Receiver 的原理其实就是将 BroadcastReceiver 和消息都放到 BroadcastRecord 里面，然后通过 Handler 机制遍历 BroadcastQueue 里面的 BroadcastRecord ，将消息发送给 BroadcastReceiver：
-![](./广播队列传送广播原理.png)
+![](image/广播队列传送广播原理.png)
 
 　　整个广播的机制总结成下图：
-![](./广播机制图.png)
+![](image/广播机制图.png)
 
 
 ## 参考文章
