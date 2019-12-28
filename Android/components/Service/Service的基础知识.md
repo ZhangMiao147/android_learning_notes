@@ -161,7 +161,7 @@
 
 　　配置信息如下：
 
-````xml
+```xml
 <service 
 android:enabled="["true"" android:exported="["true"" android:icon="drawable resource" android:isolatedprocess="["true"" android:label="string resource" android:name="string" 
 android:permission="string" android:process="string">
