@@ -6,7 +6,7 @@
 
 **第 2 章** [里氏置换原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC2%E7%AB%A0-%E9%87%8C%E6%B0%8F%E6%9B%BF%E6%8D%A2%E5%8E%9F%E5%88%99.md)
 
-**第 3 章** 依赖倒置原则
+**第 3 章** [依赖倒置原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC3%E7%AB%A0-%E4%BE%9D%E8%B5%96%E5%80%92%E7%BD%AE%E5%8E%9F%E5%88%99.md)
 
 **第 4 章** 接口隔离原则
 
