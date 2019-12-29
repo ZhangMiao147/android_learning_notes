@@ -127,23 +127,25 @@
 
 　　特定：1.接收广播按顺序接收；2.先接收的广播接收者可以对广播进行截断，即后接收的广播接收者不再接收到此广播；3.先接收的广播接收者可以对广播进行修改，那么后接收的广播接收者将接收到被修改后的广播。
 
-　　具体使用：有序广播的使用过程与普通广播非常类似，差异在于广播的发送方式：sendOrderBroadcast()。
+　　具体使用：有序广播的使用过程与普通广播非常类似，差异在于广播的发送方式：`sendOrderBroadcast()`。
 
-###### App 应用内广播（Local Broadcast）
+##### 5.2.4. App 应用内广播（Local Broadcast）
+
 　　Android 中的广播可以跨 App 直接通信（exported 对于有 intent-filter 情况下默认值为 true）。
 
-　　冲突：可能出现的问题:1.其他 App 针对性发出与当前 App intent-filter 相匹配的广播，由此导致当前 App 不断接收广播并处理；2.其他 App 注册与当前 App 一致的 intent-filter 用于接收广播，获取广播具体信息。即会出现安全性和效率性的问题。
+　　冲突：可能出现的问题：1.其他 App 针对性发出与当前 App intent-filter 相匹配的广播，由此导致当前 App 不断接收广播并处理；2.其他 App 注册与当前 App 一致的 intent-filter 用于接收广播，获取广播具体信息。即会出现安全性和效率性的问题。
 
 　　解决方案：使用 App 应用内广播（Local Broadcast）。1.App 应用内广播可以理解为一种局部广播，广播的发送者和接收者都同属于一个 App。2.相比于全局广播（普通广播），App 应用内广播优势体现在：安全性高和效率高。
 
-　　具体使用1-将全局广播设置为局部广播：1.注册广播时将 exported 属性设置为 false，使得非本 App 内部发出的此广播不被接收；2.在广播发送和接收时，增设相应权限 permission，用于权限验证；3.发送广播时指定该广播接收器所在的包名，此广播将只会发送到此包中的 App 内与之相匹配的有效广播接收器中。
+　　具体使用1：将全局广播设置为局部广播：1.注册广播时将 exported 属性设置为 false，使得非本 App 内部发出的此广播不被接收；2.在广播发送和接收时，增设相应权限 permission，用于权限验证；3.发送广播时指定该广播接收器所在的包名，此广播将只会发送到此包中的 App 内与之相匹配的有效广播接收器中。
 
-　　具体使用2-使用封装好的 LocalBroadcastManager 类，使用方式上与全局广播几乎相同，只是注册/取消注册广播接收器和发送广播是将参数的 context 变成了 LocalBroadcastManager 的单一实例。对于 LocalBroadcastManager 方式发送的应用内广播，只能通过 LocalBroadcastMananger 动态注册，不能静态注册。
+　　具体使用2：使用封装好的 **LocalBroadcastManager** 类，使用方式上与全局广播几乎相同，只是注册 / 取消广播接收器和发送广播是将参数的 context 变成了 LocalBroadcastManager 的单一实例。对于 LocalBroadcastManager 方式发送的应用内广播，只能通过 LocalBroadcastMananger 动态注册，不能静态注册。
 
-###### 粘性广播（Sticky Broadcast）
+##### 5.2.5. 粘性广播（Sticky Broadcast）
+
 　　在 Android 5.0 (API 21)中已经失效，不建议使用。
 
-#### 注意
+#### 5.3. 注意
 　　对于不同注册方式的广播接收器回调 onReceiver(Context context,Intent intent)中的 context 返回值是不一样的：
 * 对于静态注册（全局+应用内广播），回调onReceiver(Context，intent)中的 context 返回值是：广播接收者受限的 Context；
 * 对于全局广播的动态注册，回调 onReceiver(Context,intent)中的 context 返回值是：Activity context；
@@ -151,6 +153,6 @@
 * 对于应用内广播的动态注册（非 LocalBroadcastManager 方法），回调 onReceive(context,intent)中的 context 返回值：Activity context。
 
 
-## 参考文章
+## 6. 参考文章
 [Android 广播Broadcast的两种注册方式静态和动态](https://blog.csdn.net/csdn_aiyang/article/details/68947014)
 [Android四大组件：BroadcastReceiver史上最全面解析](https://blog.csdn.net/carson_ho/article/details/52973504)
