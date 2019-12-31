@@ -1,8 +1,9 @@
 # 关于 Handler
 
-## 消息机制概述
+## 1. 消息机制概述
 
-#### 消息机制的模型
+### 1.1. 消息机制的模型
+
 　　消息机制主要包含：MessageQueue、Handler 和 Looper 这三大部分，以及 Message。
 
 　　Message：需要传递的消息，可以传递数据。
@@ -16,12 +17,12 @@
 #### 消息机制的架构
 　　消息机制的运行流程：在子线程执行完耗时操作，当 Handler 发送消息时，将会调用 MessageQueue.enqueueMessae，向消息队列中添加消息。当通过 Looper.loop 开启循环后，会不断地从线程池中读取消息，即调用 MessageQueue.next，然后调用目标 Handler(即发送该消息的 Handler)的 dispatchMessage 方法传递消息，然后返回到 Handler 所在线程，目标 Handler 收到消息，调用 handleMessage 方法，接收消息，处理消息。
 
-![](./消息机制的框架.png)
+![](image/消息机制的框架.png)
 
 　　Message、Handler 和 Looper 三者之间的关系：每个线程中只能存在一个 Looper，Looper 是保存在 ThreadLocal 中的。主线程（UI 线程）已经创建了一个 Looper，所以在主线程不需要再创建 Looper，但是在其他线程中需要创建 Looper。每个线程中可以有多了 Handler，即一个 Looper 可以处理来自多个 Handler 的消息。Looper 中维护一个 MessageQueue，来维护消息队列，消息队列中的 Message 可以来自不同的 Handler。
 
 　　消息机制的真题架构图：
-![](./消息架构图.png)
+![](image/消息架构图.png)
 
 　　Looper 有一个 MessageQueue 消息队列；MessageQueue 有一组待处理的 Message；Message 中记录发送和处理消息的 Handler；Handler 中有 Looper 和 MessageQueue。
 
@@ -145,8 +146,12 @@ public final class ActivityThread {
 
 ## 参考文章
 [Android消息机制的原理及源码解析](https://www.jianshu.com/p/f10cff5b4c25)
+
 [Handler 都没搞懂，拿什么去跳槽啊？](https://juejin.im/post/5c74b64a6fb9a049be5e22fc)
+
 [Android Handler 消息机制（解惑篇）](https://juejin.im/entry/57fb3c53128fe100546ea4f2)
+
 [Android异步消息处理机制完全解析，带你从源码的角度彻底理解](https://blog.csdn.net/guolin_blog/article/details/9991569)
+
 [Android的消息机制之ThreadLocal的工作原理](https://blog.csdn.net/singwhatiwanna/article/details/48350919)
 

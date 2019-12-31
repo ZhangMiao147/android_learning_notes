@@ -63,7 +63,7 @@
 ## ANR 分析方法
 
 #### ANR 分析方法一：Log
-![](./ANR_LOG.png)
+![](image/ANR_LOG.png)
 　　可以看到 logcat 清晰地记录了 ANR 发生的时间，以及线程的 tid 和一句话概括原因：WaitingInMainSignalCatcherLoop，大概意思为主线程等待异常。
 
 　　最后一句 The application may be doing too much work on its main thread. 告知可能在主线程做了太多的工作。
@@ -170,7 +170,7 @@ jstack {pid}
 　　Service 进程 attach 到 system_server 进程的过程中会调用 realStartServiceLocked ，紧接着 mAm.mHandler.sendMessageAtTime() 来发送一个延时消息，延时的时长是定义好的，如前台 Service 的 20 秒。ActivityMananger 线程中的 AMS.MainHandler 收到 SERVICE_TIMEOUT_MAG 消息时会触发。
 
 　　ActiveServices.realStartServiceLocked
-```
+```java
     private final void realStartServiceLocked(ServiceRecord r,
             ProcessRecord app, boolean execInFg) throws RemoteException {
 		...
@@ -193,7 +193,7 @@ jstack {pid}
 	}
 ```
 ActiveService 的 bumpServiceExecutingLocked() 方法：
-```
+```java
     private final void bumpServiceExecutingLocked(ServiceRecord r, boolean fg, String why) {
         ...
         scheduleServiceTimeoutLocked(r.app);
@@ -219,7 +219,7 @@ ActiveService 的 bumpServiceExecutingLocked() 方法：
 ###### 进入目标进程的主线程创建 Service
 　　经过 Binder 等层层调用进入目标进程的主线程 handleCreateService(CreateServiceData data)。
 
-```
+```java
     private void handleCreateService(CreateServiceData data) {
 		...
 		Service service = null;
@@ -258,7 +258,7 @@ ActiveService 的 bumpServiceExecutingLocked() 方法：
 
 ###### 回到 system_server 执行取消 AMS.MainHandler 的延时消息
 ActiveService 的 serviceDoneExecutingLocked() 方法，在 serviceDoneExecutingLocked() 方法中会移除刚刚延时发送的 Message ：
-```
+```java
     private void serviceDoneExecutingLocked(ServiceRecord r, boolean inDestroying,
             boolean finishing) {
         r.executeNesting--;
@@ -282,7 +282,7 @@ ActiveService 的 serviceDoneExecutingLocked() 方法，在 serviceDoneExecuting
 
 #### 规定时间之内未完成方法的调用，出现了 ANR
 　　而如果 Message 没有被 mAm.mHandler(也就是 ActivityManagerService 中的 MainHandler)及时 remove 掉，被执行的话就会出现 ANR 的发生；执行到 ActivityMannagerService 中的 MainHandler 的 SERVICE_TIMEOUT_MSG 然后调用到 ActiveServices 的 serviceTimeout() 方法，最终执行到 AppErrors 的 appNotResponding() 方法。
-```
+```java
     final void appNotResponding(ProcessRecord app, ActivityRecord activity,
             ActivityRecord parent, boolean aboveSystem, final String annotation) {
         ArrayList<Integer> firstPids = new ArrayList<Integer>(5);
@@ -448,7 +448,7 @@ ActiveService 的 serviceDoneExecutingLocked() 方法，在 serviceDoneExecuting
 
 ###### 处理广播函数 processNextBroadcast() 中 broadcastTimeoutLocked(false) 发送延时消息
 　　广播处理顺序为先处理并行广播，再处理当前有序广播。
-```
+```java
 BroadcastQueue.java
     final void processNextBroadcast(boolean fromMsg) {
         synchronized(mService) {
@@ -503,7 +503,7 @@ BroadcastQueue.java
     }
 ```
 　　上面的 step 1.broadcastTimeoutLocked(false) 函数：记录时间信息并调用函数设置发送延时消息
-```
+```java
     final void broadcastTimeoutLocked(boolean fromMsg) {
         ...
         long now = SystemClock.uptimeMillis();
@@ -536,7 +536,7 @@ BroadcastQueue.java
 
 ```
 　　上面的 step 2 setBroadcastTimeoutLocked 函数：设置广播超时具体操作，同样是发送延时消息。
-```
+```java
     final void setBroadcastTimeoutLocked(long timeoutTime) {
         if (! mPendingBroadcastTimeoutMessage) {
             Message msg = mHandler.obtainMessage(BROADCAST_TIMEOUT_MSG, this);
@@ -548,11 +548,11 @@ BroadcastQueue.java
 
 ###### setBroadcastTimeoutLocked(long timeoutTime) 函数的参数 timeoutTime 是当前时间加上设定好的超时时间。
 　　也就是：
-```
+```java
 	long timeoutTime = SystemClock.uptimeMillis() + mTimeoutPeriod;
 ```
 　　mTimeoutPeriod 也就是前台队列的 10s 和后台队列的 60s。
-```
+```java
 public final class ActivityManagerService extends ActivityManagerNative
         implements Watchdog.Monitor, BatteryStatsImpl.BatteryCallback {
 	...
@@ -576,7 +576,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 
 ###### 在 processNextBroadcast() 过程，执行完 performReceiverLocked 后调用 cancelBroadcastTimeoutLocked
 　　cancelBroadcastTimeoutLocked：处理广播消息函数 processNextBroadcast() 中 performReceiveLocked() 处理广播消息完毕则调用 cancelBroadcastTimeoutLocked() 取消超时消息。
-```
+```java
 BroadcastQueue.java
     final void cancelBroadcastTimeoutLocked() {
         if (mPendingBroadcastTimeoutMessage) {

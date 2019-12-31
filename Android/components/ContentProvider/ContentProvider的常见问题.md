@@ -1,4 +1,4 @@
-# 关于 ContentProvider 的常见问题
+# ContentProvider 的常见问题
 
 **问题 1 ** contentprovider 怎么升级维护 
 
