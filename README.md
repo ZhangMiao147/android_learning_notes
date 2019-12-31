@@ -22,6 +22,8 @@
 	  * [BroadcaseReceiver 的实现原理](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/BroadcastReceiver/BroadcastRecevier的实现原理.md)
 	  *  [BroadcaseReceiver 的常见问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/BroadcastReceiver/BroadcastRecevier的常见问题.md)
 	* ContentProvider
+	  * [ContentProvider 的知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/ContentProvider/ContentProvider%E7%9A%84%E7%9F%A5%E8%AF%86.md)
+	  * [ContentProvider 的常见问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/ContentProvider/ContentProvider%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98.md)
 * Fragment
 * View
   * View 应用
@@ -76,7 +78,7 @@
     * [glBindFramebuffer](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glBindFramebuffer.md) - 绑定命名的帧缓冲区对象。
     * [glBindTexture](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glBindTexture.md) - 将命名纹理绑定到纹理目标上。
     * [glClear](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glClear.md) - 清除预设值的缓冲区。
-* [glClearColor](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glClearColor.md) - 为颜色缓冲区直送清除值。
+    * [glClearColor](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glClearColor.md) - 为颜色缓冲区直送清除值。
     * [glCompileShader](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glCompileShader.md) - 编译着色器对象。
     * [glCreateProgram](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glCreateProgram.md) - 创建 program 对象。
     * [glCreateShader](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glCreateShader.md) - 创建着色器对象。
