@@ -8,5 +8,4 @@
 
 4. [Animator 动画第一次播放正常，之后播放都不正常的问题解决](https://github.com/ZhangMiao147/android_learning_notes/blob/master/question/Animator%E5%8A%A8%E7%94%BB%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%92%AD%E6%94%BE%E6%AD%A3%E5%B8%B8%EF%BC%8C%E4%B9%8B%E5%90%8E%E9%83%BD%E4%B8%8D%E6%AD%A3%E5%B8%B8%E7%9A%84%E8%A7%A3%E5%86%B3.md)
 
-5. java.lang.RuntimeException Unexpected exception in dex writer thread 问题解决
 

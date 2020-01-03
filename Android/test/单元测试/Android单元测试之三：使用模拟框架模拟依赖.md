@@ -5,12 +5,12 @@
 ## 使用
 
 #### 引入框架
-```
+```xml
 testImplementation 'org.mockito:mockito-core:2.19.0'
 ```
 
 #### 测试类
-```
+```java
 package com.zm.androidUnitTest;
 
 import android.content.Context;
@@ -47,7 +47,7 @@ public class MockUnitTest {
 ```
 
 #### 测试结果
-![](./context_test.png)
+![](image/context_test.png)
 
 ## 参考文章
 https://www.jianshu.com/p/aa51a3e007e2

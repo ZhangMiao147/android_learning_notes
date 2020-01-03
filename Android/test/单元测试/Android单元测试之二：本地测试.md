@@ -5,7 +5,7 @@
 ## 如何进行本地测试
 
 #### 添加依赖
-```
+```xml
 dependencies {
 ...
     implementation 'com.android.support:appcompat-v7:26.1.0'
@@ -25,9 +25,13 @@ app/src
 
 #### 测试
 　　可以自己手动在相应目录创建测试类， AS 也提供了一种快捷方式：选择对应的类 -> 将光标停留在类名上 -> 按下 ALT + ENTER -> 在弹出的弹窗中选择 Create Test 。
-![](./create_test.png)
+
+![](image/create_test.png)
+
 　　选择 Create Test 选项之后，弹出下面框：
-![](./create_test_detail.png)
+
+![](image/create_test_detail.png)
+
 * Testing library: 测试库
 * Class Name: 测试类名
 * Superclass：超类
@@ -36,13 +40,20 @@ app/src
 * Generate test methods for：选择下面框中需要测试的方法。Show inherited methods：是否显示继承的方法。
 
 　　我这边只勾选了isJudgeSysmbol(userAnswer:String,correctAnswer:String)方法测试，剩下的选项都没有修改，点击了OK。
+
 　　在测试文件夹中就能看到测试类了：
-![](./test_java.png)
+
+![](image/test_java.png)
+
 　　图片左侧的两个绿色图标在测试类写好之后就能点击运行测试。
+
 　　**测试通过.**如图在 isJudgeSysmbol 中写入参数和正确的返回结果，测试结果通过。
-![](./test_passed.png)
+
+![](image/test_passed.png)
+
 　　**测试未通过.**如图在 isJudgeSysmbol 中写入参数和不正确的返回结果，测试结果未通过。
-![](./test_failed.png)
+
+![](image/test_failed.png)
 
 ## 总结
 　　本地测试比较适合一些工具类测试，不需要使用任何 Android 系统的东西，只适用于测试公共方法，比如字符处理，数据整理等这些方法。
