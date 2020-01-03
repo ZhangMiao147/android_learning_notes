@@ -47,11 +47,11 @@ app/src
 
 　　图片左侧的两个绿色图标在测试类写好之后就能点击运行测试。
 
-　　**测试通过.**如图在 isJudgeSysmbol 中写入参数和正确的返回结果，测试结果通过。
+　　**测试通过** 如图在 isJudgeSysmbol 中写入参数和正确的返回结果，测试结果通过。
 
 ![](image/test_passed.png)
 
-　　**测试未通过.**如图在 isJudgeSysmbol 中写入参数和不正确的返回结果，测试结果未通过。
+　　**测试未通过** 如图在 isJudgeSysmbol 中写入参数和不正确的返回结果，测试结果未通过。
 
 ![](image/test_failed.png)
 
