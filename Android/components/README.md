@@ -15,6 +15,7 @@
 
   * [Service 的基础知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Service/Service%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86.md)
   * [Service 的常见问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Service/Service%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98.md)
+  * 进程保活
 * BroadcaseReceiver  - 异步接收广播
 
   * [BroadcaseReceiver 的基础知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/BroadcastReceiver/BroadcastRecevier的基础知识.md)
@@ -26,12 +27,10 @@
   * [ContentProvider 的常见问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/ContentProvider/ContentProvider%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98.md)　　
   * ContentProvider 的运行过程
   * ContentProvider 的共享数据更新通知机制
-* Handler 知识
-  * Handler 知识 - 整理中
-  * Handler 的常见问题
 * Binder
   
   * 关于 Binder 的常见面试题
 * IntentFilter 的匹配规则 - 整理中
+* AMS、WMS 与 PMS
 
 

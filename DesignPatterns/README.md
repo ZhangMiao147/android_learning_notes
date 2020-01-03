@@ -12,7 +12,7 @@
 - [抽象工厂模式（Abstract Method）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/%E6%8A%BD%E8%B1%A1%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F.md)
 - 建造者模式（Builder）
 - 原型模式（Prototype）
-- [单例模式（Singleton）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F.md)
+- [单例模式（Singleton）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F.md)
 
 ## 结构型模式
 　　结构型模式（Structural Pattern）描述如何将类或者对象结合在一起行程更大的结构，就像搭积木，可以通过简单积木的组合行程复杂的、功能更为强大的结构。
@@ -24,7 +24,7 @@
 - 装饰模式（Decorator）
 - 外观模式（Facade）
 - 享元模式（Flyweight）
-- [代理模式（Proxy）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F.md)
+- [代理模式（Proxy）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F.md)
 
 ## 行为型模式
 　　行为型模式（Behavioral Pattern）是对在不同的对象之间划分责任和算法的抽象化。
