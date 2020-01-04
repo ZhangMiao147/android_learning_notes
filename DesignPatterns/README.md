@@ -18,7 +18,7 @@
 　　结构型模式（Structural Pattern）描述如何将类或者对象结合在一起行程更大的结构，就像搭积木，可以通过简单积木的组合行程复杂的、功能更为强大的结构。
 　　结构型模式可以分为类结构型模式和对象结构式模式：类结构型关心类的组合，由多个类可以组合成一个更大的系统，在类结构型模式中一般只存在继承关系和实现关系；对象结构型模式关心类与对象的组合，通过关联关系使得在一个类中定义另一个类的实例对象，然后通过该对象调用其方法。根据“合成复用原则”，在系统中尽量使用关联关系来替代继承关系，因此大部分结构型模型都是对象结构型模式。
 
-- [适配器模式（Adapter）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F.md)
+- [适配器模式（Adapter）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F.md)
 - 桥接模式（Bridge）
 - 组合模式（Composite）
 - 装饰模式（Decorator）
@@ -38,7 +38,7 @@
 - 迭代器模式（Iterator）
 - 中介者模式（Mediator）
 - 备忘录模式（Memento）
-- [观察者模式（Observer）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F.md)
+- [观察者模式（Observer）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F.md)
 - 状态模式（State）
 - 策略模式（Strategy）
 - 模板方法模式（Template Method）
