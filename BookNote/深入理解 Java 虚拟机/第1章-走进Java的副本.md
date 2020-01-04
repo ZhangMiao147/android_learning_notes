@@ -26,11 +26,12 @@
 * 来自商业机构和开源社区的第三方 Java 类库。
 
 **图 Java技术体系所包含的内容**
-![Java技术体系所包含的内容](./Java技术体系所包含的内容.jpg)
+![Java技术体系所包含的内容](image/Java技术体系所包含的内容.jpg)
 
 　　把 Java 程序设计语言、Java 虚拟机、Java API 类库这三部分统称为 JDK(Java Development Kit)，JDK 是用于支持 Java 程序开发的最小环境。
 　　把 Java API 类库中的 Java SE API 子集和 Java 虚拟机这两部分统称为 JRE (Java Runtime Environment)，JRE 是支持 Java 程序运行的标准环境。
 　　如果按照技术所服务的领域来划分，或者说按照 Java 技术关注的重点业务领域来划分，Java 技术体系可以分为四个平台，分别是：
+
 * Java Card：支持一些 Java 小程序（Applets）运行在小内存设备（如智能卡）上的平台。
 * Java ME (Micro Edition)：支持 Java 程序运行在移动终端（手机、PDA）上的平台，对 Java API 有所精简，并加入了针对移动终端的支持，这个版本以前称为 J2ME。
 * Java SE (Standard Edition)：支持面向桌面级应用（如 Windows 下的应用程序）的 Java 平台，提供了完整的 Java 核心 API ，这个版本以前称为 J2SE。
