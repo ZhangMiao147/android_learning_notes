@@ -437,7 +437,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 
 ### 2. 取消广播
 
-​		在 processNextBroadcast() 过程，执行完 performReceiverLocked 后调用 cancelBroadcastTimeoutLocked
+　　在 processNextBroadcast() 过程，执行完 performReceiverLocked 后调用 cancelBroadcastTimeoutLocked
 
 　　cancelBroadcastTimeoutLocked：处理广播消息函数 processNextBroadcast() 中 performReceiveLocked() 处理广播消息完毕则调用 cancelBroadcastTimeoutLocked() 取消超时消息。
 
@@ -470,5 +470,6 @@ public final class ActivityManagerService extends ActivityManagerNative
 ## 参考文章
 
 [Android ANR：原理分析及解决办法](https://www.jianshu.com/p/388166988cef)
+
 [Android性能优化（七）之你真的理解ANR吗？](https://juejin.im/post/58e5bd6dda2f60005fea525c)
 

@@ -149,6 +149,8 @@ jstack {pid}
 ## 参考文章
 
 [说说 Android 中的 ANR](https://droidyue.com/blog/2015/07/18/anr-in-android/)
+
 [Android ANR：原理分析及解决办法](https://www.jianshu.com/p/388166988cef)
+
 [Android性能优化（七）之你真的理解ANR吗？](https://juejin.im/post/58e5bd6dda2f60005fea525c)
 
