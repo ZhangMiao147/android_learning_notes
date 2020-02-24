@@ -5,7 +5,7 @@
 　　写了一个卡片翻转的动画，代码如下:
 
 **activity_main.xml**
-```
+```java
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -42,7 +42,7 @@
 ```
 
 **MainActivity.java**
-```
+```java
 package com.zm.animatorerror;
 
 import android.animation.Animator;
@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
 ## 解决方法
 　　为动画设置播放监听，在动画结束之后，将控件的属性值设置为原始状态。
 　　修改代码如下：
-```
+```java
     private void initView() {
         iv_image = (ImageView) findViewById(R.id.activity_main_image_iv);
         tv_text = (TextView) findViewById(R.id.activity_main_text_tv);
