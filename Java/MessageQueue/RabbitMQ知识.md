@@ -54,8 +54,6 @@
 
 　　目前 RabbitMQ 共有四种烈性：direct、fanot、topic、headers。
 
-　　headers 匹配 AMOP 消息的 header 而不是路由键，而且 headers 交换器和 direct 交换器完全一直，但性能差很多，目前几乎用不到了。
-
 #### direct 交换器
 
 　　生产者传送的消息中的路由键（ routing key ）必须和 Queue Binding 中的 Binding key 一致，交换器（exchange）就将消息发到对应的队列（queue）中。它是完全匹配、单播的模式。
@@ -83,9 +81,28 @@
 
 ![](image/topic交换器.png)
 
+#### header 交换器
+
+　　header 类型路由规则和上面的三个都不一样，header 交换器不是通过路由键（routing key）进行路由的，而是通过消息的 headers。
+
+　　而且 headers 交换器和 direct 交换器完全一致，但性能差很多，目前几乎用不到了。
+
+#### 交换器小结
+
+　　RabbitMQ 的交换器（exchange）的作用是路由消息，可以根据应用场景的不同选择合适的交换机。
+
+　　如果需要精准路由到队列，或者对消息进行单一维度分类（只对日志的严重程度这一维度进行分配）可以使用 direct 类型交换器；如果需要广播消息，可以使用 fanout 类型交换器；如果对消息进行多维度分类，可以使用 topic 交换器；如果消息归类的逻辑包含了较多的 AND/OR 逻辑判断，可以使用 header 交换器（开发中很少用到 header 交换器）。　　
+
+
+
+
+
+
+
 
 
 
 
 ## 参考文章
 
+[快速掌握 RabbitMQ (二)--四种 Exchange 介绍及代码演示](https://www.cnblogs.com/wyy1234/p/10837615.html)
