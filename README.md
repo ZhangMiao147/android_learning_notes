@@ -181,7 +181,6 @@
   * 第 13 章 [继续进阶，你还应该掌握的高级技巧](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E7%AC%AC%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81/%E7%AC%AC13%E7%AB%A0-%E7%BB%A7%E7%BB%AD%E8%BF%9B%E9%98%B6%EF%BC%8C%E4%BD%A0%E8%BF%98%E5%BA%94%E8%AF%A5%E6%8E%8C%E6%8F%A1%E7%9A%84%E9%AB%98%E7%BA%A7%E6%8A%80%E5%B7%A7.md)
 * **Effective Java**
   * [读书笔记](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Effective%20Java/EffectiveJavaReadRecord.txt)
-
 * **Java 多线程编程核心技术**
   * 第 1 章 [Java 多线程技能](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/%E7%AC%AC1%E7%AB%A0-Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E6%8A%80%E8%83%BD.md)
   * 第 2 章 [对象及变量的并发访问](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/%E7%AC%AC2%E7%AB%A0-%E5%AF%B9%E8%B1%A1%E5%8F%8A%E5%8F%98%E9%87%8F%E7%9A%84%E5%B9%B6%E5%8F%91%E8%AE%BF%E9%97%AE.md)
@@ -190,7 +189,6 @@
   * 第 5 章 [定时器 Timer](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/%E7%AC%AC5%E7%AB%A0-%E5%AE%9A%E6%97%B6%E5%99%A8Timer.md)
   * 第 6 章 [单例模式与多线程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/%E7%AC%AC6%E7%AB%A0-%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F%E4%B8%8E%E5%A4%9A%E7%BA%BF%E7%A8%8B.md)
   * 第 7 章 [拾遗增补](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/%E7%AC%AC7%E7%AB%A0-%E6%8B%BE%E9%81%97%E5%A2%9E%E8%A1%A5.md)
-
 * **代码整洁之道**
   * 第一章 [整洁代码](https://github.com/havenBoy/java-book-notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC1%E7%AB%A0-%E6%95%B4%E6%B4%81%E4%BB%A3%E7%A0%81.md)
   * 第二章 [有意义的命名](https://github.com/havenBoy/java-book-notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC2%E7%AB%A0-%E6%9C%89%E6%84%8F%E4%B9%89%E7%9A%84%E5%91%BD%E5%90%8D.md)
@@ -212,8 +210,15 @@
   * 第十章 [类](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC10%E7%AB%A0-%E7%B1%BB.md)
 
   * 第十一章 [系统](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC11%E7%AB%A0-%E7%B3%BB%E7%BB%9F.md)
-
 * **深入理解 Java 虚拟机**
+  * 第一部分 走进 Java
+    * 第 1 章 [走进 Java](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA/%E7%AC%AC1%E7%AB%A0-%E8%B5%B0%E8%BF%9BJava.md)
+  * 第二部分 自动内存管理
+    * 第 5 章 [调优案例分析与实战](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第5章-调优案例分析与实战.md)
+  * 第三部分 虚拟机执行子系统
+    * 第 6 章 [类文件结构](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第6章-类文件结构.md)
+    * 第 7 章 [虚拟机类加载机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第7章-虚拟机类加载机制.md)
+    * 第 8 章 [虚拟机字节码执行引擎](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第8章-虚拟机字节码执行引擎.md)
 * **设计模式之禅**
   * 第 1 章 [单一职责原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC1%E7%AB%A0-%E5%8D%95%E4%B8%80%E8%81%8C%E8%B4%A3%E5%8E%9F%E5%88%99.md)
   * 第 2 章 [里氏置换原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC2%E7%AB%A0-%E9%87%8C%E6%B0%8F%E6%9B%BF%E6%8D%A2%E5%8E%9F%E5%88%99.md)

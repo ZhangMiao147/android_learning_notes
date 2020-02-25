@@ -31,17 +31,17 @@
 - **Java核心技术卷一：基础知识**
 
     * 第二章 [Java程序设计环境](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC2%E7%AB%A0-Java%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E7%8E%AF%E5%A2%83.md)
-* 第三章 [Java的基本程序设计结构](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC3%E7%AB%A0-Java%E7%9A%84%E5%9F%BA%E6%9C%AC%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E7%BB%93%E6%9E%84.md)
+    * 第三章 [Java的基本程序设计结构](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC3%E7%AB%A0-Java%E7%9A%84%E5%9F%BA%E6%9C%AC%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E7%BB%93%E6%9E%84.md)
     * 第五章 [继承](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC5%E7%AB%A0-%E7%BB%A7%E6%89%BF.md)
-* 第六章 [接口与内部类](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC6%E7%AB%A0-%E6%8E%A5%E5%8F%A3%E4%B8%8E%E5%86%85%E9%83%A8%E7%B1%BB.md)
+    * 第六章 [接口与内部类](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC6%E7%AB%A0-%E6%8E%A5%E5%8F%A3%E4%B8%8E%E5%86%85%E9%83%A8%E7%B1%BB.md)
     * 第七章 [图形程序设计](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC7%E7%AB%A0-%E5%9B%BE%E5%BD%A2%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1.md)
-* 第八章 [事件处理](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC8%E7%AB%A0-%E4%BA%8B%E4%BB%B6%E5%A4%84%E7%90%86.md)
+    * 第八章 [事件处理](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC8%E7%AB%A0-%E4%BA%8B%E4%BB%B6%E5%A4%84%E7%90%86.md)
     * 第九章 [Swing用户界面组件](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC9%E7%AB%A0-Swing%E7%94%A8%E6%88%B7%E7%95%8C%E9%9D%A2%E7%BB%84%E4%BB%B6.md)
-* 第十章 [部署应用程序和applet](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC10%E7%AB%A0-%E9%83%A8%E7%BD%B2%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%92%8Capplet.md)
+    * 第十章 [部署应用程序和applet](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC10%E7%AB%A0-%E9%83%A8%E7%BD%B2%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%92%8Capplet.md)
     * 第十一章 [异常、断言、日志与调试](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC11%E7%AB%A0-%E5%BC%82%E5%B8%B8%E3%80%81%E6%96%AD%E8%A8%80%E3%80%81%E6%97%A5%E5%BF%97%E5%92%8C%E8%B0%83%E8%AF%95.md)
-* 第十二章 [泛型程序设计](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC12%E7%AB%A0-%E6%B3%9B%E5%9E%8B%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1.md)
+    * 第十二章 [泛型程序设计](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC12%E7%AB%A0-%E6%B3%9B%E5%9E%8B%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1.md)
     * 第十三章 [集合](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC13%E7%AB%A0-%E9%9B%86%E5%90%88.md)
-* 第十四章 [多线程](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC14%E7%AB%A0-%E5%A4%9A%E7%BA%BF%E7%A8%8B.md)
+    * 第十四章 [多线程](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC14%E7%AB%A0-%E5%A4%9A%E7%BA%BF%E7%A8%8B.md)
 - **Java 多线程编程核心技术**
     * 第 1 章 [Java 多线程技能](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/%E7%AC%AC1%E7%AB%A0-Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E6%8A%80%E8%83%BD.md)
 
@@ -58,15 +58,15 @@
     * 第 7 章 [拾遗增补](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/%E7%AC%AC7%E7%AB%A0-%E6%8B%BE%E9%81%97%E5%A2%9E%E8%A1%A5.md)
 - **代码整洁之道**
 	* 第一章 [整洁代码](https://github.com/havenBoy/java-book-notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC1%E7%AB%A0-%E6%95%B4%E6%B4%81%E4%BB%A3%E7%A0%81.md)
-* 第二章 [有意义的命名](https://github.com/havenBoy/java-book-notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC2%E7%AB%A0-%E6%9C%89%E6%84%8F%E4%B9%89%E7%9A%84%E5%91%BD%E5%90%8D.md)
+	* 第二章 [有意义的命名](https://github.com/havenBoy/java-book-notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC2%E7%AB%A0-%E6%9C%89%E6%84%8F%E4%B9%89%E7%9A%84%E5%91%BD%E5%90%8D.md)
 	* 第三章 [函数](https://github.com/havenBoy/java-book-notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC3%E7%AB%A0-%E5%87%BD%E6%95%B0.md)
-* 第四章 [注释](https://github.com/havenBoy/java-book-notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC4%E7%AB%A0-%E6%B3%A8%E9%87%8A.md)
+	* 第四章 [注释](https://github.com/havenBoy/java-book-notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC4%E7%AB%A0-%E6%B3%A8%E9%87%8A.md)
 	* 第五章 [格式](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC5%E7%AB%A0-%E6%A0%BC%E5%BC%8F.md)
-* 第六章 [对象和数据结构](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC6%E7%AB%A0-%E5%AF%B9%E8%B1%A1%E5%92%8C%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.md)
+	* 第六章 [对象和数据结构](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC6%E7%AB%A0-%E5%AF%B9%E8%B1%A1%E5%92%8C%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.md)
 	* 第七章 [错误处理](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC7%E7%AB%A0-%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86.md)
-* 第八章 [边界](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC8%E7%AB%A0-%E8%BE%B9%E7%95%8C.md)
+	* 第八章 [边界](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC8%E7%AB%A0-%E8%BE%B9%E7%95%8C.md)
 	* 第九章 [单元测试](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC9%E7%AB%A0-%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95.md)
-* 第十章 [类](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC10%E7%AB%A0-%E7%B1%BB.md)
+	* 第十章 [类](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC10%E7%AB%A0-%E7%B1%BB.md)
 	* 第十一章 [系统](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC11%E7%AB%A0-%E7%B3%BB%E7%BB%9F.md)
 - **设计模式之禅**
     * 第 1 章 [单一职责原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC1%E7%AB%A0-%E5%8D%95%E4%B8%80%E8%81%8C%E8%B4%A3%E5%8E%9F%E5%88%99.md)
@@ -78,7 +78,14 @@
 
 
 - **深入理解 Java 虚拟机**
-* 第 1 章 [走进 Java](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA/%E7%AC%AC1%E7%AB%A0-%E8%B5%B0%E8%BF%9BJava.md)
+  * 第一部分 走进 Java
+    * 第 1 章 [走进 Java](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA/%E7%AC%AC1%E7%AB%A0-%E8%B5%B0%E8%BF%9BJava.md)
+  * 第二部分 自动内存管理
+    * 第 5 章 [调优案例分析与实战](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第5章-调优案例分析与实战.md)
+  * 第三部分 虚拟机执行子系统
+    * 第 6 章 [类文件结构](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第6章-类文件结构.md)
+    * 第 7 章 [虚拟机类加载机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第7章-虚拟机类加载机制.md)
+    * 第 8 章 [虚拟机字节码执行引擎](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第8章-虚拟机字节码执行引擎.md)
 
 
 - **Android 进阶之光**
