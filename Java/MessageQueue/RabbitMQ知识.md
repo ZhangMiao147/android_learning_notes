@@ -160,19 +160,54 @@
 
 ## RabbitMQ 的消费模式
 
+　　RabbitMQ 中的消费模式有：EventingBasicConsumer、BasicGET 和 QueueBasicConsumer。
 
+　　QueueBasicConsumer 的用法和 Get 类似，QueueBasicConsumer 在官方 API 中标记已过时。
+
+　　EventingBasicConsumer 是基于长连接，发布订阅模式的消费方式，节省资源且实时性好，这是开发中最常用的消费模式。在一些消费者主动获取消息的场合，可以使用 Get 方式，Get 方式时基于短连接的，请求响应模式的消费方式。
 
 ### EventingBasicConsumer 介绍
 
+　　EventingBasicConsumer 是发布 / 订阅模式的消费者，即只要订阅的 queue 中有了新消息，Broker 就会立即把消息推送给消费者，这种模式可以保证消息及时地被消费者接收到。
 
+　　EventingBasicConsumer 是长链接：只需要创建一个 Connection，然后在 Connection 的基础上创建通道 channel，消息的发送都是通过 channel 来执行的，这样可以减少 Connection 的创建，比较节省资源。
 
 ### BasicGet 方法介绍
 
+　　使用 EventingBasicConsumer 可以让消费者最及时地获取到消息，使用 EventingBasicConsumer 模式时消费者在被动的接收消息，即消息是推送过来的，Broker 时自动的一方。那么能不能让消费者作为自动的一方，消费者什么时候想要消息了，就自己发送一个请求去找 Broker 要？答案是使用 Get 方式。
 
+　　Get 方式是短连接的，消费者每次想要消息的时候，首先建立一个 Connection，发送一次消息，Broker 接收到请求后，响应一条消息给消费者，然后断开链接。
+
+　　RabbitMQ 中 Get 方式和 HTTP 的请求响应流程基本一样，Get 方式的实时性比较差，也比较耗费资源。
+
+　　channel.BasicGet() 一次只获取一条消息，获取到消息后就把连接断开了。
 
 ### Qos（服务质量） 介绍
 
+　　在使用 EventingBasicConsumer 的时候，当生产者发送了 100 条消息到 Broker，消费端采用自动确认，执行生产者程序后，queue 中会有 100 条 ready 状态的消息，然后开始执行消费者，消费者执行后，Broker 会将全部消息发送过去，也就是说消费者可能还没有处理完消息，但是 queue 中的消息都已经删除了。如果在处理消息的途中消费者挂掉了，所有未处理的消息就会丢失。
 
+　　对于上面的问题，可以使用显示确认来保证消息不会丢失：将 BasicConsume 方法的 autoAck 设置为 false，然后处理一条消息后手动确认一下，这样的话一处理的消息在接收到确认回执时被删除，未处理的消息以 Unacked 状态存放在 queue 中。如果消费者挂掉了，Unacked 状态的消息会自动重新变成 Ready 状态，如此依赖就不用担心消息丢失了。
+
+　　通过显式确认的方式可以解决消息丢失的问题，但这种方式也存在问题：
+
+1. 当消息上万时，一股脑的把消息发送给消费者，可能会造成消费者内存爆满；
+2. 当消息处理比较慢时，单一的消费者处理这些消息可能很长时间，自然会想要再添加一个消费者加快消息的处理速度，但是这些消息都被原来的消费者接收了，状态为 Unacked，所以这些消息不回再发送给新添加的消费者。
+
+　　对于上面的问题，RabbitMQ 提供了 Qos（服务质量）可以解决。使用 Qos 时，Broker 不会再把消息一股脑的发送给消费者，可以设置每次传输给消费者的消息条数 n，消费者把这 n 条消息处理完成后，再获取 n 条数据进行处理，这样就不用担心消息丢失、服务端内存爆满的问题了，因为没有发送的消息状态都是 Ready，所以当新增一个消费者时，消息也可以立马发送给新增的消费者。
+
+　　Qos 只有在消费端使用显示确认时才有效，使用 Qos 的方式非常简单，在消费端调用 channel.BasicQos() 方法即可。
+
+```java
+channel.BasicQos(int prefetchSize, int prefetchCount, boolean global)
+```
+
+　　prefetchSize：表示预取的长度，一旦设置为 0 即可，表示长度不限。
+
+　　prefetchCount：表示预取的条数，即发送的最大消息条数。
+
+　　global：表示是否在 Connection 中全局设置，true 表示 Connection 下的所有 channel 都设置为这个位置。
+
+　　Qos 可以设置消费者一次接收消息的最大条数，能够解决消息拥堵时造成的消费者内存爆满问题。Qos 也比较适用于好事队列，当任务队列中的任务很多时，使用 Qos 后可以随时添加新的消费者来提高任务的处理效率。
 
 
 
