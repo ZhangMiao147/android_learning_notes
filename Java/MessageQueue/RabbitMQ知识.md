@@ -24,19 +24,25 @@
 
 ## 概念
 
+### Broker（Server）
 
+　　接收客户端连接，实现 AMQP 消息队列和路由功能的进程，可以把 Broker 叫做 RabbitMQ 服务器。
 
+### Virtual Host
 
+　　一个虚拟概念，一个 Virtual Host 里面可以有若干个 Exchange 和 Queue，主要用于权限控制，隔离应用。
 
-### 信道
+### Channel 信道
 
 　　引入信道的原因：RabbitMQ 之间使用 TCP 连接，每次发布消息都要连接 TCP，这样会导致连接资源严重浪费，从而造成服务器性能瓶颈，所以引入信道，将需要发布消息的线程都包装成一条信道在 TCP 中传输，这样 RabbitMQ 为所有的线程只用一条 TCP 连接即可。
+
+　　仅仅创建了客户端到 Broker 之间的连接 Connection 后，客户端还是不能发送消息的，需要在 Connection 的基础上创建 Channel，AMQP 协议规定只有通过 Channel 才能执行 AMQP 的命令，一个 Connection 可以包含多个 Channel。
 
 　　一条 TCP 连接可以支持多个信道，模型如下：
 
 ![](image/信道模型.png)
 
-### 队列
+### Queue 队列
 
 　　消息队列用来保存消息直到发送给消费者。
 
@@ -46,6 +52,16 @@
 
 　　消息一直在队列里面，等待消费者连接到这个队列将其取走。
 
+　　队列时先进先出的，默认情况下先存储的消息先被处理。
+
+### Message
+
+　　就是消息，由 Header 和 Body 组成，Header 是由生产者添加的各种属性的集合，包括 Message 是否被持久化、由哪个 Message Queue 接收、优先级是多少等，Body 是真正传输的数据，内容格式为 byte[] 。
+
+### Connection
+
+　　连接，对于 RabbitMQ 而言，其实就是一个位于客户端和 Broker 之间 TCP 连接。
+
 ### 绑定
 
 　　绑定用于消息队列和交换器之间的关联。
@@ -54,11 +70,13 @@
 
 ![](image/绑定图.png)
 
-### 交换器
+### Exchange 交换器
 
 　　向 RabbitMQ 发送消息，实际上是把消息发到交换器上，再由交换器根据相关路由规则发到特定队列上，在队列上监听的消费者就可以进行消费了。所以生产者发送消息时会经有交换器（Exchange）来决定要给哪个队列（Queue）。
 
-　　目前 RabbitMQ 共有四种烈性：direct、fanot、topic、headers。
+　　接收生产者发送的消息，并根据 Binging 规则将消息路由给服务器中的队列。ExchangeType 决定了 Exchange 路由消息的行为。
+
+　　目前 RabbitMQ 共有四种类型：direct、fanot、topic、headers。
 
 #### direct 交换器
 
@@ -98,6 +116,77 @@
 　　RabbitMQ 的交换器（exchange）的作用是路由消息，可以根据应用场景的不同选择合适的交换机。
 
 　　如果需要精准路由到队列，或者对消息进行单一维度分类（只对日志的严重程度这一维度进行分配）可以使用 direct 类型交换器；如果需要广播消息，可以使用 fanout 类型交换器；如果对消息进行多维度分类，可以使用 topic 交换器；如果消息归类的逻辑包含了较多的 AND/OR 逻辑判断，可以使用 header 交换器（开发中很少用到 header 交换器）。　　
+
+　　生产者 Producer 和消费者 Consumer 都是 RabbitMQ 的客户端，Producer 负责发送消息，Consumer 负责消费消息。
+
+## 命令
+
+### 基本控制命令
+
+　　基本控制命令主要用于启动、停止应用程序、runtime 等。
+
+```java
+rabbitmqctl shutdown //停止 rabbitmq 和 runtime
+rabbitmqctl stop //停止 erlang 节点
+rabbitmqctl start_app //启用 rabbitmq
+rabbitmqctl stop_app //停止 rabbitmq
+rabbitmqctl status //查看状态
+rabbitmqctl environment //查看环境
+rabbitmqctl reset // rabbitmq 恢复最初状态，内部的 exchange 和 queue 都清除
+```
+
+### 服务状态管理命令
+
+　　这些命令主要用于查看 exchange、channel、binding、queue、consumers。
+
+```java
+list_queues [-p <vhostpath>] [<queueinfoitem> ...] //返回 queue 的消息
+list_exchanges [-p <vhostpath>] [<exchangeinfoitem> ...] //返回 exchange 的消息
+list_bindings [-p <vhostpath>] [<bindinginfoitem> ...] //返回绑定消息
+list_connections [<connectionitem> ...] //返回链接信息
+list_channels [<channelinfoitem> ...] //返回目前所有的 channels
+list_consumers [-p <vhostpath>] // 返回 consumers
+```
+
+### 用户管理命令
+
+　　这些命令主要用于添加、修改、删除用户及管理用户权限。
+
+```java
+add_user <username> <password> //在 rabbitmq 的内部数据库添加用户
+delete_user <username> //删除一个用户
+change_password <username> <newpassword> //改变用户密码
+clear_password <username> //清除用户密码，禁止用户登陆
+set_user_tags <username> <tag> //设置用户 tag，就是设置用户角色
+list_users //查看用户列表
+add_vhost <vhostpath> //创建一个 vhost
+delete_vhost <vhostpath> //删除一个 vhosts
+list_vhosts [<chostinfoitem> ...] //列出 vhosts
+set_permissions [-p <vhostpath>] <user> <conf> <write> <read> //针对一个vhosts给用户赋予相关权限
+clear_permissions [-p <vhostpath>] <username> //清除一个用户对 vhost 的权限
+list_permissions [-p <vhostpath>] //列出所有用户对某一 vhost 的权限
+list_user_permissions <username> //列出某用户的访问权限
+```
+
+### 集群管理命令
+
+```java
+join_cluster <clusternode> [--ram] //clusternode 表示 node 名称，--ram 表示 node 以 ram node 加入集群中。默认 node 以 disc node 加入集群，在一个 node 加入 cluster 之前，必须先停止该 node 的 rabbitmq 应用，即先执行 stop_app.
+cluster_status //显示 cluster 中的所有 node
+set_cluster_name <clustername> //设置集群名字
+rename_cluster_node <oldname> <newname> //修改集群名字
+change_cluster_node_type <disc | ram> //改变一个 cluster 中 node 的模式，该节点在转换前必须先停止，不能把一个集群中唯一的 disk node 转换为 ram node
+rabbitmqctl forget_cluster_node rabbit@rabbit1 //远程删除一个节点，删除前该节点必须先停止
+sync_queue <queuename> //同步镜像队列
+cancel_sync_queue <queuename> //取消同步队列
+purge_queue [-p vhost] <queuename> //晴空队列中所有消息
+```
+
+
+
+
+
+
 
 ## 消息确认
 
@@ -229,4 +318,4 @@ channel.BasicQos(int prefetchSize, int prefetchCount, boolean global)
 
 ## 参考文章
 
-[快速掌握 RabbitMQ (二)--四种 Exchange 介绍及代码演示](https://www.cnblogs.com/wyy1234/p/10837615.html)
+[快速掌握 RabbitMQ](https://www.cnblogs.com/wyy1234/p/10743567.html)
