@@ -22,7 +22,7 @@
 
 **第 8 章** [虚拟机字节码执行引擎](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第8章-虚拟机字节码执行引擎.md)
 
-**第 9 章** 类加载及执行子系统的案例与实战
+**第 9 章** [类加载及执行子系统的案例与实战](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第9章-类加载及执行子系统的案例与实战.md)
 
 ## 第四部分 程序编译与代码优化
 
