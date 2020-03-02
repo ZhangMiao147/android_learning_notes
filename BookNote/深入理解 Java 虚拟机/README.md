@@ -26,7 +26,7 @@
 
 ## 第四部分 程序编译与代码优化
 
-**第 10 章** 前端编译与优化
+**第 10 章** [前端编译与优化](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解 Java 虚拟机/第10章-前段编译与优化.md)
 
 **第 11 章** 后端编译与优化
 
