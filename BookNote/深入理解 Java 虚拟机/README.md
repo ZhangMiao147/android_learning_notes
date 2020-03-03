@@ -26,9 +26,9 @@
 
 ## 第四部分 程序编译与代码优化
 
-**第 10 章** [前端编译与优化](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解 Java 虚拟机/第10章-前段编译与优化.md)
+**第 10 章** [前端编译与优化](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA/%E7%AC%AC10%E7%AB%A0-%E5%89%8D%E6%AE%B5%E7%BC%96%E8%AF%91%E4%B8%8E%E4%BC%98%E5%8C%96.md)
 
-**第 11 章** 后端编译与优化
+**第 11 章** [后端编译与优化](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA/%E7%AC%AC11%E7%AB%A0-%E5%90%8E%E7%AB%AF%E7%BC%96%E8%AF%91%E4%B8%8E%E4%BC%98%E5%8C%96.md)
 
 ## 第五部分 高效并发
 
