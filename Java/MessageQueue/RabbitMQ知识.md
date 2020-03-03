@@ -84,11 +84,15 @@
 
 ![](image/exchange交换机.webp)
 
-### Broker（Server）
+### Broker（Server、vhosts）
 
-　　是一种传输服务，接收客户端连接，实现 AMQP 消息队列和路由功能的进程，可以把 Broker 叫做 RabbitMQ 服务器。它的角色就是维护一条从 Producer 到 Consumer 的路线，保证数据能够按照指定的方式进行传输。
+　　提供一种传输服务，接收客户端连接，实现 AMQP 消息队列和路由功能的进程，可以把 Broker 叫做 RabbitMQ 服务器。
 
-### Publish
+　　它的角色就是维护一条从 Producer 到 Consumer 的路线，保证数据能够按照指定的方式进行传输。
+
+　　用户与权限设置就是依附于 vhosts。
+
+### Publisher
 
 　　数据的发送方，消息生产者，就是投递消息的程序。
 
@@ -108,7 +112,7 @@
 
 　　一个虚拟概念，一个 Virtual Host 里面可以有若干个 Exchange 和 Queue，主要用于权限控制，隔离应用。
 
-每个 virtual host 本质上都是一个 RabbitMQ Server，拥有它自己的 queue、exchange 和 bings rule 等等，这就保证了可以在多个不同的 Application 中使用 RabbitMQ。
+　　每个 virtual host 本质上都是一个 RabbitMQ Server，拥有它自己的 queue、exchange 和 bings rule 等等，这就保证了可以在多个不同的 Application 中使用 RabbitMQ。
 
 ### Connection
 
@@ -117,6 +121,8 @@
 ### Channel 信道
 
 　　虚拟连接。它建立在 TCP 连接中。数据流动都是在 Channel 中进行的。也就是说，一般情况是程序起始建立 TCP 连接，第二步就是建立这个 Channel。
+
+　　消息通道，在客户端的每个连接里，课建立多个 Channel。
 
 　　引入信道的原因：
 
@@ -132,6 +138,8 @@
 
 ### Queue 队列
 
+　　消息队列，提供了 FIFO（先进先出） 的处理机制，具有缓存消息的能力。RabbitMQ 中，队列消息可以设置为持久化、临时或者自动删除。
+
 　　消息队列载体，每个消息都会被投入到一个或多个队列。
 
 　　消息队列用来保存消息直到发送给消费者。
@@ -140,13 +148,19 @@
 
 　　消息一直在队列里面，等待消费者连接到这个队列将其取走。
 
-　　队列时先进先出的，默认情况下先存储的消息先被处理。
+　　队列是先进先出的，默认情况下先存储的消息先被处理。
+
+　　设置为临时队列，Queue 中的数据在系统重启之后就会丢失。
+
+　　设置为自动删除的队列，当不存在用户连接到 server，队列中的数据会被自动删除。
 
 ### Binding 绑定
 
 　　绑定，它的作用就是把 exchange 和 queue 按照与规则绑定起来。
 
 　　绑定用于消息队列和交换器之间的关联。
+
+　　Exchange 和 Queue 的绑定可以是多对多的关系。
 
 　　一个绑定就是基于路由键将交换器和消息队列连接起来的路由规则，所以可以将交换器理解成一个由绑定构成的路由表，如下：
 
@@ -164,6 +178,8 @@
 
 　　接收生产者发送的消息，并根据 Binging 规则将消息路由给服务器中的队列。ExchangeType 决定了 Exchange 路由消息的行为。
 
+　　一个 Exchange 可以和多个 Queue 进行绑定，Producer 在传递消息的时候，会传递一个 routing key，Exchange 会根据这个 routing key 按照特定的路由规则，将消息路由给指定的 queue。和 Queue 一样，Exchange 也可设置吃就会、临时或者自动删除。
+
 
 
 #### 交换器小结
@@ -175,6 +191,8 @@
 　　生产者 Producer 和消费者 Consumer 都是 RabbitMQ 的客户端，Producer 负责发送消息，Consumer 负责消费消息。
 
 　　由 Exchange 、Queue、RoutingKey 三个才能决定一个从 Exchange 到 Queue 的唯一的线路。
+
+　　Exchange 和 Queue 实在 RabbitMQ Server（也叫做 Broker）端，Producer 和 Consumer 在应用端。
 
 ## 3. 基本概念
 
@@ -198,11 +216,13 @@
 
 ### 消息确认
 
+　　RabbitMQ 消息默认是循环分发，RabbitMQ 的分发机制非常适合扩展，而且它是专门为并发程序设计的。
+
 　　在一些场合，如转账、付费时每一条消息都必须保证成功的被处理。
 
 　　AMQP 是金融级的消息队列协议，有很高的可靠性。
 
-　　RabbitMQ 通过消息确认来保证消息被成功处理。消息确认可以分为两种：
+　　为了保证数据不被丢失，RabbitMQ 直接消息确人机制。RabbitMQ 通过消息确认来保证消息被成功处理。消息确认可以分为两种：
 
 1. 生产者发送消息到服务（ Broker ）时，Broker 给生产者发送确认回执，用于告诉生产者消息已被成功发送到 Broker。
 2. 消费者接收到 Broker 发送的消息时，消费者给 Broker 发送确认回执，用于通知消息已成功被消费者接收。
@@ -247,6 +267,16 @@
 
 　　消息确认可以起到限流的作用：在 Consumer 处理完成数据后发送消息确认，甚至在额外的延时后发送消息确认，将有效的平衡 Consumer 的加载。
 
+　　在通信过程中，队列对 ACK（消息确人）的处理有以下几种情况：
+
+* 如果 consumer 接受了消息，发送 axk，RabbitMQ 会删除队列中这个消息，发送另一条消息给 consumer。
+* 如果 consumer 接受了消息，但在发送 ack 之前断开连接，RabbitMQ 会认为这条消息没有被 deliver，在 consumer 再次连接的时候，这条消息会被 redeliver。
+* 如果 consumer 接受了消息，但是程序中有 bug，忘记了 ack，RabbitMQ 不会重复发送消息。
+
+　　RabbitMQ 2.0.0 和之后的版本支持 consumer reject（拒绝）某条（类）消息，可以通过设置 requeue 参数中的 reject 为 true 达到目的，那么 RabbitMQ 将会把消息发送给下一个注册的 consumer。
+
+　　RabbitMQ 没有用到超时机制，RabbitMQ 仅仅通过 Consumer 的连接中断来确认该 Message 并没有正确处理，也就是说 RabbitMQ 给了 Consumer 足够长的时间做数据处理。
+
 ### 消息持久化与优先级
 
 #### 消息持久化（Persistent）
@@ -259,9 +289,11 @@
 
 #### 消息优先级（Priority）
 
-　　queue 时先进先出的，即先发送的消息，先被消费。设置了优先级后，优先级高的消息就会优先被消费。
+　　queue 是先进先出的，即先发送的消息，先被消费。设置了优先级后，优先级高的消息就会优先被消费。
 
 　　消息实现优先级控制的实现方式是：首先在声明 queue 是设置队列的 x-max-priority 属性，然后在 publish 消息时，设置消息的优先级等级即可。x-max-priority 设置的是队列优先级的最大值。
+
+
 
 ### RabbitMQ 的消费模式
 
@@ -378,6 +410,38 @@ channel.BasicQos(int prefetchSize, int prefetchCount, boolean global)
 　　在绑定 Queue 与 Exchange 时指定一组键值对，当消息发送到 Exchange 时，RabbitMQ 会取到该消息的 headers (也是一个键值对的形式)，对比其中的键值对是否完全匹配 Queue 与 Exchange 绑定时指定的键值对。如果完全匹配则消息会路由到该 Queue，否则不会路由到该 Queue。
 
 　　而且 headers 交换器和 direct 交换器完全一致，但性能差很多，目前几乎用不到了。
+
+### 消息序列化
+
+　　RabbitMQ 使用 ProtoBuf 序列化消息，它可作为 RabbitMQ 的 Message 的数据格式进行传输，由于是结构化的数据，这样就极大的方便了 Consumer 的数据高效处理，当然也可以使用 XML。
+
+　　与 XML 相比，ProtoBuf 有以下优势：
+
+1. 简单
+2. size 小了 3-10 倍
+3. 速度快了 20-100 倍
+4. 易于编程
+5. 减少了语义的歧义
+
+　　另外 ProtoBuf 具有速度和空间的优势，使得它现在应用非常广泛。
+
+### RabbitMQ 组件断联重连机制
+
+1. 方案一
+
+   RabbitMQ 在启动时，为 RabbitMq 设置一个 status，在第一次建立连接的时候将其变为 true，RabbitMQ client 在初始化时启动一个定时器，每隔一段时间开启一个线程，查询当前 status 的状态，如果 status 变为 false，重新建立连接（包括 connect、channel 的连接）。
+
+2. 方案二
+
+   Implement shutdown listener，如果 RabbitMQ 断线，在 shutdowm 方法执行相应的重连方法。
+
+### 关于消息的重复执行
+
+　　首先可以确定的是，触发消息重复执行的条件是很苛刻的，也就是说在大多数场景下不会触发该条件，一般出现任务超时，或者没有及时返回状态，引起任务重新入队列，重新消费，在 RabbitMQ 里连接的断开也会触发消息重新入队列。
+
+　　消息任务的类型最好要支持幂等性，这样的好处是任务执行多少次都没关系，顶多消耗一些性能。
+
+　　幂等性：一个请求，不管重复来多少次，结果是不会改变的。
 
 ### RPC 远程过程调用
 
