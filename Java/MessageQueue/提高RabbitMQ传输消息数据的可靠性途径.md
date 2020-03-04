@@ -63,7 +63,7 @@
 ### 确认消息机制比较
 
 　　1. 确认机制相对于事务机制，最大的好处就是可以异步处理提高吞吐量，不需要额外等待消耗资源，但是两者不能同时共存。
-  　　2. 确认机制的三种方式中，批量确认的最大问题在于返回的 Nack 消息需要重新发送，异步确认消息在诗句生产环境中是最推荐的。
+    　　2. 确认机制的三种方式中，批量确认的最大问题在于返回的 Nack 消息需要重新发送，异步确认消息在诗句生产环境中是最推荐的。
 
 ## 问题二：持久化
 
@@ -151,9 +151,76 @@ new BasicProperties("text/plain", null, null, 2, null, null, null, null, null, n
 
 ### mandotory 参数
 
+　　mandotory 当为 true 时，交换器无法根据自身的类型和路由器找到一个符合条件的队列，此时 RabbitMQ 会调用 Basic.Return 命令将消息返回给生产者，消息将不会丢失。当为 false 时，消息将会被直接丢弃。
 
+　　RabbitMQ 通过 addReturnListener 添加 ReturnLisenter 监听器舰艇获取没有被正确路由到合适队列的消息。
 
 ### AE 备份交换器
+
+　　Alternate Exchange，简称 AE，不设置 mandatory 参数，那么消息将会被丢失，设置 mandatory 参数的话，需要添加 ReturnListener 监听器，增加复杂代码，如果既不想增加代码又不想消息丢失，则使用 AE，将没有被路由的消息存储于 RabbitMQ 中。
+
+　　当 mandatory 参数用 AE 一起使用时，mandatory 将失效。
+
+#### TTL 过期时间设置
+
+　　可以对队列和消息分别设置 TTL ，其中消息设置 TTL 进场用于死信队列、延迟队列等高级应用中。
+
+##### 设置消息 TTL
+
+　　设置 TTL 过期时间一般有两种方式：
+
+1. 通过队列属性，对队列中所有消息设置相同的 TTL。
+2. 对消息本身单独设置，每条消息 TTL 不同。
+
+　　如果一起使用的时候，TTL 小的为准，当一旦超过设置的 TTL 时间时，就会变成 “ 死信 ”。
+
+　　方式一是针对每条消息设置 TTL 是通过 expiration 的属性参数实现的，不可能像方式二一样扫描整个队列再判断是否过期，只有当该消息即将被消费时再判定是否过期即可删除，也就是消息即使已经过期，但不一定立马被删除。
+
+```java
+AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties.Builder(); 
+// 持久化消息
+builder deliveryMode(2);
+// 设置 TTL=60000ms
+builder expiration( 60000 ); 
+AMQP.BasicProperties properties = builder. build(); 
+channel.basicPublish(exchangeName, routingKey, mandatory, properties, "ttlTestMessage".getBytes());
+```
+
+　　方式二通过队列属性设置消息 TTL 是增加 x-message-ttl 参数实现的，只需要扫描整个队列头部即可立即删除，也就是消息一旦过期就会被删除。
+
+```java
+Map<String, Object> argss = new HashMap<String , Object>(); 
+argss.put("x-message-ttl", 6000); 
+channel.queueDeclare(queueName, durable, exclusive, autoDelete, argss) ;
+```
+
+##### 设置队列 TTL
+
+　　通过在队列中添加参数 x-message-ttl 参数实现，设置队列被自动删除前处于未被使用状态的时间，注意是队列的使用状态，并不是消息是否被消费的状态。
+
+```java
+Map<String, Object> args = new HashMap<String, Object>{); 
+args.put("x-expires", 1800000);
+channel.queueDeclare("myqueue", false, false, false, args);
+```
+
+##### AE 备份交换器的使用
+
+　　如果 Exchange 能找到匹配的队列，则将消息如父爱，如果没有找到，则将消息发给备份交换器。
+
+　　声明被封交换器的时候，通过添加 alternate-exchange 参数或者通过策略实现，前者优先级高。
+
+```java
+Map<String, Object> args = new HashMap<String, Object>(); 
+args.put("a1ternate-exchange", "myAe"); 
+channe1.exchangeDec1are("norma1Exchange", "direct", true, fa1se, args); 
+channe1.exchangeDec1are("myAe", "fanout", true, fa1se, nu11) ; 
+channe1.queueDec1are( "norma1Queue", true, fa1se, fa1se, nu11); 
+channe1.queueB nd("norma1Queue", "norma1Exchange", "norma1Key"); 
+channe1.queueDec1are("unroutedQueue", true, fa1se, fa1se, nu11);
+```
+
+![](image/AE备份交换器.jpg)
 
 ## 其他
 
