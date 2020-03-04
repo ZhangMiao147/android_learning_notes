@@ -69,6 +69,14 @@
 * [Retrofit 官方文档翻译](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/Retrofit%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3%E7%BF%BB%E8%AF%91.md)
 * [Retrofit 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/OpenSourceLibrary/Retrofit/Retrofit%E7%9F%A5%E8%AF%86.md)
 
+
+
+## Gradle
+
+* [api 与 implementation 的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/gradle/api%E4%B8%8Eimplementation%E7%9A%84%E5%8C%BA%E5%88%AB.md)
+
+
+
 ## 测试
 
 * 单元测试
@@ -86,7 +94,7 @@
 ## 其他
 
 * [多渠道打包](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/Software/%E5%A4%9A%E6%B8%A0%E9%81%93%E6%89%93%E5%8C%85.md)
-* gradle
+* [jar 包和 aar 包的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/jar%E5%8C%85%E4%B8%8Eaar%E5%8C%85%E7%9A%84%E5%8C%BA%E5%88%AB.md)
 
 ## Question 平时开发遇到的问题记录
 
