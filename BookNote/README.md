@@ -80,6 +80,7 @@
 - **深入理解 Java 虚拟机**
   
   * 第 1 章 [走进 Java](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA/%E7%AC%AC1%E7%AB%A0-%E8%B5%B0%E8%BF%9BJava.md)
+  * 第 4 章 [虚拟机性能监控、故障处理工具](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第4章-虚拟机性能监控、故障处理工具.md)
   * 第 5 章 [调优案例分析与实战](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第5章-调优案例分析与实战.md)
   * 第 6 章 [类文件结构](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第6章-类文件结构.md)
   * 第 7 章 [虚拟机类加载机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第7章-虚拟机类加载机制.md)
@@ -87,6 +88,8 @@
   * 第 9 章 [类加载及执行子系统的案例与实战](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第9章-类加载及执行子系统的案例与实战.md)
   * 第 10 章 [前端编译与优化](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA/%E7%AC%AC10%E7%AB%A0-%E5%89%8D%E6%AE%B5%E7%BC%96%E8%AF%91%E4%B8%8E%E4%BC%98%E5%8C%96.md)
   * 第 11 章 [后端编译与优化](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA/%E7%AC%AC11%E7%AB%A0-%E5%90%8E%E7%AB%AF%E7%BC%96%E8%AF%91%E4%B8%8E%E4%BC%98%E5%8C%96.md)
+  * 第 12 章 [Java 内存模型与线程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第12章-Java内存模型与线程.md)
+  * 第 13 章 [线程安全与锁优化](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第13章-线程安全与锁优化.md)
 
 
 - **Android 进阶之光**

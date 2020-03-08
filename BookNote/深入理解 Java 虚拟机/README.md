@@ -10,7 +10,7 @@
 
 **第 3 章** 垃圾收集器与内存分配策略
 
-**第 4 章** 虚拟机性能监控、故障处理工具
+**第 4 章** [虚拟机性能监控、故障处理工具](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第4章-虚拟机性能监控、故障处理工具.md)
 
 **第 5 章** [调优案例分析与实战](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第5章-调优案例分析与实战.md)
 
@@ -32,6 +32,6 @@
 
 ## 第五部分 高效并发
 
-**第 12 章** Java 内存模型与线程
+**第 12 章** [Java 内存模型与线程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第12章-Java内存模型与线程.md)
 
-**第 13 章** 线程安全与锁优化
+**第 13 章** [线程安全与锁优化](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第13章-线程安全与锁优化.md)
