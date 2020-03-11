@@ -1,6 +1,41 @@
 # Fragment 的基础知识
 
-　　Fragment
+## 概述
+
+　　为了让界面可以在平板上更好的展示，Android 3.0 版本引入了 Fragment（碎片）功能，它非常类似于 Activity，可以像 Activity 一样包含布局。
+
+　　Fragment 通常是嵌套在 Activity 中使用的。
+
+　　使用 Fragment 可以更加充分地利用平板的屏幕空间。
+
+　　Fragment 是在 3.0 版本引入的，如果使用的是 3.0 之前的系统，需要先导入 android-support-v4 的 jar 包才能使用 Fragment 功能。
+
+　　Fragment 真正的强大之处在于可以动态地添加到 Activity 当中，程序的界面可以定制的更加多样化。
+
+## Fragment 的生命周期
+
+* onAttach 方法：Fragment 和 Activity 建立关联的时候调用。
+* onCreateView 方法：为 Fragment 加载布局时调用。
+* onActivityCreated 方法：当 Activty 中的 onCreate 放啊执行完后调用。
+* onDestoryView 方法：Fragment 中的布局被移除时调用。
+* onDetach 方法：Fragment 和 Activity 解除关联的时候调用。
+
+
+
+## Fragment 之间通信
+
+　　主要是通过 getAcvitity 方法，getActivity 方法可以让 Fragment 获取到关联的 Activity，然后再调用 Activity 的 findViewById 方法，就可以获取到和这个 Activity 关联的其他 Fragment 的视图了。
+
+
+
+## Fragment 的使用
+
+　　动态添加 Fragment 主要分为 4 步：
+
+1. 获取到 FragmentManager，在 Activity 中可以直接通过 getFragmentManager 得到。
+2. 开启一个事务，通过调用 beginTransaction 方法开启。
+3. 向容器内加入 Fragment，一般使用 replace 方法实现，需要传入容器的 id 和 Fragment 的实例。
+4. 提交事务，调用 commit 方法提交。
 
 
 ## 参考文章

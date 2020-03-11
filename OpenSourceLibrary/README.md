@@ -1,6 +1,14 @@
 # 常用的开源库
 
-- 1.[RxJava](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/OpenSourceLibrary/RxJava/RxJava.md) -文章梳理
+## Retrofit
 
-- 2.[Retrofit](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/OpenSourceLibrary/Retrofit/Retrofit.md)  -知识总结
+* [Retrofit 官方文档翻译](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/Retrofit/Retrofit官方文档翻译.md)
+* [Retrofit 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/Retrofit/Retrofit知识.md)
+
+## RabbitMQ
+
+* [RabbitMQ 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/MessageQueue/RabbitMQ知识.md)
+* [提高 RabbitMQ 传输消息数据的可靠性途径](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/MessageQueue/提高RabbitMQ传输消息数据的可靠性途径.md)
+* [RabbitMQ 的使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/MessageQueue/RabbitMQ的使用.md)
+* [RabbitMQ 消息幂等性](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/MessageQueue/RabbitMQ消息幂等性.md)
 

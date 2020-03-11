@@ -8,7 +8,7 @@
 
 ## 第二部分 自动内存管理
 
-**第 3 章** 垃圾收集器与内存分配策略
+**第 3 章** [垃圾收集器与内存分配策略](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第3章-垃圾收集器与内存分配策略.md)
 
 **第 4 章** [虚拟机性能监控、故障处理工具](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第4章-虚拟机性能监控、故障处理工具.md)
 
