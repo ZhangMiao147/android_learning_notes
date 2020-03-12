@@ -14,6 +14,8 @@
 
 ## Fragment 的生命周期
 
+![](image/生命周期图.png)
+
 * onAttach 方法：Fragment 和 Activity 建立关联的时候调用。
 * onCreateView 方法：为 Fragment 加载布局时调用。
 * onActivityCreated 方法：当 Activty 中的 onCreate 放啊执行完后调用。
@@ -21,27 +23,8 @@
 * onDetach 方法：Fragment 和 Activity 解除关联的时候调用。
 
 
-
-## Fragment 之间通信
-
-　　主要是通过 getAcvitity 方法，getActivity 方法可以让 Fragment 获取到关联的 Activity，然后再调用 Activity 的 findViewById 方法，就可以获取到和这个 Activity 关联的其他 Fragment 的视图了。
-
-
-
-## Fragment 的使用
-
-　　动态添加 Fragment 主要分为 4 步：
-
-1. 获取到 FragmentManager，在 Activity 中可以直接通过 getFragmentManager 得到。
-2. 开启一个事务，通过调用 beginTransaction 方法开启。
-3. 向容器内加入 Fragment，一般使用 replace 方法实现，需要传入容器的 id 和 Fragment 的实例。
-4. 提交事务，调用 commit 方法提交。
-
-
 ## 参考文章
 [Android Fragment完全解析，关于碎片你所需知道的一切](https://blog.csdn.net/guolin_blog/article/details/8881711)
-
-[Android Fragment学习与使用—高级篇](https://blog.csdn.net/qq_24442769/article/details/77679147)
 
 [Activity与Fragment生命周期探讨](https://www.jianshu.com/p/1b3f829810a1)
 
