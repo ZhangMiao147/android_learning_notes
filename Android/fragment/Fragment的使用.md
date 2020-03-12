@@ -1,5 +1,9 @@
 # Fragment 的基础知识
 
+　　使用 Fragment 时，必须构造一个无参构造函数，系统会默认带，但一旦写有参构造函数，就必要构造无参构造函数。
+
+　　一般来说传参数给 Fragment，会通过 bundle，而不是用构造方法传。
+
 ## Fragment 之间通信
 
 　　主要是通过 getAcvitity 方法，getActivity 方法可以让 Fragment 获取到关联的 Activity，然后再调用 Activity 的 findViewById 方法，就可以获取到和这个 Activity 关联的其他 Fragment 的视图了。

@@ -230,6 +230,7 @@
 * **深入理解 Java 虚拟机**
   
   * 第 1 章 [走进 Java](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA/%E7%AC%AC1%E7%AB%A0-%E8%B5%B0%E8%BF%9BJava.md)
+  * 第 2 章 [Java 内存区域与内存溢出异常](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第2章-Java内存区域与内存溢出异常.md)
   * 第 3 章 [垃圾收集器与内存分配策略](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第3章-垃圾收集器与内存分配策略.md)
   * 第 4 章 [虚拟机性能监控、故障处理工具](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第4章-虚拟机性能监控、故障处理工具.md)
   * 第 5 章 [调优案例分析与实战](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第5章-调优案例分析与实战.md)
