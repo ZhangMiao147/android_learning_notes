@@ -2,7 +2,7 @@
 
 　　使用 Fragment 时，必须构造一个无参构造函数，系统会默认带，但一旦写有参构造函数，就必要构造无参构造函数。
 
-## Fragment 常用的 Api
+## 1 Fragment 常用的 Api
 
 　　Fragment 常用的三个类：
 
@@ -10,7 +10,7 @@
 * android.support.v4.app.FragmentManager 主要用于在 Activity 中操作 Fragment。
 * android.support.v4.app.FragmentTransation 处理 Fragment 操作的事务。
 
-　　获取 FragmentManager 的方式：getFragmentManager()，v4 中是 getSupportManager。
+　　获取 FragmentManager 的方式：getFragmentManager()，v4 中是 getSupportManager()。
 
 　　主要的操作都是 FragmentTransaction 的方法：
 
@@ -78,7 +78,7 @@
 
 　　在一个事务开启到提交可以进行多个添加、移除、替换等操作。
 
-## Fragment 的使用
+## 2 在 Activity 中动态添加 Fragment 
 
 　　动态添加 Fragment 主要分为 4 步：
 
@@ -87,7 +87,7 @@
 3. 向容器内加入 Fragment，一般使用 replace 方法实现，需要传入容器的 id 和 Fragment 的实例。
 4. 提交事务，调用 commit 方法提交。
 
-## Fragment 回退栈管理
+## 3 Fragment 回退栈管理
 
 　　Activity 是由任务栈管理的，遵循先进后出的原则，Fragment 也可以实现类似的栈管理，从而实现多个 Fragment 先后添加后可以返回上一个 Fragment，当 Activity 容器内没有 Fragment 时回退则退出 Activity。
 
@@ -97,9 +97,9 @@ transaction.addToBackStack(null);
 
 　　Activity 的第一个 Fragment（根 Fragment ）可以不添加回退栈，这样最后一个 Fragment 按返回时就不会空白而是直接退出 activity。
 
-　　调用 addToBackStack(null)将当前的事务添加到了回退栈，调用 replace 方法后 Fragment 实例不会被销毁，但是视图层次会被销毁，即会调用 onDestoryView 和 onCreateView 。若需保存当前 fragment 视图状态，则可以使用 hide 后 add 新的 Fragment。
+　　调用 addToBackStack(null) 将当前的事务添加到了回退栈，调用 replace 方法后 Fragment 实例不会被销毁，但是视图层次会被销毁，即会调用 onDestoryView 和 onCreateView 。若需保存当前 fragment 视图状态，则可以使用 hide 后 add 新的 Fragment。
 
-## Fragment 与 Activity 通信
+## 4 Fragment 与 Activity 通信
 
 1. 如果 Activity 中包含自己管理的 Fragment 的引用，可以通过引用直接访问所有的 Fragment 的 public 方法。
 2. 如果 Activity 中未保存任何 Fragment 的引用，可以通过每个 Fragment 都有一个唯一的 TAG 或者 ID 使用 getFragmentManager.findFragmentByTag() 或者 findFragmentById() 获得任何 Fragment 实例，然后进行操作。
@@ -152,7 +152,7 @@ f.setListener(new TestFragment.OnListener() {
 });
 
 FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-       fragmentTransaction.replace(R.id.fragment_container, f);
+fragmentTransaction.replace(R.id.fragment_container, f);
 fragmentTransaction.commit();
 ```
 
@@ -167,7 +167,58 @@ fragmentTransaction.commit();
       f.setArguments(bundle); 
    ```
 
-## Fragment 重叠问题
+## 5 Fragment 之间通信
+
+　　主要是通过 getAcvitity 方法，getActivity 方法可以让 Fragment 获取到关联的 Activity，然后再调用 Activity 的 findViewById 方法，就可以获取到和这个 Activity 关联的其他 Fragment 的视图了。
+
+　　调用 Fragment.setTargetFragment，这个方法一般用于当前 Fragment 由其他 Fragment 启动时。
+
+```java
+EvaluateDialog dialog = new EvaluateDialog();  
+//注意setTargetFragment  
+dialog.setTargetFragment(ContentFragment.this, REQUEST_EVALUATE);  
+dialog.show(getFragmentManager(), EVALUATE_DIALOG); 
+
+//接收返回回来的数据  
+@Override  
+public void onActivityResult(int requestCode, int resultCode, Intent data)  
+{  
+    super.onActivityResult(requestCode, resultCode, data);  
+
+    if (requestCode == REQUEST_EVALUATE)  
+    {  
+        String evaluate = data  
+                    .getStringExtra(EvaluateDialog.RESPONSE_EVALUATE);  
+        Toast.makeText(getActivity(), evaluate, Toast.LENGTH_SHORT).show();  
+        Intent intent = new Intent();  
+        intent.putExtra(RESPONSE, evaluate);  
+        getActivity().setResult(Activity.REQUEST_OK, intent);  
+        }  
+
+    } 
+}
+```
+
+```java
+public class EvaluateDialog extends DialogFragment  
+{ 
+    ......
+
+    // 设置返回数据  
+    protected void setResult(int which)  
+    {  
+        // 判断是否设置了targetFragment  
+        if (getTargetFragment() == null)  
+            return;  
+
+        Intent intent = new Intent();  
+        intent.putExtra(RESPONSE_EVALUATE, mEvaluteVals[which]);  
+        getTargetFragment().onActivityResult(ContentFragment.REQUEST_EVALUATE,  Activity.RESULT_OK, intent);            
+    }  
+}
+```
+
+## 6 Fragment 重叠问题
 
 　　当屏幕旋转或者内存重启（Fragment 以及容器 Activity 被系统回收后再打开时重新初始化）会导致 Fragment 重叠问题，是因为 Activity 本身重启的时候会恢复 Fragment，然后创建 Fragment 的代码又会新建一个 Fragment 的原因。
 
@@ -193,7 +244,7 @@ protected void onCreate(Bundle savedInstanceState)  {
 } 
 ```
 
-## Fragment 与 ActionBar 和 MenuItem
+## 7 Fragment 与 ActionBar 和 MenuItem
 
 　　Fragment 可以添加自己的 MenuItem 到 Activity 的 ActionBar 或者可选菜单中。
 
@@ -268,11 +319,11 @@ protected void onCreate(Bundle savedInstanceState)  {
        }  
    ```
 
-## 没有布局的 Fragment -- 保存大量数据
+## 8 没有布局的 Fragment -- 保存大量数据
 
-　　主要用于处理异步请求带来的数据保存问题，尤其时异步请求未完成时屏幕旋转这种现象。步骤如下：
+　　主要用于处理异步请求带来的数据保存问题，尤其是异步请求未完成时屏幕旋转这种现象。步骤如下：
 
-1. 继承 Fragment，声明引用指向你的有数据的对象。
+1. 继承 Fragment，声明引用指向有数据的对象。
 
    ```java
    //数据类
@@ -432,6 +483,47 @@ protected void onCreate(Bundle savedInstanceState)  {
        private MyAsyncTask mMyTask;  
    
        @Override  
+       protected void onRestoreInstanceState(Bundle state)  
+       {  
+           super.onRestoreInstanceState(state);  
+           Log.e(TAG, "onRestoreInstanceState");  
+       }  
+   
+       @Override  
+       protected void onSaveInstanceState(Bundle outState)  
+       {  
+           mMyTask.setActivity(null);  
+           super.onSaveInstanceState(outState);  
+           Log.e(TAG, "onSaveInstanceState");  
+       }  
+   
+       @Override  
+       protected void onDestroy()  
+       {  
+           Log.e(TAG, "onDestroy");  
+           super.onDestroy();  
+   
+       }  
+       /** 
+        * 回调 
+        */  
+       public void onTaskCompleted()  
+       {  
+           mDatas = mMyTask.getItems();  
+           mAdapter = new ArrayAdapter<String>(FixProblemsActivity.this,  
+                   android.R.layout.simple_list_item_1, mDatas);  
+           setListAdapter(mAdapter);  
+       }  
+   
+   } 
+   ```
+   
+4. 当 Activity 重新启动后，使用 FragmentManager 对 Fragment 进行恢复。
+
+   ```java
+   public class FixProblemsActivity extends ListActivity  
+   {  
+       @Override  
        public void onCreate(Bundle savedInstanceState)  
        {  
            super.onCreate(savedInstanceState);  
@@ -460,56 +552,18 @@ protected void onCreate(Bundle savedInstanceState)  {
            }  
            // the data is available in dataFragment.getData()  
        }  
-   
-       @Override  
-       protected void onDestroy()  
-       {  
-           Log.e(TAG, "onDestroy");  
-           super.onDestroy();  
-   
-       }  
-       /** 
-        * 回调 
-        */  
-       public void onTaskCompleted()  
-       {  
-           mDatas = mMyTask.getItems();  
-           mAdapter = new ArrayAdapter<String>(FixProblemsActivity.this,  
-                   android.R.layout.simple_list_item_1, mDatas);  
-           setListAdapter(mAdapter);  
-       }  
-   
    } 
    ```
 
-4. 当 Activity 重新启动后，使用 FragmentManager 对 Fragment 进行恢复。
+## 9 DialogFragment
 
-   ```java
-   public class FixProblemsActivity extends ListActivity  
-   {  
-       @Override  
-       protected void onRestoreInstanceState(Bundle state)  
-       {  
-           super.onRestoreInstanceState(state);  
-           Log.e(TAG, "onRestoreInstanceState");  
-       }  
-   
-       @Override  
-       protected void onSaveInstanceState(Bundle outState)  
-       {  
-           mMyTask.setActivity(null);  
-           super.onSaveInstanceState(outState);  
-           Log.e(TAG, "onSaveInstanceState");  
-       }  
-   
-   } 
-   ```
+　　和 Fragment 有着一致的生命周期，且 DialogFragment 也允许开发者把 Dialog 作为内嵌得组件进行重用，类似 Fragment（可以在大屏幕和小屏幕显示出不同得效果）。使用 DialogFragment 至少需要实现 onCreateView 或者 onCreateDialog 方法。
 
-## DialogFragment
+onCreateView 使用定义的 xml 布局文件展示 Dialog。
 
-　　和 Fragment 有着一致得生命周期，且 DialogFragment 也允许开发者把 Dialog 作为内嵌得组件进行重用，类似 Fragment（可以在大屏幕和小屏幕显示出不同得效果）。使用 DialogFragment 至少需要实现 onCreateView 或者 onCreateDialog 方法。onCreateView 使用定义的 xml 布局文件展示 Dialog，onCreateDialog 使用 AlertDialog 或者 Dialog 创建出 Dialog。
+onCreateDialog 使用 AlertDialog 或者 Dialog 创建出 Dialog。
 
-### 重写 onCreateView 创建 Dialog
+### 9.1 重写 onCreateView 创建 Dialog
 
 1. 创建一个对话框布局文件。
 
@@ -540,7 +594,7 @@ protected void onCreate(Bundle savedInstanceState)  {
    }
    ```
 
-### 重写 onCreateDialog 创建 Dialog
+### 9.2 重写 onCreateDialog 创建 Dialog
 
 1. 新建对话框布局文件。
 
@@ -583,11 +637,11 @@ protected void onCreate(Bundle savedInstanceState)  {
    } 
    ```
 
-## Fragment 的 startActivityForResult
+## 10. Fragment 的 startActivityForResult
 
 　　在 Fragment 中存在 startActivityForResult() 以及 onActivityResult() 方法，需要通过调用 getActivity().setResult(Fragment.REQUEST_CODE,intent)来设置返回值。
 
-## FragmentPagerAdapter 与 FragmentStatePagerAdapter 区别
+## 11. FragmentPagerAdapter 与 FragmentStatePagerAdapter 区别
 
 　　使用 ViewPager 再结合 FragmentPagerAdapter 或者 FragmentStatePagerAdapter 可以制作一个 App 的主页。
 
@@ -597,56 +651,6 @@ protected void onCreate(Bundle savedInstanceState)  {
 * FragmentStatePagerAdapter：会销毁不再需要的 Fragment，当当前事务提交以后，会彻底的将 fragment 从当前 Activity 的 FragmentManager 中移除，state 标明，销毁时，会将其 onSaveInstanceState(Bundle outState) 中的 bundle 信息保存下来，当用户切换回来，可以通过该 bundle 恢复生成新的 Fragment，也就是说，可以在 onSaveInstanceState(Bundle outState) 方法中保存一些数据，在 onCreate 中进行恢复创建。
 
 　　使用 FragmentStatePagerAdapter 更省内存，但是销毁新建也是需要时间的。一般情况下，如果是制作主界面，就 3-4 个 Tab，那么可以选择使用 FragmentPagerAdapter，如果是用于 ViewPager 展示数量特别多的条目时，建议使用 FragmentStatePagerAdapter。
-
-## Fragment 之间通信
-
-　　主要是通过 getAcvitity 方法，getActivity 方法可以让 Fragment 获取到关联的 Activity，然后再调用 Activity 的 findViewById 方法，就可以获取到和这个 Activity 关联的其他 Fragment 的视图了。
-
-　　调用 Fragment.setTargetFragment，这个放啊一般用于当前 Fragment 由其他 Fragment 启动时。
-
-```java
-EvaluateDialog dialog = new EvaluateDialog();  
-//注意setTargetFragment  
-dialog.setTargetFragment(ContentFragment.this, REQUEST_EVALUATE);  
-dialog.show(getFragmentManager(), EVALUATE_DIALOG); 
-
-//接收返回回来的数据  
-@Override  
-public void onActivityResult(int requestCode, int resultCode, Intent data)  
-{  
-    super.onActivityResult(requestCode, resultCode, data);  
-
-    if (requestCode == REQUEST_EVALUATE)  
-    {  
-        String evaluate = data  
-                    .getStringExtra(EvaluateDialog.RESPONSE_EVALUATE);  
-        Toast.makeText(getActivity(), evaluate, Toast.LENGTH_SHORT).show();  
-        Intent intent = new Intent();  
-        intent.putExtra(RESPONSE, evaluate);  
-        getActivity().setResult(Activity.REQUEST_OK, intent);  
-        }  
-
-    } 
-```
-
-```java
-public class EvaluateDialog extends DialogFragment  
-{ 
-    ......
-
-    // 设置返回数据  
-    protected void setResult(int which)  
-    {  
-        // 判断是否设置了targetFragment  
-        if (getTargetFragment() == null)  
-            return;  
-
-        Intent intent = new Intent();  
-        intent.putExtra(RESPONSE_EVALUATE, mEvaluteVals[which]);  
-        getTargetFragment().onActivityResult(ContentFragment.REQUEST_EVALUATE,  Activity.RESULT_OK, intent);            
-    }  
-}
-```
 
 
 ## 参考文章
