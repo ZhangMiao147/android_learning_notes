@@ -85,5 +85,6 @@ call.enqueue(new Callback()
 
 [Android OkHttp完全解析 是时候来了解OkHttp了](https://blog.csdn.net/lmj623565791/article/details/47911083)
 
+[彻底理解 OkHttp - OkHttp 源码解析及 OkHttp 的设计思想](https://www.jianshu.com/p/cb444f49a777)
 
-
+[拆轮子系列：拆 OkHttp](https://blog.piasy.com/2016/07/11/Understand-OkHttp/index.html)
