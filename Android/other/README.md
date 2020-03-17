@@ -11,3 +11,4 @@
 * SimpleArrayMap
 * SpareArrayCompat
 * URI 和 URL 的区别
+* 怎么加载巨图不撑爆内存
