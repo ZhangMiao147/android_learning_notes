@@ -1,6 +1,6 @@
 # OkHttp 设置自定义拦截器
 
-　　OkHttp 的使用是直接用户自定义拦截器的，而且自定义的拦截器会最先执行，最后处理响应结果。
+　　OkHttp 的使用是支持用户自定义拦截器的，而且自定义的拦截器会最先执行，并最后处理响应结果。
 
 ## 1 自定义拦截器
 
@@ -36,10 +36,10 @@
             long t1 = System.nanoTime();
             LogUtil.i(tag, String.format("Sending request %s on %s%n%s\n%s",
                     request.url(), chain.connection(), request.headers(), request.body()));
-			// 2. 调用下一个拦截器
+						// 2. 调用下一个拦截器
             // response 就是响应信息
             Response response = chain.proceed(request);
-			// 3. 获取响应信息，打印
+						// 3. 获取响应信息，打印
             long t2 = System.nanoTime();
             LogUtil.i(tag, String.format("Received response for %s in %.1fms%n%s\n%s",
                     response.toString(), (t2 - t1) / 1e6d, response.headers(),response.body()));
@@ -60,7 +60,7 @@ client = new OkHttpClient.Builder()
         .build();
 ```
 
-　　addInterceptor() 方法无需担心中间响应，例如重定向和重试。即使从缓存提供 HTTP 响应，也总是被调用一次。遵守应用程序的原始意图，不关心 OkHttp 注入的标头，例如 If-None-Match，允许短路而不是 chain.proceed()，允许重试并多次调用 chain.proceed()。
+　　addInterceptor() 方法无需担心中间响应，例如重定向和重试。即使从缓存提供 HTTP 响应，也会被调用一次。遵守应用程序的原始意图，不关心 OkHttp 注入的标头，例如 If-None-Match，允许短路不被调用 chain.proceed()，也允许重试并多次调用 chain.proceed()。
 
 2. addNetworkInterceptor()
 
@@ -70,7 +70,7 @@ client = new OkHttpClient.Builder()
         .build();
 ```
 
-　　addNetworkInterceptor() 方法能够对诸如重定向和重试之类的中间响应进行操作，不会再读取缓存时调用，观察数据，就像通过网络传输数据一样，访问 Connection 带有请求的。
+　　addNetworkInterceptor() 方法能够对诸如重定向和重试之类的中间响应进行操作，在读取缓存时不会被调用到，可以观察具体的请求数据，就像通过网络传输数据一样带有请求的访问 Connection。
 
 　　addInterceptor 和 addNetworkInterceptor 主要的区别是 addInterceptor 是最先执行的拦截器，addNetworkInterceptor 是在 ConnectInterceptor 之后执行的拦截器。
 
