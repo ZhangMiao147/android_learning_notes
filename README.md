@@ -96,7 +96,10 @@
   * [RabbitMQ 的使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/MessageQueue/RabbitMQ的使用.md)
   * [RabbitMQ 消息幂等性](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/MessageQueue/RabbitMQ消息幂等性.md)
 
-
+* OkHttp
+  * [OkHttp 基础知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/OkHttp/OkHttp基础知识.md)
+  * [OkHttp 设置自定义拦截器](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/OkHttp/OkHttp设置自定义拦截器.md)
+  * [OkHttp 源码解析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/OkHttp/OkHttp源码分析.md)
 
 
 
@@ -143,12 +146,11 @@
   * [工厂方法模式（Factory Method）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E5%B7%A5%E5%8E%82%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F.md)
   * [抽象工厂模式（Abstract Method）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E6%8A%BD%E8%B1%A1%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F.md)
   * [单例模式（Singleton）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F.md)
-
 * 结构型模式
   * [适配器模式（Adapter）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F.md)
   * [代理模式（Proxy）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F.md)
-
 * 行为型模式
+  * [职责链模式（Chain of Responsibility）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/责任链模式.md)
   * [观察者模式（Observer）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DesignPatterns/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F.md)
 
 
@@ -255,4 +257,7 @@
   * 第 4 章 [接口隔离原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC4%E7%AB%A0-%E6%8E%A5%E5%8F%A3%E9%9A%94%E7%A6%BB%E5%8E%9F%E5%88%99.md)
   * 第 5 章 [迪米特原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC5%E7%AB%A0-%E8%BF%AA%E7%B1%B3%E7%89%B9%E6%B3%95%E5%88%99.md)
   * 第 6 章 [开闭原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC6%E7%AB%A0-%E5%BC%80%E9%97%AD%E5%8E%9F%E5%88%99.md)
+
+* 图解 HTTP 
+  * 第 1 章 [了解 Web 及网络基础](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第1章-了解Web及网络基础.md)
 
