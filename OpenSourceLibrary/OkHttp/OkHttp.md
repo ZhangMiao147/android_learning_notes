@@ -252,7 +252,7 @@ OkHttpClient client = new OkHttpClient();
      }
    ```
 
-2. 利用 dispatcher 调度器，来进行实际的执行 client.dispatcher().enqueue(new AsyncCall(responseCallback)); 在上面的 OkhttpClient.Build 可以看出已经初始化了 Dispatcher。
+2. 利用 dispatcher 调度器，来进行实际的执行 client.dispatcher().enqueue(new AsyncCall(responseCallback));，dispatcher 是 OkHttpClient.Builder 的成员之一，是 HTTP 请求的执行策略， 在上面的 OkhttpClient.Build 可以看出已经初始化了 Dispatcher。
 
 #### Dispatcher 调度器
 
@@ -275,7 +275,7 @@ OkHttpClient client = new OkHttpClient();
   }
 ```
 
-　　从 Dispatcher 的 enqueue 方法可以看出 Dispatcher 将 call 加入到队列中，然后通过线程池来执行 call。
+　　如果当前还能执行一个并发请求，将 call 加入到队列中，然后通过线程池来执行 call，否则加入 readyAsyncCalls 队列中。
 
 　　Dispatcher 的几个属性和方法：
 
@@ -460,6 +460,8 @@ public abstract class NamedRunnable implements Runnable {
   }
 ```
 
+　　正在执行的请求执行完毕了，会调用 promoteCalls() 函数，把 readyAsyncCalls 队列中的 AsyncCall “ 提升 ” 为 runningAsyncCalls，并开始执行。
+
 　　而真正执行网络请求和返回响应结果是在 getResponseWithInterceptorChain()：
 
 ```java
@@ -468,7 +470,7 @@ public abstract class NamedRunnable implements Runnable {
     // Build a full stack of interceptors.
     // 责任链
     List<Interceptor> interceptors = new ArrayList<>();
-    // 在配置 okhttpClient 时设置的 interceptor，就是用户自己设置的拦截器
+    // 在配置 okhttpClient 时设置的 interceptor，就是用户自己设置的拦截器，addInterceptor
     interceptors.addAll(client.interceptors());
     // 负责处理失败后的重试与重定向
     interceptors.add(retryAndFollowUpInterceptor);
@@ -482,14 +484,16 @@ public abstract class NamedRunnable implements Runnable {
     // 连接服务器，
     interceptors.add(new ConnectInterceptor(client));
     if (!forWebSocket) {
+      //用户自定义的拦截器，addNetworkInterceptor
       interceptors.addAll(client.networkInterceptors());
     }
+      //发送和接收数据的拦截器
     interceptors.add(new CallServerInterceptor(forWebSocket));
 
     Interceptor.Chain chain = new RealInterceptorChain(interceptors, null, null, null, 0,
         originalRequest, this, eventListener, client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis());
-
+	
     return chain.proceed(originalRequest);
   }
 ```
@@ -497,6 +501,686 @@ public abstract class NamedRunnable implements Runnable {
 
 
 
+
+
+
+#### Interceptor
+
+1. 在配置 OkHttpClient 时设置的 interceptors。
+2. 负责失败重试以及重定向的 RetryAndFollowUpInterceptor。
+3. 负责把用户构造的请求转换为发送服务器的请求、把服务器返回的响应转换为用户优化的响应的 BridgeInterceptor。
+4. 负责读取缓存直接返回、更新缓存的 CacheInterceptor。
+5. 负责和服务器建立连接的 ConnectInterceptor。
+6. 配置 OkHttpClient 时设置的 networkInterceptors。
+7. 负责向服务器发送请求数据、从服务器读取响应数据的 CallServerInterceptor。
+
+　　位置决定了功能，最后一个 CallServerInterceptor 负责和服务器实际通讯，重定向、缓存等一定是在实际通讯之前的。
+
+　　对于把 Request 变成 Response 这件事来说，每个 Interceptor 都可能完成这件事，链条让每一个 Interceptor 自行决定是否完成任务以及怎么完成任务（自己解决或者交给下一个 Interveptor）。这样完成网络请求这件事就彻底从 RealCall 类中剥离了出来，简化了各自的责任和逻辑。
+
+
+
+##### RetryAndFollowUpInterceptor 重试
+
+　　RetryAndFollowUpInterceptor 的 intercept 方法：
+
+```java
+  @Override public Response intercept(Chain chain) throws IOException {
+    Request request = chain.request();
+    RealInterceptorChain realChain = (RealInterceptorChain) chain;
+    Call call = realChain.call();
+    EventListener eventListener = realChain.eventListener();
+
+    StreamAllocation streamAllocation = new StreamAllocation(client.connectionPool(),
+        createAddress(request.url()), call, eventListener, callStackTrace);
+    this.streamAllocation = streamAllocation;
+
+    int followUpCount = 0;
+    Response priorResponse = null;
+    // 开启循环，请求完成或者遇到异常会退出
+    while (true) {
+      if (canceled) {
+        streamAllocation.release();
+        throw new IOException("Canceled");
+      }
+
+      Response response;
+      boolean releaseConnection = true;
+      try {
+        // 执行责任链上的任务，获得请求网络后的响应
+        // 请求失败后，会再次进入循环，再次请求
+        response = realChain.proceed(request, streamAllocation, null, null);
+        releaseConnection = false;
+      } catch (RouteException e) {
+        // The attempt to connect via a route failed. The request will not have been sent.
+        if (!recover(e.getLastConnectException(), streamAllocation, false, request)) {
+          throw e.getLastConnectException();
+        }
+        releaseConnection = false;
+        continue;
+      } catch (IOException e) {
+        // An attempt to communicate with a server failed. The request may have been sent.
+        boolean requestSendStarted = !(e instanceof ConnectionShutdownException);
+        if (!recover(e, streamAllocation, requestSendStarted, request)) throw e;
+        releaseConnection = false;
+        continue;
+      } finally {
+        // We're throwing an unchecked exception. Release any resources.
+        if (releaseConnection) {
+          streamAllocation.streamFailed(null);
+          streamAllocation.release();
+        }
+      }
+
+      // Attach the prior response if it exists. Such responses never have a body.
+      // 第一次进入时 priorResponse 是 null，在执行了后面的分析请求网络的响应后，priorResponse 就不会空了，为请求网络后的响应
+      if (priorResponse != null) {
+        response = response.newBuilder()
+            .priorResponse(priorResponse.newBuilder()
+                    .body(null)
+                    .build())
+            .build();
+      }
+	  // 判断是否需要重定向，如果需要，会对 request(请求)做一些修改，返回新的 request，如果不需要，则返回 null
+      Request followUp = followUpRequest(response, streamAllocation.route());
+	  //不需要重定向，也就是请求数据成功，释放资源，返回响应结果。
+      if (followUp == null) {
+        if (!forWebSocket) {
+          streamAllocation.release();
+        }
+        return response;
+      }
+
+      closeQuietly(response.body());
+	  //重复请求超过 20 次，就抛出异常，停止重试
+      if (++followUpCount > MAX_FOLLOW_UPS) {
+        streamAllocation.release();
+        throw new ProtocolException("Too many follow-up requests: " + followUpCount);
+      }
+
+      if (followUp.body() instanceof UnrepeatableRequestBody) {
+        streamAllocation.release();
+        throw new HttpRetryException("Cannot retry streamed HTTP body", response.code());
+      }
+	  // 比较重定向前后的地址 url、host、scheme 是否一致，一致的话重用，否则重新创建
+      if (!sameConnection(response, followUp.url())) {
+        streamAllocation.release();
+        streamAllocation = new StreamAllocation(client.connectionPool(),
+            createAddress(followUp.url()), call, eventListener, callStackTrace);
+        this.streamAllocation = streamAllocation;
+      } else if (streamAllocation.codec() != null) {
+        throw new IllegalStateException("Closing the body of " + response
+            + " didn't close its backing stream. Bad interceptor?");
+      }
+
+      request = followUp;
+      // priorResponse 设置为网络请求后的响应结果
+      priorResponse = response;
+    }
+  }
+
+  /**
+   * Figures out the HTTP request to make in response to receiving {@code userResponse}. This will
+   * either add authentication headers, follow redirects or handle a client request timeout. If a
+   * follow-up is either unnecessary or not applicable, this returns null.
+   */
+  private Request followUpRequest(Response userResponse, Route route) throws IOException {
+    if (userResponse == null) throw new IllegalStateException();
+    int responseCode = userResponse.code();
+
+    final String method = userResponse.request().method();
+    switch (responseCode) {
+      case HTTP_PROXY_AUTH:
+        Proxy selectedProxy = route != null
+            ? route.proxy()
+            : client.proxy();
+        if (selectedProxy.type() != Proxy.Type.HTTP) {
+          throw new ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy");
+        }
+        return client.proxyAuthenticator().authenticate(route, userResponse);
+
+      case HTTP_UNAUTHORIZED:
+        return client.authenticator().authenticate(route, userResponse);
+
+      case HTTP_PERM_REDIRECT://307
+      case HTTP_TEMP_REDIRECT://308
+        // "If the 307 or 308 status code is received in response to a request other than GET
+        // or HEAD, the user agent MUST NOT automatically redirect the request"
+        if (!method.equals("GET") && !method.equals("HEAD")) {
+          return null;
+        }
+        // fall-through
+      case HTTP_MULT_CHOICE://300
+      case HTTP_MOVED_PERM://301
+      case HTTP_MOVED_TEMP://302
+      case HTTP_SEE_OTHER://303
+        // Does the client allow redirects?
+        // 判断是否允许重定向，默认允许
+        if (!client.followRedirects()) return null;
+		// 重定向地址
+        String location = userResponse.header("Location");
+        if (location == null) return null;
+        HttpUrl url = userResponse.request().url().resolve(location);
+
+        // Don't follow redirects to unsupported protocols.
+        if (url == null) return null;
+
+        // If configured, don't follow redirects between SSL and non-SSL.
+        boolean sameScheme = url.scheme().equals(userResponse.request().url().scheme());
+        if (!sameScheme && !client.followSslRedirects()) return null;
+
+        // Most redirects don't include a request body.
+        Request.Builder requestBuilder = userResponse.request().newBuilder();
+        // 判断请求方式，将除了 PROPFIND的重定向请求转为 GET 请求，请求方式若为 PROPFIND，则保持原来的 method 和 requestBody
+        if (HttpMethod.permitsRequestBody(method)) {
+          final boolean maintainBody = HttpMethod.redirectsWithBody(method);
+          if (HttpMethod.redirectsToGet(method)) {
+            requestBuilder.method("GET", null);
+          } else {
+            RequestBody requestBody = maintainBody ? userResponse.request().body() : null;
+            requestBuilder.method(method, requestBody);
+          }
+          if (!maintainBody) {
+            requestBuilder.removeHeader("Transfer-Encoding");
+            requestBuilder.removeHeader("Content-Length");
+            requestBuilder.removeHeader("Content-Type");
+          }
+        }
+
+        // When redirecting across hosts, drop all authentication headers. This
+        // is potentially annoying to the application layer since they have no
+        // way to retain them.
+        if (!sameConnection(userResponse, url)) {
+          requestBuilder.removeHeader("Authorization");
+        }
+
+        return requestBuilder.url(url).build();
+
+      case HTTP_CLIENT_TIMEOUT:
+        // 408's are rare in practice, but some servers like HAProxy use this response code. The
+        // spec says that we may repeat the request without modifications. Modern browsers also
+        // repeat the request (even non-idempotent ones.)
+        if (!client.retryOnConnectionFailure()) {
+          // The application layer has directed us not to retry the request.
+          return null;
+        }
+
+        if (userResponse.request().body() instanceof UnrepeatableRequestBody) {
+          return null;
+        }
+
+        if (userResponse.priorResponse() != null
+            && userResponse.priorResponse().code() == HTTP_CLIENT_TIMEOUT) {
+          // We attempted to retry and got another timeout. Give up.
+          return null;
+        }
+
+        if (retryAfter(userResponse, 0) > 0) {
+          return null;
+        }
+
+        return userResponse.request();
+
+      case HTTP_UNAVAILABLE:
+        if (userResponse.priorResponse() != null
+            && userResponse.priorResponse().code() == HTTP_UNAVAILABLE) {
+          // We attempted to retry and got another timeout. Give up.
+          return null;
+        }
+
+        if (retryAfter(userResponse, Integer.MAX_VALUE) == 0) {
+          // specifically received an instruction to retry without delay
+          return userResponse.request();
+        }
+
+        return null;
+
+      default:
+        return null;
+    }
+  }
+```
+
+　　RetryAndFollowUpInterceptor 的 intercept 方法主要是用了一个循环体来控制，如果请求没有成功就会再次执行 chain.process() 方法再次运行起 Interceptor Chain，而循环的次数被 MAX_FOLLOW_UPS 限制，其默认大小是 20。
+
+　　是否请求成功是通过 followUpRequest() 方法来进行的，返回为 null，则表示请求成功，否则就是请求失败了。通过 response code 来进行一系列的异常判断，从而决定是否要重新请求。
+
+##### BridgeInterceptor
+
+　　BridgeInterceptor 的 intercept 方法：
+
+```java
+  @Override public Response intercept(Chain chain) throws IOException {
+    Request userRequest = chain.request();
+    Request.Builder requestBuilder = userRequest.newBuilder();
+	// 处理 body，如果有的话
+    RequestBody body = userRequest.body();
+    if (body != null) {
+      MediaType contentType = body.contentType();
+      if (contentType != null) {
+        requestBuilder.header("Content-Type", contentType.toString());
+      }
+
+      long contentLength = body.contentLength();
+      if (contentLength != -1) {
+        requestBuilder.header("Content-Length", Long.toString(contentLength));
+        requestBuilder.removeHeader("Transfer-Encoding");
+      } else {
+        requestBuilder.header("Transfer-Encoding", "chunked");
+        requestBuilder.removeHeader("Content-Length");
+      }
+    }
+	// 处理 host
+    if (userRequest.header("Host") == null) {
+      requestBuilder.header("Host", hostHeader(userRequest.url(), false));
+    }
+
+    if (userRequest.header("Connection") == null) {
+      requestBuilder.header("Connection", "Keep-Alive");
+    }
+
+    // If we add an "Accept-Encoding: gzip" header field we're responsible for also decompressing
+    // the transfer stream.
+    boolean transparentGzip = false;
+    // 请求以 GZip 来压缩
+    if (userRequest.header("Accept-Encoding") == null && userRequest.header("Range") == null) {
+      transparentGzip = true;
+      requestBuilder.header("Accept-Encoding", "gzip");
+    }
+	// 处理 Cookies，如果有的话
+    List<Cookie> cookies = cookieJar.loadForRequest(userRequest.url());
+    if (!cookies.isEmpty()) {
+      requestBuilder.header("Cookie", cookieHeader(cookies));
+    }
+	// 处理 UA
+    if (userRequest.header("User-Agent") == null) {
+      requestBuilder.header("User-Agent", Version.userAgent());
+    }
+	// 调用 proceed() 等待 Response 返回
+    Response networkResponse = chain.proceed(requestBuilder.build());
+
+    HttpHeaders.receiveHeaders(cookieJar, userRequest.url(), networkResponse.headers());
+	// 构建响应结果
+    Response.Builder responseBuilder = networkResponse.newBuilder()
+        .request(userRequest);
+
+    if (transparentGzip
+        && "gzip".equalsIgnoreCase(networkResponse.header("Content-Encoding"))
+        && HttpHeaders.hasBody(networkResponse)) {
+      GzipSource responseBody = new GzipSource(networkResponse.body().source());
+      Headers strippedHeaders = networkResponse.headers().newBuilder()
+          .removeAll("Content-Encoding")
+          .removeAll("Content-Length")
+          .build();
+      responseBuilder.headers(strippedHeaders);
+      String contentType = networkResponse.header("Content-Type");
+      responseBuilder.body(new RealResponseBody(contentType, -1L, Okio.buffer(responseBody)));
+    }
+
+    return responseBuilder.build();
+  }
+```
+
+　　BridgeInterceptor 用于桥接 request 和 response，主要就是依据 Http 协议配置请求头，然后通过 chain.proceed() 发出请求。待结果返回后再构建响应结果。
+
+##### ConnectInterceptor 建立连接
+
+　　ConnectInterceptor 的 intercept 方法：
+
+```java
+  @Override public Response intercept(Chain chain) throws IOException {
+    RealInterceptorChain realChain = (RealInterceptorChain) chain;
+    Request request = realChain.request();
+    StreamAllocation streamAllocation = realChain.streamAllocation();
+
+    // We need the network to satisfy this request. Possibly for validating a conditional GET.
+    boolean doExtensiveHealthChecks = !request.method().equals("GET");
+    HttpCodec httpCodec = streamAllocation.newStream(client, chain, doExtensiveHealthChecks);
+    RealConnection connection = streamAllocation.connection();
+
+    return realChain.proceed(request, streamAllocation, httpCodec, connection);
+  }
+```
+
+　　实际上建立连接就是创建了一个 HttpCodec 对象，它是对 HTTP 协议操作的抽象，有两个实现：Http1Codec 和 Http2Codec，它们分别对应 HTTP/1.1 和 HTTP/2 版本的实现。
+
+　　在 Http1Codec 中，它利用 Okio 对 Socket 的读写操作进行封装，Okio 对 java.io 和 hava.nio 进行了封装，让用户更便捷高效的进行 IO 操作。
+
+　　而创建 HttpCodec 对象的过程涉及了 StreamAllocation、RealConnection，这个过程可以概括为：找到一个可用的 RealConnection，再利用 RealConnection 的输入、输出（BufferedSource 和 BufferedSink）创建 HttpCodec 对象，供后面步骤使用。
+
+##### CallServerInterceptor 发送和接收数据
+
+　　CallServerInterceptor 的 intercept 方法：
+
+```java
+  @Override public Response intercept(Chain chain) throws IOException {
+    RealInterceptorChain realChain = (RealInterceptorChain) chain;
+    HttpCodec httpCodec = realChain.httpStream();
+    StreamAllocation streamAllocation = realChain.streamAllocation();
+    RealConnection connection = (RealConnection) realChain.connection();
+    Request request = realChain.request();
+
+    long sentRequestMillis = System.currentTimeMillis();
+
+    realChain.eventListener().requestHeadersStart(realChain.call());
+    // 写入申请头
+    httpCodec.writeRequestHeaders(request);
+    realChain.eventListener().requestHeadersEnd(realChain.call(), request);
+
+    Response.Builder responseBuilder = null;
+    if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
+      // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
+      // Continue" response before transmitting the request body. If we don't get that, return
+      // what we did get (such as a 4xx response) without ever transmitting the request body.
+      if ("100-continue".equalsIgnoreCase(request.header("Expect"))) {
+        httpCodec.flushRequest();
+        realChain.eventListener().responseHeadersStart(realChain.call());
+        responseBuilder = httpCodec.readResponseHeaders(true);
+      }
+
+      if (responseBuilder == null) {
+        // Write the request body if the "Expect: 100-continue" expectation was met.
+        realChain.eventListener().requestBodyStart(realChain.call());
+        long contentLength = request.body().contentLength();
+        CountingSink requestBodyOut =
+            new CountingSink(httpCodec.createRequestBody(request, contentLength));
+        // 如果需要写入 request body 的话，则写入
+        BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
+
+        request.body().writeTo(bufferedRequestBody);
+        bufferedRequestBody.close();
+        realChain.eventListener()
+            .requestBodyEnd(realChain.call(), requestBodyOut.successfulCount);
+      } else if (!connection.isMultiplexed()) {
+        // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
+        // from being reused. Otherwise we're still obligated to transmit the request body to
+        // leave the connection in a consistent state.
+        streamAllocation.noNewStreams();
+      }
+    }
+	// 完成请求的写入
+    httpCodec.finishRequest();
+
+    if (responseBuilder == null) {
+      realChain.eventListener().responseHeadersStart(realChain.call());
+      // 获取并构造 response
+      responseBuilder = httpCodec.readResponseHeaders(false);
+    }
+
+    Response response = responseBuilder
+        .request(request)
+        .handshake(streamAllocation.connection().handshake())
+        .sentRequestAtMillis(sentRequestMillis)
+        .receivedResponseAtMillis(System.currentTimeMillis())
+        .build();
+
+    int code = response.code();
+    if (code == 100) {
+      // server sent a 100-continue even though we did not request one.
+      // try again to read the actual response
+      responseBuilder = httpCodec.readResponseHeaders(false);
+
+      response = responseBuilder
+              .request(request)
+              .handshake(streamAllocation.connection().handshake())
+              .sentRequestAtMillis(sentRequestMillis)
+              .receivedResponseAtMillis(System.currentTimeMillis())
+              .build();
+
+      code = response.code();
+    }
+
+    realChain.eventListener()
+            .responseHeadersEnd(realChain.call(), response);
+
+    if (forWebSocket && code == 101) {
+      // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
+      response = response.newBuilder()
+          .body(Util.EMPTY_RESPONSE)
+          .build();
+    } else {
+      response = response.newBuilder()
+          .body(httpCodec.openResponseBody(response))
+          .build();
+    }
+
+    if ("close".equalsIgnoreCase(response.request().header("Connection"))
+        || "close".equalsIgnoreCase(response.header("Connection"))) {
+      streamAllocation.noNewStreams();
+    }
+
+    if ((code == 204 || code == 205) && response.body().contentLength() > 0) {
+      throw new ProtocolException(
+          "HTTP " + code + " had non-zero Content-Length: " + response.body().contentLength());
+    }
+
+    return response;
+  }
+```
+
+　　主要部分：
+
+1. 向服务器发送 request header。
+2. 如果有 request body，就向服务器发送。
+3. 读取 response header，先构建一个 Response 对象。
+4. 如果有 response body，就在上一步的基础上加上 body 构造一个新的 Response 对象。
+
+　　核心的工作都是由 HttpCodec 修啊ing完成，而 HttpCodec 实际上利用的是 Okio，而 Okio 实际上还是用的 Socket。
+
+　　其实 Interceptor 的设计也是一种分层的思想，每个 Interceptor 就是一层。为什么要套这么多层呢？分层的思想在 TCP/IP 协议中就体现的淋漓尽致，分层简化了每一层的逻辑，每层只需要关注自己的责任（单一原则思想也在此体现），而各层之间通过约定的接口 / 协议进行合作（面向接口编程思想），共同完成复杂的任务。
+
+
+
+
+
+##### CacheInterceptor 缓存
+
+　　CacheInterceptor 的 intercept 方法：
+
+```java
+  @Override public Response intercept(Chain chain) throws IOException {
+    // 1. 没有网络情况下处理获取缓存
+    // 获取 request 对应缓存的 Response，如果用户没有配置缓存拦截器，则 cacheCandidate == null
+    // 这里的 cache 就是 client.internalCache()，也就是在使用时 OkHttpClient build 的时候调用 cache 方法传入的 cache
+    Response cacheCandidate = cache != null
+        ? cache.get(chain.request())
+        : null;
+	// 执行响应缓存策略
+    long now = System.currentTimeMillis();
+
+    CacheStrategy strategy = new CacheStrategy.Factory(now, chain.request(), cacheCandidate).get();
+    // 如果 networkRequest == null 则说明不适用网络请求
+    Request networkRequest = strategy.networkRequest;
+    // 获取缓存中（CacheStrategy）的 response
+    Response cacheResponse = strategy.cacheResponse;
+
+    if (cache != null) {
+      cache.trackResponse(strategy);
+    }
+	// 缓存无效，关闭资源
+    if (cacheCandidate != null && cacheResponse == null) {
+      closeQuietly(cacheCandidate.body()); // The cache candidate wasn't applicable. Close it.
+    }
+
+    // If we're forbidden from using the network and the cache is insufficient, fail.
+    // networkRquest == null 不使用网络请求，且没有缓存 cacheResponse == null，则返回响应失败的结果
+    if (networkRequest == null && cacheResponse == null) {
+      return new Response.Builder()
+          .request(chain.request())
+          .protocol(Protocol.HTTP_1_1)
+          .code(504)
+          .message("Unsatisfiable Request (only-if-cached)")
+          .body(Util.EMPTY_RESPONSE)
+          .sentRequestAtMillis(-1L)
+          .receivedResponseAtMillis(System.currentTimeMillis())
+          .build();
+    }
+
+    // If we don't need the network, we're done.
+    // 不使用网络，且存在缓存，则直接返回响应
+    if (networkRequest == null) {
+      return cacheResponse.newBuilder()
+          .cacheResponse(stripBody(cacheResponse))
+          .build();
+    }
+	// 有网络的时候的处理
+    // 执行下一个拦截器
+    Response networkResponse = null;
+    try {
+      networkResponse = chain.proceed(networkRequest);
+    } finally {
+      // If we're crashing on I/O or otherwise, don't leak the cache body.
+      if (networkResponse == null && cacheCandidate != null) {
+        closeQuietly(cacheCandidate.body());
+      }
+    }
+	// 网络请求返回，更新缓存
+    // If we have a cache response too, then we're doing a conditional get.
+    // 如果存在缓存，则更新
+    if (cacheResponse != null) {
+      // 304 响应码，自从上次请求后，请求需要响应的内容未发生改变
+      if (networkResponse.code() == HTTP_NOT_MODIFIED) {
+        Response response = cacheResponse.newBuilder()
+            .headers(combine(cacheResponse.headers(), networkResponse.headers()))
+            .sentRequestAtMillis(networkResponse.sentRequestAtMillis())
+            .receivedResponseAtMillis(networkResponse.receivedResponseAtMillis())
+            .cacheResponse(stripBody(cacheResponse))
+            .networkResponse(stripBody(networkResponse))
+            .build();
+        networkResponse.body().close();
+
+        // Update the cache after combining headers but before stripping the
+        // Content-Encoding header (as performed by initContentStream()).
+        cache.trackConditionalCacheHit();
+        cache.update(cacheResponse, response);
+        return response;
+      } else {
+        closeQuietly(cacheResponse.body());
+      }
+    }
+	// 缓存 response
+    Response response = networkResponse.newBuilder()
+        .cacheResponse(stripBody(cacheResponse))
+        .networkResponse(stripBody(networkResponse))
+        .build();
+
+    if (cache != null) {
+      if (HttpHeaders.hasBody(response) && CacheStrategy.isCacheable(response, networkRequest)) {
+        // Offer this request to the cache.
+        CacheRequest cacheRequest = cache.put(response);
+        return cacheWritingResponse(cacheRequest, response);
+      }
+
+      if (HttpMethod.invalidatesCache(networkRequest.method())) {
+        try {
+          cache.remove(networkRequest);
+        } catch (IOException ignored) {
+          // The cache cannot be written.
+        }
+      }
+    }
+
+    return response;
+  }
+```
+
+　　CacheInterceptor 的 intercept 方法可以分为两部分：
+
+* 在无网络的情况下如何处理获取缓存
+  1. 如果用户自己设置了缓存拦截器，cacheCandidate = cache.Response 获取用户自己存储的 Response，否则 cacheCandidate = null，同时从 CacheStrategy 获取 cacheResponse 和 networkRequest。
+  2. 如果 cacheCandidate != null 而 cacheResponse == null 说明缓存无效，清除 cacheCandidate 缓存。
+  3. 如果 networkRequest == null 说明没有网络，cacheResponse == null 说明没有缓存，在这种情况下，返回失败的信息，责任链此时也就终止（责任链上还剩下 ConnectInterceptor，如果不使用 WebSocket，还有 client.networkInterceptors，还有 CallServerInterceptor），不会再往下继续执行。
+  4. 如果 networkRequest == null 说明没有网络，但是 cacheReponse != null 说明有缓存，在这种情况下，返回缓存的信息，责任链此时也就终止（责任链上还剩下 ConnectInterceptor，如果不使用 WebSocket，还有 client.networkInterceptors，还有 CallServerInterceptor），不会再往下继续执行。
+* 在有网络的情况下如何处理获取缓存
+  1. 执行下一个拦截器，也就是请求网络。
+  2. 责任链执行完毕后，会返回最终响应数据，如果缓存存在更新缓存，如果缓存不存在，则加入到缓存中去。
+
+　　OkHttp 的缓存是封装了一个 Cache 类来实现具体的缓存逻辑，它利用 DiskLruCache，用磁盘上的有限大小空间进行缓存，按照 LRU 算法进行缓存淘汰。
+
+　　这样就体现除了责任链的好处，当责任链执行完毕，拦截器可以想要拿到最终的数据做其他的逻辑处理等操作，也不用再做其他的调用放啊逻辑了，直接在当前的拦截器就可以拿到最终的数据。
+
+### 同步请求
+
+　　OkHttp 的同步请求调用的是 RealCall 的 execute() 方法：
+
+```java
+// 同步执行请求，直接返回一个请求的结果  
+@Override public Response execute() throws IOException {
+   	// 避免重复执行
+    synchronized (this) {
+      if (executed) throw new IllegalStateException("Already Executed");
+      executed = true;
+    }
+    captureCallStackTrace();
+    // 调用监听的开始方法
+    eventListener.callStart(this);
+    try {
+      // 交给调度器去执行
+      client.dispatcher().executed(this);
+      // 获取请求的返回数据
+      Response result = getResponseWithInterceptorChain();
+      if (result == null) throw new IOException("Canceled");
+      return result;
+    } catch (IOException e) {
+      eventListener.callFailed(this, e);
+      throw e;
+    } finally {
+      // 执行调度器的完成方法，移除队列
+      client.dispatcher().finished(this);
+    }
+  }
+```
+
+　　同步请求主要做了几件事：
+
+1. synchronized (this) 避免重复执行。
+
+2. client.dispatcher().executed(this)，实际上调度器只是将 call 加入到同步执行队列中。
+
+   ```java
+     /** Used by {@code Call#execute} to signal it is in-flight. */
+     synchronized void executed(RealCall call) {
+       runningSyncCalls.add(call);
+     }
+   ```
+
+3. 调用 getResponseWithInterceptorChain() 执行责任链，请求网络得到响应数据，返回给用户。
+
+4. client.dispatcher().finished(this) 执行调度器的完成方法，移除队列。
+
+　　同步请求和异步请求的原理是一样的，都是在 getResponseWithInterceptorChain() 函数中通过 Interceptor 链条来实现的网络逻辑，只是异步是通过 ExectorService （线程池）实现。
+
+## 返回数据的获取
+
+　　在同步（Call # execute() 执行之后）或者异步（Call # onResponse() 回调中）请求完成之后，就可以从 Response 对象中获取到响应数据了，包括 Http status code、status message、response header、response body 等。这里 body 部分最为特殊，因为服务器返回的数据可能非常大，所以必须通过数据流的方式来进行访问（也提供了诸如 string() 和 bytes() 这样的方法将流内的数据一次性读取完毕），而响应中其他部分则可以随意获取。
+
+　　响应 body 被封装到 ResponseBody 类中，该类主要有两点需要注意：
+
+1. 每个 body 只能被消费一次，多次消费会抛出异常。
+2. body 必须被关闭，否则会发生资源泄漏。
+
+　　在 CallServerInterceptor 的 interceptor 方法中：
+
+```java
+      response = response.newBuilder()
+          .body(httpCodec.openResponseBody(response))
+          .build();
+```
+
+　　由 HttpCodec#openResponseBody 提供具体 HTTP 协议版本的响应 body，而 HttpCodec 则是利用 Okio 实现具体的数据 IO 操作。
+
+　　OkHttp 对响应的校验非常严格，Http status line 不能有任何杂乱的数据，否则就会抛出异常。
+
+
+
+## 总结
+
+　　简述 OkHttp 的执行流程：
+
+1. OkHttpClient 实现了 Call.Factory，负责为 Request 创建 call；
+2. RealCall 为 Call 的具体实现，其  enqueue() 异步请求接口通过 Dispatcher() 调度器利用 ExcutorService 实现，而最终进行网络请求时和同步的 execute() 接口一致，都是通过 getResponseWithInterceptorChain() 函数实现。
+3. getResponseWithInterceptorChain() 中利用 Interceptor 链条，责任链模式，分层实现缓存、透明压缩、网络 IO 等功能，最终将响应数据返回给用户。
+4. OkHttp 的实现采用了责任链模式，它包含了一些命令对象和一系列的处理对象，每一个处理对象决定它能处理哪些命令对象，它也知道如何将它不能处理的命令对象传递给该链中的下一个处理对象，该模式还描述了往该处理链的末尾添加新的处理对象的方法。
 
 ## 参考文章
 
