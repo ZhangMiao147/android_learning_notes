@@ -316,8 +316,18 @@ final class CallEnqueueOnSubscribe<T> implements OnSubscribe<Response<T>> {
 ## 问题
 
 1. 调用接口的方法后是怎么发送请求的？这背后发生了什么？
+
+   Retrofit 使用了动态代理给定义的接口设置了代理，当调用接口的方法时，Retrofit 会拦截下来，然后经过一系列处理，比如解析方法的注解等，生成了 call Request 等 OkHttp 所需的资源，最后交给 OkHttp 去发送请求，此间经过 callAdapter、converter 的处理，最后拿到所需要的数据。
+
 2. Retrofit 与 OkHttp 是怎么合作的？
+
+   在 Retrofit 中，ServiceMethod 承载了一个 Http 请求的所有参数，OkHttpCall 为 okhttp3.call 的组合包装，由它们两合作，生成用于 OkHttp 所需的 Request 以及 okhttp3.call，交给 OkHttp 去发送请求。
+
+   可以说 Retrofit 为 OkHttp 再封装了一层，并添加了不少功能以及扩展，减少了开发使用成本。
+
 3. Retrofit 中的数据究竟是怎么处理的？它是怎么返回 RxJava.Observable 的?
+
+   Retrofit 中的数据其实是交给了 callAdapter 以及 converter 去处理，callAdapter 负责把 okHttpCall 转为用户所需的 Observable 类型，converter 负责把服务器返回的数据专程具体的实体类。
 
 
 
