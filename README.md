@@ -43,6 +43,7 @@
 	  * [Android单元测试之四：仪器化测试](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/test/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95/Android%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E4%B9%8B%E5%9B%9B%EF%BC%9A%E4%BB%AA%E5%99%A8%E5%8C%96%E6%B5%8B%E8%AF%95.md)
 * 适配
   * [Android4.4.4的setResult失效的问题适配](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/adaptation/Android4.4.4%E7%9A%84setResult%E5%A4%B1%E6%95%88%E7%9A%84%E9%97%AE%E9%A2%98%E9%80%82%E9%85%8D.md)
+  * [Android 4.4.4 支持分包后找不到勒的问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/adaptation/Android%204.4.4支持分包后找不到类的问题.md)
 * Gradle
   * [api 与 implementation 的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/gradle/api%E4%B8%8Eimplementation%E7%9A%84%E5%8C%BA%E5%88%AB.md)
 * 其他
@@ -89,7 +90,8 @@
 * Retrofit
   * [Retrofit 官方文档翻译](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/Retrofit/Retrofit官方文档翻译.md)
   * [Retrofit 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/Retrofit/Retrofit知识.md)
-
+* [Retrofit 源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/Retrofit/Retrofit源码分析.md)
+  
 * RabbitMQ
   * [RabbitMQ 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/MessageQueue/RabbitMQ知识.md)
   * [提高 RabbitMQ 传输消息数据的可靠性途径](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/MessageQueue/提高RabbitMQ传输消息数据的可靠性途径.md)
@@ -257,7 +259,8 @@
   * 第 4 章 [接口隔离原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC4%E7%AB%A0-%E6%8E%A5%E5%8F%A3%E9%9A%94%E7%A6%BB%E5%8E%9F%E5%88%99.md)
   * 第 5 章 [迪米特原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC5%E7%AB%A0-%E8%BF%AA%E7%B1%B3%E7%89%B9%E6%B3%95%E5%88%99.md)
   * 第 6 章 [开闭原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC6%E7%AB%A0-%E5%BC%80%E9%97%AD%E5%8E%9F%E5%88%99.md)
-
 * 图解 HTTP 
   * 第 1 章 [了解 Web 及网络基础](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第1章-了解Web及网络基础.md)
+* Android 开发艺术探索
+  * 第 1 章 [Activity 的生命周期和启动模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android开发艺术探索/第1章-Activity%20的声明周期和启动模式.md)
 
