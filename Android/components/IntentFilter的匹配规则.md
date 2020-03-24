@@ -25,13 +25,13 @@
 　　data 主要是由 URI 和 mimeType 组成的。
 
 　　URL 的结构如下：
-```
+```xml
 <scheme> :// < host> : <port> [<path>|<pathPrefix>|<pathPattern>]
 ```
 
 　　这些值在 Manifest 文件中可以定义，语法如下：
 
-```
+```xml
 <data android:scheme="string"
       android:host="string"
       android:port="string"
@@ -45,3 +45,4 @@
 ## 2. 参考文章
 1. [Activity 必知必会](https://juejin.im/post/5aef0d215188253dc612991b)
 2. [史上最全intent-filter匹配规则，没有之一](https://www.jianshu.com/p/7ebc63399968)
+

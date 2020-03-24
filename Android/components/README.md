@@ -32,6 +32,6 @@
 * IntentFilter 的匹配规则 - 整理中
 * Window、Activity、DectorView 以及ViewRoot 之间的关系
 * AMS、WMS 与 PMS
-* 进程保活
+* 守护进程
 
 
