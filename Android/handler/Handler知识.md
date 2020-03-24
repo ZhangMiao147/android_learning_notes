@@ -389,6 +389,48 @@ public final class ActivityThread {
 
 ### 获取消息
 
+　　当发送了消息后，在 MessageQueue 维护了消息队列，然后在 Looper 中通过 loop() 方法，不断地获取消息。
+
+　　loop() 方法中最重要的是调用了 queue.next() 方法，通过该方法来提取下一条信息。
+
+　　下来来看 next() 方法的具体流程。
+
+#### MessageQueue#next()
+
+
+
+　　nativePollOnce 是阻塞操作，启动 nextPollTimeoutMillis 代表下一个消息到来前，还需要等待的时长；当 nextPollTimeoutMillis =-1 时，表示消息队列中无消息，会一直等待下去。
+
+　　可以看出 next() 方法根据消息的处罚时间，获取下一条需要执行的消息，队列中消息为空时 ，则会进行阻塞操作。
+
+### 分发消息
+
+　　在 loop() 方法中，获取到下一条消息后，执行 msg.target.dispatchMessage(msg)，来分发消息到目标 Handler 对象。
+
+　　下面就来具体看 dispatchMessage(msg) 方法的执行流程。
+
+#### dispatchMessage()
+
+
+
+　　分发消息流程：
+
+1. 当 Message 的 msg.callback 不为空时，则回调方法 msg.callback.run()。
+2. 当 Handler 的 mCallback 不为空时，则回调 mCallback.handleMessage(msg) 。
+3. 最后调用 Handler 自身的回调方法 handleMessage()，该方法默认为空，Handler 子类通过覆写该方法完成具体的逻辑。
+
+　　消息分发的优先级：
+
+1. Message 的回调方法：message.callback.run()，优先级最高。
+2. Handler 中 Callback 的回调方法：Handler.mCallback.handleMessage(msg)，优先级仅次于 1。
+3. Handler 的默认方法：Handler.handleMessage(msg)，优先级最低。
+
+　　对于很多情况下，消息分发后的处理方法时第 3 种情况，即 Handler.handleMessage()，一般地往往通过覆写该方法从而实现自己的业务逻辑。
+
+## 消息机制的运行过程图
+
+![](image/消息机制的运行过程图.png)
+
 
 
 
