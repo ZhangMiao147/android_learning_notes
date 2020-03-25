@@ -789,19 +789,25 @@ protected void onDestroy() {
 
 ### 2. 为什么能在主线程直接使用 Handler，而不需要创建 Looper？
 
+　　Android 上一个应用的入口应该是 ActivityThread，和普通的 Java 类一样，入口是一个 main  方法
+
 　　在 ActivityThread.main() （ActivityThread 一个应用开始的类）方法中有如下代码：
 
 ```java
     public static void main(String[] args) {
-        // ...
+        ...
+      	// 创建 Looper 和 MessageQueue 对象，用来处理主线程消息
         Looper.prepareMainLooper();
+      	// 创建 ActivityThread 对象
         ActivityThread thread = new ActivityThread();
+      	// 建立 Binder 通道（创建新线程）
         thread.attach(false);
 
         if (sMainThreadHandler == null) {
             sMainThreadHandler = thread.getHandler();
         }
-        // ...
+        ...
+        // 消息循环运行
         Looper.loop();
         
         throw new RuntimeException("Main thread loop unexpectedly exited");
@@ -824,6 +830,8 @@ protected void onDestroy() {
 
 　　可以看到在 ActivityThread 里调用了 Looper.prepareMainLooper() 方法创建了主线程的 Looper，并且调用了 loop() 方法，所以可以在主线程中直接使用 Handler 了。
 
+　　主线程（UI）的 Looper 并且启动它，然后就可以处理子线程和其他组件发来的消息了。
+
 ### 3. 主线程的 Looper 不允许退出
 
 　　如果尝试退出主线程的 Looper，会得到以下错误：
@@ -838,9 +846,23 @@ Caused by: java.lang.IllegalStateException: Main thread not allowed to quit.
 
 
 
-### Android 主线程是如何管理子线程消息的
+### 为什么祝线程不会因为 Looper.loop() 里的死循环卡死或者不能处理其他事务？
 
+1. 为什么不会卡死？
 
+   handler 机制是使用 pipe 来实现的，祝线程没有消息处理时会阻塞在管道的读端。
+
+   binder 线程会往祝线程消息队列里添加消息，然后往关岛写端写一个字段，这样就能唤醒主线程从管道读端返回，也就是说 queue.next() 会调用返回。
+
+   主线程大多数都是出于休眠状态，并不会消耗大量 CPU 资源。
+
+2. 既然是死循环又如何去处理其他事务呢？
+
+   答案是通过创建新线程的方式。
+
+   在 main() 方法里调用了 thread.attach(false)，这里便会创建一个 Binder 线程（具体是指 ApplicationThread，Binder 的服务端，用于接收系统服务 AMS 发送来的事件），该 Binder 线程通过 Handler 将 Message 发送给主线程。
+
+   ActivityThread 对应的 Handler 是一个内部类 H，里面包含了启动 Acitivity、处理 Activity 生命周期等方法。
 
 
 
