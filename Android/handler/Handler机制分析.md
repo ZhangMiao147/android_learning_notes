@@ -1,17 +1,17 @@
-# 关于 Handler
+# Handler 机制分析
 
 ## 1. 消息机制概述
 
-### Android 中线程的分类
+### 1.1. Android 中线程的分类
 
 1. 带有消息队列，用来执行循环性任务（例如主线程、android.os.HandlerThread）。
 2. 没有消息队列，用来执行一次性任务（例如 java.lang.Thread）。
 
-### 1.1. 消息机制的模型
+### 1.2. 消息机制的模型
 
 　　消息机制主要包含：MessageQueue、Handler 和 Looper 这三大部分，以及 Message。
 
-#### 1.1.1. Message
+#### 1.2.1. Message
 
 　　需要传递的消息，可以传递数据。
 
@@ -25,13 +25,17 @@
 
 　　用 message.what 来标识信息，以便用不同方式处理 message。
 
-#### 1.1.2. MessageQueue
+#### 1.2.2. MessageQueue
 
-　　消息队列，但是它的内部实现并不是用的队列，实际上是通过一个单链表的数据结构来维护消息列表，因为单链表在插入和删除上比较有优势。主要功能向消息池投递消息（MessageQueue.enqueueMessage）和取走消息池的消息（MessageQueue.next）。
+　　MessageQueue 是一个低等级的持有 Message 集合的类，被 Looper 分发。
 
-　　负责消息的入队出队。
+　　Message 并不是直接加到 MessageQueue 的，而是通过 Handler 对象和 Looper 关联到一起。可以通过 Looper.myQueue() 方法来检索当前线程的 MessageQueue。
 
-#### 1.1.3. Handler
+　　MessageQueue 的内部存储了一组消息，其以队列的形式对外提供插入和删除的工作，虽然叫做消息队列，但是它的内部存储结构并不是真正的队列，而是采取单链表的数据结构来存储列表，因为单链表在插入和删除上比较有优势。
+
+　　主要功能向消息池投递消息（MessageQueue.enqueueMessage）和取走消息池的消息（MessageQueue.next）。
+
+#### 1.2.3. Handler
 
 　　消息辅助类，主要功能向消息池发送各种消息事件（Hnadler sendMessage）和处理相应消息事件（Handler.handleMessage）。
 
@@ -39,31 +43,14 @@
 
 　　每个 Handler 都会跟一个线程绑定，并与该线程的 MessageQueue 关联在一起，从而实现消息的管理以及线程间通信。
 
-#### 1.1.4. Looper
+#### 1.2.4. Looper
 
 　　不断循环执行（Looper.loop），从MessageQueue 中读取消息，按分发机制将消息分发给目标处理者。
 
-#### 消息机制的架构
-　　消息机制的运行流程：在子线程执行完耗时操作，当 Handler 发送消息时，将会调用 MessageQueue.enqueueMessae，向消息队列中添加消息。当通过 Looper.loop 开启循环后，会不断地从线程池中读取消息，即调用 MessageQueue.next，然后调用目标 Handler(即发送该消息的 Handler)的 dispatchMessage 方法传递消息，然后返回到 Handler 所在线程，目标 Handler 收到消息，调用 handleMessage 方法，接收消息，处理消息。
-
-![](image/消息机制的框架.png)
-
-　　Message、Handler 和 Looper 三者之间的关系：每个线程中只能存在一个 Looper，Looper 是保存在 ThreadLocal 中的。主线程（UI 线程）已经创建了一个 Looper，所以在主线程不需要再创建 Looper，但是在其他线程中需要创建 Looper。每个线程中可以有多了 Handler，即一个 Looper 可以处理来自多个 Handler 的消息。Looper 中维护一个 MessageQueue，来维护消息队列，消息队列中的 Message 可以来自不同的 Handler。
-
-　　消息机制的整体架构图：
-![](image/消息架构图.png)
-
-　　Looper 有一个 MessageQueue 消息队列；MessageQueue 有一组待处理的 Message；Message 中记录发送和处理消息的 Handler；Handler 中有 Looper 和 MessageQueue。
-
-### 基于消息的异步任务接口
-
-1. android.os.HandlerThread
-2. android.os.AyncTask
-
-## Handler 的基本用法
+## 2. Handler 的基本用法
 
 ```java
-android.os.Handler handler = new Handler(){
+Handler handler = new Handler(){
   @Override
   public void handleMessage(final Message msg) {
     //这里接受并处理消息
@@ -76,53 +63,92 @@ handler.post(runnable);
 
 　　实例化一个 Handler 重写 handleMessage 方法，然后在需要的时候调用它的 send 以及 post 系列方法就可以了，非常简单易用，并且支持延时消息。
 
+## 3. 消息机制的架构
 
+　　消息机制的运行流程：在子线程执行完耗时操作，当 Handler 发送消息时，将会调用 MessageQueue.enqueueMessae，向消息队列中添加消息。当通过 Looper.loop 开启循环后，会不断地从线程池中读取消息，即调用 MessageQueue.next，然后调用目标 Handler ( 即发送该消息的 Handler ) 的 dispatchMessage 方法传递消息，然后返回到 Handler 所在线程，目标 Handler 收到消息，调用 handleMessage 方法，接收消息并处理消息。
 
-## 消息机制的源码解析
+![](image/消息机制的框架.png)
 
-### Looper
+　　Message、Handler 和 Looper 三者之间的关系：每个线程中只能存在一个 Looper，Looper 是保存在 ThreadLocal 中的。
+
+　　主线程（UI 线程）已经创建了一个 Looper，所以在主线程不需要再创建 Looper，但是在其他线程中需要创建 Looper。
+
+　　每个线程中可以有多个 Handler，即一个 Looper 可以处理来自多个 Handler 的消息。
+
+　　Looper 中维护一个 MessageQueue，来维护消息队列，消息队列中的 Message 可以来自不同的 Handler。
+
+### 3.1. 消息机制的整体架构图
+
+![](image/消息架构图.png)
+
+　　Looper 有一个 MessageQueue 消息队列；MessageQueue 有一组待处理的 Message；Message 中记录发送和处理消息的 Handler；Handler 中有 Looper 和 MessageQueue。
+
+### 3.2. 基于消息的异步任务接口
+
+1. android.os.HandlerThread
+2. android.os.AyncTask
+
+## 4. 消息机制的源码解析
+
+### 4.1. Looper
 
 　　要想使用消息机制，首先要创建一个 Looper。
 
 　　用于在指定线程中运行一个消息循环，一旦有新任务则执行，执行完继续等待下一个任务，即变成 Looper 线程。
 
-#### 初始化 Looper
+#### 4.1.1. 初始化 Looper
 
 　　无参情况下，默认调用 prepare(true)，表示的是这个 Looper 可以退出，而对于 false 的情况则表示当前 Looper 不可以退出。
 
 ```java
 public final class Looper {
+    // 创建 Looper 对象
     public static void prepare() {
         prepare(true);
     }
 
     private static void prepare(boolean quitAllowed) {
+        // 一个线程只能有一个 looper
+        // 使用 ThreadLocal 来存储 Looper 对象
         if (sThreadLocal.get() != null) {
             throw new RuntimeException("Only one Looper may be created per thread");
         }
         sThreadLocal.set(new Looper(quitAllowed));
     }
+    
+   	private Looper(boolean quitAllowed) {
+        mQueue = new MessageQueue(quitAllowed);
+        mThread = Thread.currentThread();
+    }
 }
 ```
-　　Looper 提供了 Looper.prepare() 方法来创建 Looper，并且会借助 THreadLocal 来实现与当前线程的绑定功能。Looper.loop() 则会开始不断尝试从 MessageQueue 中获取 Message，并且分发给对应的 Handler。
+　　Looper 提供了 Looper.prepare() 方法来创建 Looper，并且会借助 ThreadLocal 来实现与当前线程的绑定功能。Looper.loop() 则会开始不断尝试从 MessageQueue 中获取 Message，并且分发给对应的 Handler。
 
 　　也就是说 Handler 跟线程的关联是靠 Looper 来实现的。
 
-　　这里看出，不能重复创建 Looper，只能创建一个。创建 Looper，并保存在 ThreadLocal。其中 ThreadLocal 是线程本地存储区（Thred Local Storage，简称为 TLS），每一个线程都有自己的私有的本地存储区域，不同线程之间彼此不能访问对方的 TSL 区域。
+　　这里看出，不能重复创建 Looper，只能创建一个。
 
-1. prepare() 其核心就是将 looper 对象定义为 ThreadLocal。
-2. 一个Thread 只能有一个 Looper 对象。
-3. prepare() 方法会调用 Looper d 的构造方法，初始化一个消息队列，并且指定当前线程。
+　　创建 Looper，并保存在 ThreadLocal。其中 ThreadLocal 是线程本地存储区（Thred Local Storage，简称为 TLS），每一个线程都有自己的私有的本地存储区域，不同线程之间彼此不能访问对方的 TSL 区域。
 
-　　ThreadLocal 并不是一个 Thread，而是 Thread 的局部变量。当使用 ThreadLocal 维护变量时，ThreadLocal 为每个使用该变量的线程提供独立的变量副本，所以每一个线程都可以独立地改变自己的副本，而不会影响其他线程所对应的副本。
+　　prepare() 方法会调用 Looper 的构造方法，初始化一个消息队列，并且指定当前线程。
 
-　　从线程的角度看，目标变量就像是线程的本地变量。
+##### 4.1.1.1. ThreadLocal
 
-#### MessageQueue
+　　ThreadLocal 并不是一个 Thread，而是 Thread 的局部变量，它的作用是可以在每个线程中存储数据。
 
-　　MessageQueue 是一个低等级的持有 Message 集合的类，被 Looper 分发。Message 并不是直接加到 MessageQueue 的，而是通过 Handler 对象和 Looper 关联到一起。可以通过 Looper.myQueue() 方法来检索当前线程的 MessageQueue。
+　　当使用 ThreadLocal 维护变量时，ThreadLocal 为每个使用该变量的线程提供独立的变量副本，所以每一个线程都可以独立地改变自己的副本，而不会影响其他线程所对应的副本。
 
-#### 开启 Looper
+　　Handler 创建的时候会采用当前线程的 Looper 来构造消息循环系统，Handler 内部需要使用 ThreadLocal 来获取当前线程的 Looper。
+
+　　ThreadLocal 可以在不同的线程之中互不干扰的存储并提供数据，通过 ThreadLocal 可以轻松获取每个线程的 Looper。
+
+　　需要注意的是，线程是默认没有 Looper 的，如果需要使用 Handler 就必须为线程创建 Looper。
+
+　　主线程，也就是 UI 线程，它就是 ActivityThread，ActivityThread 被创建时就会初始化 Looper，这也是在主线程中默认可以使用 Handler 的原因。
+
+　　ThreadLocal 是一个线程内部的数据存储类，通过它可以在指定的线程中存储数据，数据存储以后，只是在指定线程中可以获取到存储的数据，对于其他线程来说无法获取到数据。
+
+#### 4.1.2. 开启 Looper
 
 ```java
 public final class Looper {
@@ -461,6 +487,8 @@ public class Handler {
     }
 ```
 
+　　sendMessageAtTime() 方法接收两个参数，其中 msg 参数就是发送的 Message 对象，而 uptimeMillis 参数则标识发送消息的时间，它的值等于自系统开机到当前时间的毫秒数再加上延迟时间。如果调用的不是 sendMessageDelayed() 方法，延迟时间就为 0 ，然后将这两个参数都传递到 MessageQueue 的 enqueueMessage() 方法中。
+
 　　可以看到 sendMessageAtTime() 方法的作用很简单，就是调用 MessageQueue 的 enqueueMessage() 方法，往消息队列中添加一个消息。
 
 　　接下来看 MessageQueue 的 enqueueMessage() 方法的具体执行逻辑。
@@ -529,6 +557,8 @@ public class Handler {
 　　MessageQueue 是按照 Message 触发时间的先后顺序排列的，队头的消息是将要最早触发的消息。当有消息需要加入消息队列时，会从队列头开始遍历，直到找到消息应该插入的合适位置，以保证所有消息的时间顺序。
 
 　　调用 enqueueMessage(queue, msg, uptimeMillis) 方法，给 msg 对象的 target 变量赋值为当前的 Handler 对象，然后放入到 MessageQueue。
+
+　　MessageQueue 并没有使用一个集合把所有的消息都保存起来，它只使用了一个 mMessages 对象表示当前待处理的消息。所谓的入队其实就是将所有的消息按时间来进行排序，这个时间就是 uptimeMillis 参数。具体的操作方法就根据时间的顺序调用 msg.next，从而为每一个消息指定它的下一个消息是什么。当通过 sendMessageAtFrointOfQueue() 放啊来发送消息时，它也会调用 enqueueMessage() 来让消息入队，只不过时间为 0，这时会把 mMessages 赋值为新入队的这条消息，然后将这条消息的 next 指定为刚才的 mMessages，这样也就完成了添加消息到队列头部的操作。
 
 ### 获取消息
 
@@ -715,6 +745,97 @@ public class Handler {
 　　消息处理的方法调用栈：Looper.loop() -> MessageQueue.next() -> Message.target.dispatchMessage() -> Handler.handleMessage() ，很显然，Handler.handleMessage() 所在的线程最终由调用 Looper.loop() 的线程所决定。平时使用 Handler 的时候会从异步发送消息到 Handler，而 Handler 的 handleMessage() 方法是在主线程调用的，所以消息就从异步线程切换到了主线程。
 
 　　最终又调用到了重写的 handleMessage(Message msg) 方法来做处理子线程发来的消息或者调用 handleCallback(Message message) 去执行子线程中定义并传过来的操作。
+
+### 在子线程中进行 UI 操作
+
+　　除了 handle 的 sendMessage() 方法外，还有以下几种方式可以在子线程种进行 UI 操作：
+
+1. Handler 的 post() 方法
+2. View 的 post() 方法
+3. Activity 的 runOnUiThread() 方法
+
+#### Handler#post()
+
+```java
+    public final boolean post(Runnable r)
+    {
+       return  sendMessageDelayed(getPostMessage(r), 0);
+    }
+    private static Message getPostMessage(Runnable r) {
+        Message m = Message.obtain();
+        m.callback = r;
+        return m;
+    }
+```
+
+　　还是调用了 sendMessageDelayed() 去发送一条消息，并且还使用了 getPostMessage() 方法将 Runnable 对象转换成一条消息。将消息的 callback 字段指定为传入的 Runnable 对象，在 Handler 的 dispatchMessage() 方法中，如果 Message 的 callback 为 null 才会去调用 handleMessage() 方法，否则就调用 handleCallBack 方法：
+
+```java
+private static void handleCallback(Message message) {
+    message.callback.run();
+}
+```
+
+　　就是直接调用了传入的 Runnable 对象的 run() 方法。因此在子线程中通过 handler 的 post() 方法进行 UI 操作：
+
+```java
+public class MainActivity extends Activity {
+ 
+	private Handler handler;
+ 
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
+		handler = new Handler();
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				handler.post(new Runnable() {
+					@Override
+					public void run() {
+						// 在这里进行UI操作
+					}
+				});
+			}
+		}).start();
+	}
+}
+```
+
+#### View#post
+
+```java
+    public boolean post(Runnable action) {
+        final AttachInfo attachInfo = mAttachInfo;
+        if (attachInfo != null) {
+            return attachInfo.mHandler.post(action);
+        }
+
+        // Postpone the runnable until we know on which thread it needs to run.
+        // Assume that the runnable will be successfully placed after attach.
+        getRunQueue().post(action);
+        return true;
+    }
+```
+
+　　View 的 post 方法就是调用了 Handler 中 post() 方法。
+
+#### Activity#runOnUiThread()
+
+```java
+   public final void runOnUiThread(Runnable action) {
+        if (Thread.currentThread() != mUiThread) {
+            mHandler.post(action);
+        } else {
+            action.run();
+        }
+    }
+```
+
+　　如果当前的线程不等于 UI 线程（主线程），就去调用 Handler 的 post() 方法，否则就直接调用 Runnable 对象的 run() 方法。 
+
+
 
 ### 消息机制的运行过程图
 
@@ -984,6 +1105,4 @@ public final class MainThread {
 [Android Handler 消息机制（解惑篇）](https://juejin.im/entry/57fb3c53128fe100546ea4f2)
 
 [Android异步消息处理机制完全解析，带你从源码的角度彻底理解](https://blog.csdn.net/guolin_blog/article/details/9991569)
-
-[Android的消息机制之ThreadLocal的工作原理](https://blog.csdn.net/singwhatiwanna/article/details/48350919)
 
