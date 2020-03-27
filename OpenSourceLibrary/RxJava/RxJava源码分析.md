@@ -28,7 +28,8 @@
        });
 ```
 
-#### 1.1. 先看 Observable.create（） 方法做了什么
+### 1.1. 先看 Observable.create（） 方法做了什么
+
 ```java
 public class Observable< T > {
 
@@ -45,12 +46,86 @@ public class Observable< T > {
 ```
 　　Observable.create() 方法返回了一个 Observable 实例对象，并且将参数 OnSubscribe< T > f 存储为成员 onSubscribe。
 
-#### 1.2 查看 Obervable.subscribe() 方法
+
+
+### Observable#just
+
+```java
+    public static <T> Observable<T> just(final T value) {
+        return ScalarSynchronousObservable.create(value);
+    }
+
+    public static <T> ScalarSynchronousObservable<T> create(T t) {
+        return new ScalarSynchronousObservable<T>(t);
+    }
+
+    protected ScalarSynchronousObservable(final T t) {
+        super(RxJavaHooks.onCreate(new JustOnSubscribe<T>(t)));
+        this.t = t;
+    }
+```
+
+　　创建的是 ScalarSynchronousObservable ，是一个 Observable 的子类。
+
+　　所以传给父类构造函数的就是 JustOnSubscribe，一个 onSubscribe 的实现类。
+
+　　just() 方法将传入的参数依次发送出来。
+
+　　Observable 的构造函数接受一个 OnSubscribe，它是一个回调，会在 Observable#subscribe 中使用，同于通知 observable 自己被订阅。
+
+### 1.2 Obervable#subscribe()
+
 ```java
 public class Observable< T > {
 
 	...
+    public final Subscription subscribe(final Action1<? super T> onNext) {
+        if (onNext == null) {
+            throw new IllegalArgumentException("onNext can not be null");
+        }
 
+        Action1<Throwable> onError = InternalObservableUtils.ERROR_NOT_IMPLEMENTED;
+        Action0 onCompleted = Actions.empty();
+        // 对传入的 Action 进行包装，包装为 ActionSubscriber，一个 Subscriber 的实现类。
+        return subscribe(new ActionSubscriber<T>(onNext, onError, onCompleted));
+    }
+    
+    public final Subscription subscribe(final Action1<? super T> onNext, final Action1<Throwable> onError) {
+        if (onNext == null) {
+            throw new IllegalArgumentException("onNext can not be null");
+        }
+        if (onError == null) {
+            throw new IllegalArgumentException("onError can not be null");
+        }
+
+        Action0 onCompleted = Actions.empty();
+        return subscribe(new ActionSubscriber<T>(onNext, onError, onCompleted));
+    }
+
+    public final Subscription subscribe(final Action1<? super T> onNext, final Action1<Throwable> onError, final Action0 onCompleted) {
+        if (onNext == null) {
+            throw new IllegalArgumentException("onNext can not be null");
+        }
+        if (onError == null) {
+            throw new IllegalArgumentException("onError can not be null");
+        }
+        if (onCompleted == null) {
+            throw new IllegalArgumentException("onComplete can not be null");
+        }
+
+        return subscribe(new ActionSubscriber<T>(onNext, onError, onCompleted));
+    }
+    
+    public final Subscription subscribe(final Observer<? super T> observer) {
+        if (observer instanceof Subscriber) {
+            return subscribe((Subscriber<? super T>)observer);
+        }
+        if (observer == null) {
+            throw new NullPointerException("observer is null");
+        }
+        return subscribe(new ObserverSubscriber<T>(observer));
+    }
+    
     public final Subscription subscribe(Subscriber<? super T> subscriber) {
         return Observable.subscribe(subscriber, this);
     }
@@ -59,6 +134,7 @@ public class Observable< T > {
         ...
 
         // new Subscriber so onStart it
+        // 调用 subscriber.onStart() 通知 subscriber 它已经和 onservable 连接起来了。在这里就直到，onStart() 就是在调用 subscriber() 的线程执行的。
         subscriber.onStart();
 
         /*
@@ -66,6 +142,7 @@ public class Observable< T > {
          * to user code from within an Observer"
          */
         // if not already wrapped
+        // 如果传入的 subscriber 不是 SafeSubscriber，那就把它包装为一个 SafeSubscriber
         if (!(subscriber instanceof SafeSubscriber)) {
             // assign to `observer` so we return the protected version
             subscriber = new SafeSubscriber<T>(subscriber);
@@ -75,7 +152,10 @@ public class Observable< T > {
         // add a significant depth to already huge call stacks.
         try {
             // allow the hook to intercept and/or decorate
+            // 调用的其实就是 observable.onSubscribe.call(subscribe)。
+            // 在调用 subscribe() 的线程执行 call 回调
             hook.onSubscribeStart(observable, observable.onSubscribe).call(subscriber);
+            // 返回 subscriber，subscriber 继承了 Subscription，用于取消订阅。
             return hook.onSubscribeReturn(subscriber);
         } catch (Throwable e) {
             ...
@@ -84,7 +164,12 @@ public class Observable< T > {
 	...
 }
 ```
+　　SafeSubscriber 的作用：保证 Subscriber 实例遵循 Observable contract。
+
+　　subscribe() 的重载方法很多，但是最后都会调用到 Subscription subscribe(Subscriber<? super T> subscriber) 方法中。
+
 　　调用 subscribe() 方法时，如果 subscriber 不是 SafeSubscriber 类型，就会将 subscriber 设置为 subscriber 对象，之后 hook.onSubscribeStart(observable, observable.onSubscribe) 返回的就是是 observable 的 onSubscribe 变量，而 observable 就是调用上一步 create 返回的 Observable 的实例对象，而它的 onSubscribe 变量就是我们自己传入 create() 方法的参数：
+
 ```java
 new Observable.OnSubscribe<String>() {
             @Override
@@ -114,6 +199,125 @@ new Subscriber<String>() {
        }
 ```
 　　到这里流程就过完了。方法的主导只要由 Observable 来，在创建 Observable 的时候，会将 OnSubscribe(订阅操作)传给 Observable(被观察者) 作为成员变量，在调用 subscribe 的方法（订阅）时，将 Subscriber (观察者)作为变量传入，将 Subscriber （观察者）作为参数调用 onSubscribe 的 call 方法来处理订阅的事件，并且会调用 Subcriber 的相关方法（通知观察者）。
+
+### JustOnSubscribe#call
+
+　　在 just() 的实现里面，创建了一个 JustOnSubscribe，在 subscribe() 方法中执行 hook.onSubscribeStart(observable, observable.onSubscribe).call(subscriber) 方法实际执行的就是 JustOnSubscribe 的 call 方法。
+
+```java
+    static final class JustOnSubscribe<T> implements OnSubscribe<T> {
+        final T value;
+
+        JustOnSubscribe(T value) {
+            this.value = value;
+        }
+
+        @Override
+        public void call(Subscriber<? super T> s) {
+            s.setProducer(createProducer(s, value));
+        }
+    }
+
+    static <T> Producer createProducer(Subscriber<? super T> s, T v) {
+        if (STRONG_MODE) {
+            return new SingleProducer<T>(s, v);
+        }
+        return new WeakSingleProducer<T>(s, v);
+    }
+```
+
+　　在 RxJava 1.x 中，数据都是从  observable push 到 subscriber 的，但要是 observable 发的太快，subscriber 处理不过来，该怎么办？一种办法是，把数据保存起来，但这显然可能导致内存耗尽；另一种办法是，多余的数据来了之后就丢掉，至于丢掉和保留的策略可以按需指定；还有一种办法就是让 subscriber 向  observale 主动请求数据，subscriber 不请求，onservable 就不发出数据。它两互相协调，避免出现过多的数据，而协调的桥梁，就是 producer。
+
+### Subscriber#setProducer
+
+```java
+    public void setProducer(Producer p) {
+        long toRequest;
+        boolean passToSubscriber = false;
+        synchronized (this) {
+            toRequest = requested;
+            producer = p;
+            // 一次包装，ActionSubscriber 包装为 SafeSubscriber
+            if (subscriber != null) {
+                // middle operator ... we pass through unless a request has been made
+                if (toRequest == NOT_SET) {
+                    // we pass through to the next producer as nothing has been requested
+                    passToSubscriber = true;
+                }
+            }
+        }
+        // do after releasing lock
+        // 发生一次 pass through ，然后回进入 else 代码块
+        if (passToSubscriber) {
+            subscriber.setProducer(producer);
+        } else {
+            // we execute the request with whatever has been requested (or Long.MAX_VALUE)
+            // 这列所有的 requested 初始值都是 NOT_SET,所以回请求 Long.MAX_VALUE ，即无限个数据。
+            if (toRequest == NOT_SET) {
+                producer.request(Long.MAX_VALUE);
+            } else {
+                producer.request(toRequest);
+            }
+        }
+    }
+```
+
+　　最后调用了 producer 的 request() 方法。
+
+### WeakSingleProducer#request
+
+```java
+    static final class WeakSingleProducer<T> implements Producer {
+        final Subscriber<? super T> actual;
+        final T value;
+        boolean once;
+
+        public WeakSingleProducer(Subscriber<? super T> actual, T value) {
+            this.actual = actual;
+            this.value = value;
+        }
+
+        @Override
+        public void request(long n) {
+            if (once) {
+                return;
+            }
+            if (n < 0L) {
+                throw new IllegalStateException("n >= required but it was " + n);
+            }
+            if (n == 0L) {
+                return;
+            }
+            once = true;
+            Subscriber<? super T> a = actual;
+            if (a.isUnsubscribed()) {
+                return;
+            }
+            T v = value;
+            try {
+                a.onNext(v);
+            } catch (Throwable e) {
+                Exceptions.throwOrReport(e, a, v);
+                return;
+            }
+
+            if (a.isUnsubscribed()) {
+                return;
+            }
+            a.onCompleted();
+        }
+    }
+```
+
+　　在 request() 中，调用了 subscriiber 的 onNext() 和 onCompleted()，那么 Hello World 就传递到了 Action 中，并被打印出来了。
+
+### just 为例的完成过程
+
+![](image/RxJava_call_stack_just.png)
+
+　　一切行为都由 subscribe 触发，而且都是直接的函数调用，所以在调用 subscribe 的线程执行。
+
+
 
 ## 2. subscribeOn(Schedulers.computation()) 流程分析
 　　subscribeOn(Schedulers.computation()) 方法让 OnSubscribe()（订阅操作） 运行在计算线程。
@@ -729,6 +933,47 @@ new Subscriber<String>() {
 ```
 　　这样也就调用到了我们自己书写的代码，而 ObserveOnSubscriber 的 onNext 是通过 handler 向主线程发送消息，处理消息是在主线程，所以 Subscriber1 的 onNext() 就会运行在主线程（onError() 与 onComplete() 方法相同）。
 　　**总结：ObserveOn() 方法会生成 OperatorObserveOn 对象，并且将其设置为 Observable 的 onSubscribe 对象，并且将下游的 Subscriber 作为对象进行封装，在调用 onNext()、onError()、onComplete() 方法时通过向主线程发送 message 消息，在主线程中处理消息，从而确保Subscriber 的 onNext()、onError()、onComplete() 运行在主线程。**
+
+
+
+### map 操作符
+
+　　使用 map 操作符：
+
+```java
+        Observable.just("hello word")
+                .map(new Func1<String, Long>() {
+                    @Override
+                    public Long call(String s) {
+                        return s != null ? s.length() : 0l;
+                    }
+                })
+                .subscribe(new Action1<Long>() {
+                    @Override
+                    public void call(Long s) {
+                        Log.d(TAG, "get " + s + " @ " + Thread.currentThread().getName());
+                    }
+                });
+```
+
+　　使用 map 操作符，把字符串转换为它的长度。
+
+#### Observable#map
+
+```java
+    public final <R> Observable<R> map(Func1<? super T, ? extends R> func) {
+        return unsafeCreate(new OnSubscribeMap<T, R>(this, func));
+    }
+    public static <T> Observable<T> unsafeCreate(OnSubscribe<T> f) {
+        return new Observable<T>(RxJavaHooks.onCreate(f));
+    }
+```
+
+　　map 的实现本来是利用 lift + Operator 实现的，但是后来改成了 create + OnSubscribe(RxJava #4097)；二是
+
+
+
+
 
 ## 概括
 　　RxJava 主要采用的是观察者模式，Observable 作为被观察者，负责接收原始的 Observable 发出的事件，并在处理后发送给给 Observer，Observer 作为观察者。Observable 并不是在创建的时候就立即开始发送事件，而是在它被订阅的时候，也就是 subscribe() 方法执行的时候开始。subscribeOn() 方法会使用 OperatorSubscribeOn 类作为 Observable 的 onSubscribe 对象，将上游的 Observable 进行封装，从而确保上游的 OnSubscribe 的 call() 方法运行在指定线程。ObserveOn() 方法会使用 OperatorObserveOn 类作为 Observable 的 onSubscribe 对象，将下游的 Subscriber 进行封装，从而确保 Subscriber 的 onNext()、onError()、onComplete() 运行在指定的线程。
