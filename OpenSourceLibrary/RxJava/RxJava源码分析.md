@@ -103,9 +103,22 @@
         });
 ```
 
-　　可以看到，这里传入了一个 OnSubscribe 对象作为参数。OnSubscribe 会被存储在返回的 Observable 对象中，它的作用相当于一个计划表，当 Observable 被订阅的时候，OnSubscribe 的 call() 方法会自动被调用，事件序列就会以找设定一次触发。这样，
+　　可以看到，这里传入了一个 OnSubscribe 对象作为参数。OnSubscribe 会被存储在返回的 Observable 对象中，它的作用相当于一个计划表，当 Observable 被订阅的时候，OnSubscribe 的 call() 方法会自动被调用，事件序列就会以找设定一次触发。这样，由被观察者调用了观察者的回调方法，就实现了由被观察者向观察者的事件传递，即观察者模式。
 
+　　create() 方法是 RxJava 最基本的创造事件序列的方法。基于这个方法，RxJava 还提供了一些方法用来快捷创建事件队列。例如 just()、from()。
 
+### 订阅 Subscribe
+
+　　创建了 Observable 和 Observer 之后，再用 subscribe() 方法将它们联结起来，整条链子就可以工作了。
+
+　　代码形式很简单：
+
+```java
+observable.subscribe(observer);
+
+// 或者
+observable.subscribe(subscribe);
+```
 
 ## 1. RxJava 的基本订阅流程
 
@@ -245,6 +258,7 @@ public class Observable< T > {
 
         // new Subscriber so onStart it
         // 调用 subscriber.onStart() 通知 subscriber 它已经和 onservable 连接起来了。在这里就直到，onStart() 就是在调用 subscriber() 的线程执行的。
+        // 可以用于一些准备工作，例如数据的清零或重制，默认情况下它的实现为空
         subscriber.onStart();
 
         /*
@@ -255,6 +269,7 @@ public class Observable< T > {
         // 如果传入的 subscriber 不是 SafeSubscriber，那就把它包装为一个 SafeSubscriber
         if (!(subscriber instanceof SafeSubscriber)) {
             // assign to `observer` so we return the protected version
+          	// 强制转化为 SafeSubscriber 是为了保证 onCompleted 或 onError 调用的时候会中止 onNext 的调用
             subscriber = new SafeSubscriber<T>(subscriber);
         }
 
@@ -264,8 +279,10 @@ public class Observable< T > {
             // allow the hook to intercept and/or decorate
             // 调用的其实就是 observable.onSubscribe.call(subscribe)。
             // 在调用 subscribe() 的线程执行 call 回调
+          	// onObservableStart() 默认返回的就是 observable.onSubscribe
             hook.onSubscribeStart(observable, observable.onSubscribe).call(subscriber);
             // 返回 subscriber，subscriber 继承了 Subscription，用于取消订阅。
+          	// onObservableReturn() 默认也是返回 subscriber
             return hook.onSubscribeReturn(subscriber);
         } catch (Throwable e) {
             ...
@@ -277,6 +294,13 @@ public class Observable< T > {
 　　SafeSubscriber 的作用：保证 Subscriber 实例遵循 Observable contract。
 
 　　subscribe() 的重载方法很多，但是最后都会调用到 Subscription subscribe(Subscriber<? super T> subscriber) 方法中。
+
+　　通过源码可以看到：subscriber() 实际就做了 4 件事情：
+
+1. 调用 Subscriber.onSTart() 。
+2. 将传入的 Subscriber 转化为 SafeSubscriber，为了保证 onCompleted 或 onError 调用的时候会中止 onNext() 的调用。
+3. 调用 Observable 中的 OnSubscribe.call(Subscriber)。在这里，事件发送的逻辑开始运行。从这也可以看出，在 RxJava 中，Observable 并不是在创建的时候就立即开始发送事件，而是在它被订阅的时候，即当 subscribe() 方法执行的时候。
+4. 被传入的 Subscriber 作为 Subscription 返回。这是为了方便 unsubscribe()。
 
 　　调用 subscribe() 方法时，如果 subscriber 不是 SafeSubscriber 类型，就会将 subscriber 设置为 subscriber 对象，之后 hook.onSubscribeStart(observable, observable.onSubscribe) 返回的就是是 observable 的 onSubscribe 变量，而 observable 就是调用上一步 create 返回的 Observable 的实例对象，而它的 onSubscribe 变量就是我们自己传入 create() 方法的参数：
 
@@ -309,6 +333,105 @@ new Subscriber<String>() {
        }
 ```
 　　到这里流程就过完了。方法的主导只要由 Observable 来，在创建 Observable 的时候，会将 OnSubscribe(订阅操作)传给 Observable(被观察者) 作为成员变量，在调用 subscribe 的方法（订阅）时，将 Subscriber (观察者)作为变量传入，将 Subscriber （观察者）作为参数调用 onSubscribe 的 call 方法来处理订阅的事件，并且会调用 Subcriber 的相关方法（通知观察者）。
+
+### SafeSubscriber
+
+```java
+public class SafeSubscriber<T> extends Subscriber<T> {
+
+    private final Subscriber<? super T> actual;
+
+    boolean done; // 通过改标志来保证 onCompleted 或 onError 调用的时候会中止 onNext 的调用
+
+    public SafeSubscriber(Subscriber<? super T> actual) {
+        super(actual);
+        this.actual = actual;
+    }
+
+    @Override
+    public void onCompleted() {
+        if (!done) {
+            done = true;
+            try {
+                actual.onCompleted();
+            } catch (Throwable e) {
+                Exceptions.throwIfFatal(e);
+                RxJavaHooks.onError(e);
+                throw new OnCompletedFailedException(e.getMessage(), e);
+            } finally { // NOPMD
+                try {
+                    unsubscribe(); // 取消订阅，结束事务
+                } catch (Throwable e) {
+                    RxJavaHooks.onError(e);
+                    throw new UnsubscribeFailedException(e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onError(Throwable e) {
+        Exceptions.throwIfFatal(e);
+        if (!done) {
+            done = true;
+            _onError(e);
+        }
+    }
+
+    @Override
+    public void onNext(T t) {
+        try {
+          	// done 为 true 时，中止传递
+            if (!done) {
+                actual.onNext(t);
+            }
+        } catch (Throwable e) {
+            Exceptions.throwOrReport(e, this);
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    protected void _onError(Throwable e) { // NOPMD
+        RxJavaPlugins.getInstance().getErrorHandler().handleError(e);
+        try {
+            actual.onError(e);
+        } catch (OnErrorNotImplementedException e2) { // NOPMD
+            try {
+              	// 取消订阅
+                unsubscribe();
+            } catch (Throwable unsubscribeException) {
+                RxJavaHooks.onError(unsubscribeException);
+                throw new OnErrorNotImplementedException("Observer.onError not implemented and error while unsubscribing.", new CompositeException(Arrays.asList(e, unsubscribeException))); // NOPMD
+            }
+            throw e2;
+        } catch (Throwable e2) {
+            RxJavaHooks.onError(e2);
+            try {
+                unsubscribe();
+            } catch (Throwable unsubscribeException) {
+                RxJavaHooks.onError(unsubscribeException);
+                throw new OnErrorFailedException("Error occurred when trying to propagate error to Observer.onError and during unsubscription.", new CompositeException(Arrays.asList(e, e2, unsubscribeException)));
+            }
+
+            throw new OnErrorFailedException("Error occurred when trying to propagate error to Observer.onError", new CompositeException(Arrays.asList(e, e2)));
+        }
+        try {
+            unsubscribe();
+        } catch (Throwable unsubscribeException) {
+            RxJavaHooks.onError(unsubscribeException);
+            throw new OnErrorFailedException(unsubscribeException);
+        }
+    }
+    public Subscriber<? super T> getActual() {
+        return actual;
+    }
+}
+
+```
+
+　　通过 SafeSubscriber 中的布尔变量 done 来做标记保证 onCompleted() 和 onError() 二者的互斥性，即在队列中调用了其中一个，就不应该再调用另一个。并且只要 onCompleted() 和 onError() 中有一个调用了，都会中止 onNext() 的调用。
+
+
 
 ### JustOnSubscribe#call
 
@@ -1114,6 +1237,7 @@ new Subscriber<String>() {
 
 ```java
     public final <R> Observable<R> map(Func1<? super T, ? extends R> func) {
+      	// 新建了一个 Observable 并使用新的 OnSubscribeMap 来封装传入的数据
         return unsafeCreate(new OnSubscribeMap<T, R>(this, func));
     }
     public static <T> Observable<T> unsafeCreate(OnSubscribe<T> f) {
@@ -1128,6 +1252,7 @@ new Subscriber<String>() {
 #### OnSubscribeMap
 
 ```java
+// OnSubscribeMap 是 OnSubscribe 的子类
 public final class OnSubscribeMap<T, R> implements OnSubscribe<R> {
 
     final Observable<T> source;
@@ -1135,14 +1260,20 @@ public final class OnSubscribeMap<T, R> implements OnSubscribe<R> {
     final Func1<? super T, ? extends R> transformer;
 
     public OnSubscribeMap(Observable<T> source, Func1<? super T, ? extends R> transformer) {
+      	// 经过 Observable.interval() 函数生成的 Observable
         this.source = source;
         this.transformer = transformer;
     }
 
+  	// 传入的 o 就是 subscribe() 处传入的 Subscriber
     @Override
     public void call(final Subscriber<? super R> o) {
+      	// 对传入的 Subscriber 进行再次封装成 MapSubscriber
+      	// 具体 Observable.map() 的逻辑是在 MapSubscriber 中
         MapSubscriber<T, R> parent = new MapSubscriber<T, R>(o, transformer);  //1
-        o.add(parent);                //2
+        // 加入到 SubscriptionList 中，为了之后取消订阅
+      	o.add(parent);                //2
+      	// Observable.interval() 返回的 Observable 进行订阅
         source.unsafeSubscribe(parent); //3
     }
 
@@ -1155,10 +1286,12 @@ public final class OnSubscribeMap<T, R> implements OnSubscribe<R> {
 2. 把一个 subscriber 加入到另一个 subscriber 中，是为了让它们可以一起取消订阅。
 3. unsafeSubscribe 相较于前面的 subscribe，可想而知就是少了一层 SafeSubscriber 的包装。为什么不要包装？因为会在最后调用 Observable#subscribe 时进行包装，只需要包装一次即可。
 
+　　call() 方法的逻辑很简单，只是将例子中 Observable.subscribe() 传入的 Subscriber 进行封装后，再将上流传入的 Observable 进行订阅。
+
 #### MapSubscriber
 
 ```java
-    static final class MapSubscriber<T, R> extends Subscriber<T> {
+		static final class MapSubscriber<T, R> extends Subscriber<T> {
 
         final Subscriber<? super R> actual;
 
@@ -1167,6 +1300,7 @@ public final class OnSubscribeMap<T, R> implements OnSubscribe<R> {
         boolean done;
 
         public MapSubscriber(Subscriber<? super R> actual, Func1<? super T, ? extends R> mapper) {
+          	// Observable.subscribe() 传入的 Subscriber
             this.actual = actual;
             this.mapper = mapper;
         }
@@ -1176,6 +1310,7 @@ public final class OnSubscribeMap<T, R> implements OnSubscribe<R> {
             R result;
 
             try {
+              	// 数据进行了交换
                 result = mapper.call(t);  //1
             } catch (Throwable ex) {
                 Exceptions.throwIfFatal(ex);
@@ -1183,7 +1318,7 @@ public final class OnSubscribeMap<T, R> implements OnSubscribe<R> {
                 onError(OnErrorThrowable.addValueAsLastCause(ex, t));
                 return;
             }
-
+						// 往下流传
             actual.onNext(result); //2
         }
 
@@ -1227,7 +1362,63 @@ public final class OnSubscribeMap<T, R> implements OnSubscribe<R> {
 
 ![](image/RxJava_call_stack_just_map.png)
 
-　　上面的u欧城依然由 subscribe 触发，而且都是直接的函数调用，所以都在调用 subscribe 的线程执行。
+　　上面的流程依然由 subscribe 触发，而且都是直接的函数调用，所以都在调用 subscribe 的线程执行。
+
+#### Observable.interval
+
+```java
+    public static Observable<Long> interval(long initialDelay, long period, TimeUnit unit, Scheduler scheduler) {
+        return unsafeCreate(new OnSubscribeTimerPeriodically(initialDelay, period, unit, scheduler));
+    }
+```
+
+　　可以看出 interval() 和 map() 一样都是通过生成新的 Observable 并向 Observable 中传入与之对应的 OnSubscribe 的子类来完成具体操作。
+
+##### OnSubscribeTimerPeriodically
+
+```java
+public final class OnSubscribeTimerPeriodically implements OnSubscribe<Long> {
+    final long initialDelay;
+    final long period;
+    final TimeUnit unit;
+    final Scheduler scheduler;
+
+    public OnSubscribeTimerPeriodically(long initialDelay, long period, TimeUnit unit, Scheduler scheduler) {
+        this.initialDelay = initialDelay;
+        this.period = period;
+        this.unit = unit;
+        this.scheduler = scheduler;
+    }
+		
+  	// 传入的 Subscriber 为 OnSubscribeMap.call() 方法中 source.unsafeSubscribe(parent)；
+    @Override
+    public void call(final Subscriber<? super Long> child) {
+        final Worker worker = scheduler.createWorker();
+        child.add(worker);
+        worker.schedulePeriodically(new Action0() {
+            long counter;
+            @Override
+            public void call() {
+                try {
+                    child.onNext(counter++);
+                } catch (Throwable e) {
+                    try {
+                        worker.unsubscribe();
+                    } finally {
+                        Exceptions.throwOrReport(e, child);
+                    }
+                }
+            }
+
+        }, initialDelay, period, unit);
+    }
+}
+
+```
+
+
+
+
 
 
 
