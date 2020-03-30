@@ -1,7 +1,5 @@
 # RxJava 1 操作符源码分析
 
-
-
 ## 1. just
 
 ### Observable#just
@@ -146,7 +144,7 @@
 
 　　一切行为都由 subscribe 触发，而且都是直接的函数调用，所以在调用 subscribe 的线程执行。
 
-##  map 操作符
+##  2. map 操作符
 
 　　使用 map 操作符：
 
@@ -352,7 +350,7 @@ public final class OnSubscribeTimerPeriodically implements OnSubscribe<Long> {
 ```
 
 
-## 参考文章
+## 3. 参考文章
 [拆轮子系列：拆 RxJava](https://blog.piasy.com/2016/09/15/Understand-RxJava/index.html)
 
 [RxJava 源码解析之观察者模式](https://juejin.im/post/58dcc66444d904006dfd857a)

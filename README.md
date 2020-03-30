@@ -266,6 +266,7 @@
   * 第 6 章 [开闭原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC6%E7%AB%A0-%E5%BC%80%E9%97%AD%E5%8E%9F%E5%88%99.md)
 * **图解 HTTP** 
   * 第 1 章 [了解 Web 及网络基础](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第1章-了解Web及网络基础.md)
+  * 第 2 章 [简单的 HTTP 协议](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第2章-简单的HTTP协议.md)
 * **Android 开发艺术探索**
   * 第 1 章 [Activity 的生命周期和启动模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android开发艺术探索/第1章-Activity%20的声明周期和启动模式.md)
 
