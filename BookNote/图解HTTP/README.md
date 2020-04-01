@@ -4,7 +4,7 @@
 
 **第 2 章** [简单的 HTTP 协议](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第2章-简单的HTTP协议.md)
 
-**第 3 章** HTTP 报文内的 HTTP 信息
+**第 3 章** [HTTP 报文内的 HTTP 信息](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/图解HTTP)
 
 **第 4 章** 返回结果的 HTTP 状态码
 

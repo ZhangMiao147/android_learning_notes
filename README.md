@@ -108,7 +108,12 @@
   * [OkHttp 设置自定义拦截器](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/OkHttp/OkHttp设置自定义拦截器.md)
   * [OkHttp 源码解析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/OkHttp/OkHttp源码分析.md)
 
-
+* RxJava
+  * [RxJava 1 源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/RxJava/RxJava1源码分析.md)
+  * [RxJava 1 线程切换源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/RxJava/RxJava1线程切换源码分析.md)
+  * [RxJava 1 操作符源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/RxJava/RxJava1操作符源码分析.md)
+  * [RxJava 2 与 RxJava 1 的对比](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/RxJava/RxJava2与RxJava1的对比.md)
+  * [RxJava 2 背压源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/RxJava/RxJava2背压源码分析.md)
 
 ## 多媒体
 
@@ -267,6 +272,7 @@
 * **图解 HTTP** 
   * 第 1 章 [了解 Web 及网络基础](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第1章-了解Web及网络基础.md)
   * 第 2 章 [简单的 HTTP 协议](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第2章-简单的HTTP协议.md)
+  * 第 3 章 [HTTP 报文内的 HTTP 信息](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/图解HTTP)
 * **Android 开发艺术探索**
   * 第 1 章 [Activity 的生命周期和启动模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android开发艺术探索/第1章-Activity%20的声明周期和启动模式.md)
 
