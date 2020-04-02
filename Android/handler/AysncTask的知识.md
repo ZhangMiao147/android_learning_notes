@@ -42,13 +42,19 @@ class DownloadTask extends AsyncTask<Void, Integer, Boolean> {
 
    这个方法会在后台任务开始执行之前调用，用于进行一些界面上的初始化操作，比如显示一个进度条对话框等。
 
+   所在线程：后台线程
+
 2. doInBackground(Params ...)
 
    这个方法中的所有代码都会在子线程中运行，应该在这里处理所有的耗时任务。任务一旦完成就可以通过 return 语句来将任务的执行结果进行返回，如果 AsyncTask 的第三个泛型参数执行的 Void，就可以不反悔任务执行结果。注意，在这个方法中时不可以进行 UI 操作的，如果需要更新 UI 元素，比如说反馈当前任务的执行进度，可以调用 publishProgress(Progress,,,) 方法来完成。
 
+   所在线程：UI 线程
+
 3. onProgressUpdate(Progress...)
 
    当在后台任务中调用了 publishProgress(Progress...) 方法后，这个方法就很快会被调用，方法中携带的参数就是在后台任务中传递过来的。这个方法中可以对 UI 进行操作，利用参数中的数值就可以对界面元素进行相应的更新。
+   
+   所在线程：UI 线程
 
 　　一个完整的自定义 AsyncTask ：
 
@@ -94,9 +100,17 @@ class DownloadTask extends AsyncTask<Void, Integer, Boolean> {
 }
 ```
 
-　　如果想要启动任务，只需要简单的调用 new DownTask().execute() 即可。
+　　如果想要启动任务，只需要简单的调用：
 
+```java
+new DownTask().execute();
+```
 
+　　如果想要并行启动任务：
+
+```java
+new DownloadTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "");
+```
 
 ## 源码分析
 
@@ -104,10 +118,13 @@ class DownloadTask extends AsyncTask<Void, Integer, Boolean> {
 
 ```java
    public AsyncTask(@Nullable Looper callbackLooper) {
+       	// 静态 Handler，用来发送通知，采用 UI 线程的 Looper 来处理消息
+       	// 这是为什么 AsyncTask 必须在 UI 线程调用，因为子线程
+        // 默认没有 Looper 无法创建 handler，程序会直接 Crash
         mHandler = callbackLooper == null || callbackLooper == Looper.getMainLooper()
             ? getMainHandler()
             : new Handler(callbackLooper);
-
+		
         mWorker = new WorkerRunnable<Params, Result>() {
             public Result call() throws Exception {
                 mTaskInvoked.set(true);
@@ -154,9 +171,14 @@ class DownloadTask extends AsyncTask<Void, Integer, Boolean> {
 ```java
     @MainThread
     public final AsyncTask<Params, Progress, Result> execute(Params... params) {
+        // 串行执行
         return executeOnExecutor(sDefaultExecutor, params);
     }
-
+	
+	// 通过这个方法可以自定义 AsyncTask 的执行方式，串行 or 并行，甚至可以采用自己的 Executor
+	// 为了实现并行，可以在外部使用 AsyncTask：
+	// asyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, Params... params);
+	// 必须在 UI 线程调用此方法
     @MainThread
     public final AsyncTask<Params, Progress, Result> executeOnExecutor(Executor exec,
             Params... params) {
@@ -177,8 +199,9 @@ class DownloadTask extends AsyncTask<Void, Integer, Boolean> {
         onPreExecute();
 
         mWorker.mParams = params;
+        // 然后后台计算的 onInBackground 才真正开始
         exec.execute(mFuture);
-
+		// 接着会有 onProgressUpdate 被调用，最后是 onPostExecute
         return this;
     }
 ```
@@ -188,8 +211,12 @@ class DownloadTask extends AsyncTask<Void, Integer, Boolean> {
 　　接着调用了 Executor 的 execute() 方法，并将前面初始化的 mFuture 对象传了进去，而 Executor 对象是 AysncTask 的 sDefaultExecutor 成员，
 
 ```java
-    private static volatile Executor sDefaultExecutor = SERIAL_EXECUTOR;
-    public static final Executor SERIAL_EXECUTOR = new SerialExecutor();
+// 默认任务执行其，被赋值为串行任务执行器，AsyncTask 变成串行的了
+private static volatile Executor sDefaultExecutor = SERIAL_EXECUTOR;
+
+// 静态串行任务执行器，其内部实现了串行控制。
+// 循环的取出一个个任务交给并发线程去执行
+public static final Executor SERIAL_EXECUTOR = new SerialExecutor();
 ```
 
 　　所以在 executeOnExecutor 方法中调用的 `exec.execute(mFuture);` 其实就是调用了 SerialExecutor 的 execute 方法。
@@ -200,26 +227,34 @@ class DownloadTask extends AsyncTask<Void, Integer, Boolean> {
 
 ```java
     private static class SerialExecutor implements Executor {
+        // 先行双向队列，用来存储所有的 AsyncTask 任务
         final ArrayDeque<Runnable> mTasks = new ArrayDeque<Runnable>();
+        // 当前正在执行的 AysncTask 任务
         Runnable mActive;
 
         public synchronized void execute(final Runnable r) {
+            // 将新的 AsyncTask 任务加入到双向队列中
             mTasks.offer(new Runnable() {
                 public void run() {
                     try {
                         // mFuture.run
+                        // 执行 AsyncTask 任务
                         r.run();
                     } finally {
+                        // 当前 AsyncTask 任务执行完毕后，进行下一轮执行，如果还有未执行的话
+                        // 这一点很明显体现了 AsyncTask 是串行执行任务的，总是一个任务执行完毕才会执行下一个任务
                         scheduleNext();
                     }
                 }
             });
+            // 如果当前没有任务在执行，直接进入执行逻辑
             if (mActive == null) {
                 scheduleNext();
             }
         }
 
         protected synchronized void scheduleNext() {
+            // 从任务队列中取出队列头部的任务，如果有就交给并发线程池去执行
             if ((mActive = mTasks.poll()) != null) {
                 THREAD_POOL_EXECUTOR.execute(mActive);
             }
@@ -308,7 +343,8 @@ class DownloadTask extends AsyncTask<Void, Integer, Boolean> {
 ### AsyncTask#postResult
 
 ```java
-    private Result postResult(Result result) {
+   // doInBackground 执行完毕，发送消息 
+   private Result postResult(Result result) {
         @SuppressWarnings("unchecked")
         Message message = getHandler().obtainMessage(MESSAGE_POST_RESULT,
                 new AsyncTaskResult<Result>(this, result)); // this-AysncTaskResult.mTask,result-AysncTaskResult.mData
@@ -337,7 +373,8 @@ class DownloadTask extends AsyncTask<Void, Integer, Boolean> {
 #### AysncTask#InternalHandler
 
 ```java
-    private static class InternalHandler extends Handler {
+    // AsyncTask 内部 Handler, 用来发送后台计算进度更新消息和计算完成消息
+	private static class InternalHandler extends Handler {
         public InternalHandler(Looper looper) {
             super(looper);
         }
@@ -379,7 +416,8 @@ class DownloadTask extends AsyncTask<Void, Integer, Boolean> {
 ### AysncTask#publishProgress
 
 ```java
-    @WorkerThread
+    // 打印后台计算进度，onProgressUpdate 会被调用
+	@WorkerThread
     protected final void publishProgress(Progress... values) {
         if (!isCancelled()) {
             getHandler().obtainMessage(MESSAGE_POST_PROGRESS,
@@ -394,7 +432,9 @@ class DownloadTask extends AsyncTask<Void, Integer, Boolean> {
 
 
 
-## AsyncTask 并行
+
+
+
 
 
 

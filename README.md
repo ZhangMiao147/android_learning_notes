@@ -47,7 +47,7 @@
 	  * [Android单元测试之三：使用模拟框架模拟依赖](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/test/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95/Android%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E4%B9%8B%E4%B8%89%EF%BC%9A%E4%BD%BF%E7%94%A8%E6%A8%A1%E6%8B%9F%E6%A1%86%E6%9E%B6%E6%A8%A1%E6%8B%9F%E4%BE%9D%E8%B5%96.md)
 	  * [Android单元测试之四：仪器化测试](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/test/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95/Android%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E4%B9%8B%E5%9B%9B%EF%BC%9A%E4%BB%AA%E5%99%A8%E5%8C%96%E6%B5%8B%E8%AF%95.md)
 * 适配
-  * [Android4.4.4的setResult失效的问题适配](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/adaptation/Android4.4.4%E7%9A%84setResult%E5%A4%B1%E6%95%88%E7%9A%84%E9%97%AE%E9%A2%98%E9%80%82%E9%85%8D.md)
+  * [Android 4.4.4 的 setResult 失效的问题适配](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/adaptation/Android4.4.4%E7%9A%84setResult%E5%A4%B1%E6%95%88%E7%9A%84%E9%97%AE%E9%A2%98%E9%80%82%E9%85%8D.md)
   * [Android 4.4.4 支持分包后找不到勒的问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/adaptation/Android%204.4.4支持分包后找不到类的问题.md)
 * Gradle
   * [api 与 implementation 的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/gradle/api%E4%B8%8Eimplementation%E7%9A%84%E5%8C%BA%E5%88%AB.md)
@@ -68,7 +68,7 @@
 
 ## 算法
 
-* [动态规划Dynamic Programming](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Algorithm/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92.md)
+* [动态规划 Dynamic Programming](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Algorithm/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92.md)
 
 ## Java
 
@@ -119,34 +119,6 @@
 
 * Opengl
   * GLES20 API
-    * [glActiveTexture](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glActiveTexture.md) - 选择活动纹理单元。
-    * [glAttachShader](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glAttachShader.md) - 将着色器对象附加到对象上。
-    * [glBindFramebuffer](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glBindFramebuffer.md) - 绑定命名的帧缓冲区对象。
-    * [glBindTexture](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glBindTexture.md) - 将命名纹理绑定到纹理目标上。
-    * [glClear](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glClear.md) - 清除预设值的缓冲区。
-    * [glClearColor](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glClearColor.md) - 为颜色缓冲区直送清除值。
-    * [glCompileShader](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glCompileShader.md) - 编译着色器对象。
-    * [glCreateProgram](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glCreateProgram.md) - 创建 program 对象。
-    * [glCreateShader](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glCreateShader.md) - 创建着色器对象。
-    * [glDeleteFramebuffers](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glDeleteFramebuffers.md) - 删除命名 framebuffer ( 帧缓冲区 ) 对象。
-    * [glDeleteProgram](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glDeleteProgram.md) - 删除一个 program 对象。 
-    * [glDeleteRenderbuffers](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glDeleteRenderbuffer.md) - 删除命名的 renderbuffer 对象。 
-    * [glDeleteShader](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glDeleteShader.md) - 删除 shader (着色器)对象。 
-    * [glDeleteTextures](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glDeleteTextures.md) - 删除命名纹理。 
-    * [glDisableVertexAttribArray 与 glEnableVertexAttribArray](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glDisableVertexAttribArray%E4%B8%8EglEnableVertextAttribArray.md) - 启动或禁用通用顶点属性数组。
-    * [glDrawArrays](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glDrawArrays.md) - 从数组数据中渲染图元。
-    * [glEnableVertexAttribArray与glDisableVertexAttribArray](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glEnableVertexAttribArray%E4%B8%8EglDisableVertexAttribArray.md)- 启用或者禁用通用顶点属性数组。
-    * [glEnable 与 glDisable](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glEnable%E4%B8%8EglDisable.md) - 启用或禁用服务器 GL 功能。
-    * [glFramebufferRenderbuffer](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glFramebufferRenderbuffer.md) - 将渲染缓冲区对象附着到帧缓冲区对象上。
-    * [glFramebufferTexture2D](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glFramebufferTexture2D.md) - 将纹理图像附加到帧缓冲区对象上。
-    * [glGenTextures](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGenTextures.md) - 生成纹理名称。
-    * [glGet](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGet.md) - 返回所选参数的一个或多个值。
-    * [glGetAttribLocation](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGetAttribLocation.md) - 返回属性变量的位置。
-    * [glGetProgramiv](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGetProgramiv.md) - 从程序对象返回一个参数的值。
-    * [glGetShaderiv](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGetShaderiv.md) - 从着色器对象返回参数。
-    * [glGetUniformLocation](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glGetUniformLocation.md) - 返回统一变量的位置。
-    * [glLinkProgram](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glLinkProgram.md) - 连接一个程序对象。
-    * [glShaderSource](https://github.com/ZhangMiao147/android_learning_notes/blob/master/MultiMedia/OpenGL/GLES20/glShaderSource.md) - 替换着色器对象中的源代码。
 
 
 
