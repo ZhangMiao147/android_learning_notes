@@ -2,7 +2,9 @@
 
 ## 1. ContentProvider 概念
 
-　　需要操作其他应用程序的一些数据，例如需要操作系统里的媒体库、通讯录等，这是就可以通过 ContentProvider 来完成需求。
+　　ContentProvider 可以实现在应用程序之间共享数据。
+
+　　Android 为常见的一些数据提供了默认的 ContentProvider（包括音频、视频、图片和通讯录等）。所以可以在其他应用中通过那些 ContentProvider 获取这些数据。
 
 　　Android 所提供的 ContentProvider 都存放在 android.provider 包中。
 
@@ -27,15 +29,15 @@
 
 ![](image/Uri示例图.jpg)
 
-　　A：标准前缀，用来说明一个 ContentProvider 控制这些数据，无法改变。
+　　A：scheme，标准前缀，用来说明一个 ContentProvider 控制这些数据，无法改变。ContentProvider 的 scheme 已经由 Android 所规定，scheme 为：content://。
 
-　　B：URI 的标识，用来唯一标识这个 ContentProvider ，外部调用者可以根据这个标识来找到它。它定义了是哪个 ContentProvider 提供这些数据。对于第三方应用程序，为了保证 URI 标识的唯一性，它必须是一个完整的、小写的类名。这个标识在元素的 authorities 属性中说明，一般是定义该 ContentProvider 的包类的名称。
+　　B：主机名，URI 的标识，用来唯一标识这个 ContentProvider ，外部调用者可以根据这个标识来找到它。它定义了是哪个 ContentProvider 提供这些数据。对于第三方应用程序，为了保证 URI 标识的唯一性，它必须是一个完整的、小写的类名。这个标识在元素的 authorities 属性中说明，一般是定义该 ContentProvider 的包类的名称。
 
-　　C：路径（path），就是要操作的数据库中表的名字，或者也可以自己定义。
+　　C：路径（path），就是要操作的数据，路径的构建根据业务而定。
 
 　　D：如果 URI 中包含表示需要获取的记录的 ID，则就返回该 id 对应的数据，如果没有 ID，就表示返回全部。
 
-　　在配置 ContentProvider 的时候，最重要的就是制定它的 **authorities** 属性了，只有配置了这个属性，第三方应用程序才能通过它来找到这个 ContentProvider。另外一个属性 **multiprocess** 是一个布尔值，它表示这个 ContentProvider 是否可以在每个客户进程中创建一个实例，这样做的目的是为了减少进程间通信的开销。
+　　在配置 ContentProvider 的时候，最重要的就是指定它的 **authorities** 属性了，只有配置了这个属性，第三方应用程序才能通过它来找到这个 ContentProvider，authorities 就是 ContentProvider 的身份证。另外一个属性 **multiprocess** 是一个布尔值，它表示这个 ContentProvider 是否可以在每个客户进程中创建一个实例，这样做的目的是为了减少进程间通信的开销。
 
 ## 4. 操作 Uri 的工具类
 
