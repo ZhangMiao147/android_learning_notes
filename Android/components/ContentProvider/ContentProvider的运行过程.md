@@ -877,13 +877,16 @@
                 final int N = mLaunchingProviders.size();
                 int i;
                 for (i = 0; i < N; i++) {
+                    // 判断 ContentProvider 是否正在被其他应用程序加载
                     if (mLaunchingProviders.get(i) == cpr) {
+                        // 如果是的话，就不用重复加载了
                         break;
                     }
                 }
 
                 // If the provider is not already being launched, then get it
                 // started.
+                // i >= N ，表明没有其他应用程序正在加载这个 ContentProvider
                 if (i >= N) {
                     final long origId = Binder.clearCallingIdentity();
 
@@ -918,6 +921,7 @@
                             }
                         } else {
                             checkTime(startTime, "getContentProviderImpl: before start process");
+                            // 启动一个新的进程来加载这个 ContentProvider 对应的类
                             proc = startProcessLocked(cpi.processName,
                                     cpr.appInfo, false, 0, "content provider",
                                     new ComponentName(cpi.applicationInfo.packageName,
@@ -932,6 +936,7 @@
                             }
                         }
                         cpr.launchingApp = proc;
+                        // 把这个正在加载的信息增加到 mLaunchingProvider 中去
                         mLaunchingProviders.add(cpr);
                     } finally {
                         Binder.restoreCallingIdentity(origId);
@@ -943,6 +948,7 @@
                 // Make sure the provider is published (the same provider class
                 // may be published under multiple names).
                 if (firstClass) {
+                    // 把 ContentProvider 的信息保存到 ProviderMap 中去，以方便后续查询。
                     mProviderMap.putProviderByClass(comp, cpr);
                 }
 
@@ -959,6 +965,7 @@
         }
 
         // Wait for the provider to be published...
+        // 等待要获取的 ContentProvider 。是在新的进程中湾仔完成。
         synchronized (cpr) {
             while (cpr.provider == null) {
                 if (cpr.launchingApp == null) {
@@ -996,9 +1003,1188 @@
 
 　　如果时第一次调用自己实现的 ContentProvider，因此，在 mProviderMap 中不存在我们需要的 ContentProvider 的相关信息。因此，这里会通过 AppGlobals.getPackageManager 函数来获得 PackageManangerService 服务接口，然后分别通过它的 resolveContentProvider 和 getApplicationInfo 函数来分别获取 MyContentProvider 所在应用程序的相关信息，分别保存在 cpi 和 cpr 这两个本地变量中。这些信息都是在安装应用程序的过程中保存下来的。
 
-　　系统中所有正在加载的
+　　系统中所有正在加载的 ContentProvider 都保存在 mLaunchingProviders 成员变量中。在加载相应的 ContentProvider 之前，首先要判断一下它是否正在被其他应用程序加载，如果是的话，就不用重复加载了。
+
+　　当条件 i >= N 为 true，就表明没有其他应用程序正在加载这个 ContentProvider，因此，就要调用 startProcessLocked 函数来启动一个新的进程来加载这个 ContentProvider 对应的类了，然后就把这个正在加载的信息增加到 mLaunchingProviders 中去。
+
+　　因为需要获取的 ContentProvider 是在新的进程中加载的，而 getContentProviderImpl() 这个方法是在系统进程中执行的，它必须要等到要获取的 ContentProvider 是在新的进程中加载完成后才能返回，这样就涉及到进程同步的问题了。这里使用的同步方法是不断地去检查变量 cpr 的 provider 域是否被设置了。当要获取的 ContentProvidre 在新的进程加载完成之后，它会通过 Binder 进程间通信机制调用到系统进程中，把这个 cpr 变量的 provider 域设置为已经加载好的 IContentProvider 接口，这时候，函数 getContentProviderImpl() 就可以返回了。
+
+　　cpr 就是 ContentProviderRecord，它的 provider 域就是 IContentProvider。
+
+### attachApplication
+
+#### ActivityManagerService#attachApplicationLocked
+
+```java
+    private final boolean attachApplicationLocked(IApplicationThread thread,
+            int pid) {
+
+        // Find the application record that is being attached...  either via
+        // the pid if we are running in multiple processes, or just pull the
+        // next app record if we are emulating process with anonymous threads.
+        ProcessRecord app;
+        long startTime = SystemClock.uptimeMillis();
+        if (pid != MY_PID && pid >= 0) {
+            synchronized (mPidsSelfLocked) {
+                app = mPidsSelfLocked.get(pid);
+            }
+        } else {
+            app = null;
+        }
+
+        if (app == null) {
+            Slog.w(TAG, "No pending application record for pid " + pid
+                    + " (IApplicationThread " + thread + "); dropping process");
+            EventLog.writeEvent(EventLogTags.AM_DROP_PROCESS, pid);
+            if (pid > 0 && pid != MY_PID) {
+                killProcessQuiet(pid);
+                //TODO: killProcessGroup(app.info.uid, pid);
+            } else {
+                try {
+                    thread.scheduleExit();
+                } catch (Exception e) {
+                    // Ignore exceptions.
+                }
+            }
+            return false;
+        }
+
+        // If this application record is still attached to a previous
+        // process, clean it up now.
+        if (app.thread != null) {
+            handleAppDiedLocked(app, true, true);
+        }
+
+        // Tell the process all about itself.
+
+        if (DEBUG_ALL) Slog.v(
+                TAG, "Binding process pid " + pid + " to record " + app);
+
+        final String processName = app.processName;
+        try {
+            AppDeathRecipient adr = new AppDeathRecipient(
+                    app, pid, thread);
+            thread.asBinder().linkToDeath(adr, 0);
+            app.deathRecipient = adr;
+        } catch (RemoteException e) {
+            app.resetPackageList(mProcessStats);
+            startProcessLocked(app, "link fail", processName);
+            return false;
+        }
+
+        EventLog.writeEvent(EventLogTags.AM_PROC_BOUND, app.userId, app.pid, app.processName);
+
+        app.makeActive(thread, mProcessStats);
+        app.curAdj = app.setAdj = app.verifiedAdj = ProcessList.INVALID_ADJ;
+        app.curSchedGroup = app.setSchedGroup = ProcessList.SCHED_GROUP_DEFAULT;
+        app.forcingToImportant = null;
+        updateProcessForegroundLocked(app, false, false);
+        app.hasShownUi = false;
+        app.debugging = false;
+        app.cached = false;
+        app.killedByAm = false;
+        app.killed = false;
 
 
+        // We carefully use the same state that PackageManager uses for
+        // filtering, since we use this flag to decide if we need to install
+        // providers when user is unlocked later
+        app.unlocked = StorageManager.isUserKeyUnlocked(app.userId);
+
+        mHandler.removeMessages(PROC_START_TIMEOUT_MSG, app);
+
+        boolean normalMode = mProcessesReady || isAllowedWhileBooting(app.info);
+        List<ProviderInfo> providers = normalMode ? generateApplicationProvidersLocked(app) : null;
+
+        if (providers != null && checkAppInLaunchingProvidersLocked(app)) {
+            Message msg = mHandler.obtainMessage(CONTENT_PROVIDER_PUBLISH_TIMEOUT_MSG);
+            msg.obj = app;
+            mHandler.sendMessageDelayed(msg, CONTENT_PROVIDER_PUBLISH_TIMEOUT);
+        }
+
+        checkTime(startTime, "attachApplicationLocked: before bindApplication");
+
+        if (!normalMode) {
+            Slog.i(TAG, "Launching preboot mode app: " + app);
+        }
+
+        if (DEBUG_ALL) Slog.v(
+            TAG, "New app record " + app
+            + " thread=" + thread.asBinder() + " pid=" + pid);
+        try {
+            int testMode = ApplicationThreadConstants.DEBUG_OFF;
+            if (mDebugApp != null && mDebugApp.equals(processName)) {
+                testMode = mWaitForDebugger
+                    ? ApplicationThreadConstants.DEBUG_WAIT
+                    : ApplicationThreadConstants.DEBUG_ON;
+                app.debugging = true;
+                if (mDebugTransient) {
+                    mDebugApp = mOrigDebugApp;
+                    mWaitForDebugger = mOrigWaitForDebugger;
+                }
+            }
+            String profileFile = app.instr != null ? app.instr.mProfileFile : null;
+            ParcelFileDescriptor profileFd = null;
+            int samplingInterval = 0;
+            boolean profileAutoStop = false;
+            boolean profileStreamingOutput = false;
+            if (mProfileApp != null && mProfileApp.equals(processName)) {
+                mProfileProc = app;
+                profileFile = mProfileFile;
+                profileFd = mProfileFd;
+                samplingInterval = mSamplingInterval;
+                profileAutoStop = mAutoStopProfiler;
+                profileStreamingOutput = mStreamingOutput;
+            }
+            boolean enableTrackAllocation = false;
+            if (mTrackAllocationApp != null && mTrackAllocationApp.equals(processName)) {
+                enableTrackAllocation = true;
+                mTrackAllocationApp = null;
+            }
+
+            // If the app is being launched for restore or full backup, set it up specially
+            boolean isRestrictedBackupMode = false;
+            if (mBackupTarget != null && mBackupAppName.equals(processName)) {
+                isRestrictedBackupMode = mBackupTarget.appInfo.uid >= FIRST_APPLICATION_UID
+                        && ((mBackupTarget.backupMode == BackupRecord.RESTORE)
+                                || (mBackupTarget.backupMode == BackupRecord.RESTORE_FULL)
+                                || (mBackupTarget.backupMode == BackupRecord.BACKUP_FULL));
+            }
+
+            if (app.instr != null) {
+                notifyPackageUse(app.instr.mClass.getPackageName(),
+                                 PackageManager.NOTIFY_PACKAGE_USE_INSTRUMENTATION);
+            }
+            if (DEBUG_CONFIGURATION) Slog.v(TAG_CONFIGURATION, "Binding proc "
+                    + processName + " with config " + getGlobalConfiguration());
+            ApplicationInfo appInfo = app.instr != null ? app.instr.mTargetInfo : app.info;
+            app.compat = compatibilityInfoForPackageLocked(appInfo);
+            if (profileFd != null) {
+                profileFd = profileFd.dup();
+            }
+            ProfilerInfo profilerInfo = profileFile == null ? null
+                    : new ProfilerInfo(profileFile, profileFd, samplingInterval, profileAutoStop,
+                                       profileStreamingOutput);
+
+            // We deprecated Build.SERIAL and it is not accessible to
+            // apps that target the v2 security sandbox. Since access to
+            // the serial is now behind a permission we push down the value.
+            String buildSerial = Build.UNKNOWN;
+            if (appInfo.targetSandboxVersion != 2) {
+                buildSerial = IDeviceIdentifiersPolicyService.Stub.asInterface(
+                        ServiceManager.getService(Context.DEVICE_IDENTIFIERS_SERVICE))
+                        .getSerial();
+            }
+
+            // Check if this is a secondary process that should be incorporated into some
+            // currently active instrumentation.  (Note we do this AFTER all of the profiling
+            // stuff above because profiling can currently happen only in the primary
+            // instrumentation process.)
+            if (mActiveInstrumentation.size() > 0 && app.instr == null) {
+                for (int i = mActiveInstrumentation.size() - 1; i >= 0 && app.instr == null; i--) {
+                    ActiveInstrumentation aInstr = mActiveInstrumentation.get(i);
+                    if (!aInstr.mFinished && aInstr.mTargetInfo.uid == app.uid) {
+                        if (aInstr.mTargetProcesses.length == 0) {
+                            // This is the wildcard mode, where every process brought up for
+                            // the target instrumentation should be included.
+                            if (aInstr.mTargetInfo.packageName.equals(app.info.packageName)) {
+                                app.instr = aInstr;
+                                aInstr.mRunningProcesses.add(app);
+                            }
+                        } else {
+                            for (String proc : aInstr.mTargetProcesses) {
+                                if (proc.equals(app.processName)) {
+                                    app.instr = aInstr;
+                                    aInstr.mRunningProcesses.add(app);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            checkTime(startTime, "attachApplicationLocked: immediately before bindApplication");
+            mStackSupervisor.mActivityMetricsLogger.notifyBindApplication(app);
+            if (app.instr != null) {
+                thread.bindApplication(processName, appInfo, providers,
+                        app.instr.mClass,
+                        profilerInfo, app.instr.mArguments,
+                        app.instr.mWatcher,
+                        app.instr.mUiAutomationConnection, testMode,
+                        mBinderTransactionTrackingEnabled, enableTrackAllocation,
+                        isRestrictedBackupMode || !normalMode, app.persistent,
+                        new Configuration(getGlobalConfiguration()), app.compat,
+                        getCommonServicesLocked(app.isolated),
+                        mCoreSettingsObserver.getCoreSettingsLocked(),
+                        buildSerial);
+            } else {
+                thread.bindApplication(processName, appInfo, providers, null, profilerInfo,
+                        null, null, null, testMode,
+                        mBinderTransactionTrackingEnabled, enableTrackAllocation,
+                        isRestrictedBackupMode || !normalMode, app.persistent,
+                        new Configuration(getGlobalConfiguration()), app.compat,
+                        getCommonServicesLocked(app.isolated),
+                        mCoreSettingsObserver.getCoreSettingsLocked(),
+                        buildSerial);
+            }
+
+            checkTime(startTime, "attachApplicationLocked: immediately after bindApplication");
+            updateLruProcessLocked(app, false, null);
+            checkTime(startTime, "attachApplicationLocked: after updateLruProcessLocked");
+            app.lastRequestedGc = app.lastLowMemory = SystemClock.uptimeMillis();
+        } catch (Exception e) {
+            // todo: Yikes!  What should we do?  For now we will try to
+            // start another process, but that could easily get us in
+            // an infinite loop of restarting processes...
+            Slog.wtf(TAG, "Exception thrown during bind of " + app, e);
+
+            app.resetPackageList(mProcessStats);
+            app.unlinkDeathRecipient();
+            startProcessLocked(app, "bind fail", processName);
+            return false;
+        }
+
+        // Remove this record from the list of starting applications.
+        mPersistentStartingProcesses.remove(app);
+        if (DEBUG_PROCESSES && mProcessesOnHold.contains(app)) Slog.v(TAG_PROCESSES,
+                "Attach application locked removing on hold: " + app);
+        mProcessesOnHold.remove(app);
+
+        boolean badApp = false;
+        boolean didSomething = false;
+
+        // See if the top visible activity is waiting to run in this process...
+        if (normalMode) {
+            try {
+                if (mStackSupervisor.attachApplicationLocked(app)) {
+                    didSomething = true;
+                }
+            } catch (Exception e) {
+                Slog.wtf(TAG, "Exception thrown launching activities in " + app, e);
+                badApp = true;
+            }
+        }
+
+        // Find any services that should be running in this process...
+        if (!badApp) {
+            try {
+                didSomething |= mServices.attachApplicationLocked(app, processName);
+                checkTime(startTime, "attachApplicationLocked: after mServices.attachApplicationLocked");
+            } catch (Exception e) {
+                Slog.wtf(TAG, "Exception thrown starting services in " + app, e);
+                badApp = true;
+            }
+        }
+
+        // Check if a next-broadcast receiver is in this process...
+        if (!badApp && isPendingBroadcastProcessLocked(pid)) {
+            try {
+                didSomething |= sendPendingBroadcastsLocked(app);
+                checkTime(startTime, "attachApplicationLocked: after sendPendingBroadcastsLocked");
+            } catch (Exception e) {
+                // If the app died trying to launch the receiver we declare it 'bad'
+                Slog.wtf(TAG, "Exception thrown dispatching broadcasts in " + app, e);
+                badApp = true;
+            }
+        }
+
+        // Check whether the next backup agent is in this process...
+        if (!badApp && mBackupTarget != null && mBackupTarget.app == app) {
+            if (DEBUG_BACKUP) Slog.v(TAG_BACKUP,
+                    "New app is backup target, launching agent for " + app);
+            notifyPackageUse(mBackupTarget.appInfo.packageName,
+                             PackageManager.NOTIFY_PACKAGE_USE_BACKUP);
+            try {
+                thread.scheduleCreateBackupAgent(mBackupTarget.appInfo,
+                        compatibilityInfoForPackageLocked(mBackupTarget.appInfo),
+                        mBackupTarget.backupMode);
+            } catch (Exception e) {
+                Slog.wtf(TAG, "Exception thrown creating backup agent in " + app, e);
+                badApp = true;
+            }
+        }
+
+        if (badApp) {
+            app.kill("error during init", true);
+            handleAppDiedLocked(app, false, true);
+            return false;
+        }
+
+        if (!didSomething) {
+            updateOomAdjLocked();
+            checkTime(startTime, "attachApplicationLocked: after updateOomAdjLocked");
+        }
+
+        return true;
+    }
+```
+
+　　这个函数首先是根据传进来的进程 ID 找到相应的进程记录块，注意，这个进程 ID 是 MyContentProvider 所在程序的 ID，然后对这个进程记录块做了一些初始化的工作。再接下来通过调用 generateApplicationProviderLocked() 获得需要在这个过程中加载的 ContentProvider 列表，在这个情景中，就只有 MyProviderContent 这个 ContentProvider 了。最后调用从参数传进来的 IApplicationThread 对象 thread 的 bindApplication 函数来执行一些应用程序初始化工作。
+
+### handleBindApplication
+
+#### ActivityThread#handleBindApplication
+
+```java
+    private void handleBindApplication(AppBindData data) {
+        // Register the UI Thread as a sensitive thread to the runtime.
+        VMRuntime.registerSensitiveThread();
+        if (data.trackAllocation) {
+            DdmVmInternal.enableRecentAllocations(true);
+        }
+
+        // Note when this process has started.
+        Process.setStartTimes(SystemClock.elapsedRealtime(), SystemClock.uptimeMillis());
+
+        mBoundApplication = data;
+        mConfiguration = new Configuration(data.config);
+        mCompatConfiguration = new Configuration(data.config);
+
+        mProfiler = new Profiler();
+        if (data.initProfilerInfo != null) {
+            mProfiler.profileFile = data.initProfilerInfo.profileFile;
+            mProfiler.profileFd = data.initProfilerInfo.profileFd;
+            mProfiler.samplingInterval = data.initProfilerInfo.samplingInterval;
+            mProfiler.autoStopProfiler = data.initProfilerInfo.autoStopProfiler;
+            mProfiler.streamingOutput = data.initProfilerInfo.streamingOutput;
+        }
+
+        // send up app name; do this *before* waiting for debugger
+        Process.setArgV0(data.processName);
+        android.ddm.DdmHandleAppName.setAppName(data.processName,
+                                                UserHandle.myUserId());
+
+        if (data.persistent) {
+            // Persistent processes on low-memory devices do not get to
+            // use hardware accelerated drawing, since this can add too much
+            // overhead to the process.
+            if (!ActivityManager.isHighEndGfx()) {
+                ThreadedRenderer.disable(false);
+            }
+        }
+
+        if (mProfiler.profileFd != null) {
+            mProfiler.startProfiling();
+        }
+
+        // If the app is Honeycomb MR1 or earlier, switch its AsyncTask
+        // implementation to use the pool executor.  Normally, we use the
+        // serialized executor as the default. This has to happen in the
+        // main thread so the main looper is set right.
+        if (data.appInfo.targetSdkVersion <= android.os.Build.VERSION_CODES.HONEYCOMB_MR1) {
+            AsyncTask.setDefaultExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
+
+        Message.updateCheckRecycle(data.appInfo.targetSdkVersion);
+
+        /*
+         * Before spawning a new process, reset the time zone to be the system time zone.
+         * This needs to be done because the system time zone could have changed after the
+         * the spawning of this process. Without doing this this process would have the incorrect
+         * system time zone.
+         */
+        TimeZone.setDefault(null);
+
+        /*
+         * Set the LocaleList. This may change once we create the App Context.
+         */
+        LocaleList.setDefault(data.config.getLocales());
+
+        synchronized (mResourcesManager) {
+            /*
+             * Update the system configuration since its preloaded and might not
+             * reflect configuration changes. The configuration object passed
+             * in AppBindData can be safely assumed to be up to date
+             */
+            mResourcesManager.applyConfigurationToResourcesLocked(data.config, data.compatInfo);
+            mCurDefaultDisplayDpi = data.config.densityDpi;
+
+            // This calls mResourcesManager so keep it within the synchronized block.
+            applyCompatConfiguration(mCurDefaultDisplayDpi);
+        }
+
+        data.info = getPackageInfoNoCheck(data.appInfo, data.compatInfo);
+
+        /**
+         * Switch this process to density compatibility mode if needed.
+         */
+        if ((data.appInfo.flags&ApplicationInfo.FLAG_SUPPORTS_SCREEN_DENSITIES)
+                == 0) {
+            mDensityCompatMode = true;
+            Bitmap.setDefaultDensity(DisplayMetrics.DENSITY_DEFAULT);
+        }
+        updateDefaultDensity();
+
+        final String use24HourSetting = mCoreSettings.getString(Settings.System.TIME_12_24);
+        Boolean is24Hr = null;
+        if (use24HourSetting != null) {
+            is24Hr = "24".equals(use24HourSetting) ? Boolean.TRUE : Boolean.FALSE;
+        }
+        // null : use locale default for 12/24 hour formatting,
+        // false : use 12 hour format,
+        // true : use 24 hour format.
+        DateFormat.set24HourTimePref(is24Hr);
+
+        View.mDebugViewAttributes =
+                mCoreSettings.getInt(Settings.Global.DEBUG_VIEW_ATTRIBUTES, 0) != 0;
+
+        /**
+         * For system applications on userdebug/eng builds, log stack
+         * traces of disk and network access to dropbox for analysis.
+         */
+        if ((data.appInfo.flags &
+             (ApplicationInfo.FLAG_SYSTEM |
+              ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0) {
+            StrictMode.conditionallyEnableDebugLogging();
+        }
+
+        /**
+         * For apps targetting Honeycomb or later, we don't allow network usage
+         * on the main event loop / UI thread. This is what ultimately throws
+         * {@link NetworkOnMainThreadException}.
+         */
+        if (data.appInfo.targetSdkVersion >= Build.VERSION_CODES.HONEYCOMB) {
+            StrictMode.enableDeathOnNetwork();
+        }
+
+        /**
+         * For apps targetting N or later, we don't allow file:// Uri exposure.
+         * This is what ultimately throws {@link FileUriExposedException}.
+         */
+        if (data.appInfo.targetSdkVersion >= Build.VERSION_CODES.N) {
+            StrictMode.enableDeathOnFileUriExposure();
+        }
+
+        // We deprecated Build.SERIAL and only apps that target pre NMR1
+        // SDK can see it. Since access to the serial is now behind a
+        // permission we push down the value and here we fix it up
+        // before any app code has been loaded.
+        try {
+            Field field = Build.class.getDeclaredField("SERIAL");
+            field.setAccessible(true);
+            field.set(Build.class, data.buildSerial);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            /* ignore */
+        }
+
+        if (data.debugMode != ApplicationThreadConstants.DEBUG_OFF) {
+            // XXX should have option to change the port.
+            Debug.changeDebugPort(8100);
+            if (data.debugMode == ApplicationThreadConstants.DEBUG_WAIT) {
+                Slog.w(TAG, "Application " + data.info.getPackageName()
+                      + " is waiting for the debugger on port 8100...");
+
+                IActivityManager mgr = ActivityManager.getService();
+                try {
+                    mgr.showWaitingForDebugger(mAppThread, true);
+                } catch (RemoteException ex) {
+                    throw ex.rethrowFromSystemServer();
+                }
+
+                Debug.waitForDebugger();
+
+                try {
+                    mgr.showWaitingForDebugger(mAppThread, false);
+                } catch (RemoteException ex) {
+                    throw ex.rethrowFromSystemServer();
+                }
+
+            } else {
+                Slog.w(TAG, "Application " + data.info.getPackageName()
+                      + " can be debugged on port 8100...");
+            }
+        }
+
+        // Allow application-generated systrace messages if we're debuggable.
+        boolean isAppDebuggable = (data.appInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        Trace.setAppTracingAllowed(isAppDebuggable);
+        if (isAppDebuggable && data.enableBinderTracking) {
+            Binder.enableTracing();
+        }
+
+        /**
+         * Initialize the default http proxy in this process for the reasons we set the time zone.
+         */
+        Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "Setup proxies");
+        final IBinder b = ServiceManager.getService(Context.CONNECTIVITY_SERVICE);
+        if (b != null) {
+            // In pre-boot mode (doing initial launch to collect password), not
+            // all system is up.  This includes the connectivity service, so don't
+            // crash if we can't get it.
+            final IConnectivityManager service = IConnectivityManager.Stub.asInterface(b);
+            try {
+                final ProxyInfo proxyInfo = service.getProxyForNetwork(null);
+                Proxy.setHttpProxySystemProperty(proxyInfo);
+            } catch (RemoteException e) {
+                Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+                throw e.rethrowFromSystemServer();
+            }
+        }
+        Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+
+        // Instrumentation info affects the class loader, so load it before
+        // setting up the app context.
+        final InstrumentationInfo ii;
+        if (data.instrumentationName != null) {
+            try {
+                ii = new ApplicationPackageManager(null, getPackageManager())
+                        .getInstrumentationInfo(data.instrumentationName, 0);
+            } catch (PackageManager.NameNotFoundException e) {
+                throw new RuntimeException(
+                        "Unable to find instrumentation info for: " + data.instrumentationName);
+            }
+
+            mInstrumentationPackageName = ii.packageName;
+            mInstrumentationAppDir = ii.sourceDir;
+            mInstrumentationSplitAppDirs = ii.splitSourceDirs;
+            mInstrumentationLibDir = getInstrumentationLibrary(data.appInfo, ii);
+            mInstrumentedAppDir = data.info.getAppDir();
+            mInstrumentedSplitAppDirs = data.info.getSplitAppDirs();
+            mInstrumentedLibDir = data.info.getLibDir();
+        } else {
+            ii = null;
+        }
+
+        final ContextImpl appContext = ContextImpl.createAppContext(this, data.info);
+        updateLocaleListFromAppContext(appContext,
+                mResourcesManager.getConfiguration().getLocales());
+
+        if (!Process.isIsolated() && !"android".equals(appContext.getPackageName())) {
+            // This cache location probably points at credential-encrypted
+            // storage which may not be accessible yet; assign it anyway instead
+            // of pointing at device-encrypted storage.
+            final File cacheDir = appContext.getCacheDir();
+            if (cacheDir != null) {
+                // Provide a usable directory for temporary files
+                System.setProperty("java.io.tmpdir", cacheDir.getAbsolutePath());
+            } else {
+                Log.v(TAG, "Unable to initialize \"java.io.tmpdir\" property "
+                        + "due to missing cache directory");
+            }
+
+            // Setup a location to store generated/compiled graphics code.
+            final Context deviceContext = appContext.createDeviceProtectedStorageContext();
+            final File codeCacheDir = deviceContext.getCodeCacheDir();
+            if (codeCacheDir != null) {
+                setupGraphicsSupport(appContext, codeCacheDir);
+            } else {
+                Log.e(TAG, "Unable to setupGraphicsSupport due to missing code-cache directory");
+            }
+        }
+
+        // If we use profiles, setup the dex reporter to notify package manager
+        // of any relevant dex loads. The idle maintenance job will use the information
+        // reported to optimize the loaded dex files.
+        // Note that we only need one global reporter per app.
+        // Make sure we do this before calling onCreate so that we can capture the
+        // complete application startup.
+        if (SystemProperties.getBoolean("dalvik.vm.usejitprofiles", false)) {
+            BaseDexClassLoader.setReporter(DexLoadReporter.getInstance());
+        }
+
+        // Install the Network Security Config Provider. This must happen before the application
+        // code is loaded to prevent issues with instances of TLS objects being created before
+        // the provider is installed.
+        Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "NetworkSecurityConfigProvider.install");
+        NetworkSecurityConfigProvider.install(appContext);
+        Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+
+        // Continue loading instrumentation.
+        if (ii != null) {
+            final ApplicationInfo instrApp = new ApplicationInfo();
+            ii.copyTo(instrApp);
+            instrApp.initForUser(UserHandle.myUserId());
+            final LoadedApk pi = getPackageInfo(instrApp, data.compatInfo,
+                    appContext.getClassLoader(), false, true, false);
+            final ContextImpl instrContext = ContextImpl.createAppContext(this, pi);
+
+            try {
+                final ClassLoader cl = instrContext.getClassLoader();
+                mInstrumentation = (Instrumentation)
+                    cl.loadClass(data.instrumentationName.getClassName()).newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException(
+                    "Unable to instantiate instrumentation "
+                    + data.instrumentationName + ": " + e.toString(), e);
+            }
+
+            final ComponentName component = new ComponentName(ii.packageName, ii.name);
+            mInstrumentation.init(this, instrContext, appContext, component,
+                    data.instrumentationWatcher, data.instrumentationUiAutomationConnection);
+
+            if (mProfiler.profileFile != null && !ii.handleProfiling
+                    && mProfiler.profileFd == null) {
+                mProfiler.handlingProfiling = true;
+                final File file = new File(mProfiler.profileFile);
+                file.getParentFile().mkdirs();
+                Debug.startMethodTracing(file.toString(), 8 * 1024 * 1024);
+            }
+        } else {
+            mInstrumentation = new Instrumentation();
+        }
+
+        if ((data.appInfo.flags&ApplicationInfo.FLAG_LARGE_HEAP) != 0) {
+            dalvik.system.VMRuntime.getRuntime().clearGrowthLimit();
+        } else {
+            // Small heap, clamp to the current growth limit and let the heap release
+            // pages after the growth limit to the non growth limit capacity. b/18387825
+            dalvik.system.VMRuntime.getRuntime().clampGrowthLimit();
+        }
+
+        // Allow disk access during application and provider setup. This could
+        // block processing ordered broadcasts, but later processing would
+        // probably end up doing the same disk access.
+        final StrictMode.ThreadPolicy savedPolicy = StrictMode.allowThreadDiskWrites();
+        try {
+            // If the app is being launched for full backup or restore, bring it up in
+            // a restricted environment with the base application class.
+            Application app = data.info.makeApplication(data.restrictedBackupMode, null);
+            mInitialApplication = app;
+
+            // don't bring up providers in restricted mode; they may depend on the
+            // app's custom Application class
+            if (!data.restrictedBackupMode) {
+                if (!ArrayUtils.isEmpty(data.providers)) {
+                    // 安装 ContentProvider
+                    installContentProviders(app, data.providers);
+                    // For process that contains content providers, we want to
+                    // ensure that the JIT is enabled "at some point".
+                    mH.sendEmptyMessageDelayed(H.ENABLE_JIT, 10*1000);
+                }
+            }
+
+            // Do this after providers, since instrumentation tests generally start their
+            // test thread at this point, and we don't want that racing.
+            try {
+                mInstrumentation.onCreate(data.instrumentationArgs);
+            }
+            catch (Exception e) {
+                throw new RuntimeException(
+                    "Exception thrown in onCreate() of "
+                    + data.instrumentationName + ": " + e.toString(), e);
+            }
+
+            try {
+                mInstrumentation.callApplicationOnCreate(app);
+            } catch (Exception e) {
+                if (!mInstrumentation.onException(app, e)) {
+                    throw new RuntimeException(
+                        "Unable to create application " + app.getClass().getName()
+                        + ": " + e.toString(), e);
+                }
+            }
+        } finally {
+            StrictMode.setThreadPolicy(savedPolicy);
+        }
+
+        // Preload fonts resources
+        FontsContract.setApplicationContextForResources(appContext);
+        try {
+            final ApplicationInfo info =
+                    getPackageManager().getApplicationInfo(
+                            data.appInfo.packageName,
+                            PackageManager.GET_META_DATA /*flags*/,
+                            UserHandle.myUserId());
+            if (info.metaData != null) {
+                final int preloadedFontsResource = info.metaData.getInt(
+                        ApplicationInfo.METADATA_PRELOADED_FONTS, 0);
+                if (preloadedFontsResource != 0) {
+                    data.info.mResources.preloadFonts(preloadedFontsResource);
+                }
+            }
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+```
+
+　　在这个方法中，调用了 installContentProviders 方法来在本地安装 ContentProviders 信息。
+
+#### ActivityThread#installContentProviders
+
+```java
+    private void installContentProviders(
+            Context context, List<ProviderInfo> providers) {
+        final ArrayList<ContentProviderHolder> results = new ArrayList<>();
+
+        for (ProviderInfo cpi : providers) {
+            if (DEBUG_PROVIDER) {
+                StringBuilder buf = new StringBuilder(128);
+                buf.append("Pub ");
+                buf.append(cpi.authority);
+                buf.append(": ");
+                buf.append(cpi.name);
+                Log.i(TAG, buf.toString());
+            }
+            // 安装每一个 ContentProvider 的信息
+            // ContentProviderHolder 对象来保存相关信息
+            ContentProviderHolder cph = installProvider(context, null, cpi,
+                    false /*noisy*/, true /*noReleaseNeeded*/, true /*stable*/);
+            if (cph != null) {
+                cph.noReleaseNeeded = true;
+                results.add(cph);
+            }
+        }
+
+        try {
+            // 通知 ActivityManangerService 服务这个进程中所要加载的 ContentProvider 都已经准备完毕了
+            ActivityManager.getService().publishContentProviders(
+                getApplicationThread(), results);
+        } catch (RemoteException ex) {
+            throw ex.rethrowFromSystemServer();
+        }
+    }
+```
+
+　　这个方法主要是做了两件事情：
+
+1. 调用 installProvider() 来在本地安装每一个ContentProvider 的信息，并且为每一个 ContentProvider 创建一个 ContentProviderHolder 对象来保存相关的信息。
+
+   ContentProviderHolder 对象是一个 Binder 对象，是用来把 ContentProvider 的信息传递给 ActiivtyManagerService 服务的。
+
+2. 当这些 ContentProvider 都处理好了以后，还要调用 ActivityManangerService 服务的 publishContentProviders() 函数来通知 ActivityManagerService 服务这个进程中所要加载的 ContentProvider 都已经准备完毕了，而 ActivityManagerService 服务的 publishContentProviders() 函数的作用就是用来唤醒在前面等待的线程。
+
+#### ActivityThread#installProvider
+
+```java
+    private ContentProviderHolder installProvider(Context context,
+            ContentProviderHolder holder, ProviderInfo info,
+            boolean noisy, boolean noReleaseNeeded, boolean stable) {
+        ContentProvider localProvider = null;
+        IContentProvider provider;
+        if (holder == null || holder.provider == null) {
+            if (DEBUG_PROVIDER || noisy) {
+                Slog.d(TAG, "Loading provider " + info.authority + ": "
+                        + info.name);
+            }
+            Context c = null;
+            ApplicationInfo ai = info.applicationInfo;
+            if (context.getPackageName().equals(ai.packageName)) {
+                c = context;
+            } else if (mInitialApplication != null &&
+                    mInitialApplication.getPackageName().equals(ai.packageName)) {
+                c = mInitialApplication;
+            } else {
+                try {
+                    c = context.createPackageContext(ai.packageName,
+                            Context.CONTEXT_INCLUDE_CODE);
+                } catch (PackageManager.NameNotFoundException e) {
+                    // Ignore
+                }
+            }
+            if (c == null) {
+                Slog.w(TAG, "Unable to get context for package " +
+                      ai.packageName +
+                      " while loading content provider " +
+                      info.name);
+                return null;
+            }
+
+            if (info.splitName != null) {
+                try {
+                    c = c.createContextForSplit(info.splitName);
+                } catch (NameNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            try {
+                // 将 ContentProvider 类加载到内存中
+                final java.lang.ClassLoader cl = c.getClassLoader();
+                localProvider = (ContentProvider)cl.
+                    loadClass(info.name).newInstance();
+                // 获得一个 Binder 对象
+                provider = localProvider.getIContentProvider();
+                if (provider == null) {
+                    Slog.e(TAG, "Failed to instantiate class " +
+                          info.name + " from sourceDir " +
+                          info.applicationInfo.sourceDir);
+                    return null;
+                }
+                if (DEBUG_PROVIDER) Slog.v(
+                    TAG, "Instantiating local provider " + info.name);
+                // XXX Need to create the correct context for this provider.
+                localProvider.attachInfo(c, info);
+            } catch (java.lang.Exception e) {
+                if (!mInstrumentation.onException(null, e)) {
+                    throw new RuntimeException(
+                            "Unable to get provider " + info.name
+                            + ": " + e.toString(), e);
+                }
+                return null;
+            }
+        } else {
+            provider = holder.provider;
+            if (DEBUG_PROVIDER) Slog.v(TAG, "Installing external provider " + info.authority + ": "
+                    + info.name);
+        }
+
+        ContentProviderHolder retHolder;
+
+        synchronized (mProviderMap) {
+            if (DEBUG_PROVIDER) Slog.v(TAG, "Checking to add " + provider
+                    + " / " + info.name);
+            IBinder jBinder = provider.asBinder();
+            if (localProvider != null) {
+                ComponentName cname = new ComponentName(info.packageName, info.name);
+                ProviderClientRecord pr = mLocalProvidersByName.get(cname);
+                if (pr != null) {
+                    if (DEBUG_PROVIDER) {
+                        Slog.v(TAG, "installProvider: lost the race, "
+                                + "using existing local provider");
+                    }
+                    provider = pr.mProvider;
+                } else {
+                    holder = new ContentProviderHolder(info);
+                    holder.provider = provider;
+                    holder.noReleaseNeeded = true;
+                    pr = installProviderAuthoritiesLocked(provider, localProvider, holder);
+                    mLocalProviders.put(jBinder, pr);
+                    mLocalProvidersByName.put(cname, pr);
+                }
+                retHolder = pr.mHolder;
+            } else {
+                ProviderRefCount prc = mProviderRefCountMap.get(jBinder);
+                if (prc != null) {
+                    if (DEBUG_PROVIDER) {
+                        Slog.v(TAG, "installProvider: lost the race, updating ref count");
+                    }
+                    // We need to transfer our new reference to the existing
+                    // ref count, releasing the old one...  but only if
+                    // release is needed (that is, it is not running in the
+                    // system process).
+                    if (!noReleaseNeeded) {
+                        incProviderRefLocked(prc, stable);
+                        try {
+                            ActivityManager.getService().removeContentProvider(
+                                    holder.connection, stable);
+                        } catch (RemoteException e) {
+                            //do nothing content provider object is dead any way
+                        }
+                    }
+                } else {
+                    ProviderClientRecord client = installProviderAuthoritiesLocked(
+                            provider, localProvider, holder);
+                    if (noReleaseNeeded) {
+                        prc = new ProviderRefCount(holder, client, 1000, 1000);
+                    } else {
+                        prc = stable
+                                ? new ProviderRefCount(holder, client, 1, 0)
+                                : new ProviderRefCount(holder, client, 0, 1);
+                    }
+                    mProviderRefCountMap.put(jBinder, prc);
+                }
+                retHolder = prc.holder;
+            }
+        }
+        return retHolder;
+    }
+```
+
+　　这个方法的作用主要就是在应用程序进程中把相应的 ContentProvider 类加载进来，也就是要在 MyContentProvider 所在应用程序中把这个 MyContentProvider 这个 ContentProvider 类加载到内存中来。
+
+　　接着通过调用 localProvider(ContentProvider 类型)的 getIContentProvider() 函数来获得一个 Binder 对象（IContentProvider 类型），将这个 Binder 对象赋值给 ContentProviderHolder 对象的内部变量 provider，将 ContentProviderHolder 返回，传到 ActivityManagerService 中去，后续其他应用程序就会通过获得这个 ContentProviderHolder 对象的内部 IContentProvider 对象来和相应的 ContentProvider 进行通信的了。
+
+#### ContentProvider#getIContentProvider
+
+```java
+    private Transport mTransport = new Transport();
+
+	public IContentProvider getIContentProvider() {
+        return mTransport;
+    }
+```
+
+![](image/ContentProvider类.png)
+
+　　ContentProvider 类和 Thransport 类的关系就类似于 ActivityThread 和 ApplicationThread 的关系，其他应用程序不是直接调用 ContentProvider 接口来访问它的数据，而是通过调用它的内部对象 mTransport 来间接调用 ContentProvider 的接口。
+
+　　那么 ActivityThread 的 installProvider 方法中调用了 `localProvider.attachInfo`来初始化刚刚加载好的 ContentProvider。
+
+#### ContentProvider#attachInfo
+
+```java
+    private void attachInfo(Context context, ProviderInfo info, boolean testing) {
+        mNoPerms = testing;
+
+        /*
+         * Only allow it to be set once, so after the content service gives
+         * this to us clients can't change it.
+         */
+        if (mContext == null) {
+            mContext = context;
+            if (context != null) {
+                mTransport.mAppOpsManager = (AppOpsManager) context.getSystemService(
+                        Context.APP_OPS_SERVICE);
+            }
+            mMyUid = Process.myUid();
+            if (info != null) {
+                setReadPermission(info.readPermission);
+                setWritePermission(info.writePermission);
+                setPathPermissions(info.pathPermissions);
+                mExported = info.exported;
+                mSingleUser = (info.flags & ProviderInfo.FLAG_SINGLE_USER) != 0;
+                setAuthorities(info.authority);
+            }
+            ContentProvider.this.onCreate();
+        }
+    }
+```
+
+
+
+
+
+#### ActivityThread # installProviderAuthoritiesLocked
+
+```java
+    private ProviderClientRecord installProviderAuthoritiesLocked(IContentProvider provider,
+            ContentProvider localProvider, ContentProviderHolder holder) {
+        final String auths[] = holder.info.authority.split(";");
+        final int userId = UserHandle.getUserId(holder.info.applicationInfo.uid);
+
+        if (provider != null) {
+            // If this provider is hosted by the core OS and cannot be upgraded,
+            // then I guess we're okay doing blocking calls to it.
+            for (String auth : auths) {
+                switch (auth) {
+                    case ContactsContract.AUTHORITY:
+                    case CallLog.AUTHORITY:
+                    case CallLog.SHADOW_AUTHORITY:
+                    case BlockedNumberContract.AUTHORITY:
+                    case CalendarContract.AUTHORITY:
+                    case Downloads.Impl.AUTHORITY:
+                    case "telephony":
+                        Binder.allowBlocking(provider.asBinder());
+                }
+            }
+        }
+
+        final ProviderClientRecord pcr = new ProviderClientRecord(
+                auths, provider, localProvider, holder);
+        for (String auth : auths) {
+            final ProviderKey key = new ProviderKey(auth, userId);
+            final ProviderClientRecord existing = mProviderMap.get(key);
+            if (existing != null) {
+                Slog.w(TAG, "Content provider " + pcr.mHolder.info.name
+                        + " already published as " + auth);
+            } else {
+                mProviderMap.put(key, pcr);
+            }
+        }
+        return pcr;
+    }
+```
+
+
+
+
+
+#### ActivityManagerService#publishContentProvider
+
+```java
+    public final void publishContentProviders(IApplicationThread caller,
+            List<ContentProviderHolder> providers) {
+        if (providers == null) {
+            return;
+        }
+
+        enforceNotIsolatedCaller("publishContentProviders");
+        synchronized (this) {
+            final ProcessRecord r = getRecordForAppLocked(caller);
+            if (DEBUG_MU) Slog.v(TAG_MU, "ProcessRecord uid = " + r.uid);
+            if (r == null) {
+                throw new SecurityException(
+                        "Unable to find app for caller " + caller
+                      + " (pid=" + Binder.getCallingPid()
+                      + ") when publishing content providers");
+            }
+
+            final long origId = Binder.clearCallingIdentity();
+
+            final int N = providers.size();
+            for (int i = 0; i < N; i++) {
+                ContentProviderHolder src = providers.get(i);
+                if (src == null || src.info == null || src.provider == null) {
+                    continue;
+                }
+                ContentProviderRecord dst = r.pubProviders.get(src.info.name);
+                if (DEBUG_MU) Slog.v(TAG_MU, "ContentProviderRecord uid = " + dst.uid);
+                if (dst != null) {
+                    ComponentName comp = new ComponentName(dst.info.packageName, dst.info.name);
+                    mProviderMap.putProviderByClass(comp, dst);
+                    String names[] = dst.info.authority.split(";");
+                    for (int j = 0; j < names.length; j++) {
+                        mProviderMap.putProviderByName(names[j], dst);
+                    }
+
+                    int launchingCount = mLaunchingProviders.size();
+                    int j;
+                    boolean wasInLaunchingProviders = false;
+                    for (j = 0; j < launchingCount; j++) {
+                        if (mLaunchingProviders.get(j) == dst) {
+                            mLaunchingProviders.remove(j);
+                            wasInLaunchingProviders = true;
+                            j--;
+                            launchingCount--;
+                        }
+                    }
+                    if (wasInLaunchingProviders) {
+                        mHandler.removeMessages(CONTENT_PROVIDER_PUBLISH_TIMEOUT_MSG, r);
+                    }
+                    synchronized (dst) {
+                        dst.provider = src.provider;
+                        dst.proc = r;
+                        dst.notifyAll();
+                    }
+                    updateOomAdjLocked(r, true);
+                    maybeUpdateProviderUsageStatsLocked(r, src.info.packageName,
+                            src.info.authority);
+                }
+            }
+
+            Binder.restoreCallingIdentity(origId);
+        }
+    }
+```
+
+
+
+#### ActivityThread#installProvider
+
+```java
+    private ContentProviderHolder installProvider(Context context,
+            ContentProviderHolder holder, ProviderInfo info,
+            boolean noisy, boolean noReleaseNeeded, boolean stable) {
+        ContentProvider localProvider = null;
+        IContentProvider provider;
+        if (holder == null || holder.provider == null) {
+            if (DEBUG_PROVIDER || noisy) {
+                Slog.d(TAG, "Loading provider " + info.authority + ": "
+                        + info.name);
+            }
+            Context c = null;
+            ApplicationInfo ai = info.applicationInfo;
+            if (context.getPackageName().equals(ai.packageName)) {
+                c = context;
+            } else if (mInitialApplication != null &&
+                    mInitialApplication.getPackageName().equals(ai.packageName)) {
+                c = mInitialApplication;
+            } else {
+                try {
+                    c = context.createPackageContext(ai.packageName,
+                            Context.CONTEXT_INCLUDE_CODE);
+                } catch (PackageManager.NameNotFoundException e) {
+                    // Ignore
+                }
+            }
+            if (c == null) {
+                Slog.w(TAG, "Unable to get context for package " +
+                      ai.packageName +
+                      " while loading content provider " +
+                      info.name);
+                return null;
+            }
+
+            if (info.splitName != null) {
+                try {
+                    c = c.createContextForSplit(info.splitName);
+                } catch (NameNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            try {
+                final java.lang.ClassLoader cl = c.getClassLoader();
+                localProvider = (ContentProvider)cl.
+                    loadClass(info.name).newInstance();
+                provider = localProvider.getIContentProvider();
+                if (provider == null) {
+                    Slog.e(TAG, "Failed to instantiate class " +
+                          info.name + " from sourceDir " +
+                          info.applicationInfo.sourceDir);
+                    return null;
+                }
+                if (DEBUG_PROVIDER) Slog.v(
+                    TAG, "Instantiating local provider " + info.name);
+                // XXX Need to create the correct context for this provider.
+                localProvider.attachInfo(c, info);
+            } catch (java.lang.Exception e) {
+                if (!mInstrumentation.onException(null, e)) {
+                    throw new RuntimeException(
+                            "Unable to get provider " + info.name
+                            + ": " + e.toString(), e);
+                }
+                return null;
+            }
+        } else {
+            provider = holder.provider;
+            if (DEBUG_PROVIDER) Slog.v(TAG, "Installing external provider " + info.authority + ": "
+                    + info.name);
+        }
+
+        ContentProviderHolder retHolder;
+
+        synchronized (mProviderMap) {
+            if (DEBUG_PROVIDER) Slog.v(TAG, "Checking to add " + provider
+                    + " / " + info.name);
+            IBinder jBinder = provider.asBinder();
+            if (localProvider != null) {
+                ComponentName cname = new ComponentName(info.packageName, info.name);
+                ProviderClientRecord pr = mLocalProvidersByName.get(cname);
+                if (pr != null) {
+                    if (DEBUG_PROVIDER) {
+                        Slog.v(TAG, "installProvider: lost the race, "
+                                + "using existing local provider");
+                    }
+                    provider = pr.mProvider;
+                } else {
+                    holder = new ContentProviderHolder(info);
+                    holder.provider = provider;
+                    holder.noReleaseNeeded = true;
+                    pr = installProviderAuthoritiesLocked(provider, localProvider, holder);
+                    mLocalProviders.put(jBinder, pr);
+                    mLocalProvidersByName.put(cname, pr);
+                }
+                retHolder = pr.mHolder;
+            } else {
+                ProviderRefCount prc = mProviderRefCountMap.get(jBinder);
+                if (prc != null) {
+                    if (DEBUG_PROVIDER) {
+                        Slog.v(TAG, "installProvider: lost the race, updating ref count");
+                    }
+                    // We need to transfer our new reference to the existing
+                    // ref count, releasing the old one...  but only if
+                    // release is needed (that is, it is not running in the
+                    // system process).
+                    if (!noReleaseNeeded) {
+                        incProviderRefLocked(prc, stable);
+                        try {
+                            ActivityManager.getService().removeContentProvider(
+                                    holder.connection, stable);
+                        } catch (RemoteException e) {
+                            //do nothing content provider object is dead any way
+                        }
+                    }
+                } else {
+                    ProviderClientRecord client = installProviderAuthoritiesLocked(
+                            provider, localProvider, holder);
+                    if (noReleaseNeeded) {
+                        prc = new ProviderRefCount(holder, client, 1000, 1000);
+                    } else {
+                        prc = stable
+                                ? new ProviderRefCount(holder, client, 1, 0)
+                                : new ProviderRefCount(holder, client, 0, 1);
+                    }
+                    mProviderRefCountMap.put(jBinder, prc);
+                }
+                retHolder = prc.holder;
+            }
+        }
+        return retHolder;
+    }
+```
 
 
 
