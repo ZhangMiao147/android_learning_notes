@@ -1,8 +1,6 @@
 # ContentProvider 的运行过程
 
-　　ContentProvder
-
-## getContentResolver
+## ContextWrapper#getContentResolver
 
 　　getContentResolver  用来获取 ContentResolver 对象。
 
@@ -34,7 +32,9 @@
 
 　　直接返回了 ContextImpl 对象的成员变量 mContentResolver。
 
-　　在启动 APP 的时候会调用 ActivityThread 的 performLaunchActivity 方法：
+### mContextResolver 在哪里初始化的
+
+　　在启动 APP 的时候会调用 ActivityThread 的 performLaunchActivity 方法。
 
 #### ActivityThread#performLaunchActivity
 
@@ -75,22 +75,14 @@
             }
         } catch (Exception e) {
             if (!mInstrumentation.onException(activity, e)) {
-                throw new RuntimeException(
-                    "Unable to instantiate activity " + component
-                    + ": " + e.toString(), e);
+                ...
             }
         }
 
         try {
             Application app = r.packageInfo.makeApplication(false, mInstrumentation);
 
-            if (localLOGV) Slog.v(TAG, "Performing launch of " + r);
-            if (localLOGV) Slog.v(
-                    TAG, r + ": app=" + app
-                    + ", appName=" + app.getPackageName()
-                    + ", pkg=" + r.packageInfo.getPackageName()
-                    + ", comp=" + r.intent.getComponent().toShortString()
-                    + ", dir=" + r.packageInfo.getAppDir());
+            ...
 
             if (activity != null) {
                 CharSequence title = r.activityInfo.loadLabel(appContext.getPackageManager());
@@ -171,23 +163,18 @@
             mActivities.put(r.token, r);
 
         } catch (SuperNotCalledException e) {
-            throw e;
-
+            ...
         } catch (Exception e) {
-            if (!mInstrumentation.onException(activity, e)) {
-                throw new RuntimeException(
-                    "Unable to start activity " + component
-                    + ": " + e.toString(), e);
-            }
+            ...
         }
 
         return activity;
     }
 ```
 
-　　在 ActivityThread  的 performLaunchActivity 方法中会使用 createContextForActivity() 函数创建 contextImpl 对象，也会创建 mContentResolver 对象，然后通过 attach() 方法讲创建的 contextImpl 对象赋值给 activity 的成员，也就是前面的 mBase 变量。
+　　在 ActivityThread  的 performLaunchActivity 方法中会使用 createBaseContextForActivity() 函数创建 contextImpl 对象，在这个方法里面最终也会创建 mContentResolver 对象，然后通过 attach() 方法将创建的 contextImpl 对象赋值给 activity 的成员，也就是前面的 mBase 变量。
 
-#### ActivityThread#createNaseContextForActivity
+##### ActivityThread#createBaseContextForActivity
 
 ```java
     private ContextImpl createBaseContextForActivity(ActivityClientRecord r) {
@@ -197,7 +184,7 @@
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }
-
+				// 创建 ContextImpl 对象
         ContextImpl appContext = ContextImpl.createActivityContext(
                 this, r.packageInfo, r.activityInfo, r.token, displayId, r.overrideConfig);
 
@@ -223,7 +210,7 @@
 
 　　调用 ContextImpl 的 createActivityContext 方法来创建 ContextImpl 对象 appContext。
 
-#### ContextImpl#createActivityContext
+###### ContextImpl#createActivityContext
 
 ```java
     static ContextImpl createActivityContext(ActivityThread mainThread,
@@ -247,6 +234,7 @@
             }
         }
 
+      	// 调用 ContextImpl 的构造方法来创建 ContextImpl 对象
         ContextImpl context = new ContextImpl(null, mainThread, packageInfo, activityInfo.splitName,
                 activityToken, null, 0, classLoader);
 
@@ -278,7 +266,7 @@
 
 　　调用 ContextImpl 的 构造方法创建 ContextImpl 对象 context。
 
-#### ContextImpl 构造方法
+###### ContextImpl 构造方法
 
 ```java
     private ContextImpl(@Nullable ContextImpl container, @NonNull ActivityThread mainThread,
@@ -331,14 +319,15 @@
                 mOpPackageName = mBasePackageName;
             }
         }
-		// 给 mContentResolver 成员赋值
+				// 创建 mContentResolver 成员
+      	// mainThread 就是 ActivityThread 对象，作为 ApplicationContentResolver 的 mMainThread 成员
         mContentResolver = new ApplicationContentResolver(this, mainThread, user);
     }
 ```
 
-　　在这里初始化了 mContextResolver 成员。
+　　在这里初始化了 mContextResolver 成员。所以 getContentResolver 就是 ApplicationContentResolver 对象。
 
-#### Activity#attach
+##### Activity#attach
 
 ```java
     final void attach(Context context, ActivityThread aThread,
@@ -348,7 +337,8 @@
             NonConfigurationInstances lastNonConfigurationInstances,
             Configuration config, String referrer, IVoiceInteractor voiceInteractor,
             Window window, ActivityConfigCallback activityConfigCallback) {
-        // 这里
+        // 调用 attachBaseContext 方法
+      	// context 就是 createBaseContextForActivity 方法返回的 ContextImpl 对象
         attachBaseContext(context);
 
         mFragments.attachHost(null /*parent*/);
@@ -402,9 +392,9 @@
     }
 ```
 
-　　调用了 attachBaseContext 方法。而 attachBaseContext 是 Activity 基类 ContextThemeWrapper 的 方法。而 ContextThmemWrapper 的 attachBaseContext 方法是调用了它的j基类 ContextWrapper的 attachBaseContext 方法。
+　　调用了 attachBaseContext 方法。而 attachBaseContext 是 Activity 基类 ContextThemeWrapper 的 方法。ContextThemeWrapper 的 attachBaseContext 方法是调用了它的基类 ContextWrapper的 attachBaseContext 方法。
 
-#### ContextWrapper#attachBaseContext
+###### ContextWrapper#attachBaseContext
 
 ```java
     protected void attachBaseContext(Context base) {
@@ -515,13 +505,14 @@
 　　ContentResolver 的 query 方法主要做了下面几件事：
 
 1. 调用 acquireUnstableProvider 方法创建 IContentProvider 对象 unstableProvier。
-2. 调用 unstableProvider 的 query 方法创建 Cursor 对象 qCursor。
-3. 创建 CursorWrapperInner 对象，将  wrapper 作为成员。
+2. 如果 stableProvider 为空则调用 acquireProvider 方法来初始化。
+3. 调用 unstableProvider 或者 stableProvider 的 query 方法创建 Cursor 对象 qCursor。
+4. 创建 CursorWrapperInner 对象，将  qCursor 和 provider 作为成员，并返回 CursorWrapperInnder 对象。
 
 ### ContentResolver#acquireUnStableProvider
 
 ```java
-    public static final String SCHEME_CONTENT = "content";
+  public static final String SCHEME_CONTENT = "content";
 
 	public final IContentProvider acquireUnstableProvider(Uri uri) {
         // 检查 uri 的 scheme 是不是 content
@@ -539,7 +530,7 @@
 
 　　方法返回的是一个 IContentProvider，而一个 IContentProvider 对应一个 ContentProvider 对象。
 
-　　调用 IContentProvider 对象的方法最终会调用到 ContentProvider 对象的方法，也就是自己写的 ContentProvider。
+　　调用 IContentProvider 对象的方法最终会调用到 ContentProvider 对象的方法，也就是 MyContentProvider。
 
 　　方法首先会验证参数 Uri 的 scheme 是否正确，也就是是否是以 content 开头的，然后取出它的 authority 部分，最后调用 acquireUnstableProvider 方法获取 ContentProvider。
 
@@ -567,6 +558,7 @@
             Context c, String auth, int userId, boolean stable) {
         // 获取本地存在的 IContentProvider
         final IContentProvider provider = acquireExistingProvider(c, auth, userId, stable);
+      	// 如果存在直接返回
         if (provider != null) {
             return provider;
         }
@@ -577,9 +569,10 @@
         // Note that we cannot hold the lock while acquiring and installing the
         // provider since it might take a long time to run and it could also potentially
         // be re-entrant in the case where the provider is in the same process.
+      	// 不存在本地的，则需要获取
         ContentProviderHolder holder = null;
         try {
-            // 获取 IContentProvider
+            // 获取一个 ContentProviderHolder 对象 holder
             holder = ActivityManager.getService().getContentProvider(
                     getApplicationThread(), auth, userId, stable);
         } catch (RemoteException ex) {
@@ -592,6 +585,7 @@
 
         // Install provider will increment the reference count for us, and break
         // any ties in the race.
+      	// 将 IContentProvider 保存在本地
         holder = installProvider(c, holder, holder.info,
                 true /*noisy*/, holder.noReleaseNeeded, stable);
         return holder.provider;
@@ -599,8 +593,18 @@
 ```
 
 　　方法首先会调用 acquireExistingProvider 方法来获取本地要获取的 IContentProvider，如果存在，就直接返回了。本地已经存在的 IContentProvider 保存在 ActivityThread 类的 `final ArrayMap<ProviderKey, ProviderClientRecord> mProviderMap
-    = new ArrayMap<ProviderKey, ProviderClientRecord>();`成员中，以 ContentProvider 对应的 URI 的 authority 为键值保存。如果是第一次调用，通过 acquireExistingProvider 方法得到的 IContentProvider 为 null，所以就会调用 `ActivityManager.getService().getContentProvider(
-                    getApplicationThread(), auth, userId, stable);` 方法来获取一个 ContentProviderHolder 对象 holder，这个对象包含了所要获取的自己实现的 ContentProvider 对应的 IContentProvider，在将 IContentProvider 返回给调用者之前，还会调用 installProvider 方法把这个 IContentProvider 保存在本地中，一边下次要使用这个 IContentProvider 时，直接就可以通过 acquireExistingProvider 方法获取了。
+    = new ArrayMap<ProviderKey, ProviderClientRecord>();`成员中，以 ContentProvider 对应的 URI 的 authority 为键值保存。
+
+　　如果是第一次调用，通过 acquireExistingProvider 方法得到的 IContentProvider 为 null，所以就会调用 `ActivityManager.getService().getContentProvider(
+                    getApplicationThread(), auth, userId, stable);` 方法来获取一个 ContentProviderHolder 对象 holder，这个对象包含了所要获取的 MyContentProvider 对应的 IContentProvider，在将 IContentProvider 返回给调用者之前，还会调用 installProvider 方法把这个 IContentProvider 保存在本地中，以便下次要使用这个 IContentProvider 时，直接就可以通过 acquireExistingProvider 方法获取了。
+
+#### ContentProviderRecord
+
+
+
+#### ContextProviderHolder
+
+
 
 #### ActivityManagerService#getContentProvider
 
@@ -667,8 +671,8 @@
                 }
             }
 
+          	// 检查要获取的 ContentProvider 是否已经存在了
             boolean providerRunning = cpr != null && cpr.proc != null && !cpr.proc.killed;
-            // 检查要获取的 ContentProvider 是否已经存在了
             if (providerRunning) {
                 cpi = cpr.info;
                 String msg;
@@ -835,7 +839,7 @@
 
                     try {
                         checkTime(startTime, "getContentProviderImpl: before getApplicationInfo");
-                        // 获取 ContentProvider 所在应用程序的的相关信息，
+                        // 获取 ContentProvider 所在应用程序的的相关信息
                         ApplicationInfo ai =
                             AppGlobals.getPackageManager().
                                 getApplicationInfo(
@@ -905,7 +909,7 @@
 
                         // Use existing process if already started
                         checkTime(startTime, "getContentProviderImpl: looking for process record");
-                        // 
+                        
                         ProcessRecord proc = getProcessRecordLocked(
                                 cpi.processName, cpr.appInfo.uid, false);
                         if (proc != null && proc.thread != null && !proc.killed) {
@@ -948,7 +952,7 @@
                 // Make sure the provider is published (the same provider class
                 // may be published under multiple names).
                 if (firstClass) {
-                    // 把 ContentProvider 的信息保存到 ProviderMap 中去，以方便后续查询。
+                    // 把 ContentProvider 的信息保存到 mProviderMap 中去，以方便后续查询。
                     mProviderMap.putProviderByClass(comp, cpr);
                 }
 
@@ -965,7 +969,7 @@
         }
 
         // Wait for the provider to be published...
-        // 等待要获取的 ContentProvider 。是在新的进程中湾仔完成。
+        // 等待要获取的 ContentProvider ,是在新的进程中加载完成。
         synchronized (cpr) {
             while (cpr.provider == null) {
                 if (cpr.launchingApp == null) {
@@ -986,6 +990,7 @@
                     if (conn != null) {
                         conn.waiting = true;
                     }
+                  	// 等待
                     cpr.wait();
                 } catch (InterruptedException ex) {
                 } finally {
@@ -999,21 +1004,23 @@
     }
 ```
 
-　　在 ActivityManagerService 中，用 mProviderMap 保存系统中的 ContentProvider 信息的。这里 ContentProviderRecord 对象就封装了 ContentProvider 的相关信息。
+　　在 ActivityManagerService 中，是用 mProviderMap 保存系统中的 ContentProvider 信息的。这里 ContentProviderRecord 对象就封装了 ContentProvider 的相关信息。
 
-　　如果时第一次调用自己实现的 ContentProvider，因此，在 mProviderMap 中不存在我们需要的 ContentProvider 的相关信息。因此，这里会通过 AppGlobals.getPackageManager 函数来获得 PackageManangerService 服务接口，然后分别通过它的 resolveContentProvider 和 getApplicationInfo 函数来分别获取 MyContentProvider 所在应用程序的相关信息，分别保存在 cpi 和 cpr 这两个本地变量中。这些信息都是在安装应用程序的过程中保存下来的。
+　　如果是第一次调用 MyContentProvider，那么在 mProviderMap 中不存在需要的 MyContentProvider 的相关信息。因此，这里会通过 AppGlobals.getPackageManager 函数来获得 PackageManangerService 服务接口，然后分别通过它的 resolveContentProvider 和 getApplicationInfo 函数来分别获取 MyContentProvider 所在应用程序的相关信息，分别保存在 cpi 和 cpr 这两个本地变量中。这些信息都是在安装应用程序的过程中保存下来的。
 
 　　系统中所有正在加载的 ContentProvider 都保存在 mLaunchingProviders 成员变量中。在加载相应的 ContentProvider 之前，首先要判断一下它是否正在被其他应用程序加载，如果是的话，就不用重复加载了。
 
-　　当条件 i >= N 为 true，就表明没有其他应用程序正在加载这个 ContentProvider，因此，就要调用 startProcessLocked 函数来启动一个新的进程来加载这个 ContentProvider 对应的类了，然后就把这个正在加载的信息增加到 mLaunchingProviders 中去。
+　　当条件 i >= N 为 true，就表明没有其他应用程序正在加载这个 ContentProvider，因此，就要调用 startProcessLocked 函数来启动一个新的进程来加载这个 ContentProvider 对应的类了，然后就把这个正在加载的信息增加到 mLaunchingProviders 中去，防止重复加载。
 
 　　因为需要获取的 ContentProvider 是在新的进程中加载的，而 getContentProviderImpl() 这个方法是在系统进程中执行的，它必须要等到要获取的 ContentProvider 是在新的进程中加载完成后才能返回，这样就涉及到进程同步的问题了。这里使用的同步方法是不断地去检查变量 cpr 的 provider 域是否被设置了。当要获取的 ContentProvidre 在新的进程加载完成之后，它会通过 Binder 进程间通信机制调用到系统进程中，把这个 cpr 变量的 provider 域设置为已经加载好的 IContentProvider 接口，这时候，函数 getContentProviderImpl() 就可以返回了。
 
 　　cpr 就是 ContentProviderRecord，它的 provider 域就是 IContentProvider。
 
-### attachApplication
+## 何时 ContentProviderRecord 的 provider 被设置
 
-#### ActivityManagerService#attachApplicationLocked
+　　在点击 Android 桌面 app 图标启动应用程序的过程中，会调用 ActivityManagerService 的 attachApplication() 方法，而 attachApplication 方法就会调用 attachApplicationLocked 方法。
+
+### ActivityManagerService#attachApplicationLocked
 
 ```java
     private final boolean attachApplicationLocked(IApplicationThread thread,
@@ -1026,6 +1033,7 @@
         long startTime = SystemClock.uptimeMillis();
         if (pid != MY_PID && pid >= 0) {
             synchronized (mPidsSelfLocked) {
+              	// 获取 pid 对应的进程记录块
                 app = mPidsSelfLocked.get(pid);
             }
         } else {
@@ -1094,6 +1102,7 @@
         mHandler.removeMessages(PROC_START_TIMEOUT_MSG, app);
 
         boolean normalMode = mProcessesReady || isAllowedWhileBooting(app.info);
+      	// 获取需要在这个进程中加载的 ContentProvider 列表
         List<ProviderInfo> providers = normalMode ? generateApplicationProvidersLocked(app) : null;
 
         if (providers != null && checkAppInLaunchingProvidersLocked(app)) {
@@ -1206,6 +1215,7 @@
 
             checkTime(startTime, "attachApplicationLocked: immediately before bindApplication");
             mStackSupervisor.mActivityMetricsLogger.notifyBindApplication(app);
+          	// 应用程序初始化工作
             if (app.instr != null) {
                 thread.bindApplication(processName, appInfo, providers,
                         app.instr.mClass,
@@ -1320,11 +1330,14 @@
     }
 ```
 
-　　这个函数首先是根据传进来的进程 ID 找到相应的进程记录块，注意，这个进程 ID 是 MyContentProvider 所在程序的 ID，然后对这个进程记录块做了一些初始化的工作。再接下来通过调用 generateApplicationProviderLocked() 获得需要在这个过程中加载的 ContentProvider 列表，在这个情景中，就只有 MyProviderContent 这个 ContentProvider 了。最后调用从参数传进来的 IApplicationThread 对象 thread 的 bindApplication 函数来执行一些应用程序初始化工作。
+　　这个方法主要是 4 个：
 
-### handleBindApplication
+1. 首先是根据传进来的进程 ID 找到相应的进程记录块，注意，这个进程 ID 是 MyContentProvider 所在程序的 ID。
+2. 然后对这个进程记录块做了一些初始化的工作。
+3. 再接下来通过调用 generateApplicationProviderLocked() 获得需要在这个进程中加载的 ContentProvider 列表，在这个情景中，就只有 MyProviderContent 这个 ContentProvider 了。
+4. 最后调用从参数传进来的 IApplicationThread 对象 thread 的 bindApplication 函数来执行一些应用程序初始化工作。
 
-#### ActivityThread#handleBindApplication
+### ActivityThread#handleBindApplication
 
 ```java
     private void handleBindApplication(AppBindData data) {
@@ -1743,9 +1756,9 @@
 
    ContentProviderHolder 对象是一个 Binder 对象，是用来把 ContentProvider 的信息传递给 ActiivtyManagerService 服务的。
 
-2. 当这些 ContentProvider 都处理好了以后，还要调用 ActivityManangerService 服务的 publishContentProviders() 函数来通知 ActivityManagerService 服务这个进程中所要加载的 ContentProvider 都已经准备完毕了，而 ActivityManagerService 服务的 publishContentProviders() 函数的作用就是用来唤醒在前面等待的线程。
+2. 当这些 ContentProvider 都处理好了以后，还要调用 ActivityManangerService 服务的 publishContentProviders() 函数来通知 ActivityManagerService 服务这个进程中所要加载的 ContentProvider 都已经准备完毕了，而 ActivityManagerService 服务的 publishContentProviders() 函数的作用就是用来唤醒 ActivityManagerService 的 getContentProvider 方法中等待的线程。
 
-#### ActivityThread#installProvider
+##### ActivityThread#installProvider
 
 ```java
     private ContentProviderHolder installProvider(Context context,
@@ -1805,6 +1818,7 @@
                 if (DEBUG_PROVIDER) Slog.v(
                     TAG, "Instantiating local provider " + info.name);
                 // XXX Need to create the correct context for this provider.
+              	// 初始化加载好的 localProvider
                 localProvider.attachInfo(c, info);
             } catch (java.lang.Exception e) {
                 if (!mInstrumentation.onException(null, e)) {
@@ -1839,6 +1853,7 @@
                     holder = new ContentProviderHolder(info);
                     holder.provider = provider;
                     holder.noReleaseNeeded = true;
+                  	// 把在本地中加载的 ContentProvider 信息保存下来，方便后面查询和使用。
                     pr = installProviderAuthoritiesLocked(provider, localProvider, holder);
                     mLocalProviders.put(jBinder, pr);
                     mLocalProvidersByName.put(cname, pr);
@@ -1864,6 +1879,7 @@
                         }
                     }
                 } else {
+                 		// 把在本地中加载的 ContentProvider 信息保存下来，方便后面查询和使用。
                     ProviderClientRecord client = installProviderAuthoritiesLocked(
                             provider, localProvider, holder);
                     if (noReleaseNeeded) {
@@ -1886,7 +1902,7 @@
 
 　　接着通过调用 localProvider(ContentProvider 类型)的 getIContentProvider() 函数来获得一个 Binder 对象（IContentProvider 类型），将这个 Binder 对象赋值给 ContentProviderHolder 对象的内部变量 provider，将 ContentProviderHolder 返回，传到 ActivityManagerService 中去，后续其他应用程序就会通过获得这个 ContentProviderHolder 对象的内部 IContentProvider 对象来和相应的 ContentProvider 进行通信的了。
 
-#### ContentProvider#getIContentProvider
+###### ContentProvider#getIContentProvider
 
 ```java
     private Transport mTransport = new Transport();
@@ -1900,9 +1916,9 @@
 
 　　ContentProvider 类和 Thransport 类的关系就类似于 ActivityThread 和 ApplicationThread 的关系，其他应用程序不是直接调用 ContentProvider 接口来访问它的数据，而是通过调用它的内部对象 mTransport 来间接调用 ContentProvider 的接口。
 
-　　那么 ActivityThread 的 installProvider 方法中调用了 `localProvider.attachInfo`来初始化刚刚加载好的 ContentProvider。
+###### ContentProvider#attachInfo
 
-#### ContentProvider#attachInfo
+　　那么 ActivityThread 的 installProvider 方法中调用了 `localProvider.attachInfo`来初始化刚刚加载好的 ContentProvider。
 
 ```java
     private void attachInfo(Context context, ProviderInfo info, boolean testing) {
@@ -1920,6 +1936,7 @@
             }
             mMyUid = Process.myUid();
             if (info != null) {
+              // 设置相应的读写权限
                 setReadPermission(info.readPermission);
                 setWritePermission(info.writePermission);
                 setPathPermissions(info.pathPermissions);
@@ -1927,16 +1944,15 @@
                 mSingleUser = (info.flags & ProviderInfo.FLAG_SINGLE_USER) != 0;
                 setAuthorities(info.authority);
             }
+          	// 调用 ContentProvider 的 onCreate() 方法
             ContentProvider.this.onCreate();
         }
     }
 ```
 
+　　这个方法很简单，主要就是根据这个 ContentProvider 的信息 info 来设置相应的读写权限，然后调用它的子类的 onCreate 函数来让子类执行一些初始化的工作。这个子类就是 MyContentProvider 所在应用程序中的 MyContentProvider 类了。
 
-
-
-
-#### ActivityThread # installProviderAuthoritiesLocked
+###### ActivityThread # installProviderAuthoritiesLocked
 
 ```java
     private ProviderClientRecord installProviderAuthoritiesLocked(IContentProvider provider,
@@ -1970,6 +1986,7 @@
                 Slog.w(TAG, "Content provider " + pcr.mHolder.info.name
                         + " already published as " + auth);
             } else {
+              	// 保存在 mProviderMap 中
                 mProviderMap.put(key, pcr);
             }
         }
@@ -1977,11 +1994,9 @@
     }
 ```
 
+　　把在本地中加载的 ContentProvider 信息保存下来，方便后面查询和使用。
 
-
-
-
-#### ActivityManagerService#publishContentProvider
+###### ActivityManagerService#publishContentProvider
 
 ```java
     public final void publishContentProviders(IApplicationThread caller,
@@ -2012,6 +2027,7 @@
                 ContentProviderRecord dst = r.pubProviders.get(src.info.name);
                 if (DEBUG_MU) Slog.v(TAG_MU, "ContentProviderRecord uid = " + dst.uid);
                 if (dst != null) {
+                  	// 把 dst 信息保存在 mProviderMap 中
                     ComponentName comp = new ComponentName(dst.info.packageName, dst.info.name);
                     mProviderMap.putProviderByClass(comp, dst);
                     String names[] = dst.info.authority.split(";");
@@ -2023,6 +2039,7 @@
                     int j;
                     boolean wasInLaunchingProviders = false;
                     for (j = 0; j < launchingCount; j++) {
+                      // 因为这个 ContentProvider 已经加载好了，因此把它从 mLaunchingProviders 列表中删除
                         if (mLaunchingProviders.get(j) == dst) {
                             mLaunchingProviders.remove(j);
                             wasInLaunchingProviders = true;
@@ -2033,9 +2050,12 @@
                     if (wasInLaunchingProviders) {
                         mHandler.removeMessages(CONTENT_PROVIDER_PUBLISH_TIMEOUT_MSG, r);
                     }
+                  	// 设置这个 ContentProviderRecord 对象 dst 的 provider 域为从参数传进来的 IContentProvider 远程接口
                     synchronized (dst) {
                         dst.provider = src.provider;
                         dst.proc = r;
+                      	// 执行了 dst.notifyAll 语句后，getContentProviderImpl 中等待要获取的 ContentProvider 接口加载完毕的线程就被唤醒了。唤醒之后它检查本地 ContentProviderRecord 变量 cpr 的 provider 域不为 null，于是就返回了。
+                      // 最终返回到 ActivityThread 类的 acquireProvider() 函数中。
                         dst.notifyAll();
                     }
                     updateOomAdjLocked(r, true);
@@ -2049,9 +2069,19 @@
     }
 ```
 
+　　这个方法调用的作用就是通知 ActivityManagerService，需要在这个进程中加载的 ContentProvider 已经加载完成了，参数 result 就包含了这些已经加载好的 ContentProvider 接口。
 
+　　当只有一个 ContentProvider 时，N 等于 1。在 for 循环里面，最重要的就是
 
-#### ActivityThread#installProvider
+```java
+ContentProviderRecord dst = r.pubProviders.get(src.info.name);
+```
+
+　　从这个得到的 ContentProviderRecord 对象 dst，就是 getContentProviderImpl 方法中创建的 ContentProviderRecord 对象。在 for 循环中，首先是把这个 ContentProvider 信息保存好在 mProviderMap 中。
+
+　　该方法返回到 ActivityThread 类的 acquireProvider() 函数中后，会继续执行 installProvider 方法。注意，这里是在第二个应用程序进程中执行 installProvider() 函数的，而前面的 installProvider 函数是在第一个应用程序中执行的。
+
+### ActivityThread#installProvider
 
 ```java
     private ContentProviderHolder installProvider(Context context,
@@ -2186,7 +2216,11 @@
     }
 ```
 
+　　同样是执行 installProvider 方法，与前面的不同，这里传进来的参数 provider 是不为 null 的，因此，它不需要执行在本地加载 ContentProvider 的工作，只需要把从 ActivityManagerService 中获得的 ContentProviderHolder 对象中的 IContentProvider 保存在成员变量 mProviderMap 中就可以了。然后将 ContentProviderHolder 对象返回，回到 ActivityThread 类的 acquireProvider() 方法中，将 IContentProvider 返回到 query() 方法中，然后调用 IContentProvider 的 query() 方法，其实最终调用到了 MyContentProvider 类里面的 query() 方法了。
 
+　　其它几个函数 insert()、delete()... 都是同样的过程。
+
+ 
 
 
 
