@@ -1,6 +1,6 @@
 # ContentProvider 的运行过程
 
-## ContextWrapper#getContentResolver
+## 1. ContextWrapper#getContentResolver
 
 　　getContentResolver  用来获取 ContentResolver 对象。
 
@@ -21,7 +21,7 @@
 
 　　mBase 是 Context 对象，而 Context 是一个抽象类，它的实现类是 ContextImpl，在创建 activity 的时候会 new 一个 ContextImpl 对象，赋值给 activity 的。
 
-### ContextImpl#getContentResolver
+### 1.1. ContextImpl#getContentResolver
 
 ```java
     @Override
@@ -32,11 +32,11 @@
 
 　　直接返回了 ContextImpl 对象的成员变量 mContentResolver。
 
-### mContextResolver 在哪里初始化的
+### 1.2. mContextResolver 在哪里初始化的
 
 　　在启动 APP 的时候会调用 ActivityThread 的 performLaunchActivity 方法。
 
-#### ActivityThread#performLaunchActivity
+#### 1.2.1. ActivityThread#performLaunchActivity
 
 ```java
     private Activity performLaunchActivity(ActivityClientRecord r, Intent customIntent) {
@@ -174,7 +174,7 @@
 
 　　在 ActivityThread  的 performLaunchActivity 方法中会使用 createBaseContextForActivity() 函数创建 contextImpl 对象，在这个方法里面最终也会创建 mContentResolver 对象，然后通过 attach() 方法将创建的 contextImpl 对象赋值给 activity 的成员，也就是前面的 mBase 变量。
 
-##### ActivityThread#createBaseContextForActivity
+##### 1.2.1.1. ActivityThread#createBaseContextForActivity
 
 ```java
     private ContextImpl createBaseContextForActivity(ActivityClientRecord r) {
@@ -210,7 +210,7 @@
 
 　　调用 ContextImpl 的 createActivityContext 方法来创建 ContextImpl 对象 appContext。
 
-###### ContextImpl#createActivityContext
+###### 1.2.1.1.1. ContextImpl#createActivityContext
 
 ```java
     static ContextImpl createActivityContext(ActivityThread mainThread,
@@ -266,7 +266,7 @@
 
 　　调用 ContextImpl 的 构造方法创建 ContextImpl 对象 context。
 
-###### ContextImpl 构造方法
+###### 1.2.1.1.2. ContextImpl 构造方法
 
 ```java
     private ContextImpl(@Nullable ContextImpl container, @NonNull ActivityThread mainThread,
@@ -327,7 +327,7 @@
 
 　　在这里初始化了 mContextResolver 成员。所以 getContentResolver 就是 ApplicationContentResolver 对象。
 
-##### Activity#attach
+##### 1.2.1.2. Activity#attach
 
 ```java
     final void attach(Context context, ActivityThread aThread,
@@ -394,7 +394,7 @@
 
 　　调用了 attachBaseContext 方法。而 attachBaseContext 是 Activity 基类 ContextThemeWrapper 的 方法。ContextThemeWrapper 的 attachBaseContext 方法是调用了它的基类 ContextWrapper的 attachBaseContext 方法。
 
-###### ContextWrapper#attachBaseContext
+###### 1.2.1.2.1. ContextWrapper#attachBaseContext
 
 ```java
     protected void attachBaseContext(Context base) {
@@ -408,7 +408,7 @@
 
 　　在这里将 createBaseContextForActivity() 方法创建的 ContextImpl 对象设置给了 mBase 成员。
 
-## ContentResolver#query
+## 2. ContentResolver#query
 
 ```java
     public final @Nullable Cursor query(@RequiresPermission.Read @NonNull Uri uri,
@@ -509,7 +509,7 @@
 3. 调用 unstableProvider 或者 stableProvider 的 query 方法创建 Cursor 对象 qCursor。
 4. 创建 CursorWrapperInner 对象，将  qCursor 和 provider 作为成员，并返回 CursorWrapperInnder 对象。
 
-### ContentResolver#acquireUnStableProvider
+### 2.1. ContentResolver#acquireUnStableProvider
 
 ```java
   public static final String SCHEME_CONTENT = "content";
@@ -536,7 +536,7 @@
 
 　　acquireUnstableProvider 的实现是在 ApplicationContentResolver 类中。
 
-#### ApplicationContentResolver#acquireUnstableProvider
+#### 2.1.1. ApplicationContentResolver#acquireUnstableProvider
 
 　　ApplicationContentResolver 是 ContextImpl 的内部类。
 
@@ -551,7 +551,7 @@
 
 　　mMainThread 是 ActivityThread 类型，在创建 ApplicationContentResolver 对象时作为构造参数传进去的。
 
-#### ActivityThread#acquireProvider
+#### 2.1.2. ActivityThread#acquireProvider
 
 ```java
     public final IContentProvider acquireProvider(
@@ -598,15 +598,214 @@
 　　如果是第一次调用，通过 acquireExistingProvider 方法得到的 IContentProvider 为 null，所以就会调用 `ActivityManager.getService().getContentProvider(
                     getApplicationThread(), auth, userId, stable);` 方法来获取一个 ContentProviderHolder 对象 holder，这个对象包含了所要获取的 MyContentProvider 对应的 IContentProvider，在将 IContentProvider 返回给调用者之前，还会调用 installProvider 方法把这个 IContentProvider 保存在本地中，以便下次要使用这个 IContentProvider 时，直接就可以通过 acquireExistingProvider 方法获取了。
 
-#### ContentProviderRecord
+#### 2.1.3. ContentProviderRecord
 
+```java
+final class ContentProviderRecord {
+    final ActivityManagerService service;
+    public final ProviderInfo info;
+    final int uid;
+    final ApplicationInfo appInfo;
+    final ComponentName name;
+    final boolean singleton;
+    public IContentProvider provider;
+    public boolean noReleaseNeeded;
+    // All attached clients
+    final ArrayList<ContentProviderConnection> connections
+            = new ArrayList<ContentProviderConnection>();
+    //final HashSet<ProcessRecord> clients = new HashSet<ProcessRecord>();
+    // Handles for non-framework processes supported by this provider
+    HashMap<IBinder, ExternalProcessHandle> externalProcessTokenToHandle;
+    // Count for external process for which we have no handles.
+    int externalProcessNoHandleCount;
+    ProcessRecord proc; // if non-null, hosting process.
+    ProcessRecord launchingApp; // if non-null, waiting for this app to be launched.
+    String stringName;
+    String shortStringName;
 
+    public ContentProviderRecord(ActivityManagerService _service, ProviderInfo _info,
+            ApplicationInfo ai, ComponentName _name, boolean _singleton) {
+        service = _service;
+        info = _info;
+        uid = ai.uid;
+        appInfo = ai;
+        name = _name;
+        singleton = _singleton;
+        noReleaseNeeded = uid == 0 || uid == Process.SYSTEM_UID;
+    }
 
-#### ContextProviderHolder
+    public ContentProviderRecord(ContentProviderRecord cpr) {
+        service = cpr.service;
+        info = cpr.info;
+        uid = cpr.uid;
+        appInfo = cpr.appInfo;
+        name = cpr.name;
+        singleton = cpr.singleton;
+        noReleaseNeeded = cpr.noReleaseNeeded;
+    }
 
+    public ContentProviderHolder newHolder(ContentProviderConnection conn) {
+        ContentProviderHolder holder = new ContentProviderHolder(info);
+        holder.provider = provider;
+        holder.noReleaseNeeded = noReleaseNeeded;
+        holder.connection = conn;
+        return holder;
+    }
 
+    public boolean canRunHere(ProcessRecord app) {
+        return (info.multiprocess || info.processName.equals(app.processName))
+                && uid == app.info.uid;
+    }
 
-#### ActivityManagerService#getContentProvider
+    public void addExternalProcessHandleLocked(IBinder token) {
+        if (token == null) {
+            externalProcessNoHandleCount++;
+        } else {
+            if (externalProcessTokenToHandle == null) {
+                externalProcessTokenToHandle = new HashMap<IBinder, ExternalProcessHandle>();
+            }
+            ExternalProcessHandle handle = externalProcessTokenToHandle.get(token);
+            if (handle == null) {
+                handle = new ExternalProcessHandle(token);
+                externalProcessTokenToHandle.put(token, handle);
+            }
+            handle.mAcquisitionCount++;
+        }
+    }
+
+    public boolean removeExternalProcessHandleLocked(IBinder token) {
+        if (hasExternalProcessHandles()) {
+            boolean hasHandle = false;
+            if (externalProcessTokenToHandle != null) {
+                ExternalProcessHandle handle = externalProcessTokenToHandle.get(token);
+                if (handle != null) {
+                    hasHandle = true;
+                    handle.mAcquisitionCount--;
+                    if (handle.mAcquisitionCount == 0) {
+                        removeExternalProcessHandleInternalLocked(token);
+                        return true;
+                    }
+                }
+            }
+            if (!hasHandle) {
+                externalProcessNoHandleCount--;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void removeExternalProcessHandleInternalLocked(IBinder token) {
+        ExternalProcessHandle handle = externalProcessTokenToHandle.get(token);
+        handle.unlinkFromOwnDeathLocked();
+        externalProcessTokenToHandle.remove(token);
+        if (externalProcessTokenToHandle.size() == 0) {
+            externalProcessTokenToHandle = null;
+        }
+    }
+
+    public boolean hasExternalProcessHandles() {
+        return (externalProcessTokenToHandle != null || externalProcessNoHandleCount > 0);
+    }
+
+    public boolean hasConnectionOrHandle() {
+        return !connections.isEmpty() || hasExternalProcessHandles();
+    }
+
+    void dump(PrintWriter pw, String prefix, boolean full) {
+        if (full) {
+            pw.print(prefix); pw.print("package=");
+                    pw.print(info.applicationInfo.packageName);
+                    pw.print(" process="); pw.println(info.processName);
+        }
+        pw.print(prefix); pw.print("proc="); pw.println(proc);
+        if (launchingApp != null) {
+            pw.print(prefix); pw.print("launchingApp="); pw.println(launchingApp);
+        }
+        if (full) {
+            pw.print(prefix); pw.print("uid="); pw.print(uid);
+                    pw.print(" provider="); pw.println(provider);
+        }
+        if (singleton) {
+            pw.print(prefix); pw.print("singleton="); pw.println(singleton);
+        }
+        pw.print(prefix); pw.print("authority="); pw.println(info.authority);
+        if (full) {
+            if (info.isSyncable || info.multiprocess || info.initOrder != 0) {
+                pw.print(prefix); pw.print("isSyncable="); pw.print(info.isSyncable);
+                        pw.print(" multiprocess="); pw.print(info.multiprocess);
+                        pw.print(" initOrder="); pw.println(info.initOrder);
+            }
+        }
+        if (full) {
+            if (hasExternalProcessHandles()) {
+                pw.print(prefix); pw.print("externals:");
+                if (externalProcessTokenToHandle != null) {
+                    pw.print(" w/token=");
+                    pw.print(externalProcessTokenToHandle.size());
+                }
+                if (externalProcessNoHandleCount > 0) {
+                    pw.print(" notoken=");
+                    pw.print(externalProcessNoHandleCount);
+                }
+                pw.println();
+            }
+        } else {
+            if (connections.size() > 0 || externalProcessNoHandleCount > 0) {
+                pw.print(prefix); pw.print(connections.size());
+                        pw.print(" connections, "); pw.print(externalProcessNoHandleCount);
+                        pw.println(" external handles");
+            }
+        }
+        if (connections.size() > 0) {
+            if (full) {
+                pw.print(prefix); pw.println("Connections:");
+            }
+            for (int i=0; i<connections.size(); i++) {
+                ContentProviderConnection conn = connections.get(i);
+                pw.print(prefix); pw.print("  -> "); pw.println(conn.toClientString());
+                if (conn.provider != this) {
+                    pw.print(prefix); pw.print("    *** WRONG PROVIDER: ");
+                            pw.println(conn.provider);
+                }
+            }
+        }
+    }
+    
+    ...
+
+    // This class represents a handle from an external process to a provider.
+    // 用于在托管 IBinder 的进程离开时接收回调的接口。
+    private class ExternalProcessHandle implements DeathRecipient {
+        private static final String LOG_TAG = "ExternalProcessHanldle";
+
+        private final IBinder mToken;
+        private int mAcquisitionCount;
+
+        ...
+        
+    }
+}
+```
+
+　　ContentProviderRecord 类持有 ActivityManagerService 成员 service，ProviderInfo 成员 info，还有进程 ID  uid，ApplicationInfo 成员 appInfo 和 IContentProvider 成员 provider。
+
+#### 2.1.4. ContentProviderHolder
+
+```java
+public class ContentProviderHolder implements Parcelable {
+    public final ProviderInfo info;
+    public IContentProvider provider;
+    public IBinder connection;
+    public boolean noReleaseNeeded;
+
+    ...
+}
+```
+
+　　ContentProviderHolder 类具有 ProviderInfo 成员 info，IContentProvider 成员 provider 和 IBinder 成员 connection。
+
+#### 2.1.5. ActivityManagerService#getContentProvider
 
 ```java
     @Override
@@ -1016,11 +1215,11 @@
 
 　　cpr 就是 ContentProviderRecord，它的 provider 域就是 IContentProvider。
 
-## 何时 ContentProviderRecord 的 provider 被设置
+## 3. 何时 ContentProviderRecord 的 provider 被设置
 
 　　在点击 Android 桌面 app 图标启动应用程序的过程中，会调用 ActivityManagerService 的 attachApplication() 方法，而 attachApplication 方法就会调用 attachApplicationLocked 方法。
 
-### ActivityManagerService#attachApplicationLocked
+### 3.1. ActivityManagerService#attachApplicationLocked
 
 ```java
     private final boolean attachApplicationLocked(IApplicationThread thread,
@@ -1330,14 +1529,68 @@
     }
 ```
 
-　　这个方法主要是 4 个：
+　　这个方法做了 4 件事情：
 
 1. 首先是根据传进来的进程 ID 找到相应的进程记录块，注意，这个进程 ID 是 MyContentProvider 所在程序的 ID。
 2. 然后对这个进程记录块做了一些初始化的工作。
 3. 再接下来通过调用 generateApplicationProviderLocked() 获得需要在这个进程中加载的 ContentProvider 列表，在这个情景中，就只有 MyProviderContent 这个 ContentProvider 了。
 4. 最后调用从参数传进来的 IApplicationThread 对象 thread 的 bindApplication 函数来执行一些应用程序初始化工作。
 
-### ActivityThread#handleBindApplication
+#### 3.1.1. ApplicationThread#bindApplication
+
+```java
+        public final void bindApplication(String processName, ApplicationInfo appInfo,
+                List<ProviderInfo> providers, ComponentName instrumentationName,
+                ProfilerInfo profilerInfo, Bundle instrumentationArgs,
+                IInstrumentationWatcher instrumentationWatcher,
+                IUiAutomationConnection instrumentationUiConnection, int debugMode,
+                boolean enableBinderTracking, boolean trackAllocation,
+                boolean isRestrictedBackupMode, boolean persistent, Configuration config,
+                CompatibilityInfo compatInfo, Map services, Bundle coreSettings,
+                String buildSerial) {
+
+            if (services != null) {
+                // Setup the service cache in the ServiceManager
+                ServiceManager.initServiceCache(services);
+            }
+
+            setCoreSettings(coreSettings);
+
+            AppBindData data = new AppBindData();
+            data.processName = processName;
+            data.appInfo = appInfo;
+            data.providers = providers;
+            data.instrumentationName = instrumentationName;
+            data.instrumentationArgs = instrumentationArgs;
+            data.instrumentationWatcher = instrumentationWatcher;
+            data.instrumentationUiAutomationConnection = instrumentationUiConnection;
+            data.debugMode = debugMode;
+            data.enableBinderTracking = enableBinderTracking;
+            data.trackAllocation = trackAllocation;
+            data.restrictedBackupMode = isRestrictedBackupMode;
+            data.persistent = persistent;
+            data.config = config;
+            data.compatInfo = compatInfo;
+            data.initProfilerInfo = profilerInfo;
+            data.buildSerial = buildSerial;
+            sendMessage(H.BIND_APPLICATION, data);
+        }
+```
+
+　　ApplicationThread 的 bindApplication 方法，向主线程发送了 BIND_APPLICATION 消息，主线程中就会收到 BIND_APPLICATION 消息，在 handleMessage 中处理：
+
+```java
+              case BIND_APPLICATION:
+                    Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "bindApplication");
+                    AppBindData data = (AppBindData)msg.obj;
+                    handleBindApplication(data);
+                    Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+                    break;
+```
+
+　　在处理 BIND_APPLICATION 消息，会调用 ActivityThread 的 handleBindApplication 方法。
+
+### 3.2. ActivityThread#handleBindApplication
 
 ```java
     private void handleBindApplication(AppBindData data) {
@@ -1714,7 +1967,7 @@
 
 　　在这个方法中，调用了 installContentProviders 方法来在本地安装 ContentProviders 信息。
 
-#### ActivityThread#installContentProviders
+#### 3.2.1. ActivityThread#installContentProviders
 
 ```java
     private void installContentProviders(
@@ -1758,7 +2011,7 @@
 
 2. 当这些 ContentProvider 都处理好了以后，还要调用 ActivityManangerService 服务的 publishContentProviders() 函数来通知 ActivityManagerService 服务这个进程中所要加载的 ContentProvider 都已经准备完毕了，而 ActivityManagerService 服务的 publishContentProviders() 函数的作用就是用来唤醒 ActivityManagerService 的 getContentProvider 方法中等待的线程。
 
-##### ActivityThread#installProvider
+##### 3.2.1.1. ActivityThread#installProvider
 
 ```java
     private ContentProviderHolder installProvider(Context context,
@@ -1902,7 +2155,7 @@
 
 　　接着通过调用 localProvider(ContentProvider 类型)的 getIContentProvider() 函数来获得一个 Binder 对象（IContentProvider 类型），将这个 Binder 对象赋值给 ContentProviderHolder 对象的内部变量 provider，将 ContentProviderHolder 返回，传到 ActivityManagerService 中去，后续其他应用程序就会通过获得这个 ContentProviderHolder 对象的内部 IContentProvider 对象来和相应的 ContentProvider 进行通信的了。
 
-###### ContentProvider#getIContentProvider
+###### 3.2.1.1.1. ContentProvider#getIContentProvider
 
 ```java
     private Transport mTransport = new Transport();
@@ -1916,7 +2169,7 @@
 
 　　ContentProvider 类和 Thransport 类的关系就类似于 ActivityThread 和 ApplicationThread 的关系，其他应用程序不是直接调用 ContentProvider 接口来访问它的数据，而是通过调用它的内部对象 mTransport 来间接调用 ContentProvider 的接口。
 
-###### ContentProvider#attachInfo
+###### 3.2.1.1.2. ContentProvider#attachInfo
 
 　　那么 ActivityThread 的 installProvider 方法中调用了 `localProvider.attachInfo`来初始化刚刚加载好的 ContentProvider。
 
@@ -1952,7 +2205,7 @@
 
 　　这个方法很简单，主要就是根据这个 ContentProvider 的信息 info 来设置相应的读写权限，然后调用它的子类的 onCreate 函数来让子类执行一些初始化的工作。这个子类就是 MyContentProvider 所在应用程序中的 MyContentProvider 类了。
 
-###### ActivityThread # installProviderAuthoritiesLocked
+###### 3.2.1.1.3. ActivityThread # installProviderAuthoritiesLocked
 
 ```java
     private ProviderClientRecord installProviderAuthoritiesLocked(IContentProvider provider,
@@ -1996,7 +2249,7 @@
 
 　　把在本地中加载的 ContentProvider 信息保存下来，方便后面查询和使用。
 
-###### ActivityManagerService#publishContentProvider
+###### 3.2.1.1.4. ActivityManagerService#publishContentProvider
 
 ```java
     public final void publishContentProviders(IApplicationThread caller,
@@ -2081,7 +2334,7 @@ ContentProviderRecord dst = r.pubProviders.get(src.info.name);
 
 　　该方法返回到 ActivityThread 类的 acquireProvider() 函数中后，会继续执行 installProvider 方法。注意，这里是在第二个应用程序进程中执行 installProvider() 函数的，而前面的 installProvider 函数是在第一个应用程序中执行的。
 
-### ActivityThread#installProvider
+### 3.3. ActivityThread#installProvider
 
 ```java
     private ContentProviderHolder installProvider(Context context,
@@ -2220,11 +2473,17 @@ ContentProviderRecord dst = r.pubProviders.get(src.info.name);
 
 　　其它几个函数 insert()、delete()... 都是同样的过程。
 
- 
+## 4. 总结
 
+　　getContentResolver 方法返回的是 Context 的 mContentResolver 成员，而 mContextResolver 是在启动 App 的时候调用 performLaunchActivity 方法初始化了 mContextResolver 成员 `mContentResolver = new ApplicationContentResolver(this, mainThread, user);`。
 
+　　调用 ContentResolver 的 query 方法，会在 ActivityManagerService 的  getContentProvider 方法中调用 wait 方法去等待 cpr.provider 不为 null。而 cpr 是 ContentProviderRecord 对象，cpr 包含想要获取的系统中的 ContentProvider 信息。
 
-## 参考文章
+　　而 cpr.provider 是在启动应用的时候去设置的。在启动应用的时候会调用 ActivityManangerService 的 attachApplicationLocked 方法，这个方法会发出 BIND_APPLICATION 消息，在主线程接收到这个消息后，会调用 ActivityThread 的 handleBindApplication 方法出处理这个消息，在这个消息中，会调用 ActivityThread 的 installProvider 方法将相应的 ContentProvider 加载进来，并且调用 ActivityMnangerService 的 publishContentProvider 方法通知等待的线程，创建一个 ContentProviderHolder 对象并返回。
+
+　　在 ActivityManagerService 中，是用 mProviderMap 保存系统中的 ContentProvider 信息的。
+
+## 5. 参考文章
 
 1. [深入理解 Android 四大组件之一 ContentProvider](https://blog.csdn.net/hehe26/article/details/51784355)
 
