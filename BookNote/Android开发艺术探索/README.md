@@ -2,7 +2,7 @@
 
 **第 1 章** [Activity 的生命周期和启动模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android开发艺术探索/第1章-Activity%20的声明周期和启动模式.md)
 
-**第 2 章** IPC 机制
+**第 2 章** [IPC 机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android开发艺术探索/第2章-IPC机制.md)
 
 **第 3 章** View 的事件体系
 
