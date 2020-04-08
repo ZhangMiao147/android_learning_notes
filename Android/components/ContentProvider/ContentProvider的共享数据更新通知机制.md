@@ -1,6 +1,8 @@
 # ContentProvider 的共享数据更新通知机制
 
-　　Android 应用程序组件 ContentProvder 中的数据更新通知机制和 Android 系统中的广播（Broadcast）通知机制的实现思路是相似的。
+## 1. 概述
+
+　　Android 应用程序组件 ContentProvider 中的数据更新通知机制和 Android 系统中的广播（Broadcast）通知机制的实现思路是相似的。
 
 　　在 Android 的广播机制中，首先是接收者对自己感兴趣的广播进行注册，接着当发送者发出这些广播时，接收者就会得到通知了。
 
@@ -18,39 +20,41 @@
 2. 监控数据变化的 ContentObserver 的注册过程
 3. 数据更新通知的发送过程
 
-## ContentService 启动
+## 2. ContentService 启动
 
-### ContentService 概述
+### 2.1. ContentService 概述
 
 　　ContentService 可以看做 Android 中一个系统级别的消息中心，可以说搭建一个系统级的观察者模型，App 可以向消息中心注册观察者，选择订阅自己关心的消息，也可以通过消息中心发送消息，通知其他进程，简单模型如下：
 
 ![](image/ContentService简单模型.png)
 
-　　ContentService服务伴随系统启动，更准确的说是伴随SystemServer进程启动，本身是一个 Binder 系统服务，运行在 SystemServer 进程。
+　　ContentService服务伴随系统启动，更准确的说是伴随 SystemServer进程启动，本身是一个 Binder 系统服务，运行在 SystemServer 进程。
 
 　　作为系统服务，最好能保持高效运行，因此 ContentService 通知 App 都是异步的，被限制 oneway，仅仅插入目标进程（线程）的 Queue 队列，不必等待执行。
 
+### 2.2. 源码分析
 
+#### 2.2.1. Lifecycle
 
-### 源码分析
-
-#### LifeCycle
-
-　　LifeCycle 是 ContentService 的静态内部类。
+　　Lifecycle 是 ContentService 的静态内部类。
 
 ```java
-    public static class Lifecycle extends SystemService {
-        private ContentService mService;
+		// Lifecycle 继承 SystemService   
+		public static class Lifecycle extends SystemService {
+        private ContentService mService; // ContentService 的成员对象
 
         public Lifecycle(Context context) {
             super(context);
         }
 
+      	// 启动后会调用 onStart 方法
         @Override
         public void onStart() {
             final boolean factoryTest = (FactoryTest
                     .getMode() == FactoryTest.FACTORY_TEST_LOW_LEVEL);
+          	// 初始化 contentService 成员对象
             mService = new ContentService(getContext(), factoryTest);
+          	// 调用 SystemService 的 publishBinderService 方法
             publishBinderService(ContentResolver.CONTENT_SERVICE_NAME, mService);
         }
 
@@ -72,14 +76,15 @@
 
 　　Lifecycle 是 SystemService 的子类，持有 ContentService 成员 mService，在 onStart 方法中初始化 mService，并调用 publishBinderService 方法。
 
-#### SystemService
+#### 2.2.2. SystemService
 
-　　SystemService 是系统服务，从 main 方法进入
+　　SystemService 是系统服务，从 main 方法进入开始执行。
 
-##### SystemService#main
+##### 2.2.2.1. SystemService#main
 
 ```java
     public static void main(String[] args) {
+      	// 调用 SystemServer 的 run 方法
         new SystemServer().run();
     }
     public SystemServer() {
@@ -90,12 +95,14 @@
     }
 ```
 
-　　
+　　在 SystemService 的 main 方法中调用 SystemServer 的构造方法创建了一个 SystemServer 对象，并调用了 SystemServer 的 run 方法。
 
-##### SystemService#run
+##### 2.2.2.2. SystemServer#run
+
+　　在 SystemServer 的 run 方法中会有如下部分代码：
 
 ```java
- // Start services.开启一些系统核心服务与其他服务
+ 				// Start services.开启一些系统核心服务与其他服务
         try {
             traceBeginAndSlog("StartServices");
             startBootstrapServices();
@@ -111,37 +118,39 @@
         }
 ```
 
+　　在 SystemService 的 run 方法中调用了 startOtherService 方法。
 
+##### 2.2.2.3. SystemServer#startOtherService
 
-##### SystemService#startOtherService
+　　在 SystemServer 的 startOtherService 方法中有如下部分代码：
 
 ```java
-            traceBeginAndSlog("StartContentService");
-            mSystemServiceManager.startService(CONTENT_SERVICE_CLASS);
-            traceEnd();
-
-
+traceBeginAndSlog("StartContentService");
+mSystemServiceManager.startService(CONTENT_SERVICE_CLASS);
+traceEnd();
 ```
 
+　　调用 mSystemServiceManager 的 startService 开启 CONTENT_SERVICE_CLASS 服务，而 CONTENT_SERVICE_CLASS 如下：
 
-
-```
+```java
     private static final String CONTENT_SERVICE_CLASS =
-            "com.android.server.content.ContentService$Lifecycle";
+            "com.android.server.content.ContentService$Lifecycle"; // ContentService 的 Lisecycle
 ```
 
-#### publishBinderService
+　　CONTENT_SERVICE_CLASS 就是 ContentService 的内部类 Lifecycle。启动之后就会调用 Lifecycle 的 onStart 方法，创建 ContentService 对象，并调用 publicBinderService 方法。
 
-```
+#### 2.2.3. SystemService#publishBinderService
+
+```java
 /**
- * Publish the service到ServiceManager，对其他进程提供binder服务.
+ * Publish the service 到 ServiceManager，对其他进程提供 binder 服务.
  */
 protected final void publishBinderService(String name, IBinder service) {
     publishBinderService(name, service, false);
 }
 
 /**
- * Publish the service到ServiceManager，对其他进程提供binder服务.
+ * Publish the service 到 ServiceManager，对其他进程提供 binder 服务.
  */
 protected final void publishBinderService(String name, IBinder service,
         boolean allowIsolated) {
@@ -149,65 +158,56 @@ protected final void publishBinderService(String name, IBinder service,
 }
 ```
 
+　　在 publishBinderService 方法中调用了 ServiceMananger 的 addService 方法。
 
+##### 2.2.3.1. ServiceManager#addService
 
-##### addService
+　　SystemServer 进程启动系统服务有两种方式，分别是 SystemServiceManager 的`startService` 方式和 ServiceManager 的 `addService` 方式。
 
-SystemServer 进程启动系统服务有两种方式，分别是 SystemServiceManager 的`startService` 方式和 ServiceManager 的 `addService` 方式。
-
-通过 ServiceManager 的`addService(String name, IBinder service)`用于初始化继承于 IBinder 的服务。
-
-主要功能如下：
-
-- 将对应服务的 Binder 对象添加到 SystemManager 中去。
-
-之前有学习到 ServiceManager 是系统服务的管家，通过它来获得其他服务。然而，在启动系统服务时，有些服务竟然没有 addService 注册到 ServiceManager 中去。
-
-事实上，有些服务即使在启动时没有注册进去，在启动之后也会注册到 ServiceManager 中去。
-
-```
+```java
 public static void addService(String name, IBinder service, boolean allowIsolated) {
-try {
-getIServiceManager().addService(name, service, allowIsolated);
-} catch (RemoteException e) {
-Log.e(TAG, "error in addService", e);
-}
+		try {
+				getIServiceManager().addService(name, service, allowIsolated);
+		} catch (RemoteException e) {
+				Log.e(TAG, "error in addService", e);
+		}
 }
 ```
 
+　　通过 ServiceManager 的`addService(String name, IBinder service)`用于初始化继承于 IBinder 的服务。
 
+　　主要功能是将对应服务的 Binder 对象添加到 SystemManager 中去。
 
+##### 2.2.3.2. ServiceManagerNative#addService
 
+```java
 
-SystemService
+    public void addService(String name, IBinder service, boolean allowIsolated)
+            throws RemoteException {
+        Parcel data = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        data.writeInterfaceToken(IServiceManager.descriptor);
+        data.writeString(name);
+        data.writeStrongBinder(service);
+        data.writeInt(allowIsolated ? 1 : 0);
+        mRemote.transact(ADD_SERVICE_TRANSACTION, data, reply, 0);
+        reply.recycle();
+        data.recycle();
+    }
+```
 
-[Android 源码学习 SystemServer](https://www.jianshu.com/p/8177f92e1df5)
+　　调用 mRemote 的 transact 方法执行添加服务的 Binder 操作。
 
-[Android系统服务(SystemService)简介](https://blog.csdn.net/geyunfei_/article/details/78851024)
+## 3. 监控数据变化的 ContentObserver 的注册过程
 
-SystemService#publishBinderService
-
-[Android SystemService类注释](https://blog.csdn.net/u011139711/article/details/81105895)
-
-
-
-SystemService # addService
-
-[Android 系统服务启动 SystemServer](https://www.cnblogs.com/aademeng/articles/7521853.html)
-
-
-
-## 监控数据变化的 ContentObserver 的注册过程
-
-### 注册更新
+### 3.1. 注册更新
 
 ```java
 // 注册数据更新
-resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovider/contact"),  
-                true,new MyContentObserver(new Handler()));
+resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovider/contact"),  true,new MyContentObserver(new Handler()));
 ```
 
-　　通过调用 ContentResolver 对象的 resisterContentObserver() 方法来注册一个自定义的 ContentObserver(MyContentObserver) 来监控 MyContentProvider 这个 ContentProvider 中的数据变化。
+　　通过调用 ContentResolver 对象的 registerContentObserver() 方法来注册一个自定义的 ContentObserver(MyContentObserver) 来监控 MyContentProvider 这个 ContentProvider 中的数据变化。
 
 ```java
  private class MyContentObserver extends ContentObserver{  
@@ -221,7 +221,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
             super(handler);  
         }  
   		
-     	// 接收到数据更新时的回调
+     		// 接收到数据更新时的回调
         @Override  
         public void onChange(boolean selfChange) {  
             
@@ -233,24 +233,26 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 
 　　从 ContentObserver 继承下来的子类必须要实现 onChange 函数。当这个 ContentObserver 子类负责监控的数据发生变化时，ContentService 就会调用它的 onChange 函数来处理，参数 selfChange 表示这个变化是否是由自己引起的。
 
-　　在这个应用程序中，MyContentObserver 继承了 Observer 类，它负责监控的 URL 是 “"content://com.content.mycontentprovider/contact"”。当这个 URI 为前缀的 URI 对应的数据发生改变时，ContentService 都会调用这个 MyContentObserver 类的 onChange 函数来处理。在 MyContentObserver 类的 onChange 函数中。
+　　在这个应用程序中，MyContentObserver 继承了 Observer 类，它负责监控的 URL 是 “"content://com.content.mycontentprovider/contact"”。当这个 URI 为前缀的 URI 对应的数据发生改变时，ContentService 都会调用这个 MyContentObserver 类的 onChange 函数来处理。
 
-### 注册过程分析
+### 3.2. 注册过程分析
 
-　　在 MyContentProvider 类的构造函数中，有一个 handler，它的类型为 Handler：
+　　在 ContentObserver 类的构造函数中，有一个 handler，它的类型为 Handler：
 
-```
-    Handler mHandler;
+```java
+	Handler mHandler;
     
 	public ContentObserver(Handler handler) {
         mHandler = handler;
-    }
+  }
 ```
 
-　　这个 handler 是用来分发和处理消息用的。由于是在主线程中调用的 `resolver.registerContentObserver(...,  
+　　这个 handler 是用来分发和处理消息用的。
+
+　　由于是在主线程中调用的 `resolver.registerContentObserver(...,  
                 ..,new MyContentObserver(new Handler()));`，因此，这个 handler 参数就是和应用程序主线程的消息循环关联在一起的。
 
-#### ContentResolver#registerContentObserver
+#### 3.2.1. ContentResolver#registerContentObserver
 
 ```java
     public final void registerContentObserver(@NonNull Uri uri, boolean notifyForDescendants,
@@ -268,6 +270,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
     public final void registerContentObserver(Uri uri, boolean notifyForDescendents,
             ContentObserver observer, @UserIdInt int userHandle) {
         try {
+          	// 调用了 ContentService 的 registerContentObserver 方法
             getContentService().registerContentObserver(uri, notifyForDescendents,
                     observer.getContentObserver(), userHandle, mTargetSdkVersion);
         } catch (RemoteException e) {
@@ -283,7 +286,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 2. 调用从参数传进来的 ContentObserver 对象 observer 的 getContentObserver 函数来获得一个 Binder 对象。
 3. 通过调用 ContentService 远程接口的 registerContentObserver 函数来把这个 Binder 对象注册到 ContentService 中去。
 
-#### ContentResolver#getContentService
+#### 3.2.2. ContentResolver#getContentService
 
 ```java
     public static IContentService getContentService() {
@@ -298,9 +301,9 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
     }
 ```
 
-　　在 ContentProvider 类中，有一个静态成员变量 sContentService。开始时 sContentService 为 null。当ContentResolver 类的 getContentService 函数第一次被调用时，它便会通过 ServiceMananger 类的 getService 函数来获得前面已经启动起来了的 ContentService 服务的远程接口，然后把它保存在 sContentService 变量中。这样，当下次 ContentResolver 类的 getContentService 函数再次被调用时，就可以直接把这个 ContentService 远程接口返回给调用者了。
+　　在 ContentProvider 类中，有一个静态成员变量 sContentService。开始时 sContentService 为 null。当ContentResolver 类的 getContentService 函数第一次被调用时，它便会通过 ServiceMananger 类的 getService 方法来获得前面已经启动起来了的 ContentService 服务的远程接口，然后把它保存在 sContentService 变量中。这样，当下次 ContentResolver 类的 getContentService 函数再次被调用时，就可以直接把这个 ContentService 远程接口返回给调用者了。
 
-#### ContentObserver#getContentObserver
+#### 3.2.3. ContentObserver#getContentObserver
 
 ```java
     public IContentObserver getContentObserver() {
@@ -317,7 +320,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 
 ```java
     private static final class Transport extends IContentObserver.Stub {
-        private ContentObserver mContentObserver;
+        private ContentObserver mContentObserver; // ContentObserver 成员对象
 
         public Transport(ContentObserver contentObserver) {
             mContentObserver = contentObserver;
@@ -880,3 +883,18 @@ contentValues.put("number",num);
 1. [深入理解ContentProvider共享数据更新通知机制](https://blog.csdn.net/hehe26/article/details/51871610)
 2. [Android内容服务ContentService原理浅析](https://www.jianshu.com/p/d6af600e4c20)
 
+SystemService
+
+[Android 源码学习 SystemServer](https://www.jianshu.com/p/8177f92e1df5)
+
+[Android系统服务(SystemService)简介](https://blog.csdn.net/geyunfei_/article/details/78851024)
+
+SystemService#publishBinderService
+
+[Android SystemService类注释](https://blog.csdn.net/u011139711/article/details/81105895)
+
+
+
+SystemService # addService
+
+[Android 系统服务启动 SystemServer](https://www.cnblogs.com/aademeng/articles/7521853.html)
