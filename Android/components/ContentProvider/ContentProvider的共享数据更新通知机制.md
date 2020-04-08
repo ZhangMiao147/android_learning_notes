@@ -20,9 +20,164 @@
 
 ## ContentService 启动
 
-ContentService服务伴随系统启动，更准确的说是伴随SystemServer进程启动
+### ContentService 概述
 
-[Android内容服务ContentService原理浅析](https://www.jianshu.com/p/d6af600e4c20)
+　　ContentService 可以看做 Android 中一个系统级别的消息中心，可以说搭建一个系统级的观察者模型，App 可以向消息中心注册观察者，选择订阅自己关心的消息，也可以通过消息中心发送消息，通知其他进程，简单模型如下：
+
+![](image/ContentService简单模型.png)
+
+　　ContentService服务伴随系统启动，更准确的说是伴随SystemServer进程启动，本身是一个 Binder 系统服务，运行在 SystemServer 进程。
+
+　　作为系统服务，最好能保持高效运行，因此 ContentService 通知 App 都是异步的，被限制 oneway，仅仅插入目标进程（线程）的 Queue 队列，不必等待执行。
+
+
+
+### 源码分析
+
+#### LifeCycle
+
+　　LifeCycle 是 ContentService 的静态内部类。
+
+```java
+    public static class Lifecycle extends SystemService {
+        private ContentService mService;
+
+        public Lifecycle(Context context) {
+            super(context);
+        }
+
+        @Override
+        public void onStart() {
+            final boolean factoryTest = (FactoryTest
+                    .getMode() == FactoryTest.FACTORY_TEST_LOW_LEVEL);
+            mService = new ContentService(getContext(), factoryTest);
+            publishBinderService(ContentResolver.CONTENT_SERVICE_NAME, mService);
+        }
+
+        @Override
+        public void onBootPhase(int phase) {
+            if (phase == SystemService.PHASE_ACTIVITY_MANAGER_READY) {
+                mService.systemReady();
+            }
+        }
+
+        @Override
+        public void onCleanupUser(int userHandle) {
+            synchronized (mService.mCache) {
+                mService.mCache.remove(userHandle);
+            }
+        }
+    }
+```
+
+　　Lifecycle 是 SystemService 的子类，持有 ContentService 成员 mService，在 onStart 方法中初始化 mService，并调用 publishBinderService 方法。
+
+#### SystemService
+
+　　SystemService 是系统服务，从 main 方法进入
+
+##### SystemService#main
+
+```java
+    public static void main(String[] args) {
+        new SystemServer().run();
+    }
+    public SystemServer() {
+        // Check for factory test mode.
+        mFactoryTestMode = FactoryTest.getMode();
+        // Remember if it's runtime restart(when sys.boot_completed is already set) or reboot
+        mRuntimeRestart = "1".equals(SystemProperties.get("sys.boot_completed"));
+    }
+```
+
+　　
+
+##### SystemService#run
+
+```java
+ // Start services.开启一些系统核心服务与其他服务
+        try {
+            traceBeginAndSlog("StartServices");
+            startBootstrapServices();
+            startCoreServices();
+            startOtherServices();
+            SystemServerInitThreadPool.shutdown();
+        } catch (Throwable ex) {
+            Slog.e("System", "******************************************");
+            Slog.e("System", "************ Failure starting system services", ex);
+            throw ex;
+        } finally {
+            traceEnd();
+        }
+```
+
+
+
+##### SystemService#startOtherService
+
+```java
+            traceBeginAndSlog("StartContentService");
+            mSystemServiceManager.startService(CONTENT_SERVICE_CLASS);
+            traceEnd();
+
+
+```
+
+
+
+```
+    private static final String CONTENT_SERVICE_CLASS =
+            "com.android.server.content.ContentService$Lifecycle";
+```
+
+#### publishBinderService
+
+```
+/**
+ * Publish the service到ServiceManager，对其他进程提供binder服务.
+ */
+protected final void publishBinderService(String name, IBinder service) {
+    publishBinderService(name, service, false);
+}
+
+/**
+ * Publish the service到ServiceManager，对其他进程提供binder服务.
+ */
+protected final void publishBinderService(String name, IBinder service,
+        boolean allowIsolated) {
+    ServiceManager.addService(name, service, allowIsolated);
+}
+```
+
+
+
+##### addService
+
+SystemServer 进程启动系统服务有两种方式，分别是 SystemServiceManager 的`startService` 方式和 ServiceManager 的 `addService` 方式。
+
+通过 ServiceManager 的`addService(String name, IBinder service)`用于初始化继承于 IBinder 的服务。
+
+主要功能如下：
+
+- 将对应服务的 Binder 对象添加到 SystemManager 中去。
+
+之前有学习到 ServiceManager 是系统服务的管家，通过它来获得其他服务。然而，在启动系统服务时，有些服务竟然没有 addService 注册到 ServiceManager 中去。
+
+事实上，有些服务即使在启动时没有注册进去，在启动之后也会注册到 ServiceManager 中去。
+
+```
+public static void addService(String name, IBinder service, boolean allowIsolated) {
+try {
+getIServiceManager().addService(name, service, allowIsolated);
+} catch (RemoteException e) {
+Log.e(TAG, "error in addService", e);
+}
+}
+```
+
+
+
+
 
 SystemService
 
@@ -500,7 +655,11 @@ contentValues.put("number",num);
 1. 第一件事情是调用 ContentService 的成员变量 mRootNode 的 collectObserverLocked() 方法来收集那些注册了监控 “content://com.content.mycontentprovider/contact/d” 这个 URI 的 ContentObserver。
 2. 第二件事情是分别调用这些 ContentObserver 的 onChange() 方法来通知它们监控的数据发生变化了。
 
+### 收集注册了监控的 ContentObserver
+
 #### ObserverNode#collectObserverLocked
+
+　　ObserverNode 是 ContentService 的内部类。
 
 ```java
         public void collectObserversLocked(Uri uri, int index, IContentObserver observer,
@@ -537,13 +696,187 @@ contentValues.put("number",num);
         }
 ```
 
+##### ObserverNode#collectMyObserverLocked
+
+```java
+        private void collectMyObserversLocked(boolean leaf, IContentObserver observer,
+                                              boolean observerWantsSelfNotifications, int flags,
+                                              int targetUserHandle, ArrayList<ObserverCall> calls) {
+            int N = mObservers.size();
+            IBinder observerBinder = observer == null ? null : observer.asBinder();
+            for (int i = 0; i < N; i++) {
+                ObserverEntry entry = mObservers.get(i);
+
+                // Don't notify the observer if it sent the notification and isn't interested
+                // in self notifications
+                boolean selfChange = (entry.observer.asBinder() == observerBinder);
+                if (selfChange && !observerWantsSelfNotifications) {
+                    continue;
+                }
+
+                // Does this observer match the target user?
+                if (targetUserHandle == UserHandle.USER_ALL
+                        || entry.userHandle == UserHandle.USER_ALL
+                        || targetUserHandle == entry.userHandle) {
+                    // Make sure the observer is interested in the notification
+                    if (leaf) {
+                        // If we are at the leaf: we always report, unless the sender has asked
+                        // to skip observers that are notifying for descendants (since they will
+                        // be sending another more specific URI for them).
+                        if ((flags&ContentResolver.NOTIFY_SKIP_NOTIFY_FOR_DESCENDANTS) != 0
+                                && entry.notifyForDescendants) {
+                            if (DEBUG) Slog.d(TAG, "Skipping " + entry.observer
+                                    + ": skip notify for descendants");
+                            continue;
+                        }
+                    } else {
+                        // If we are not at the leaf: we report if the observer says it wants
+                        // to be notified for all descendants.
+                        if (!entry.notifyForDescendants) {
+                            if (DEBUG) Slog.d(TAG, "Skipping " + entry.observer
+                                    + ": not monitor descendants");
+                            continue;
+                        }
+                    }
+                    if (DEBUG) Slog.d(TAG, "Reporting to " + entry.observer + ": leaf=" + leaf
+                            + " flags=" + Integer.toHexString(flags)
+                            + " desc=" + entry.notifyForDescendants);
+                    calls.add(new ObserverCall(this, entry.observer, selfChange,
+                            UserHandle.getUserId(entry.uid)));
+                }
+            }
+        }
+```
 
 
-　　第一个调用 collectObserversLocked() 时，是在 mRootNode 的这个 ObserverNode 节点中进行收集 ConentObserver 的。这时候传进来的 uri 的值为 “content://com.content.mycontentprovider/contact/d” ，index 的值为 0 ，调用 countUriSegments("content://com.content.mycontentprovider/contact/d") 函数得到的返回值为 3，于是就会调用 getUriSegment 方法，得到的 segem
+
+　　第一个调用 collectObserversLocked() 时，是在 mRootNode 的这个 ObserverNode 节点中进行收集 ConentObserver 的。这时候传进来的 uri 的值为 “content://com.content.mycontentprovider/contact/d” ，index 的值为 0 ，调用 countUriSegments("content://com.content.mycontentprovider/contact/d") 函数得到的返回值为 3，于是就会调用 getUriSegment 方法，得到的 segment 的值为 “com.content.mycontentprovider”。在这个情景中，mRootNode 这个节点中没有注册 ContentObserver，于是调用 collectMyObserversLocked 方法就不会收集到 ContentObserver。
+
+　　在接下来的 for 循环中，在 mRootNode 的孩子节点列表 mChildren 中查找名称等于 “com.content.mycontentprovider” 的 ObserverNode 节点。
+
+　　在 ContentObserver 的注册过程中，已经往 mRootNode 的孩子节点列表 mChildren 中增加了一个名称为 “com.content.mycontentprovider” 的 ObserverNode 节点，因此，在这里会成功找到它，并且调用它的 collectionObserversLocked() 函数来继续收集 ContentObserver。
+
+　　第二次进入到 collectObserversLocked() 方法时，是在名称为 “com.content.mycontentprovider” 的 ObserverNode 节点中收集 ContentObserver 的。这时候传来的 uri 值不变，但是 index 的值为 1，于是执行 getUriSegment 方法的返回值 segment 为 “contact”，并接着执行 collectMyObserversLocked 方法。在当前场景重，没有在名称为 “com.content.mycontentprovider” 的 ObserverNode 节点重注册有 ContentObserver，因此调用 collectMyObserversLocked() 方法也不会收集到 ContentObserver。
+
+　　在接下来的 for 循环中，在名称为 “com.content.mycontentprovider”  的 ObserverNode 节点的孩子节点列表 mChildren 中朝朝名称等于 “contact” 的 ObserverNode 节点。在 ContentObserver 的注册过程中，往名称为 “com.content.mycontentprovider” 的 ObserverNode 节点的孩子节点列表 mChildren 中增加了一个名称为 "contact" 的 ObserverNode 节点，因此，这里会找到它，并且调用它的 collectObserversLocked() 方法来继续收集 ContentObserver。
+
+　　第三次进入到 collectObserversLocked() 方法时，是在名称为 “com.content.mycontentprovider” 的 ObserverNode 节点的子节点中名称为 "contact" 的 ObserverNode 节点中收集 ContentObserver 的。这时候传来的 uri 值不变，但是 index 的值为 2，于是执行 getUriSegment 的返回值 segment 为 “d”。
+
+　　前面已经在名称为 “com.content.mycontentprovider” 的 ObserverNode 节点的子节点中名称为 “contact” 的 ObserverNode 节点中注册了一个 ContentObserver，即 MyContentObserver，因此这里调用 collectMyObserversLocked() 方法会收集到这个 ContentObserver。注意，这次调用 collectMyObserversLocked() 方法时，虽然传进去的参数 leaf 为 false，但是由于注册 MyContentProvider 时，指定了 notifyForDescendents 参数为 true，因此，这里可以把它收集回来。
+
+　　在接下来的 for 循环中，继续在该节点的子节点列表 mChildren 中查找名称等于 "d" 的 ObserverNode 节点。在当前场景下，不存在这个名称为 “d” 的子节点，于是收集 ContentObserver 的工作就结束了，收集结果是只有一个 ContentObserver，即在前面注册的 MyContentObserver。
+
+### 通知监控数据发生了变化
+
+　　collectObserversLocked 方法执行完成后，回到 ContentService 的 notifyChange 方法，接着执行 for 循环：
+
+```java
+            for (int i=0; i<numCalls; i++) {
+                ObserverCall oc = calls.get(i);
+                try {
+                    oc.mObserver.onChange(oc.mSelfChange, uri, userHandle);
+                    if (DEBUG) Slog.d(TAG, "Notified " + oc.mObserver + " of " + "update at "
+                            + uri);
+                } catch (RemoteException ex) {
+                    synchronized (mRootNode) {
+                        Log.w(TAG, "Found dead observer, removing");
+                        IBinder binder = oc.mObserver.asBinder();
+                        final ArrayList<ObserverNode.ObserverEntry> list
+                                = oc.mNode.mObservers;
+                        int numList = list.size();
+                        for (int j=0; j<numList; j++) {
+                            ObserverNode.ObserverEntry oe = list.get(j);
+                            if (oe.observer.asBinder() == binder) {
+                                list.remove(j);
+                                j--;
+                                numList--;
+                            }
+                        }
+                    }
+                }
+            }
+```
+
+　　ContentService 服务中的 mObserver 是一个在 ContentObserver 内部定义的一个类 Transport 对象的远程接口。
+
+　　通过调用 `oc.mObserver.onChange(oc.mSelfChange, uri, userHandle);` 也就是调用远程接口的 onChange() 方法，就会进入 ContentObserver 的内部类 Transport 的 onChange() 方法中去。
+
+#### Transport
+
+　　Transport 是 ContentObserver 的内部类。
+
+```java
+    private static final class Transport extends IContentObserver.Stub {
+        private ContentObserver mContentObserver;
+
+        public Transport(ContentObserver contentObserver) {
+            mContentObserver = contentObserver;
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri, int userId) {
+            ContentObserver contentObserver = mContentObserver;
+            if (contentObserver != null) {
+                contentObserver.dispatchChange(selfChange, uri, userId);
+            }
+        }
+
+        public void releaseContentObserver() {
+            mContentObserver = null;
+        }
+    }
+```
+
+　　在 ContentObserver 的注册过程中，会把 MyContentObserver 这个 ContentObserver 保存在这个 Transport 对象的 mContentObserver 成员变量中，因此会调用它的 dispatchChange() 方法来执行数据更新通知的操作。
+
+#### ContentObserver#dispatchChange
+
+```java
+    private void dispatchChange(boolean selfChange, Uri uri, int userId) {
+        if (mHandler == null) {
+            // 里面什么代码都没有执行
+            onChange(selfChange, uri, userId);
+        } else {
+            mHandler.post(new NotificationRunnable(selfChange, uri, userId));
+        }
+    }
+```
+
+　　在 ContentObserver 的注册过程中，在应用程序的主线程的消息循环创建了一个 Handler，并且以这个 Handler 来创建了这个 MyContentObserver，这个 Handler 就保存在 ContentObserver 的成员变量 mHandler 中。因此，这里的 mHandler 不为 null，于是把这个消息更新通知封装成了一个消息，放到应用程序的主线程中去处理，最终消息是由 NotificationRunnable 类的 run() 方法来处理的。
+
+#### NotificationRunnable#run
+
+　　NotificationRunnable 是 ContentObserver 的内部类。
+
+```java
+    private final class NotificationRunnable implements Runnable {
+        private final boolean mSelfChange;
+        private final Uri mUri;
+        private final int mUserId;
+
+        public NotificationRunnable(boolean selfChange, Uri uri, int userId) {
+            mSelfChange = selfChange;
+            mUri = uri;
+            mUserId = userId;
+        }
+
+        @Override
+        public void run() {
+            ContentObserver.this.onChange(mSelfChange, mUri, mUserId);
+        }
+    }
+```
+
+　　NotificationRunnable 直接调用了 ContentObserver 的子类 onChange 方法来处理这个数据更新通知了，这个 ContentObserver 子类就是 MyContentObserver 。
+
+　　以上就是 ContentProvider 的共享数据更新通知机制的运行过程。
+
+## 总结
 
 
 
 ## 参考文章
 
 1. [深入理解ContentProvider共享数据更新通知机制](https://blog.csdn.net/hehe26/article/details/51871610)
+2. [Android内容服务ContentService原理浅析](https://www.jianshu.com/p/d6af600e4c20)
 
