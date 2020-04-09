@@ -264,7 +264,7 @@
 
 　　以 Activity 的启动过程举例，Activity 的启动过程中会调用 Instrumentation 的 execStartActivity 方法。
 
-#### Instrumentation#execStartActivity
+### Instrumentation#execStartActivity
 
 ```java
     public ActivityResult execStartActivity(
@@ -289,19 +289,171 @@
 
 　　execStartActivity 方法中会调用 AMN 的 getDefault 来获取 AMS 的代理类 AMP，接着调用了 AMP 的 startActivity 方法。
 
-### ActivityManagerNative#getDefault
+#### ActivityManagerNative#getDefault
 
 ```java
     static public IActivityManager getDefault() {
-        return ActivityManager.getService();
+        return gDefault.get();
+    }
+
+    private static final Singleton<IActivityManager> gDefault = new Singleton<IActivityManager>() {
+        protected IActivityManager create() {
+          	// 得到名为 “activity” 的 Service 引用，也就是 IBinder 类型 的 AMS 的引用
+            IBinder b = ServiceManager.getService("activity");
+            if (false) {
+                Log.v("ActivityManager", "default service binder = " + b);
+            }
+          	// 将 b 封装成 AMP 类型对象，并将它保存到 gDefault 中
+          	// 此后调用 AMN 的 getDefault 方法就会直接获得 AMS 的代理对象 AMP
+            IActivityManager am = asInterface(b);
+            if (false) {
+                Log.v("ActivityManager", "default service = " + am);
+            }
+            return am;
+        }
+    };
+```
+
+　　getDefault 方法调用了 gDefault 的 get 方法，gDefault 是一个 Singleton 类。最后返回 AMP 对象。
+
+##### ActivityManagerNative#asInterface
+
+```java
+    static public IActivityManager asInterface(IBinder obj) {
+        if (obj == null) {
+            return null;
+        }
+        IActivityManager in =
+            (IActivityManager)obj.queryLocalInterface(descriptor);
+        if (in != null) {
+            return in;
+        }
+
+        return new ActivityManagerProxy(obj);
     }
 ```
 
+　　asInterface 方法的主要作用就是将 IBinder 类型的 AMS 引用封装成 AMP。
 
+##### ActivityManagerProxy 的构造方法
 
+　　ActivityManagerProxy 是 ActivityManagerNative 的内部类。
 
+```java
+class ActivityManagerProxy implements IActivityManager
+{
+    public ActivityManagerProxy(IBinder remote)
+    {
+        mRemote = remote;
+    }
+}
+```
 
+　　AMP 的构造方法中将 AMS 的引用赋值给变量 mRemote，这样在 AMP 中就可以使用 AMS 了。
 
+　　其中 IActivityManager 是一个接口，AMN 和 AMP 都实现了这个接口，用于实现代理模式和 Binder 通信。
+
+#### ActivityManagerProxy#startActivity
+
+　　再回到 Instrumentation 的 execStartActivity 方法，查看 AMP 的 startActivity 方法。
+
+　　AMP 是 AMN 的内部类。
+
+```java
+    public int startActivity(IApplicationThread caller, String callingPackage, Intent intent,
+            String resolvedType, IBinder resultTo, String resultWho, int requestCode,
+            int startFlags, ProfilerInfo profilerInfo, Bundle options) throws RemoteException {
+        ...
+        data.writeInt(requestCode);
+        data.writeInt(startFlags);
+        ...
+        // 通过 IBinder 类型对象 mRemote 向服务端 AMS 发送一个 START_ACTIVITY_TRANSACTION 类型的进程间通信请求
+        mRemote.transact(START_ACTIVITY_TRANSACTION, data, reply, 0);
+        reply.readException();
+        int result = reply.readInt();
+        reply.recycle();
+        data.recycle();
+        return result;
+    }
+
+```
+
+　　首先会将传入的参数写入到 Parcel 类型的 data 中，通过 IBinder 类型对象 mRemote（AMS 的引用）向服务端的 AMS 发送一个 START_ACTIVITY_TRANSACTION 类型的进程间通信请求。那么服务端 AMS 就会从 Binder 线程池中读取客户端发送来的数据，最终会调用 AMN 的 onTransact 方法。
+
+##### ActiveManagerNative#onTransact
+
+```java
+    @Override
+    public boolean onTransact(int code, Parcel data, Parcel reply, int flags)
+            throws RemoteException {
+        switch (code) {
+        case START_ACTIVITY_TRANSACTION:
+        {
+            ...
+            int result = startActivity(app, callingPackage, intent, resolvedType,
+                    resultTo, resultWho, requestCode, startFlags, profilerInfo, options);
+            reply.writeNoException();
+            reply.writeInt(result);
+            return true;
+        }
+        ...
+    }
+      
+    return super.onTransact(code, data, reply, flags);
+}
+```
+
+　　ActivityManagerNative 的 onTransact 方法中会调用 AMS 的 startActivity 方法。
+
+##### ActivityManagerService#startActivity
+
+```java
+    @Override
+    public final int startActivity(IApplicationThread caller, String callingPackage,
+            Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode,
+            int startFlags, ProfilerInfo profilerInfo, Bundle bOptions) {
+        return startActivityAsUser(caller, callingPackage, intent, resolvedType, resultTo,
+                resultWho, requestCode, startFlags, profilerInfo, bOptions,
+                UserHandle.getCallingUserId());
+    }
+```
+
+　　ActivityManagerService 的 startActivity 会 return startActivityAsUser 方法。
+
+##### ActivityManagerService#startActivityAsUser
+
+```java
+    @Override
+    public final int startActivityAsUser(IApplicationThread caller, String callingPackage,
+            Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode,
+            int startFlags, ProfilerInfo profilerInfo, Bundle bOptions, int userId) {
+        enforceNotIsolatedCaller("startActivity");
+        userId = mUserController.handleIncomingUser(Binder.getCallingPid(), Binder.getCallingUid(),
+                userId, false, ALLOW_FULL_ONLY, "startActivity", null);
+        // TODO: Switch to user app stacks here.
+        return mActivityStarter.startActivityMayWait(caller, -1, callingPackage, intent,
+                resolvedType, null, null, resultTo, resultWho, requestCode, startFlags,
+                profilerInfo, null, null, bOptions, false, userId, null, null);
+    }
+```
+
+　　startActivityAsUser 方法最后会 return mActivityStarter.startActivityMayWait 方法。
+
+### 总结
+
+　　在 Activity 的启动过程中提到了 AMP、AMN 和 AMS ，它们共同组成了 AMS 家族的主要部分，如下图所示：
+
+![](image/AMS家族.png)
+
+　　AMP 是 AMN 的内部类，它们都实现了 IActivityManager 接口，这样它们就可以实现代理模式。
+
+　　具体来讲是远程代理：AMP 和 AMN 都是运行在两个进程的，AMP 是 Client 端，AMN 则是 Server 端，而 Server 端中具体的功能都是由 AMN 的子类 AMS 来实现的，因此，AMP 就是 AMS 在 Client 端的代理类。AMN 又实现了 Binder 类，这样 AMP 可以和 AMS 通过 Binder 来进行进程间通信。
+
+　　ActivityManager 通过 AMN 的 getDefault 方法得到 AMP，通过 AMP 就可以和 AMN 进行通信，也就是间接的与 AMS 进行通信。
+
+　　除了 ActivityManager ，其他想要与 AMS 进行通信的类都需要通过 AMP，如下图：
+
+![](image/AMS通信.png)
 
 ## 参考文章
 
