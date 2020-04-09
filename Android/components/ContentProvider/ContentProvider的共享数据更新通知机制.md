@@ -28,7 +28,7 @@
 
 ![](image/ContentService简单模型.png)
 
-　　ContentService服务伴随系统启动，更准确的说是伴随 SystemServer进程启动，本身是一个 Binder 系统服务，运行在 SystemServer 进程。
+　　ContentService 服务伴随系统启动，更准确的说是伴随 SystemServer进程启动，本身是一个 Binder 系统服务，运行在 SystemServer 进程。
 
 　　作为系统服务，最好能保持高效运行，因此 ContentService 通知 App 都是异步的，被限制 oneway，仅仅插入目标进程（线程）的 Queue 队列，不必等待执行。
 
@@ -76,11 +76,11 @@
 
 　　Lifecycle 是 SystemService 的子类，持有 ContentService 成员 mService，在 onStart 方法中初始化 mService，并调用 publishBinderService 方法。
 
-#### 2.2.2. SystemService
+#### 2.2.2. SystemServer
 
-　　SystemService 是系统服务，从 main 方法进入开始执行。
+　　SystemServer 是一个进程，从 main 方法进入开始执行。
 
-##### 2.2.2.1. SystemService#main
+##### 2.2.2.1. SystemServer#main
 
 ```java
     public static void main(String[] args) {
@@ -95,7 +95,7 @@
     }
 ```
 
-　　在 SystemService 的 main 方法中调用 SystemServer 的构造方法创建了一个 SystemServer 对象，并调用了 SystemServer 的 run 方法。
+　　在 SystemServer 的 main 方法中调用 SystemServer 的构造方法创建了一个 SystemServer 对象，并调用了 SystemServer 的 run 方法。
 
 ##### 2.2.2.2. SystemServer#run
 
@@ -118,7 +118,7 @@
         }
 ```
 
-　　在 SystemService 的 run 方法中调用了 startOtherService 方法。
+　　在 SystemServer 的 run 方法中调用了 startOtherService 方法。
 
 ##### 2.2.2.3. SystemServer#startOtherService
 
@@ -342,7 +342,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 
 　　Transport 是一个 Binder 对象，它是要传递给 ContentService 服务的，以便当 ContentObserver 所监控的数据发生变化时，ContentService 服务可以通过这个 Binder 对象通知相应的 ContentObserver 它监控的数据发生变化了。
 
-#### ContentService#registerContentObserver
+#### 3.2.4. ContentService#registerContentObserver
 
 ```java
     @Override
@@ -394,7 +394,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 
 　　成员变量 mRootNode 的类型为 ContentService 在内部定义的一个类 ObserverNode。
 
-##### ObserverNode#addObserverLocked
+##### 3.2.4.1. ObserverNode#addObserverLocked
 
 ```java
         private void addObserverLocked(Uri uri, int index, IContentObserver observer,
@@ -438,9 +438,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 
 　　每一个 ObserverNode 节点都对应一个名字，它是从 URI 中解析出来的。
 
-　　在当前的这个情景中，传进来的 uri 是  "content://com.content.mycontentprovider/contact" ，第一个用 mRootNode 的 addObserverLock()  方法往树上增加一个 ObserverNode 节点时，传进来的参数 index 的值为 0，而调用 countUriSegments(“content://com.content.mycontentprovider/contact”)  方法的返回值为 2，不等于 index 的值。
-
-##### ObserverNode#countUriSegments
+##### 3.2.4.2. ObserverNode#countUriSegments
 
 ```java
         private int countUriSegments(Uri uri) {
@@ -451,11 +449,13 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
         }
 ```
 
-　　uri.getPathSegments 得到 uri 的 path 部分，并拆封，去掉 “/”，取得第一个元素（从第 0 哥开始）。对于 "content://com.content.mycontentprovider/contact"  就是 “content” 一个元素。
+　　获取 uri 的 segment 的数量。
 
-　　因此就会往下执行，而通过调用 getUriSegment("content://com.content.mycontentprovider/contact",0) 方法得到的返回值为 “com.content.mycontentprovider”。
+　　uri.getPathSegments 方法会得到 uri 的 path 部分，并拆封，去掉 “/”，取得第一个元素（从第 0 个开始）。
 
-##### ObserverNode#getUriSegment
+　　例如对于 "content://com.content.mycontentprovider/contact"  uri.getPathSegments 方法返回的就是 “content” 一个元素。
+
+##### 3.2.4.3. ObserverNode#getUriSegment
 
 ```java
         private String getUriSegment(Uri uri, int index) {
@@ -471,9 +471,23 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
         }
 ```
 
-　　假设时第一次调用树的根节点 mRootNode 来增加 “content://com.content.mycontentprovider/contact” 这个 URI，那么在接下来的 for 循环中，就不会在 mRootNode 的孩子节点列表 mChildren 中找到与名称 “com.content.mycontentprovider” 对应的 ObserverNode，于是就会以 “com.content.mycontentprovider” 为名称来创建一个新的 ObserverNode，并增加到 mRootNode 的孩子界面列表 mChildren 中去，并以这个新的 ObserverNode 来开始新一轮的 addObserverLocked() 方法调用。
+　　获取 Uri 指定 index 的 segment。
+
+　　以传入的 uri 为 "content://com.content.mycontentprovider/contact"  为例：
+
+**第一次调用 addObserverLock **
+
+　　第一次调用的是 mRpptNode 的 addObserverLock() 方法，传入的参数 index 的值为 0，而调用 countUriSegments(“content://com.content.mycontentprovider/contact”)  方法的返回值为 2，不等于 index 的值。
+
+　　因此就会往下执行，通过调用 getUriSegment("content://com.content.mycontentprovider/contact",0) 方法得到的返回值为 “com.content.mycontentprovider”。
+
+　　在第一次调用树的根节点 mRootNode 来增加 “content://com.content.mycontentprovider/contact” 这个 URI，那么在接下来的 for 循环中，就不会在 mRootNode 的孩子节点列表 mChildren 中找到与名称 “com.content.mycontentprovider” 对应的 ObserverNode，于是就会以 “com.content.mycontentprovider” 为名称来创建一个新的 ObserverNode，并增加到 mRootNode 的孩子界面列表 mChildren 中去，并以这个新的 ObserverNode 来开始新一轮的 addObserverLocked() 方法调用。
+
+**第二次调用 addObserverLocked **
 
 　　第二次进入到 addObserverLocked() 方法时，countUriSegents("content://com.content.mycontentprovider/contact") 的值仍为 2，而 index 的值为 1，因此就会往下执行，这时候通过调用 getUriSegment("content://com.content.mycontentprovider/contact",1) 方法得到的返回值为 “content”。这里不存在名称为 “contact” 的孩子节点，于是又会以 “contact” 为名称来创建一个新的 ObserverNode，并以这个新的 ObserverNode 来开始新一轮的 addObserverLocked 方法调用。
+
+**第三次调用 addObserverLocked**
 
 　　第三次进入到 addObserverLocked() 方法时，countUriSegments("content://com.content.mycontentprovider/contact") 的值仍为 2，而 index 的值也为 2，因此就会新建一个 ObserverEntry 对象，并保存这个以 “contact” 为名称的 ObserverNode 的 ContentObserver 列表 mObservers 中。
 
@@ -487,9 +501,9 @@ mRootNode("")
 
 　　这样，ContentObserver 的注册过程就完成了。
 
-## 数据更新通知的发送过程
+## 4. 数据更新通知的发送过程
 
-### 通知更新
+### 4.1. 通知更新
 
 　　调用 ContentResolver 来插入数据：
 
@@ -510,6 +524,7 @@ contentValues.put("number",num);
   
             long d = database.insert("contact", "_id", values);  
             u = ContentUris.withAppendedId(uri,d);  
+            // 通知订阅者
             contentResolver.notifyChange(u,null);  
         }  
         return u;  
@@ -519,9 +534,9 @@ contentValues.put("number",num);
 
 　　传递进来的参数 uri 的值为 “content://com.content.mycontentprovider/contact”。在 MyContentProvider 类的 insert 方法将数据加入到 SQLite 数据库之后，返回来的 id 值为 d，于是通过调用 ContentUris.withAppendedId(uri,id) 得到的 u 就是 “content://com.content.mycontentprovider/contact/d”。随后就会调用 `contentResolver.notifyChange` 方法来通知那些注册了监控 “content://com.content.mycontentprovider/contact/d” 这个 URI 的 ContentObserver，它监控的数据发生变化了。
 
-### 通知过程分析
+### 4.2. 通知过程分析
 
-#### ContentResolver#notifyChange
+#### 4.2.1. ContentResolver#notifyChange
 
 ```java
     public void notifyChange(@NonNull Uri uri, @Nullable ContentObserver observer) {
@@ -541,6 +556,7 @@ contentValues.put("number",num);
     public void notifyChange(@NonNull Uri uri, ContentObserver observer, boolean syncToNetwork,
             @UserIdInt int userHandle) {
         try {
+            // 调用 ContentService 的 notifyChange
             getContentService().notifyChange(
                     uri, observer == null ? null : observer.getContentObserver(),
                     observer != null && observer.deliverSelfNotifications(),
@@ -554,7 +570,7 @@ contentValues.put("number",num);
 
 　　调用了 ContentService 的远程接口来调用它的 notifyChange() 方法来发送数据更新通知。
 
-#### ContentService#notifyChange
+##### 4.2.1.2. ContentService#notifyChange
 
 ```java
     public void notifyChange(Uri uri, IContentObserver observer,
@@ -658,9 +674,9 @@ contentValues.put("number",num);
 1. 第一件事情是调用 ContentService 的成员变量 mRootNode 的 collectObserverLocked() 方法来收集那些注册了监控 “content://com.content.mycontentprovider/contact/d” 这个 URI 的 ContentObserver。
 2. 第二件事情是分别调用这些 ContentObserver 的 onChange() 方法来通知它们监控的数据发生变化了。
 
-### 收集注册了监控的 ContentObserver
+#### 4.2.2. 收集注册了监控的 ContentObserver
 
-#### ObserverNode#collectObserverLocked
+##### 4.2.2.1. ObserverNode#collectObserverLocked
 
 　　ObserverNode 是 ContentService 的内部类。
 
@@ -699,7 +715,7 @@ contentValues.put("number",num);
         }
 ```
 
-##### ObserverNode#collectMyObserverLocked
+##### 4.2.2.2. ObserverNode#collectMyObserverLocked
 
 ```java
         private void collectMyObserversLocked(boolean leaf, IContentObserver observer,
@@ -751,7 +767,9 @@ contentValues.put("number",num);
         }
 ```
 
+　　以 uri 为 “content://com.content.mycontentprovider/contact/d” 为例，解析 collectObserverLocked 方法：
 
+**第一次调用 collectObserverLocked**
 
 　　第一个调用 collectObserversLocked() 时，是在 mRootNode 的这个 ObserverNode 节点中进行收集 ConentObserver 的。这时候传进来的 uri 的值为 “content://com.content.mycontentprovider/contact/d” ，index 的值为 0 ，调用 countUriSegments("content://com.content.mycontentprovider/contact/d") 函数得到的返回值为 3，于是就会调用 getUriSegment 方法，得到的 segment 的值为 “com.content.mycontentprovider”。在这个情景中，mRootNode 这个节点中没有注册 ContentObserver，于是调用 collectMyObserversLocked 方法就不会收集到 ContentObserver。
 
@@ -759,9 +777,13 @@ contentValues.put("number",num);
 
 　　在 ContentObserver 的注册过程中，已经往 mRootNode 的孩子节点列表 mChildren 中增加了一个名称为 “com.content.mycontentprovider” 的 ObserverNode 节点，因此，在这里会成功找到它，并且调用它的 collectionObserversLocked() 函数来继续收集 ContentObserver。
 
-　　第二次进入到 collectObserversLocked() 方法时，是在名称为 “com.content.mycontentprovider” 的 ObserverNode 节点中收集 ContentObserver 的。这时候传来的 uri 值不变，但是 index 的值为 1，于是执行 getUriSegment 方法的返回值 segment 为 “contact”，并接着执行 collectMyObserversLocked 方法。在当前场景重，没有在名称为 “com.content.mycontentprovider” 的 ObserverNode 节点重注册有 ContentObserver，因此调用 collectMyObserversLocked() 方法也不会收集到 ContentObserver。
+**第二次调用 collectObserversLocked **
 
-　　在接下来的 for 循环中，在名称为 “com.content.mycontentprovider”  的 ObserverNode 节点的孩子节点列表 mChildren 中朝朝名称等于 “contact” 的 ObserverNode 节点。在 ContentObserver 的注册过程中，往名称为 “com.content.mycontentprovider” 的 ObserverNode 节点的孩子节点列表 mChildren 中增加了一个名称为 "contact" 的 ObserverNode 节点，因此，这里会找到它，并且调用它的 collectObserversLocked() 方法来继续收集 ContentObserver。
+　　第二次进入到 collectObserversLocked() 方法时，是在名称为 “com.content.mycontentprovider” 的 ObserverNode 节点中收集 ContentObserver 的。这时候传来的 uri 值不变，但是 index 的值为 1，于是执行 getUriSegment 方法的返回值 segment 为 “contact”，并接着执行 collectMyObserversLocked 方法。在当前场景重，没有在名称为 “com.content.mycontentprovider” 的 ObserverNode 节点中注册有 ContentObserver，因此调用 collectMyObserversLocked() 方法也不会收集到 ContentObserver。
+
+　　在接下来的 for 循环中，在名称为 “com.content.mycontentprovider”  的 ObserverNode 节点的孩子节点列表 mChildren 中查找名称等于 “contact” 的 ObserverNode 节点。在 ContentObserver 的注册过程中，往名称为 “com.content.mycontentprovider” 的 ObserverNode 节点的孩子节点列表 mChildren 中增加了一个名称为 "contact" 的 ObserverNode 节点，因此，这里会找到它，并且调用它的 collectObserversLocked() 方法来继续收集 ContentObserver。
+
+**第三次调用 collectObserversLocked **
 
 　　第三次进入到 collectObserversLocked() 方法时，是在名称为 “com.content.mycontentprovider” 的 ObserverNode 节点的子节点中名称为 "contact" 的 ObserverNode 节点中收集 ContentObserver 的。这时候传来的 uri 值不变，但是 index 的值为 2，于是执行 getUriSegment 的返回值 segment 为 “d”。
 
@@ -769,7 +791,7 @@ contentValues.put("number",num);
 
 　　在接下来的 for 循环中，继续在该节点的子节点列表 mChildren 中查找名称等于 "d" 的 ObserverNode 节点。在当前场景下，不存在这个名称为 “d” 的子节点，于是收集 ContentObserver 的工作就结束了，收集结果是只有一个 ContentObserver，即在前面注册的 MyContentObserver。
 
-### 通知监控数据发生了变化
+#### 4.2.3. 通知监控数据发生了变化
 
 　　collectObserversLocked 方法执行完成后，回到 ContentService 的 notifyChange 方法，接着执行 for 循环：
 
@@ -804,13 +826,13 @@ contentValues.put("number",num);
 
 　　通过调用 `oc.mObserver.onChange(oc.mSelfChange, uri, userHandle);` 也就是调用远程接口的 onChange() 方法，就会进入 ContentObserver 的内部类 Transport 的 onChange() 方法中去。
 
-#### Transport
+##### 4.2.3.1. Transport
 
 　　Transport 是 ContentObserver 的内部类。
 
 ```java
     private static final class Transport extends IContentObserver.Stub {
-        private ContentObserver mContentObserver;
+        private ContentObserver mContentObserver; // ContenObserver 成员对象
 
         public Transport(ContentObserver contentObserver) {
             mContentObserver = contentObserver;
@@ -820,6 +842,7 @@ contentValues.put("number",num);
         public void onChange(boolean selfChange, Uri uri, int userId) {
             ContentObserver contentObserver = mContentObserver;
             if (contentObserver != null) {
+                // 调用 contentObserver 的 dispatchChange 方法
                 contentObserver.dispatchChange(selfChange, uri, userId);
             }
         }
@@ -832,7 +855,7 @@ contentValues.put("number",num);
 
 　　在 ContentObserver 的注册过程中，会把 MyContentObserver 这个 ContentObserver 保存在这个 Transport 对象的 mContentObserver 成员变量中，因此会调用它的 dispatchChange() 方法来执行数据更新通知的操作。
 
-#### ContentObserver#dispatchChange
+##### 4.2.3.2. ContentObserver#dispatchChange
 
 ```java
     private void dispatchChange(boolean selfChange, Uri uri, int userId) {
@@ -840,6 +863,7 @@ contentValues.put("number",num);
             // 里面什么代码都没有执行
             onChange(selfChange, uri, userId);
         } else {
+            // 调用 mHandler 运行 NotificationRunnable
             mHandler.post(new NotificationRunnable(selfChange, uri, userId));
         }
     }
@@ -847,7 +871,7 @@ contentValues.put("number",num);
 
 　　在 ContentObserver 的注册过程中，在应用程序的主线程的消息循环创建了一个 Handler，并且以这个 Handler 来创建了这个 MyContentObserver，这个 Handler 就保存在 ContentObserver 的成员变量 mHandler 中。因此，这里的 mHandler 不为 null，于是把这个消息更新通知封装成了一个消息，放到应用程序的主线程中去处理，最终消息是由 NotificationRunnable 类的 run() 方法来处理的。
 
-#### NotificationRunnable#run
+##### 4.2.3.3. NotificationRunnable#run
 
 　　NotificationRunnable 是 ContentObserver 的内部类。
 
@@ -865,6 +889,7 @@ contentValues.put("number",num);
 
         @Override
         public void run() {
+            // 调用 ContentObserver 的 onChange 方法
             ContentObserver.this.onChange(mSelfChange, mUri, mUserId);
         }
     }
@@ -874,27 +899,25 @@ contentValues.put("number",num);
 
 　　以上就是 ContentProvider 的共享数据更新通知机制的运行过程。
 
-## 总结
+## 5. 总结
 
+　　ContentService 服务伴随系统启动，本身是一个 Binder 系统服务，运行在 SystemServer 进程。在 SystemService 的 main 方法中开启 ContentService 的 lifecycyle 服务，从来创建 ContentService 对象，并调用 ServiceManager 的 addService 方法启动服务。
 
+　　ContentObserver 的 registerContentObserver 方法会做三件事情去完成绑定数据变化监听：
 
-## 参考文章
+1. 调用 getContentService 函数来获得启动起来了的 ContentService 服务。
+2. 调用从参数传进来的 ContentObserver 对象 observer 的 getContentObserver 函数来获得一个 Binder 对象。返回的是 ContentObserver 的内部类 Transport 。
+3. 通过调用 ContentService 远程接口（也就是 Transport）的 registerContentObserver 函数来把这个 Binder 对象注册到 ContentService 中去。
+
+　　注册到 ContentService 中的 ContentObserver 是按照树形来组织，树的节点类型为 ObserverNode，ObserverNode 的 name 是 uri 的其中一部分，而树的根节点就是 ContentService 类的成员变量 mRootNode。最后一个树节点（树梢）会存储监听了 uri （从 mRootNode 开始到该 ObserberNode 的 name 的拼接，只不过没有 “content://” 和 uri 中的 /） 的 ContentObserver 对象。
+
+　　数据更新通知是通过 ContentResolver 的 notifyChange 方法来发出的。而 ContentResolver 的 notifyChange 方法调用了开启的 ContentService 的 notifyChange 来完成。
+
+　　ContentService 的 notifyChange 方法会先收集注册了监听 uri 变化的 ContentObserver，从自己的 mRootNode 注册的 ObserverNode 中去收集注册的 ContentObserver，然后遍历收集到的 ContentObserver 列表，调用收集的 ContentObserver 的 onChange() 方法，将更新通知发送了出去。
+
+## 6. 参考文章
 
 1. [深入理解ContentProvider共享数据更新通知机制](https://blog.csdn.net/hehe26/article/details/51871610)
 2. [Android内容服务ContentService原理浅析](https://www.jianshu.com/p/d6af600e4c20)
 
-SystemService
-
-[Android 源码学习 SystemServer](https://www.jianshu.com/p/8177f92e1df5)
-
-[Android系统服务(SystemService)简介](https://blog.csdn.net/geyunfei_/article/details/78851024)
-
-SystemService#publishBinderService
-
-[Android SystemService类注释](https://blog.csdn.net/u011139711/article/details/81105895)
-
-
-
-SystemService # addService
-
-[Android 系统服务启动 SystemServer](https://www.cnblogs.com/aademeng/articles/7521853.html)
+4. [Android SystemService类注释](https://blog.csdn.net/u011139711/article/details/81105895)
