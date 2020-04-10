@@ -455,6 +455,223 @@ class ActivityManagerProxy implements IActivityManager
 
 ![](image/AMS通信.png)
 
+## ActivityStack
+
+　　ActivityStack 是一个管理类，用来管理系统所有 Activity 的各种状态，其内部维护了 TaskRecord 的列表，因此从 Activity 任务栈这一角度来说，ActivityStack 也可以理解为 Activity 堆栈。它由 ActivityStackSupervicor 来进行管理的，而 ActivityStackSupervisor 在 AMS 中的构造方法中被创建。
+
+### ActivityManagerService 的构造方法
+
+```java
+    public ActivityManagerService(Context systemContext) {
+                mStackSupervisor = new ActivityStackSupervisor(this);
+    }
+```
+
+### ActivityStack 的实例类型
+
+　　ActivityStackSupervisor 中有多种 ActivityStack 实例。
+
+```java
+public class ActivityStackSupervisor extends ConfigurationContainer implements DisplayListener {
+	/** The stack containing the launcher app. Assumed to always be attached to
+     * Display.DEFAULT_DISPLAY. */
+    ActivityStack mHomeStack;
+
+    /** The stack currently receiving input or launching the next activity. */
+    ActivityStack mFocusedStack;
+ 
+    /** If this is the same as mFocusedStack then the activity on the top of the focused stack has
+     * been resumed. If stacks are changing position this will hold the old stack until the new
+     * stack becomes resumed after which it will be set to mFocusedStack. */
+    private ActivityStack mLastFocusedStack;
+	...
+}
+```
+
+　　mHomeStack 用来存储 Launcher App 的所有 Activity，mFocusedStack 表示当前正在接收输入或启动下一个 Activity 的所有 Activity。mLastFocusStack 表示此前接收输入的所有 Activity。
+
+　　通过 ActivityStackSupervisor 提供了获取上述 ActivityStack 的方法，比如要获取 mFocusStack，主要调用 ActivityStackSupervisor 的 getFocusedStack 方法就可以了：
+
+ ```java
+    ActivityStack getFocusedStack() {
+        return mFocusedStack;
+    }
+ ```
+
+### ActivityState
+
+　　ActivityState 是 ActivityStack 的内部类。
+
+　　ActivityState 中通过枚举存储了 Activity 的所有状态，如下：
+
+
+
+　　通过名称可以很轻易的知道这些状态所代表的意义。应用 ActivityState 的场景有很多，比如：
+
+```java
+public class ActivityManagerService extends IActivityManager.Stub
+        implements Watchdog.Monitor, BatteryStatsImpl.BatteryCallback {
+	@Override
+    public void overridePendingTransition(IBinder token, String packageName,
+            int enterAnim, int exitAnim) {
+        synchronized(this) {
+            ...
+
+                // 只有 ActivityState 为 RESUMNED 状态或者 PAUSING 状态时才会调用 WMS 类型的 mWindowManager 对象的 overridePendingAppTransition 方法来进行切换动画
+            if (self.state == ActivityState.RESUMED
+                    || self.state == ActivityState.PAUSING) {
+                mWindowManager.overridePendingAppTransition(packageName,
+                        enterAnim, exitAnim, null);
+            }
+
+            Binder.restoreCallingIdentity(origId);
+        }
+    }
+}
+```
+
+　　overridePendingTransition 方法用于设置 Activity 的切换动画。
+
+### 特殊状态的 Activity
+
+　　在  ActivityStack 中定义了一些特殊状态的 Activity，如下所示：
+
+
+
+　　这些特殊的状态都是 ActivityRecord 类型的，ActivityRecord 用来记录一个 Activity 的所有信息。从 Activity 任务栈的角度来说，一个或多个 ActivityRecord 会组成一个 TaskRecord，TaskRecord 用来记录 Activity 的栈，而 ActivityStack 包含了一个或多个 TaskRecord。
+
+![](image/ActivityStack.png)
+
+### 维护的 ArrayList
+
+　　ActivityStack 中维护了很多 ArrayList，这些 ArrayList 中的元素类型主要有 ActivityRecord 和 TaskRecord，其中 TaskRecord 用来记录 Activity 的 Task。
+
+| ArrayList          | 元素类型       | 说明                                                        |
+| ------------------ | -------------- | ----------------------------------------------------------- |
+| mTaskHistory       | TaskRecord     | 所有没有被销毁的 Task                                       |
+| mLRUActivities     | ActivityRecord | 正在运行的 Activity，列表中的第一个条目是最近最少使用的元素 |
+| mNoAnimActivity    | ActivityRecord | 不考虑转换动画的 Activity                                   |
+| mValidateAppTokens | TaskGroup      | 用于与窗口管理器验证应用令牌                                |
+
+## Activity 栈管理
+
+　　Activity 是由任务栈来进行管理的，有了栈管理，就可以对应用程序进行操作，应用可以复用自身应用中以及其他应用的 Activity，节省了资源。
+
+　　为了更灵活的进行栈管理，Android 系统提供了很多配置，下面分别对他们进行介绍。
+
+### Launch Mode
+
+　　Launch Mode 都不会陌生，用于设定 Activity 的启动方式，无论是哪种启动方式，所启动的 Activity 都会位于 Activity 栈的栈顶。
+
+　　Launch Mode 有以下四种：
+
+1. standerd：标准模式，每次启动 Activity 都会创建一个新的 Activity 实例。
+2. singleTop：如果要启动的 Activity 已经在栈顶，则不会重新创建 Activity，同时该 Activity 的  onNewIntent 方法会被调用。如果要启动的 Activity 不在栈顶，则会重新创建该 Activity 的实例。
+3. singleTask：如果要启动的 Activity 已经存在于它想要归属的栈中，那么不会创建该 Activity 实例，将栈中位于该 Activity 上的所有的 Activity 出栈，同时该 Activity 的 onNewIntent 方法会被调用。如果要启动的 Activity 不存在于它想要归属的栈中，并且该栈存在，则会重新创建该 Activity 的实例。如果要启动的 Activity 想要归属的栈不存在，则首先要创建一个新栈，然后创建该 Activity 实例并压入到新栈中。
+4. singleInstance：和 singleTask 基本类似，不同的是启动 Activity 时，首先要创建在一个新栈，然后创建该 Activity 实例并压入新栈中，新栈中只会存在这一个 Activity 实例。
+
+### Intent 的 FLAG
+
+　　Intent 中定义了很多 FLAG，其中有几个 FLAG 也可以设定 Activity 的启动方式，如果 Launch Mode 设定和 FLAG 设定的 Activity 的启动方式有冲突，则以 FLAG 设定的为准。
+
+1. FLAG_ACTIVITY_SINGLE_TOP：和 Launch Mode 中的 singleTop 效果是一样的。
+2. FLAG_ACTIVITY_NEW_TASK：和 Launch Mode 中的 singleTask 效果是一样的。
+3. FLAG_ACTIVITY_CLEAR_TOP：Launch Mode 中没有与此对应的模式，如果要启动的 Activity 已经存在于栈中，则将所有位于它上面的 Activity 出栈。singleTask 默认具有此标记位的效果。
+
+　　除了这三个 FLAG，还有一些 FLAG 对分析栈管理有些帮助。
+
+1. FLAG_ACTIVITY_NO_HISTORY：Activity 一旦退出，就不会存在于栈中。同样的，也可以在 AndroidManifest.xml 中设置 “android:noHistory”。
+2. FLAG_ACTIVITY_MULTIPLE_TASK：需要和 FLAG_ACTIVITY_NEW_TASK 一同使用才有效果，系统会启动一个新的栈来容纳新启动的 Activity。
+3. FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS：Activity 不会被放入到 “ 最近启动的 Activity ” 列表中。
+4. FLAG_ACTIVITY_BROUGHT_TO_FRONT：这个标志位通常不是由应用程序中的代码设置的，而是 Launch Mode 为 singleTask 时，由系统自动加上的。
+5. FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY：这个标志为通常不是由应用程序中的代码设置的，而是从历史记录中启动的（长按 Home 键调出）。
+6. FLAG_ACTIVITY_CLEAR_TASK：需要和 FLAG_ACTIVITY_NEW_TASK 一同使用才有效果，用于清除与启动的 Activity 相关栈的所有其他 Activity。
+
+#### ActivityStarter#startActivityUnchecked
+
+　　根 Activity 启动时会调用 AMS 的 startActivity 方法，经过层层调用会调用 ActivityStarter 的 startActivityUnchecked 方法，如下图的时序图所示：
+
+![](image/activity启动时序图.png)
+
+
+
+```java
+class ActivityStarter {
+    private int startActivityUnchecked(final ActivityRecord r, ActivityRecord sourceRecord,
+            IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
+            int startFlags, boolean doResume, ActivityOptions options, TaskRecord inTask,
+            ActivityRecord[] outActivity) {
+        // 用于初始化启动 Activity 的各种配置
+        // 在初始化前会重置各种配置再进行配置
+        // 这些配置包括：ActivityRecord、Intent、TaskRecord 和 LaunchFlags（启动的 FLAG）等等
+
+        setInitialState(r, options, inTask, doResume, startFlags, sourceRecord, voiceSession,
+                voiceInteractor);
+        // 用于计算出启动的 FLAG，并将计算的值赋值给 mLaunchFlags。
+
+        computeLaunchingTaskFlags();
+
+        computeSourceStack();
+
+        // 将 mLaunchFlags 设置为 Intent，达到设定 Activity 的启动方式的目的。
+        mIntent.setFlags(mLaunchFlags);
+        ...
+    }
+}
+```
+
+##### ActivityStarter#computeLaunchingTaskFlags
+
+```java
+    private void computeLaunchingTaskFlags() {
+        ...
+
+        // TaskRecord 类型的 mInTask 为 null 时，说明 Activity 要加入的栈不存在，因此，这一小段代码主要解决的问题就是 Activity 要加入的栈不存在时如何计算出启动的 FLAG。
+        if (mInTask == null) {
+            // ActivityRecord 类型的 mSourceRecord 用于描述 “ 初始化 Activity ”
+            // 初始化 Activity：ActivityA 启动了 ActivityB，ActivityA 就是初始 Activity
+            if (mSourceRecord == null) {
+                // This activity is not being started from another...  in this
+                // case we -always- start a new task.
+                // 同时满足 mSourceRecord == null 和下面的条件则需要创建一个新栈
+                if ((mLaunchFlags & FLAG_ACTIVITY_NEW_TASK) == 0 && mInTask == null) {
+                    Slog.w(TAG, "startActivity called from non-Activity context; forcing " +
+                            "Intent.FLAG_ACTIVITY_NEW_TASK for: " + mIntent);
+                    mLaunchFlags |= FLAG_ACTIVITY_NEW_TASK;
+                }
+                // 如果 “ 初始 Activity ” 所在的栈只允许有一个 Activity 实例，则也需要创建一个新栈
+            } else if (mSourceRecord.launchMode == LAUNCH_SINGLE_INSTANCE) {
+                // The original activity who is starting us is running as a single
+                // instance...  this new activity it is starting must go on its
+                // own task.
+                mLaunchFlags |= FLAG_ACTIVITY_NEW_TASK;
+                // 如果 Launch Mode 设置了 singleTask 或 singleInstance，则也要创建一个新栈。
+            } else if (mLaunchSingleInstance || mLaunchSingleTask) {
+                // The activity being started is a single instance...  it always
+                // gets launched into its own task.
+                mLaunchFlags |= FLAG_ACTIVITY_NEW_TASK;
+            }
+        }
+    }
+```
+
+### taskAffinity
+
+　　可以在 AndroidManifest.xml 设置 android:taskAffinity，用来指定 Activity 希望归属的栈，默认情况下，同一个应用程序的所有的 Activity 都有着相同的 taskAffinity。
+
+　　taskAffinity 在下面两种情况下会产生效果：
+
+1. taskAffinity 与 FLAG_ACTIVITY_NEW_TASK 或者 singleTask 配合。如果新启动 Activity 的 taskAffinity 和栈的 taskAffinity 相同（栈的 taskAffinity 取决于根 Activity 的 taskAffinity）则加入到该栈中。如果不同，就会创建新栈。
+2. taskAffinity 与 allowTaskReparenting 配合，如果 allowTaskReparenting 为 true，说明 Activity 具有转移的能力。如果 ActivityA 启动 ActivityB，ActivityB 的 allowTaskReparenting 为 false，ActivityA 和 ActivityB 就处于同一个栈中。如果 ActivityB 的 allowTaskReparenting 设置为 true，此后 ActivityB 所在的栈位于前台，这是 AcvitiyB 就会由 ActivityA 的栈中转移到与它更亲近的 ActivityB（taskAffinity相同）所在的栈中。
+
+#### ActivityStack#findTaskLocked
+
+　　ActivityStackSupervisor 的 findTaskLocked 方法用于找到 Activity 最匹配的栈，最终会调用 ActivityStack 的 findTaskLocked 方法。
+
+
+
+　　上面的代码只是与 taskAffinity 相关的部分。
+
 ## 参考文章
 
 1. [请从 AMS、WMS、PMS 的角度考虑，以及继承是如何启动的？开机 SystemServer 到 ActivityManagerService 启动过程](https://www.cnblogs.com/sunkeji/articles/7650482.html)
