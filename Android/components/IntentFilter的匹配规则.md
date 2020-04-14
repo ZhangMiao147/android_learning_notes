@@ -68,17 +68,10 @@
 
 ## 4. data 的匹配规则
 
-　　data 主要是由 URI 和 mimeType 组成的。
-
-　　URL 的结构如下：
-```xml
-<scheme> :// < host> : <port> [<path>|<pathPrefix>|<pathPattern>]
-```
-
-　　这些值在 Manifest 文件中可以定义，语法如下：
+　　data 的结构：
 
 ```xml
-<data android:scheme="string"
+   <data android:scheme="string"
       android:host="string"
       android:port="string"
       android:path="string"
@@ -87,30 +80,50 @@
       android:mimeType="string" />
 ```
 
-　　设置 SecondActivity 的 data :
+　　这些值是在 Manifest 文件中可以定义的。
+
+　　data 主要是由 URI 和 mimeType 组成的。
+
+1. mimeType 表示 image/ipeg，video/* 等媒体结构。
+
+   这个属性就是说要传递什么类型的数据，通常有 text/plain 或 image/jpeg。
+
+2. URI 信息量相对大一些，其结构一般如下：
 
 ```xml
-<activity android:name=".SecondActivity">
-    <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <data
-            android:host="zede"
-            android:port="1010"
-            android:scheme="chan" />
-    </intent-filter>
-</activity>
+<scheme> :// < host> : <port> [<path>|<pathPrefix>|<pathPattern>]
 ```
 
-　　跳转 SecondActiivty：
+　　URI 各个节点数据的含义：
+
+1. scheme：整个 URI 的模式，如常见的 http、file 等，注意如果 URI 中没有指定的 scheme，那么整个 uri 无效。
+2. host：URI 的域名，比如巡航舰的 www.mi.com、www.baidu.com，与 scheme 一样，一旦没有 host ，那么整个 URI 也毫无意义。
+3. port：端口号，比如 80，只有在 URI 中制定了 scheme 和 host 之后端口号才是有意义的。
+4. path、PathPattern、pathPrefix 包含路径信息，path 表示完整的路径，pathPattern 在此基础上可以包含通配符，pathPrefix 表示路径的前缀信息。
+
+### 4.1. data 的匹配规则
+
+1. Intent 中必须有 data 数据。
+2. Intent 中的 data 必须和过滤规则中的某一个 data 完全匹配。
+3. 过滤规则中可以有多个 data 存在，但是 Intent 中的 data 只需匹配其中的任意一个 data 即可。
+4. 过滤规则中可以没有指定 URI，但是系统会赋予其默认值：content 和 file，这一点在 Intent 中需要注意。
+5. 为 Intent 设定 data 和 type 的时候必须要调用 setDataAndType() 方法，而不能先 setData 再 setType，因为这两个方法是互斥的，都会清除对方的值。
+6. 再匹配规则中，data 的 scheme、host、post、path 等属性可以卸载同一个 < / > 中，也可以分来单独写，其功效是一样的。
+
+### 4.2. data 匹配
+
+　　按照 data 的匹配规则，为了启动 MyActivity，可以设置 Intent 如下：
 
 ```java
-Intent intent = new Intent();
-intent.setData(Uri.parse("chan://zede:1010"));
+Intent intent = new Intent("com.action.a");
+intent.addCategory("com.category.c")
+intent.setData(Uri.parse("file://abc"),"text/plain");
 startActivity(intent);
 ```
 
-　　这样就可以跳转到 SecondActivity。
+　　这样就可以跳转到 MyActivity。
+
+#### 4.2.1. 使用 html 来跳转 Activity
 
 　　也可以创建一个 html 文件来实现跳转 SecondActivity：
 
@@ -121,19 +134,19 @@ startActivity(intent);
 	<title></title>
 </head>
 <body>
-<a href="chan://zede:1010/mypath?user=admin&psd=123456">跳转至SecondActivity</a>
+<a href="content://intentfilter:1010/mypath?user=admin&psd=123456">跳转至SecondActivity</a>
 </body>
 </html>
 ```
 
-　　使用收集浏览器打开这个 html 文件，点击这个超链接就可以跳转到 SecondActivity。而链接中的 `user=admin&psd=123456` 是传递给 SecondActivity 的数据。而在 SecondActivity 接收数据：
+　　使用收集浏览器打开这个 html 文件，点击这个超链接就可以跳转到匹配的 data 的 Activity。而链接中的 `user=admin&psd=123456` 是传递给 Activity的数据。而在 Activity接收数据：
 
 ```java
 Intent intent = getIntent();
 Uri uri = intent.getData();
 
-Log.e("chan", "==================getScheme= " + intent.getScheme()); // chan
-Log.e("chan", "==================getHost= " + uri.getHost()); // zede
+Log.e("chan", "==================getScheme= " + intent.getScheme()); // content
+Log.e("chan", "==================getHost= " + uri.getHost()); // intentfilter
 Log.e("chan", "==================getPort= " + uri.getPort()); // 1010
 Log.e("chan", "==================getPath= " + uri.getPath()); // /mypath
 
@@ -149,28 +162,37 @@ while (iterator.hasNext()) {
 }
 ```
 
-　　还需要注意另一个属性：android:mimeType，这个属性就是说要传递什么类型的数据，通常有 text/plain 或 image/jpeg。
 
-　　可以通过以下代码来启动 Activity：
 
-```java
-intent.setType("text/plain");
+## 5. 匹配失败
+
+　　如果 action、category 和 data 所有的匹配失败就会报：
+
+```xml
+android.content.ActivityNotFoundException: No Activity found t0 handle Intent { act= com.action.a cat=[com.category.c] dat=file://abc type=text/plain }
+...
 ```
 
-　　如果同时设置了 URI 和 mimeType 的话就必须使用如下代码才可以跳转：
+　　为了避免发生上面的异常，可以使用 PackageManager 或者 Intent 的 resolveActivity() 方法，如果 intent 和过滤规则匹配失败，那么将返回 null，也就不会再继续调用 startActivity 方法了，从而去修改 intent 再次进行匹配直到成功匹配到预期 intent。
 
-```java
-intent.setDataAndType(Uri.parse("chan://zede:1010"), "text/plain");
+## 6. 其他
+
+　　在 action 和 category 中有一些是系统自戴的，其中有些比较重要，如：
+
+```xml
+<action android:name="android.intent.action.MAIN"/>
+
+<category android:name="android.intent.category.LAUNCHER"/>
 ```
 
-　　因为如果使用 setData() 或者 setType() 的话，会分别将对应的 type 和 data 置为 null。
+　　这两者一般是成双成对出现的，用来表明这是一个程序的入口，并且会出现在系统的应用列表中，之所以成双成对的出现是说，二者却已不可，少了批此都没有实际意义。
+
+　　intent-filter 匹配规则是适用于 Intent、Service 和 BroadcastReceiver 的，但是在 Android 5.0 以后需要显式调用来启动 Service，否则会报异常：`java.lang.IllegalArgumentException:Service Intent must be explicit`。
 
 
 
+## 7. 参考文章
 
-
-## 3. 参考文章
-
-2. [史上最全intent-filter匹配规则，没有之一](https://www.jianshu.com/p/7ebc63399968)
+1. [史上最全intent-filter匹配规则，没有之一](https://www.jianshu.com/p/7ebc63399968)
 2. [Activity 必知必会](https://juejin.im/post/5aef0d215188253dc612991b)
 
