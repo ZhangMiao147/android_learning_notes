@@ -3,7 +3,7 @@
 
 　　Activity 的启动方式分为隐式和显式两种。
 
-　　显示需要明确的指定被启动对象的组卷信息，比如包名和类型等，而隐式调用就不需要明确指定组件的信息。
+　　显示需要明确的指定被启动对象的组件信息，比如包名和类型等，而隐式调用就不需要明确指定组件的信息。
 
 　　隐式调用就需要 Intent 能够匹配目标组件的 IntentFilter 中所设置的过滤信息，如果匹配不成功就不能启动目标 Actiivty。
 
@@ -38,7 +38,7 @@
 
 　　action 是一个字符串，系统默认定义了一些 action，同时也可以自定义。
 
-　　字符中的字符时严格区分大小写的。所以 action 的匹配是区分大小写的。
+　　字符中的字符时严格区分大小写的，所以 action 的匹配是区分大小写的。
 
 ### 2.1. action 的匹配规则
 
@@ -80,7 +80,7 @@
       android:mimeType="string" />
 ```
 
-　　这些值是在 Manifest 文件中可以定义的。
+　　这些值是在 AndroidManifest 文件中可以定义的。
 
 　　data 主要是由 URI 和 mimeType 组成的。
 
@@ -97,7 +97,7 @@
 　　URI 各个节点数据的含义：
 
 1. scheme：整个 URI 的模式，如常见的 http、file 等，注意如果 URI 中没有指定的 scheme，那么整个 uri 无效。
-2. host：URI 的域名，比如巡航舰的 www.mi.com、www.baidu.com，与 scheme 一样，一旦没有 host ，那么整个 URI 也毫无意义。
+2. host：URI 的域名，比如常见的 www.mi.com、www.baidu.com，与 scheme 一样，一旦没有 host ，那么整个 URI 也毫无意义。
 3. port：端口号，比如 80，只有在 URI 中制定了 scheme 和 host 之后端口号才是有意义的。
 4. path、PathPattern、pathPrefix 包含路径信息，path 表示完整的路径，pathPattern 在此基础上可以包含通配符，pathPrefix 表示路径的前缀信息。
 
@@ -108,7 +108,7 @@
 3. 过滤规则中可以有多个 data 存在，但是 Intent 中的 data 只需匹配其中的任意一个 data 即可。
 4. 过滤规则中可以没有指定 URI，但是系统会赋予其默认值：content 和 file，这一点在 Intent 中需要注意。
 5. 为 Intent 设定 data 和 type 的时候必须要调用 setDataAndType() 方法，而不能先 setData 再 setType，因为这两个方法是互斥的，都会清除对方的值。
-6. 再匹配规则中，data 的 scheme、host、post、path 等属性可以卸载同一个 < / > 中，也可以分来单独写，其功效是一样的。
+6. 在匹配规则中，data 的 scheme、host、post、path 等属性可以写在同一个 < / > 中，也可以分来单独写，其功效是一样的。
 
 ### 4.2. data 匹配
 
@@ -134,7 +134,7 @@ startActivity(intent);
 	<title></title>
 </head>
 <body>
-<a href="content://intentfilter:1010/mypath?user=admin&psd=123456">跳转至SecondActivity</a>
+<a href="content://intentfilter:1010/mypath?user=admin&psd=123456">跳转至 Activity</a>
 </body>
 </html>
 ```
@@ -162,8 +162,6 @@ while (iterator.hasNext()) {
 }
 ```
 
-
-
 ## 5. 匹配失败
 
 　　如果 action、category 和 data 所有的匹配失败就会报：
@@ -177,7 +175,7 @@ android.content.ActivityNotFoundException: No Activity found t0 handle Intent { 
 
 ## 6. 其他
 
-　　在 action 和 category 中有一些是系统自戴的，其中有些比较重要，如：
+　　在 action 和 category 中有一些是系统自带的，其中有些比较重要，如：
 
 ```xml
 <action android:name="android.intent.action.MAIN"/>
@@ -185,11 +183,9 @@ android.content.ActivityNotFoundException: No Activity found t0 handle Intent { 
 <category android:name="android.intent.category.LAUNCHER"/>
 ```
 
-　　这两者一般是成双成对出现的，用来表明这是一个程序的入口，并且会出现在系统的应用列表中，之所以成双成对的出现是说，二者却已不可，少了批此都没有实际意义。
+　　这两者一般是成双成对出现的，用来表明这是一个程序的入口，并且会出现在系统的应用列表中，之所以成双成对的出现是说，二者却已不可，少了彼此都没有实际意义。
 
 　　intent-filter 匹配规则是适用于 Intent、Service 和 BroadcastReceiver 的，但是在 Android 5.0 以后需要显式调用来启动 Service，否则会报异常：`java.lang.IllegalArgumentException:Service Intent must be explicit`。
-
-
 
 ## 7. 参考文章
 
