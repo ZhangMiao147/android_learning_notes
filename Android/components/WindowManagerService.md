@@ -469,9 +469,325 @@
     final InputManagerService mInputManager;
 ```
 
+　　上面是 WMS 的部分成员变量，分别对它们进行简单的介绍。
+
+### 1. mPolicy:WindowManagerPolicy
+
+　　WindowManagerPolicy （WMP）类型的变量。WindowManagerPolicy 是窗口管理策略的接口类，用来定义一个窗口策略所要遵循的通用规范，并提供了 WindowManager 所有的特定的 UI 行为。它的具体实现类为 PhoneWindowManager，这个实现类在 WMS 创建时被创建。WMP 允许定制窗口层级和特殊窗口类型以及关键的调度和布局。
+
+### 2.  mSessions:ArraySet
+
+　　ArraySet 类型的变量，元素类型为 Session。Session 主要用于进程间通信，其他的应用程序想要和 WMS 进程进行通信就需要经过 Session，并且每个应用程序进程都会对应一个 Session，WMS 保存这些 Session 用来记录所有向 WMS 提供窗口管理服务的客户端。
+
+### 3. mWindowMap:WindowHashMap
+
+　　WindowHashMap 类型的变量，WindowHashMap 继承了 HashMap，它限制了 HashMap 的 key 值得类型为 IBinder，value 值的类型为 WindowState。WindowState 用于保存窗口的信息，在 WMS 中它用来描述一个窗口。综上得出结论，mWindowMap 就是用来保存 WMS 中各种窗口的集合。
+
+### 4.mFinishedStarting:ArrayList
+
+　　ArrayList 类型的变量，元素类型为 AppWindowToken，它是 WindowToken 的子类。
+
+　　要理解 mFinishedStarting 的含义，需要先了解 WindowToken 是什么。WindowToken 主要有两个作用：
+
+1. 可以理解为窗口令牌，当应用程序想要向 WMS 申请新创建一个窗口，则需要向 WMS 出示有效的 WindowToken。
+
+   AppWindowToken 作为 WindowToken 的子类，主要用来描述应用程序的 WindowToken 结构。
+
+   应用程序中每个 Activity 都对应一个 AppWindowToken。
+
+2. WindowToken 会将相同组件（比如 Activity）的窗口（WindowState）复合在一起，方便管理。
+
+　　mFinishedStarting 就是用于存储已经完成启动的应用程序窗口（比如 Activity）的 AppWindowToken 的列表。除了 mFinishedStarting，还有类似的 mFinishedEarlyAnim 和 mWindowReplacementTimeputs，其中 mFinishedEarlyAnim 存储了已经完成窗口绘制并且不需要展示任何已保存 surface 的应用程序窗口的 AppWindowToken。mWindowReplacementTimeout 存储了等待更换的应用程序窗口的 AppWindowToken，如果更换不及时，旧窗口就需要被处理。
+
+### 5.mResizingWindows:ArrayList
+
+　　ArrayList 类型的变量，元素类型为 WindowState。
+
+　　mResizingWindows 是用来存储正在调整大小的窗口的列表。与 mResizingWindows 类似的还有 mPendingRemove、mDestroySurface 和 mDestoryPreservedSurface 等等。其中 mPendingRemove 是在内存耗尽时设置的，里面存有需要强制删除的窗口。mDestroySurface 里面存有需要被 Destory 的 Surface。mDestoryPreservedSurface 里面存有窗口需要保存的等待销毁的 Surface，为什么窗口要保存这些 Surface？这是因为窗口经历 Surface 变化时，窗口需要一直保持旧 Surface，直到新 Surface 的第一帧绘制完成。
+
+### 6.mAnimator:WindowAnimator
+
+　　WindowAnimator 类型的变量，用于管理窗口的动画以及特效动画。
+
+### 7.mH:H
+
+　　H 类型的变量，系统的 Handler 类，用于将任务加入到主线程的消息队列中，这样代码逻辑就会在主线程中执行。
+
+### 8.mInputManager:InputManagerService
+
+　　InputManagerService 类型的变量，输入系统的管理者。InputManagerService（IMS）会对触摸事件进行处理，它会寻找一个最合适的窗口来处理触摸反馈信息，WMS 是窗口的管理者，因此，WMS “理所应当” 的成为了输入系统的中转站，WMS 包含了 IMS 的引用不足为怪。
+
+## 5. Window 的添加过程（WMS 部分）
+
+　　Window 的操作分为两大部分，一部分是 WindowManager 处理部分，另一部分是 WMS 处理部分，如下：
+
+![](image/window的操作.png)
+
+　　无论是系统窗口还是 Activity，它们的 Window 的添加或称都会调用 WMS 的 addWindow 方法。
+
+　　将  addWindow 方法分为 3 个部分解析：
+
+### 1.WindowManagerService#addWindow1
+
+```java
+    public int addWindow(Session session, IWindow client, int seq,
+            WindowManager.LayoutParams attrs, int viewVisibility, int displayId,
+            Rect outContentInsets, Rect outStableInsets, Rect outOutsets,
+            InputChannel outInputChannel) {
+        int[] appOp = new int[1];
+        // 根据 Window 的属性，调用 WMP 的 checkAddPermission 方法来检查权限。
+        // 具体的是现在 PhoneWindowManager 的 checkAddPermission 方法中，如果没有权限则不会执行后续的代码逻辑。
+        int res = mPolicy.checkAddPermission(attrs, appOp);
+        if (res != WindowManagerGlobal.ADD_OKAY) {
+            return res;
+        }
+
+        ...
+
+        synchronized(mWindowMap) {
+            if (!mDisplayReady) {
+                throw new IllegalStateException("Display has not been initialialized");
+            }
+
+            // 通过 displayId 来获得窗口要添加到哪个 DisplayContent 上，如果没有找到 SisplayContent，则返回 WindowManagerGlobal.ADD_INVALID_DISPLAY 这一状态，其中 DisplayContent 用来描述一块屏幕。
+            final DisplayContent displayContent = mRoot.getDisplayContentOrCreate(displayId);
+            if (displayContent == null) {
+                Slog.w(TAG_WM, "Attempted to add window to a display that does not exist: "
+                        + displayId + ".  Aborting.");
+                return WindowManagerGlobal.ADD_INVALID_DISPLAY;
+            }
+            ...
+
+            // type 代表一个窗口的类型，它的数值介于 FIRST_SUB_WINDOW 和 LAST_SUB_WINDOW 之间（1000-1999）,这个数值定义在 WindowManager 中，说明这个窗口是一个子窗口。
+            if (type >= FIRST_SUB_WINDOW && type <= LAST_SUB_WINDOW) {
+                // attrs.token 是 IBinder 类型的对象
+                // windowForClientLocked 方法内部会根据 attrs.token 作为 key 值从 mWindowMap 中得到该子窗口的父窗口。
+                //接着对父窗口进行判断，如果父窗口为 null 或者 type 的取值返回不正确则会返回错误的状态
+                parentWindow = windowForClientLocked(null, attrs.token, false);
+                if (parentWindow == null) {
+                    Slog.w(TAG_WM, "Attempted to add window with token that is not a window: "
+                          + attrs.token + ".  Aborting.");
+                    return WindowManagerGlobal.ADD_BAD_SUBWINDOW_TOKEN;
+                }
+                if (parentWindow.mAttrs.type >= FIRST_SUB_WINDOW
+                        && parentWindow.mAttrs.type <= LAST_SUB_WINDOW) {
+                    Slog.w(TAG_WM, "Attempted to add window with token that is a sub-window: "
+                            + attrs.token + ".  Aborting.");
+                    return WindowManagerGlobal.ADD_BAD_SUBWINDOW_TOKEN;
+                }
+            }
+           ...
+
+        }
+        ...
+    }
+```
+
+　　WMS 的 addWindow 返回的是 addWindow 的各种状态，比如添加 Window 成功、无效的 dispaly 等等，这些状态被定义在 WindowManagerGlobal 中。
 
 
 
+### 2. WindowManagerService#addWindow2
+
+```java
+    public int addWindow(Session session, IWindow client, int seq,
+            WindowManager.LayoutParams attrs, int viewVisibility, int displayId,
+            Rect outContentInsets, Rect outStableInsets, Rect outOutsets,
+            InputChannel outInputChannel) {
+        ...
+
+        synchronized(mWindowMap) {
+            ...
+
+            AppWindowToken atoken = null;
+            final boolean hasParent = parentWindow != null;
+            // Use existing parent window token for child windows since they go in the same token
+            // as there parent window so we can apply the same policy on them.
+            // 通过 displayContent 的 getWindowToken 方法来得到 WindowToken
+            WindowToken token = displayContent.getWindowToken(
+                    hasParent ? parentWindow.mAttrs.token : attrs.token);
+            // If this is a child window, we want to apply the same type checking rules as the
+            // parent window type.
+            // 如果有父窗口就将父窗口的 type 值赋值给 rootType
+            // 如果没有将当前窗口的 type 值赋值 rootType
+            final int rootType = hasParent ? parentWindow.mAttrs.type : type;
+
+            boolean addToastWindowRequiresToken = false;
+            // 接下来如果 WindowToken 为 null，则根据 rootType 或者 type 的值进行区分判断
+            if (token == null) {
+                if (rootType >= FIRST_APPLICATION_WINDOW && rootType <= LAST_APPLICATION_WINDOW) {
+                    Slog.w(TAG_WM, "Attempted to add application window with unknown token "
+                          + attrs.token + ".  Aborting.");
+                    return WindowManagerGlobal.ADD_BAD_APP_TOKEN;
+                }
+                // 如果 rootType 值等于 TYPE_INPUT_METHOD、TYPE_WALLPAPER 等值时，则返回状态值 WindowManagerGlobal.ADD_BAD_APP_TOKEN，说明 rootType 等于 TYPE_INPUT_METHOD、TYPE_WALLPAPE 等值时是不允许 WindowToken 为 null 的
+                if (rootType == TYPE_INPUT_METHOD) {
+                    Slog.w(TAG_WM, "Attempted to add input method window with unknown token "
+                          + attrs.token + ".  Aborting.");
+                    return WindowManagerGlobal.ADD_BAD_APP_TOKEN;
+                }
+                if (rootType == TYPE_VOICE_INTERACTION) {
+                    Slog.w(TAG_WM, "Attempted to add voice interaction window with unknown token "
+                          + attrs.token + ".  Aborting.");
+                    return WindowManagerGlobal.ADD_BAD_APP_TOKEN;
+                }
+                if (rootType == TYPE_WALLPAPER) {
+                    Slog.w(TAG_WM, "Attempted to add wallpaper window with unknown token "
+                          + attrs.token + ".  Aborting.");
+                    return WindowManagerGlobal.ADD_BAD_APP_TOKEN;
+                }
+                ...
+                
+               
+                if (type == TYPE_TOAST) {
+                    // Apps targeting SDK above N MR1 cannot arbitrary add toast windows.
+                    if (doesAddToastWindowRequireToken(attrs.packageName, callingUid,
+                            parentWindow)) {
+                        Slog.w(TAG_WM, "Attempted to add a toast window with unknown token "
+                                + attrs.token + ".  Aborting.");
+                        return WindowManagerGlobal.ADD_BAD_APP_TOKEN;
+                    }
+                }
+                final IBinder binder = attrs.token != null ? attrs.token : client.asBinder();
+                // 通过多次的条件判断筛选，在这里隐式创建 WindowToen
+                // 这就说明当添加窗口时是可以不向 WMS 体魄美国 WindowToken 的，前提是 rootType 和 type 的值不为前面条件判断筛选的值。
+                // WindowToken 隐式和显示的创建肯定是要加以区分的，第 4 个参数为 false 就代表这个 WindowToken 是隐式创建的。
+                token = new WindowToken(this, binder, type, false, displayContent,
+                        session.mCanAddInternalSystemWindow);
+            // 接下来的代码逻辑就是 WindowToken 不为 null 的情况，根据 rootType 和 type 的值进行判断
+                // 比如判断如果窗口为应用程序窗口
+            } else if (rootType >= FIRST_APPLICATION_WINDOW && rootType <= LAST_APPLICATION_WINDOW) {
+                // 将 WindowToken 转换为专门针对应用程序窗口的 AppWindowToken，然后根据 AppWindowToken 的值进行后续的判断
+                atoken = token.asAppWindowToken();
+                if (atoken == null) {
+                    Slog.w(TAG_WM, "Attempted to add window with non-application token "
+                          + token + ".  Aborting.");
+                    return WindowManagerGlobal.ADD_NOT_APP_TOKEN;
+                } else if (atoken.removed) {
+                    Slog.w(TAG_WM, "Attempted to add window with exiting application token "
+                          + token + ".  Aborting.");
+                    return WindowManagerGlobal.ADD_APP_EXITING;
+                }
+            } else if (rootType == TYPE_INPUT_METHOD) {
+                if (token.windowType != TYPE_INPUT_METHOD) {
+                    Slog.w(TAG_WM, "Attempted to add input method window with bad token "
+                            + attrs.token + ".  Aborting.");
+                      return WindowManagerGlobal.ADD_BAD_APP_TOKEN;
+                }
+            } 
+            ...
+    }
+```
+
+
+
+
+
+### 3. WindowManagerService#addWindow3
+
+```java
+    public int addWindow(Session session, IWindow client, int seq,
+            WindowManager.LayoutParams attrs, int viewVisibility, int displayId,
+            Rect outContentInsets, Rect outStableInsets, Rect outOutsets,
+            InputChannel outInputChannel) {
+       ...
+
+        synchronized(mWindowMap) {
+            ...
+
+                // 创建了 WindowState，它存有窗口的所有的状态信息，在 WMS 中它代表一个窗口。
+                // 从 WindowState 传入的参数，可以发现 WindowState 中包含了 WMS、Session、WindowToken、父类的 WindowState、LayoutParams 等信息。
+            final WindowState win = new WindowState(this, session, client, token, parentWindow,
+                    appOp[0], seq, attrs, viewVisibility, session.mUid,
+                    session.mCanAddInternalSystemWindow);
+           // 判断请求添加窗口的客户端是否已经死亡，如果是，则不会再执行下面的代码逻辑
+            if (win.mDeathRecipient == null) {
+                // Client has apparently died, so there is no reason to
+                // continue.
+                Slog.w(TAG_WM, "Adding window client " + client.asBinder()
+                        + " that is dead, aborting.");
+                return WindowManagerGlobal.ADD_APP_EXITING;
+            }
+           // 判断请求添加窗口的 DisplayContent 是否为 null，如果是，则不会再执行下面的代码逻辑
+
+            if (win.getDisplayContent() == null) {
+                Slog.w(TAG_WM, "Adding window to Display that has been removed.");
+                return WindowManagerGlobal.ADD_INVALID_DISPLAY;
+            }
+           
+           // 调用了 WMP 的 adjustWindowParamsLw 方法，该方法的实现在 PhoneWindowManager 中，会根据窗口的 type 对窗口的 LayoutParams 的一些成员变量进行修改 
+
+            mPolicy.adjustWindowParamsLw(win.mAttrs);
+            win.setShowToOwnerOnlyLocked(mPolicy.checkShowToOwnerOnly(attrs));
+           // 调用 WMP 的 prepareWindowLw 方法，用于准备将窗口添加到系统中
+
+            res = mPolicy.prepareAddWindowLw(win, attrs);
+           	...
+            win.attach();
+           // 将 WindowState 添加到 mWindowMap 中
+            mWindowMap.put(client.asBinder(), win);
+            if (win.mAppOp != AppOpsManager.OP_NONE) {
+                int startOpResult = mAppOps.startOpNoThrow(win.mAppOp, win.getOwningUid(),
+                        win.getOwningPackage());
+                if ((startOpResult != AppOpsManager.MODE_ALLOWED) &&
+                        (startOpResult != AppOpsManager.MODE_DEFAULT)) {
+                    win.setAppOpVisibilityLw(false);
+                }
+            }
+
+            final AppWindowToken aToken = token.asAppWindowToken();
+            if (type == TYPE_APPLICATION_STARTING && aToken != null) {
+                aToken.startingWindow = win;
+                if (DEBUG_STARTING_WINDOW) Slog.v (TAG_WM, "addWindow: " + aToken
+                        + " startingWindow=" + win);
+            }
+
+            boolean imMayMove = true;
+           // 将 WindowState 添加到该 WidowState 对应的 WindowToken 中（实际是保存在 WindowToken 的父类 WindowContainer 中），这样  WindowToken 就包含了相同组件的 WindowState。
+
+            win.mToken.addWindow(win);
+            if (type == TYPE_INPUT_METHOD) {
+                win.mGivenInsetsPending = true;
+                setInputMethodWindowLocked(win);
+                imMayMove = false;
+            } else if (type == TYPE_INPUT_METHOD_DIALOG) {
+                displayContent.computeImeTarget(true /* updateImeTarget */);
+                imMayMove = false;
+            } else {
+                if (type == TYPE_WALLPAPER) {
+                    displayContent.mWallpaperController.clearLastWallpaperTimeoutTime();
+                    displayContent.pendingLayoutChanges |= FINISH_LAYOUT_REDO_WALLPAPER;
+                } else if ((attrs.flags&FLAG_SHOW_WALLPAPER) != 0) {
+                    displayContent.pendingLayoutChanges |= FINISH_LAYOUT_REDO_WALLPAPER;
+                } else if (displayContent.mWallpaperController.isBelowWallpaperTarget(win)) {
+                    // If there is currently a wallpaper being shown, and
+                    // the base layer of the new window is below the current
+                    // layer of the target window, then adjust the wallpaper.
+                    // This is to avoid a new window being placed between the
+                    // wallpaper and its target.
+                    displayContent.pendingLayoutChanges |= FINISH_LAYOUT_REDO_WALLPAPER;
+                }
+            }
+
+            ...
+       	}
+
+        return res;
+    }
+```
+
+
+
+### 4. addWindow 方法总结
+
+　　addWindow 方法分了 3 个部分来进行解析，主要就是做了下面 4 件事情：
+
+1. 对所要添加的窗口进行检查，如果窗口不满足一些条件，就不会再执行下面的代码逻辑。
+2. WindowToken 相关的处理，比如有的窗口类型需要提供 WindowToken，没有提供的话就不会执行下面的代码逻辑，有的窗口类型则需要由 WMS 隐式创建 WindowToken。
+3. WindowState 的创建和相关处理，将 WindowToken 和 WindowState 先关联。
+4. 创建和配置 DispalyContent，完成窗口添加到系统前的准备工作。
+
+## 6. Window 的删除过程
 
 
 
