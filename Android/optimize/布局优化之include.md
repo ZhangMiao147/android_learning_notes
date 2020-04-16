@@ -1,12 +1,12 @@
 # 布局优化之 include
 
-## include 标签
+## 1. 概述
 
 　　include 标签常用于将布局中的公共部分提取出来供其他 layout 共用，以实现布局模块化，也是平常设计布局时用的最多的。
 
 　　include 就是为了解决重复定义相同布局的问题。
 
-#### include 使用注意
+## 2. include 使用注意
 
 1. 一个 xml 布局文件有多个 include 标签需要设置 ID，才能找到相应子 View 的控件，否则只能找到第一个 include 的 layout 布局，以及该布局的控件。
 2. include 标签如果使用 layout_xx 属性，会覆盖被 include 的 xml 文件根节点对应的 layout_xx 属性，建议在 include 标签调用的布局设置好宽高位置，防止不必要的 bug。
@@ -14,7 +14,7 @@
 4. 如果要在 include 标签下使用 RelativeLayout，如 layout_margin 等其他属性，记得要同时设置 layout_margin 等其他属性，记得要同时设置 layout_width 和 layout_height，不然其它属性会没反应。
 5. 如果 include 中设置了 id，那么就通过 include 的 id 来查找被 include 布局根元素的 View；如果 include 中没有设置 id，而被 include 的布局的根元素设置了 id，那么通过该根元素的 id 来查找该 view 即可。拿到根元素后查找其子控件都是一样的。
 
-#### 源码分析
+## 3. 源码分析
 
 　　为什么使用根元素的 id 查找 view 就会包空指针呢？分析一下源码来查看。对于布局文件的解析，最终都会调用 LayoutInflater 的 inflater 方法：
 
@@ -286,10 +286,6 @@
 ```
 
 　　整个过程就是根据不同的标签解析不同的元素，首先会解析 include 元素，然后再解析被 include 进来的布局的 root view 元素。在代码中会判断 include 标签的 id 如果不是 View.NO_ID 的话会把 include 的 id 设置给被引入的布局根元素的 id。
-
-
-## Space 组件
-　　在 ConstaintLayout 出来前，写布局会使用大量的 margin 或 padding，但是这种方式可读性会很差，加一个布局嵌套又会损耗性能，鉴于这种情况，可以使用 space，使用方式和 View 一样，不过主要用来占位置，不会有任何显示效果。
 
 ## 参考文章
 1. [布局优化神器 include 、merge、ViewStub标签详解](https://blog.csdn.net/u012792686/article/details/72901531)

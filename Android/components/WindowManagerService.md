@@ -789,6 +789,218 @@
 
 ## 6. Window 的删除过程
 
+　　Window 的创建和更新过程类似，要删除 Window 需要先调用 WindowManagerImpl 的 remove 方法，removeView 方法中又会调用 WindowManagerGlobal 的 removeView 方法。
+
+　　将要删除的 Window（View）简称为 V。
+
+### 1. WindowManagerGlobal#removeView
+
+```java
+    public void removeView(View view, boolean immediate) {
+        if (view == null) {
+            throw new IllegalArgumentException("view must not be null");
+        }
+
+        synchronized (mLock) {
+            // 找到要 V 在 View 列表中的索引
+            int index = findViewLocked(view, true);
+            View curView = mRoots.get(index).getView();
+            // 调用了 removeViewLocked 发给发并将索引传进去
+            removeViewLocked(index, immediate);
+            if (curView == view) {
+                return;
+            }
+
+            throw new IllegalStateException("Calling with view " + view
+                    + " but the ViewAncestor is attached to " + curView);
+        }
+    }
+```
+
+### 2. WindowManagerGlobal#removeViewLocked
+
+```java
+    private void removeViewLocked(int index, boolean immediate) {
+        // 根据传入的索引在 ViewRootImpl 列表中获得 V 的 ViewRootImpl
+        ViewRootImpl root = mRoots.get(index);
+        View view = root.getView();
+
+        if (view != null) {
+            // 得到 InputMethodManager 实例
+            InputMethodManager imm = InputMethodManager.getInstance();
+            if (imm != null) {
+                // 如果 InputMethodManager 实例不为 null，则调用 InputMethodManager 的 windowDismissed 方法来结束 V 的输入法相关的逻辑
+                imm.windowDismissed(mViews.get(index).getWindowToken());
+            }
+        }
+        // 调用 ViewRootIlmpl 的 die 方法
+        boolean deferred = root.die(immediate);
+        if (view != null) {
+            view.assignParent(null);
+            if (deferred) {
+                mDyingViews.add(view);
+            }
+        }
+    }
+```
+
+
+
+### 3. ViewRootImpl#die
+
+```java
+    /**
+     * @param immediate True, do now if not in traversal. False, put on queue and do later.
+     * @return True, request has been queued. False, request has been completed.
+     */
+    boolean die(boolean immediate) {
+        // Make sure we do execute immediately if we are in the middle of a traversal or the damage
+        // done by dispatchDetachedFromWindow will cause havoc on return.
+        // 如果 immediate 为 true（需要理解执行），并且 mIsTraversal 值为 true 时，执行 doDie 方法
+        // mIsInTraversal 在执行 ViewRootImpl 的 performTraversals 方法时会被置为 true，在 performTraversals 方法执行完时被设置为 false
+        // 因此这里可以理解为 die 方法需要立即执行并且此时 ViewRootImpl 不在执行 performTraversals 方法
+        if (immediate && !mIsInTraversal) {
+            // 2
+            doDie();
+            return false;
+        }
+
+        if (!mIsDrawing) {
+            destroyHardwareRenderer();
+        } else {
+            Log.e(mTag, "Attempting to destroy the window while drawing!\n" +
+                    "  window=" + this + ", title=" + mWindowAttributes.getTitle());
+        }
+        mHandler.sendEmptyMessage(MSG_DIE);
+        return true;
+    }
+```
+
+### 4. ViewRootImpl#doDie
+
+```java
+    void doDie() {
+        // 检查执行 doDie 方法的线程的正确性
+        // checkThread 的内部会判断执行 doDie 方法线程是否是创建 V 的原始线程，如果不是就会抛出异常，这是因为只有创建 V 的原始线程才能够操作 V。
+        checkThread();
+        if (LOCAL_LOGV) Log.v(mTag, "DIE in " + this + " of " + mSurface);
+        synchronized (this) {
+            // 防止 doDie 方法被重复调用
+            if (mRemoved) {
+                return;
+            }
+            // 防止 doDie 方法被重复调用
+            mRemoved = true;
+            // V 有子 View 就会调用 dispatchDetachedFromWindow 方法来销毁 View
+            if (mAdded) {
+        
+                dispatchDetachedFromWindow();
+            }
+            //  如果 V 有子 View 并且不是第一次被添加
+
+            if (mAdded && !mFirst) {
+                destroyHardwareRenderer();
+
+                if (mView != null) {
+                    int viewVisibility = mView.getVisibility();
+                    boolean viewVisibilityChanged = mViewVisibility != viewVisibility;
+                    if (mWindowAttributesChanged || viewVisibilityChanged) {
+                        // If layout params have been changed, first give them
+                        // to the window manager to make sure it has the correct
+                        // animation info.
+                        try {
+                            if ((relayoutWindow(mWindowAttributes, viewVisibility, false)
+                                    & WindowManagerGlobal.RELAYOUT_RES_FIRST_TIME) != 0) {
+                                mWindowSession.finishDrawing(mWindow);
+                            }
+                        } catch (RemoteException e) {
+                        }
+                    }
+
+                    mSurface.release();
+                }
+            }
+
+            mAdded = false;
+        }
+        // 调用 WindowManagerGlobal 的 doRemoveView 方法
+        WindowManagerGlobal.getInstance().doRemoveView(this);
+    }
+```
+
+#### 4.1. WindowManagerGlobal#doRemoveView
+
+```java
+    void doRemoveView(ViewRootImpl root) {
+        synchronized (mLock) {
+            // 找到 V 对应的 ViewRootImpl 在 ViewRootImpl 列表中的索引，接着根据这个索引从 ViewRootImpl 列表、布局参数列表和 View 列表中删除与 V 对应的元素。
+            final int index = mRoots.indexOf(root);
+            if (index >= 0) {
+                mRoots.remove(index);
+                mParams.remove(index);
+                final View view = mViews.remove(index);
+                mDyingViews.remove(view);
+            }
+        }
+        if (ThreadedRenderer.sTrimForeground && ThreadedRenderer.isAvailable()) {
+            doTrimForeground();
+        }
+    }
+```
+
+　　WindowManagerGlobal 中维护了和 WIndow 操作相关的三个列表，doRemoveView 方法会从这三个列表中清除 V 对应的元素。
+
+#### 4.2. ViewRootImpl#dispatchDetachedFromWindow
+
+```java
+    void dispatchDetachedFromWindow() {
+        ...
+        try {
+            mWindowSession.remove(mWindow);
+        } catch (RemoteException e) {
+        }
+
+        ...
+    }
+```
+
+　　dispatchDetachedFromWindow 方法中主要调用了 IWindowSession 的 remove 方法，IWindowSession 在 Server 端的实现为 Session。
+
+#### 4.3. Session#remove
+
+```java
+   public void remove(IWindow window) {
+        mService.removeWindow(this, window);
+    }
+```
+
+
+
+#### 4.4. WindowManagerService#removeWindow
+
+```java
+    void removeWindow(Session session, IWindow client) {
+        synchronized(mWindowMap) {
+            // 用于获取 Window 对应的 WindowState
+            // WindowState 用于保存窗口的信息，在 WMS 中它用来描述一个接口。
+            WindowState win = windowForClientLocked(session, client, false);
+            if (win == null) {
+                return;
+            }
+            // 调用 WindowState 的 removeIfPossible 方法
+            win.removeIfPossible();
+        }
+    }
+```
+
+
+
+#### 4.5. WindowState#removeIfPossible
+
+
+
+
+
 
 
 
