@@ -23,8 +23,9 @@
 
 ## 4. merge 源码分析
 
-　　相关的代码还是从 LayoutInflate 的 inflate() 函数中开始，从前面 include 的源码分析贴出的 inflate() 代码可以看到，如果标签是 merge 的话就会调用 rInflate() 方法解析子 view：
-```
+　　相关的代码还是从 LayoutInflate 的 inflate() 函数中开始，从 include 的源码分析贴出的 inflate() 代码可以看到，如果标签是 merge 的话就会调用 rInflate() 方法解析子 view：
+
+```java
     /**
      * Recursive method used to descend down the xml hierarchy and instantiate
      * views, instantiate their children, and then call onFinishInflate().
@@ -34,16 +35,21 @@
      */
     void rInflate(XmlPullParser parser, View parent, Context context,
             AttributeSet attrs, boolean finishInflate) throws XmlPullParserException, IOException {
-		// 解析 include 代码有 rInflate() 方法代码，所以省略部分代码，只贴出 merge 主要的代码
+      
+				// 省略部分代码，只贴出 merge 主要的代码
         ...
         final View view = createViewFromTag(parent, name, context, attrs);
-		//获取 merge 标签的 parent
+      
+				// 获取 merge 标签的 parent
         final ViewGroup viewGroup = (ViewGroup) parent;
-		//获取布局参数
+      
+				// 获取布局参数
         final ViewGroup.LayoutParams params = viewGroup.generateLayoutParams(attrs);
-		//递归解析每个子元素
+      
+				// 递归解析每个子元素
         rInflateChildren(parser, view, attrs, true);
-		//将子元素直接添加到 merge 标签的 parent view 中
+      
+				// 将子元素直接添加到 merge 标签的 parent view 中
         viewGroup.addView(view, params);
     }
 

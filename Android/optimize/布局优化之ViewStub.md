@@ -6,12 +6,12 @@
 
 　　第一次初始化时，初始化的是 ViewStub View，当调用 inflate() 或 setVisibility() 后会被 remove 掉，然后再将其中的 layout 加到当前 view hierarchy 中。
 
-　　ViewStub 就是一个宽高为 0 的一个 View，它默认是不可见的，只有通过调用 setVisibility 函数或者 Inflate 函数才会将其要装载的目标布局给加载出来，从而达到延迟加载的效果，这个要被加载的布局通过 android:layout 属性来设置。
+　　其实 ViewStub 就是一个宽高为 0 的一个 View，它默认是不可见的，只有通过调用 setVisibility 函数或者 Inflate 函数才会将其要装载的目标布局给加载出来，从而达到延迟加载的效果，这个要被加载的布局通过 android:layout 属性来设置。
 
-## 2. 判断 ViewStub （做单例）是否已经加载过：
+## 2. 判断 ViewStub （做单例）是否已经加载过
 
 1. 如果通过 setVisibility 来加载，那么通过判断可见性即可。
-2. 如果通过 inflate() 来加载，判断 ViewStub 的 ID 是否为 null 来判断。
+2. 如果通过 inflate() 来加载，判断 ViewStub 是否为 null 来判断。
 
 ## 3. ViewStub 标签使用注意
 
@@ -23,8 +23,11 @@
 
 ## 4. ViewStub 源码分析
 
+### 4.1. ViewStub 类
+
 　　ViewStub 类部分代码：
-```
+
+```java
 @RemoteView
 public final class ViewStub extends View {
 	...
@@ -34,7 +37,8 @@ public final class ViewStub extends View {
 
         final TypedArray a = context.obtainStyledAttributes(attrs,
                 R.styleable.ViewStub, defStyleAttr, defStyleRes);
-		//获取 inflatedId 属性
+    
+				// 获取 inflatedId 属性
         mInflatedId = a.getResourceId(R.styleable.ViewStub_inflatedId, NO_ID);
         mLayoutResource = a.getResourceId(R.styleable.ViewStub_layout, 0);
         mID = a.getResourceId(R.styleable.ViewStub_id, NO_ID);
@@ -69,10 +73,13 @@ public final class ViewStub extends View {
             } else {
                 throw new IllegalStateException("setVisibility called on un-referenced view");
             }
-        } else { //如果未加载，则加载目标布局
+        } else { 
+          	//如果未加载，则加载目标布局
             super.setVisibility(visibility);
             if (visibility == VISIBLE || visibility == INVISIBLE) {
-                inflate(); // 调用 inflate() 方法来加载目标布局
+              
+              	// 调用 inflate() 方法来加载目标布局
+                inflate(); 
             }
         }
     }
@@ -89,6 +96,7 @@ public final class ViewStub extends View {
 
         if (viewParent != null && viewParent instanceof ViewGroup) {
             if (mLayoutResource != 0) {
+              // 获取 ViewStub 的 parent View，也是目标布局根元素的 parent view
                 final ViewGroup parent = (ViewGroup) viewParent;
                 final LayoutInflater factory;
                 if (mInflater != null) {
@@ -96,23 +104,28 @@ public final class ViewStub extends View {
                 } else {
                     factory = LayoutInflater.from(mContext);
                 }
-				//1. 加载目标布局
+              
+								// 1. 加载目标布局
                 final View view = factory.inflate(mLayoutResource, parent,
                         false);
-				//2. 如果 ViewStub 的 inflatedId 不是 NO_ID ，则把 inflatedId 设置为目标布局根元的 id
+              
+								// 2. 如果 ViewStub 的 inflatedId 不是 NO_ID ，则把 inflatedId 设置为目标布局根元的 id
                 if (mInflatedId != NO_ID) {
                     view.setId(mInflatedId);
                 }
 
                 final int index = parent.indexOfChild(this);
-				// 3.将 ViewStub 自身从 parent 中移除
+              
+								// 3.将 ViewStub 自身从 parent 中移除
                 parent.removeViewInLayout(this);
 
                 final ViewGroup.LayoutParams layoutParams = getLayoutParams();
-				// 4. 将目标布局的根元素添加到 parent 中
+              
+								// 4. 将目标布局的根元素添加到 parent 中，有参数
                 if (layoutParams != null) {
                     parent.addView(view, index, layoutParams);
                 } else {
+                  // 4. 将目标布局的根元素添加到 parent 中
                     parent.addView(view, index);
                 }
 
@@ -132,7 +145,7 @@ public final class ViewStub extends View {
     }
 }
 ```
-　　其实最终加载目标布局的还是 inflate() 函数，在该函数中将加载目标布局，获取到根元素后，如果 mInflatedId 不为 NO_ID 则把 mInflatedId 设置为根元素的 id，这也是为什么在获取根元素时会使用 ViewStub 的 inflatedId。如果没有设置 inflatedId 的话可以通过根元素的 id 来获取。然后将 ViewStub 从 parent 中移除，将目标布局的根元素添加到 parent 中。最后会把目标布局的根元素返回。
+　　可以看出，其实最终加载目标布局的还是 inflate() 函数，在该函数中将加载目标布局，获取到根元素后，如果 mInflatedId 不为 NO_ID 则把 mInflatedId 设置为根元素的 id，这也是为什么在获取根元素时会使用 ViewStub 的 inflatedId。如果没有设置 inflatedId 的话可以通过根元素的 id 来获取。然后将 ViewStub 从 parent 中移除，将目标布局的根元素添加到 parent 中。最后会把目标布局的根元素返回。因此在调用 inflate() 函数时可以直接获得根元素，省掉了 findViewById 的过程。
 
 
 ## 5. Space 组件
@@ -140,5 +153,5 @@ public final class ViewStub extends View {
 
 ## 6. 参考文章
 1. [布局优化神器 include 、merge、ViewStub标签详解](https://blog.csdn.net/u012792686/article/details/72901531)
-2. [Android布局优化之ViewStub、include、merge使用与源码分析](https://blog.csdn.net/bboyfeiyu/article/details/45869393)
+2. [Android布局优化之ViewStub、include、merge使用与源码分析]( )
 
