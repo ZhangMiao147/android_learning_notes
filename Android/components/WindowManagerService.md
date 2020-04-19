@@ -4,19 +4,19 @@
 
 　　WMS 是系统的其他服务，无论对于应用开发还是 Framework 开发都是重点的知识，它的职责有很多，主要有以下几点：
 
-### 1. 窗口管理
+### 1.1. 窗口管理
 
 　　WMS 是窗口的管理者，它负责窗口的启动、添加和删除，另外窗口的大小和层级也是由 WMS 进行管理的。窗口管理的核心成员有 DisplayContent、WindowToken 和 WindowState。
 
-### 2. 窗口动画
+### 1.2. 窗口动画
 
-　　窗口间进行切换时，使用窗口动画可以显得更炫一些，窗口动画由 WMS 的动画子系统来负责，动画自系统的管理者为 WindowAnimator。
+　　窗口间进行切换时，使用窗口动画可以显得更炫一些，窗口动画由 WMS 的动画子系统来负责，动画子系统的管理者为 WindowAnimator。
 
-### 3. 输入系统的中转站
+### 1.3. 输入系统的中转站
 
 　　通过对窗口的触摸从而产生触摸事件，InputManangerService（IMS）会对触摸事件进行处理，它会寻找一个最合适的窗口来处理触摸反馈信息，WMS 是窗口的管理者，因此，WMS "理所应当" 的成为了输入系统的中转站。
 
-### 4. Surface 管理
+### 1.4. Surface 管理
 
 　　窗口并不具备有绘制的功能，因此每个窗口都需要有一块 Surface 来供自己绘制。为每个窗口分配 Surface 是由 WMS 来完成的。
 
@@ -61,7 +61,7 @@
 
             // Create the system service manager.
             // 创建 SystemServerManager
-            // 它会对系统的服务进行创建、启动和生命周期管理
+            // SystemServerManager 会对系统的服务进行创建、启动和生命周期管理
             mSystemServiceManager = new SystemServiceManager(mSystemContext);
             mSystemServiceManager.setRuntimeRestarted(mRuntimeRestart);
             LocalServices.addService(SystemServiceManager.class, mSystemServiceManager);
@@ -98,11 +98,9 @@
     }
 ```
 
-　　使用 startBootstrapServices()、startCoreServices()、startOtherServices() 三个方法启动的服务的父类为 SystemService。
+　　官方把大概 100 多个系统服务分为了三种类型，分别是引导服务、核心服务和其他服务，其中其他服务为一些非紧要和一些不需要立即启动的服务，WMS 就是其他服务的一种。而且这些服务的父类为 SystemService。
 
-　　官方把大概 100 多个系统服务分为了三种类型，分别是引导服务、核心服务和其他服务，其中其他服务为一些非紧要和一些不需要立即启动的服务，WMS 就是其他服务的一种。
-
-### 3. SystemServer#startOtherServices
+### 2.3. SystemServer#startOtherServices
 
 ```java
     /**
@@ -133,7 +131,8 @@
             // WMS needs sensor service ready
             ConcurrentUtils.waitForFutureNoInterrupt(mSensorServiceStart, START_SENSOR_SERVICE);
             mSensorServiceStart = null;
-            // 执行了 WMS 的 main 方法。其内部会创建 WMS，需要注意的是 main 方法其中一个传入的参数就是上面创建的 IMS，WMS 是输入书简的中转站，其内部包含了 IMS 引用并不意外。
+            // 执行了 WMS 的 main 方法。其内部会创建 WMS
+            // 需要注意的是 main 方法其中一个传入的参数就是上面创建的 IMS，WMS 是输入事件的中转站，其内部包含了 IMS 引用并不意外。
             wm = WindowManagerService.main(context, inputManager,
                     mFactoryTestMode != FactoryTest.FACTORY_TEST_LOW_LEVEL,
                     !mFirstBoot, mOnlyCore, new PhoneWindowManager());
@@ -160,7 +159,7 @@
         
         ...
             
-               traceBeginAndSlog("MakeWindowManagerServiceReady");
+        traceBeginAndSlog("MakeWindowManagerServiceReady");
         try {
             // 通知 WMS，系统的初始化工作已经完成
             // 内部调用了 WindowManagerPolicy 的 systemReady 方法
@@ -180,7 +179,7 @@
 
 　　将 WMS 和 IMS 注册到 ServiceManager 中，如果某个客户端想要使用 WMS，就需要先去 ServiceManager 中查询信息，然后根据信息与 WMS 所在的进程建立通信通路，客户端就可以使用 WMS 了。
 
-### 4. WindowManagerService#main
+### 2.4. WindowManagerService#main
 
 ```java
     public static WindowManagerService main(final Context context, final InputManagerService im,
@@ -188,7 +187,7 @@
             WindowManagerPolicy policy) {
         // 调用了 DisplayThread 的 getHandler 方法，用来得到 DisplayThread 的 Handler 实例。
         DisplayThread.getHandler().runWithScissors(() ->
-                                                   // 创建了 WMS 的实例。
+                // 创建了 WMS 的实例。
                 sInstance = new WindowManagerService(context, im, haveInputMethods, showBootMsgs,
                         onlyCore, policy), 0);
         return sInstance;
@@ -204,14 +203,14 @@
             @Override
             public void run() {
              sInstance = new WindowManagerService(context, im, haveInputMethods, showBootMsgs,
-                        onlyCore, policy);//2
+                        onlyCore, policy);
             }
         }, 0);
 ```
 
 　　创建 WMS 的过程是运行在 Runnable 的 run 方法中，而 Runnable 则传入到 DisplayThread 对应 Handler 的 runWithScissors 方法中，说明 WMS 的创建是运行在 “android:display” 线程中。需要注意的是，runWithScissors 方法的第二个参数传入的是 0.
 
-### 5. Handler#runWithScissors
+### 2.5. Handler#runWithScissors
 
 ```java
     public final boolean runWithScissors(final Runnable r, long timeout) {
@@ -221,7 +220,7 @@
         if (timeout < 0) {
             throw new IllegalArgumentException("timeout must be non-negative");
         }
-		// 判断当前线程是否是主线程
+				// 判断当前线程是否是主线程
         if (Looper.myLooper() == mLooper) {
             r.run();
             return true;
@@ -236,7 +235,7 @@
 
 　　根据每个线程只有一个 Looper 的原理来判断当前的线程（“System_server” 线程）是否是 Handler 所指向的线程（“android.display” 线程），如果是则直接执行 Runnable 的 run 方法，如果不是则调用 BlockingRunnable 的 postAndWait 方法，并将当前线程的 Runnable 作为参数传进去。
 
-### 6. BlockingRunnable
+### 2.6. BlockingRunnable
 
 　　BlockingRunnable 是 Handler 的内部类。
 
@@ -281,7 +280,7 @@
                         } catch (InterruptedException ex) {
                         }
                     }
-                    // time = 0 
+                // time = 0 
                 } else {
                     while (!mDone) {
                         try {
@@ -301,7 +300,7 @@
 
 　　因此得出结论，“system_server” 线程等待的就是 “android.display” 线程，一直到 “android.display” 线程执行完毕再执行 “system_server” 线程，这是因为 “android.display” 线程内部执行了 WMS 的创建，显然 WMS 的创建优先级更高些。
 
-### 7. WindowManagerService 的构造方法
+### 2.7. WindowManagerService 的构造方法
 
 ```java
     private WindowManagerService(Context context, InputManagerService inputManager,
@@ -320,13 +319,14 @@
         mDisplays = mDisplayManager.getDisplays();
         // 遍历 Display 数组
         for (Display display : mDisplays) {
-            // 将 Display 封装成 DisplayContent,DisplayContent 用来描述一块屏幕
+            // 将 Display 封装成 DisplayContent
+          	// DisplayContent 用来描述一块屏幕
             createDisplayContentLocked(display);
         }
 
         ...
 
-            // 得到 AMS 实例，并赋值给 mActivityManager，这样 WMS 就持有了 AMS 的引用
+        // 得到 AMS 实例，并赋值给 mActivityManager，这样 WMS 就持有了 AMS 的引用
         mActivityManager = ActivityManager.getService();
         
         ...
@@ -339,7 +339,8 @@
 
 
         LocalServices.addService(WindowManagerInternal.class, new LocalService());
-        // 初始化了窗口管理策略的接口类 WindowManagerPolicy(WMP)，它用来定义一个窗口策略所有遵循的通用规范
+        // 初始化了窗口管理策略的接口类 WindowManagerPolicy(WMP)
+      	// 它用来定义一个窗口策略所有遵循的通用规范
         initPolicy();
 
         // Add ourself to the Watchdog monitors.
@@ -352,7 +353,7 @@
 
 　　Watchdog 用来监控系统的一些关键服务的运行状态（比如传入的 WMS 的运行状况），这些被监控的服务都会实现 Watchdog.Monitor 接口。Watchdog 每分钟都会对监控的系统服务进行检查，如果被监控的系统服务出现了死锁，则会杀死 Watchdog 所在的进程，也就是 SystemServer 进程。
 
-### 8. WindowManagerService#initPolicy
+### 2.8. WindowManagerService#initPolicy
 
 ```java
     private void initPolicy() {
@@ -396,7 +397,7 @@
 
     final DisplaySettings mDisplaySettings;
 
-	...
+		...
 
     /**
      * All currently active sessions with clients.
@@ -458,32 +459,36 @@
      */
     final ArrayList<WindowState> mDestroyPreservedSurface = new ArrayList<>();
 
-	...
+		...
     final H mH = new H();
 
-	...
+		...
         
     final WindowAnimator mAnimator;
 
-	...
+		...
     final InputManagerService mInputManager;
 ```
 
 　　上面是 WMS 的部分成员变量，分别对它们进行简单的介绍。
 
-### 1. mPolicy:WindowManagerPolicy
+### 4.1. mPolicy:WindowManagerPolicy
 
 　　WindowManagerPolicy （WMP）类型的变量。WindowManagerPolicy 是窗口管理策略的接口类，用来定义一个窗口策略所要遵循的通用规范，并提供了 WindowManager 所有的特定的 UI 行为。它的具体实现类为 PhoneWindowManager，这个实现类在 WMS 创建时被创建。WMP 允许定制窗口层级和特殊窗口类型以及关键的调度和布局。
 
-### 2.  mSessions:ArraySet
+### 4.2. mSessions:ArraySet
 
 　　ArraySet 类型的变量，元素类型为 Session。Session 主要用于进程间通信，其他的应用程序想要和 WMS 进程进行通信就需要经过 Session，并且每个应用程序进程都会对应一个 Session，WMS 保存这些 Session 用来记录所有向 WMS 提供窗口管理服务的客户端。
 
-### 3. mWindowMap:WindowHashMap
+### 4.3. mWindowMap:WindowHashMap
 
-　　WindowHashMap 类型的变量，WindowHashMap 继承了 HashMap，它限制了 HashMap 的 key 值得类型为 IBinder，value 值的类型为 WindowState。WindowState 用于保存窗口的信息，在 WMS 中它用来描述一个窗口。综上得出结论，mWindowMap 就是用来保存 WMS 中各种窗口的集合。
+　　WindowHashMap 类型的变量，WindowHashMap 继承了 HashMap，它限制了 HashMap 的 key 值的类型为 IBinder，value 值的类型为 WindowState。
 
-### 4.mFinishedStarting:ArrayList
+　　WindowState 用于保存窗口的信息，在 WMS 中它用来描述一个窗口。
+
+　　综上得出结论，mWindowMap 就是用来保存 WMS 中各种窗口的集合。
+
+### 4.4. mFinishedStarting:ArrayList
 
 　　ArrayList 类型的变量，元素类型为 AppWindowToken，它是 WindowToken 的子类。
 
@@ -499,21 +504,21 @@
 
 　　mFinishedStarting 就是用于存储已经完成启动的应用程序窗口（比如 Activity）的 AppWindowToken 的列表。除了 mFinishedStarting，还有类似的 mFinishedEarlyAnim 和 mWindowReplacementTimeputs，其中 mFinishedEarlyAnim 存储了已经完成窗口绘制并且不需要展示任何已保存 surface 的应用程序窗口的 AppWindowToken。mWindowReplacementTimeout 存储了等待更换的应用程序窗口的 AppWindowToken，如果更换不及时，旧窗口就需要被处理。
 
-### 5.mResizingWindows:ArrayList
+### 4.5. mResizingWindows:ArrayList
 
 　　ArrayList 类型的变量，元素类型为 WindowState。
 
 　　mResizingWindows 是用来存储正在调整大小的窗口的列表。与 mResizingWindows 类似的还有 mPendingRemove、mDestroySurface 和 mDestoryPreservedSurface 等等。其中 mPendingRemove 是在内存耗尽时设置的，里面存有需要强制删除的窗口。mDestroySurface 里面存有需要被 Destory 的 Surface。mDestoryPreservedSurface 里面存有窗口需要保存的等待销毁的 Surface，为什么窗口要保存这些 Surface？这是因为窗口经历 Surface 变化时，窗口需要一直保持旧 Surface，直到新 Surface 的第一帧绘制完成。
 
-### 6.mAnimator:WindowAnimator
+### 4.6. mAnimator:WindowAnimator
 
 　　WindowAnimator 类型的变量，用于管理窗口的动画以及特效动画。
 
-### 7.mH:H
+### 4.7. mH:H
 
 　　H 类型的变量，系统的 Handler 类，用于将任务加入到主线程的消息队列中，这样代码逻辑就会在主线程中执行。
 
-### 8.mInputManager:InputManagerService
+### 4.8. mInputManager:InputManagerService
 
 　　InputManagerService 类型的变量，输入系统的管理者。InputManagerService（IMS）会对触摸事件进行处理，它会寻找一个最合适的窗口来处理触摸反馈信息，WMS 是窗口的管理者，因此，WMS “理所应当” 的成为了输入系统的中转站，WMS 包含了 IMS 的引用不足为怪。
 
@@ -527,7 +532,7 @@
 
 　　将  addWindow 方法分为 3 个部分解析：
 
-### 1.WindowManagerService#addWindow1
+### 5.1. WindowManagerService#addWindow1
 
 ```java
     public int addWindow(Session session, IWindow client, int seq,
@@ -535,8 +540,8 @@
             Rect outContentInsets, Rect outStableInsets, Rect outOutsets,
             InputChannel outInputChannel) {
         int[] appOp = new int[1];
-        // 根据 Window 的属性，调用 WMP 的 checkAddPermission 方法来检查权限。
-        // 具体的是现在 PhoneWindowManager 的 checkAddPermission 方法中，如果没有权限则不会执行后续的代码逻辑。
+        // 根据 Window 的属性，调用 WMP 的 checkAddPermission 方法来检查权限。具体的是现在 PhoneWindowManager 的 checkAddPermission 方法中
+      	// 如果没有权限则不会执行后续的代码逻辑。
         int res = mPolicy.checkAddPermission(attrs, appOp);
         if (res != WindowManagerGlobal.ADD_OKAY) {
             return res;
@@ -549,7 +554,9 @@
                 throw new IllegalStateException("Display has not been initialialized");
             }
 
-            // 通过 displayId 来获得窗口要添加到哪个 DisplayContent 上，如果没有找到 SisplayContent，则返回 WindowManagerGlobal.ADD_INVALID_DISPLAY 这一状态，其中 DisplayContent 用来描述一块屏幕。
+            // 通过 displayId 来获得窗口要添加到哪个 DisplayContent 上，
+          	// 如果没有找到 displayContent，则返回 WindowManagerGlobal.ADD_INVALID_DISPLAY 这一状态
+          	// 其中 DisplayContent 用来描述一块屏幕。
             final DisplayContent displayContent = mRoot.getDisplayContentOrCreate(displayId);
             if (displayContent == null) {
                 Slog.w(TAG_WM, "Attempted to add window to a display that does not exist: "
@@ -585,9 +592,7 @@
 
 　　WMS 的 addWindow 返回的是 addWindow 的各种状态，比如添加 Window 成功、无效的 dispaly 等等，这些状态被定义在 WindowManagerGlobal 中。
 
-
-
-### 2. WindowManagerService#addWindow2
+### 5.2. WindowManagerService#addWindow2
 
 ```java
     public int addWindow(Session session, IWindow client, int seq,
@@ -649,13 +654,13 @@
                     }
                 }
                 final IBinder binder = attrs.token != null ? attrs.token : client.asBinder();
-                // 通过多次的条件判断筛选，在这里隐式创建 WindowToen
-                // 这就说明当添加窗口时是可以不向 WMS 体魄美国 WindowToken 的，前提是 rootType 和 type 的值不为前面条件判断筛选的值。
+                // 通过多次的条件判断筛选，在这里隐式创建 WindowToken
+                // 这就说明当添加窗口时是可以不向 WMS 提供 WindowToken 的，前提是 rootType 和 type 的值不为前面条件判断筛选的值。
                 // WindowToken 隐式和显示的创建肯定是要加以区分的，第 4 个参数为 false 就代表这个 WindowToken 是隐式创建的。
                 token = new WindowToken(this, binder, type, false, displayContent,
                         session.mCanAddInternalSystemWindow);
             // 接下来的代码逻辑就是 WindowToken 不为 null 的情况，根据 rootType 和 type 的值进行判断
-                // 比如判断如果窗口为应用程序窗口
+            // 比如判断如果窗口为应用程序窗口
             } else if (rootType >= FIRST_APPLICATION_WINDOW && rootType <= LAST_APPLICATION_WINDOW) {
                 // 将 WindowToken 转换为专门针对应用程序窗口的 AppWindowToken，然后根据 AppWindowToken 的值进行后续的判断
                 atoken = token.asAppWindowToken();
@@ -679,11 +684,9 @@
     }
 ```
 
+　　WindowManagerService 的 addWindow 方法对 WindowToken 进行相关的处理，比如有的窗口类型需要提供 WindowToken，没有提供的话就不会执行下面的代码逻辑，有的窗口类型则需要由 WMS 隐式创建 WindowToken。
 
-
-
-
-### 3. WindowManagerService#addWindow3
+### 5.3. WindowManagerService#addWindow3
 
 ```java
     public int addWindow(Session session, IWindow client, int seq,
@@ -695,8 +698,8 @@
         synchronized(mWindowMap) {
             ...
 
-                // 创建了 WindowState，它存有窗口的所有的状态信息，在 WMS 中它代表一个窗口。
-                // 从 WindowState 传入的参数，可以发现 WindowState 中包含了 WMS、Session、WindowToken、父类的 WindowState、LayoutParams 等信息。
+            // 创建了 WindowState，它存有窗口的所有的状态信息，在 WMS 中它代表一个窗口。
+            // 从 WindowState 传入的参数，可以发现 WindowState 中包含了 WMS、Session、WindowToken、父类的 WindowState、LayoutParams 等信息。
             final WindowState win = new WindowState(this, session, client, token, parentWindow,
                     appOp[0], seq, attrs, viewVisibility, session.mUid,
                     session.mCanAddInternalSystemWindow);
@@ -708,22 +711,22 @@
                         + " that is dead, aborting.");
                 return WindowManagerGlobal.ADD_APP_EXITING;
             }
-           // 判断请求添加窗口的 DisplayContent 是否为 null，如果是，则不会再执行下面的代码逻辑
-
+           
+         		// 判断请求添加窗口的 DisplayContent 是否为 null，如果是，则不会再执行下面的代码逻辑
             if (win.getDisplayContent() == null) {
                 Slog.w(TAG_WM, "Adding window to Display that has been removed.");
                 return WindowManagerGlobal.ADD_INVALID_DISPLAY;
             }
            
            // 调用了 WMP 的 adjustWindowParamsLw 方法，该方法的实现在 PhoneWindowManager 中，会根据窗口的 type 对窗口的 LayoutParams 的一些成员变量进行修改 
-
             mPolicy.adjustWindowParamsLw(win.mAttrs);
             win.setShowToOwnerOnlyLocked(mPolicy.checkShowToOwnerOnly(attrs));
+         
            // 调用 WMP 的 prepareWindowLw 方法，用于准备将窗口添加到系统中
-
             res = mPolicy.prepareAddWindowLw(win, attrs);
            	...
             win.attach();
+         
            // 将 WindowState 添加到 mWindowMap 中
             mWindowMap.put(client.asBinder(), win);
             if (win.mAppOp != AppOpsManager.OP_NONE) {
@@ -743,8 +746,8 @@
             }
 
             boolean imMayMove = true;
+         
            // 将 WindowState 添加到该 WidowState 对应的 WindowToken 中（实际是保存在 WindowToken 的父类 WindowContainer 中），这样  WindowToken 就包含了相同组件的 WindowState。
-
             win.mToken.addWindow(win);
             if (type == TYPE_INPUT_METHOD) {
                 win.mGivenInsetsPending = true;
@@ -776,15 +779,15 @@
     }
 ```
 
+　　WindowManagerService 创建 WindowState，并将 WindowToken 和 WindowState 相关联。
 
-
-### 4. addWindow 方法总结
+### 5.4. addWindow 方法总结
 
 　　addWindow 方法分了 3 个部分来进行解析，主要就是做了下面 4 件事情：
 
 1. 对所要添加的窗口进行检查，如果窗口不满足一些条件，就不会再执行下面的代码逻辑。
 2. WindowToken 相关的处理，比如有的窗口类型需要提供 WindowToken，没有提供的话就不会执行下面的代码逻辑，有的窗口类型则需要由 WMS 隐式创建 WindowToken。
-3. WindowState 的创建和相关处理，将 WindowToken 和 WindowState 先关联。
+3. WindowState 的创建和相关处理，将 WindowToken 和 WindowState 相关联。
 4. 创建和配置 DispalyContent，完成窗口添加到系统前的准备工作。
 
 ## 6. Window 的删除过程
@@ -793,7 +796,7 @@
 
 　　将要删除的 Window（View）简称为 V。
 
-### 1. WindowManagerGlobal#removeView
+### 6.1. WindowManagerGlobal#removeView
 
 ```java
     public void removeView(View view, boolean immediate) {
@@ -817,7 +820,9 @@
     }
 ```
 
-### 2. WindowManagerGlobal#removeViewLocked
+　　WindowManagerGlobal 的 removeView 方法会先找到要删除的 Window 在 view 列表中的索引 index。然后调用 removeViewLocked 方法，并将 index 传递进去。
+
+### 6.2. WindowManagerGlobal#removeViewLocked
 
 ```java
     private void removeViewLocked(int index, boolean immediate) {
@@ -844,9 +849,13 @@
     }
 ```
 
+　　在 WindowManagerGlobal 的 removeViewLocked 方法会先根据需要删除的 Window 在 View 的索引 index 在 ViewRootImpl 列表中获得 index 对应的 ViewRootImpl，也就是要删除的 Window 的 ViewRootImpl 对象 root。
 
+　　接着对 InputMethodManager 的实例进行处理，如果存在 InputMethodManager 的实例则结束与要删除的 Window 相关的逻辑。
 
-### 3. ViewRootImpl#die
+　　然后调用 root 的 die 方法。
+
+### 6.3. ViewRootImpl#die
 
 ```java
     /**
@@ -856,7 +865,7 @@
     boolean die(boolean immediate) {
         // Make sure we do execute immediately if we are in the middle of a traversal or the damage
         // done by dispatchDetachedFromWindow will cause havoc on return.
-        // 如果 immediate 为 true（需要理解执行），并且 mIsTraversal 值为 true 时，执行 doDie 方法
+        // 如果 immediate 为 true（需要立即执行），并且 mIsTraversal 值为 true 时，执行 doDie 方法
         // mIsInTraversal 在执行 ViewRootImpl 的 performTraversals 方法时会被置为 true，在 performTraversals 方法执行完时被设置为 false
         // 因此这里可以理解为 die 方法需要立即执行并且此时 ViewRootImpl 不在执行 performTraversals 方法
         if (immediate && !mIsInTraversal) {
@@ -876,7 +885,9 @@
     }
 ```
 
-### 4. ViewRootImpl#doDie
+　　如果需要立即执行并且 ViewRootImpl 没有在执行 performTraversals 方法，则执行 doDie() 方法。
+
+### 6.4. ViewRootImpl#doDie
 
 ```java
     void doDie() {
@@ -885,19 +896,22 @@
         checkThread();
         if (LOCAL_LOGV) Log.v(mTag, "DIE in " + this + " of " + mSurface);
         synchronized (this) {
+          
             // 防止 doDie 方法被重复调用
             if (mRemoved) {
                 return;
             }
+          
             // 防止 doDie 方法被重复调用
             mRemoved = true;
+          
             // V 有子 View 就会调用 dispatchDetachedFromWindow 方法来销毁 View
             if (mAdded) {
         
                 dispatchDetachedFromWindow();
             }
+          
             //  如果 V 有子 View 并且不是第一次被添加
-
             if (mAdded && !mFirst) {
                 destroyHardwareRenderer();
 
@@ -928,7 +942,9 @@
     }
 ```
 
-#### 4.1. WindowManagerGlobal#doRemoveView
+　　WindowManagerGlobal 的 doDie 方法会检查 doDie 所在的线程是不是创建所要删除 Window 的线程，是才可以继续执行，如果要删除的 Window 有子 View，则调用 dispatchDetachedFromWindow 方法来销毁子 View。最后调用 WindowManagerGlobal 的 doEwmoveView 方法。
+
+#### 6.4.1. WindowManagerGlobal#doRemoveView
 
 ```java
     void doRemoveView(ViewRootImpl root) {
@@ -950,7 +966,7 @@
 
 　　WindowManagerGlobal 中维护了和 WIndow 操作相关的三个列表，doRemoveView 方法会从这三个列表中清除 V 对应的元素。
 
-#### 4.2. ViewRootImpl#dispatchDetachedFromWindow
+#### 6.4.2. ViewRootImpl#dispatchDetachedFromWindow
 
 ```java
     void dispatchDetachedFromWindow() {
@@ -966,7 +982,7 @@
 
 　　dispatchDetachedFromWindow 方法中主要调用了 IWindowSession 的 remove 方法，IWindowSession 在 Server 端的实现为 Session。
 
-#### 4.3. Session#remove
+#### 6.4.3. Session#remove
 
 ```java
    public void remove(IWindow window) {
@@ -974,9 +990,9 @@
     }
 ```
 
+　　Session 的 remove 方法调用了 WMS 的 removeWindow 方法。
 
-
-#### 4.4. WindowManagerService#removeWindow
+#### 6.4.4. WindowManagerService#removeWindow
 
 ```java
     void removeWindow(Session session, IWindow client) {
@@ -993,9 +1009,9 @@
     }
 ```
 
+　　获取所要删除的 Window 对应的 WindowState win，调用 win 的 removeIfPossible 方法。
 
-
-#### 4.5. WindowState#removeIfPossible
+#### 6.4.5. WindowState#removeIfPossible
 
 ```java
     @Override
@@ -1025,15 +1041,15 @@
 
 　　通过这些条件判断过滤就会执行 removeImmediately 方法。
 
-#### 4.6. WindowState#removeImmediately
+#### 6.4.6. WindowState#removeImmediately
 
 ```java
     @Override
     void removeImmediately() {
         super.removeImmediately();
+      
         // mRemoved 为 true 意味着正在执行删除 Window 操作
         // 防止重复删除操作
-
         if (mRemoved) {
             // Nothing to do.
             if (DEBUG_ADD_REMOVE) Slog.v(TAG_WM,
@@ -1046,13 +1062,14 @@
 
         ...
 
-		// 如果当前要删除的 Window 是 StatusBar 或者 NavigationBar 就会将这个 Window 从对应的控制器中删除
+				// 如果当前要删除的 Window 是 StatusBar 或者 NavigationBar 就会将这个 Window 从对应的控制器中删除
         mPolicy.removeWindowLw(this);
 
         disposeInputChannel();
 
         mWinAnimator.destroyDeferredSurfaceLocked();
         mWinAnimator.destroySurfaceLocked();
+      
         // 将 V 对应的 Session 从 WMS 的 ArraySet<Session> mSessions 中删除并清除 Session 对应的 SurfaceSession 资源（SurfaceSession 是 SurfaceFlinger 的一个连接，通过这个连接可以创建 1 个或多个 Surface 并渲染到屏幕上）。
         mSession.windowRemovedLocked();
         try {
@@ -1061,15 +1078,15 @@
             // Ignore if it has already been removed (usually because
             // we are doing this as part of processing a death note.)
         }
+      
         // 调用了 WMS 的 postWindowRemoveCleanupLocked 方法用于对 V 进行一些集中的清理工作。
-
         mService.postWindowRemoveCleanupLocked(this);
     }
 ```
 
 　　removeImmediately 方法用于立即进行删除操作。
 
-### 5. Window 删除过程总结
+### 6.5. Window 删除过程总结
 
 1. 检查删除线程的正确性，如果不正确就抛出异常。
 2. 从 ViewRootImpl 列表、布局参数列表和 View 列表中删除与 V 对应的元素。
@@ -1078,6 +1095,7 @@
 
 ## 7. 参考文章
 
-4. [Android 解析 WindowManagerService（一）WMS 的诞生](https://blog.csdn.net/itachi85/article/details/78186741)
-5. [Android解析WindowManagerService（二）WMS的重要成员和Window的添加过程](https://blog.csdn.net/itachi85/article/details/78357437)
-6. [Android解析WindowManagerService（三）Window的删除过程](https://blog.csdn.net/itachi85/article/details/79134490)
+1. [Android 解析 WindowManagerService（一）WMS 的诞生](https://blog.csdn.net/itachi85/article/details/78186741)
+2. [Android解析WindowManagerService（二）WMS的重要成员和Window的添加过程](https://blog.csdn.net/itachi85/article/details/78357437)
+3. [Android解析WindowManagerService（三）Window的删除过程](https://blog.csdn.net/itachi85/article/details/79134490)
+
