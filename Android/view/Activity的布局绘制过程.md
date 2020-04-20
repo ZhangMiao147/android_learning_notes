@@ -1,10 +1,41 @@
 # Activity 的布局绘制过程
 
-## 前言
-　　Activity 的 setContentView() 方法我们都知道是用来设置 Activity 的显示布局，那 setContentView() 方法是怎么去设置布局的。
+## 1. 概述
+　　LayoutInflater 主要是用于加载布局的，而通常加载布局的任务都是在 Activity 中调用 setContentView() 方法来完成，而 setContentView() 方法的内部是使用 LayoutInflater 来加载布局的，只是这一部分源码是 internal 的，不太容易查看到。
 
-## setContentView() 方法
+## 2. LayoutInflater 的用法
+
+　　LayoutInflater 的用法非常简单，首先需要获取到 LayoutInflater 的实例，有两种方法可以获取到。
+
+1. 第一种写法
+
+   ```java
+   LayoutInflater layoutInflater = LayoutInflater.from(context);
+   ```
+
+2. 第二种写法
+
+   ```java
+   LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+   ```
+
+　　其实第一种就是第二种的简单写法，只是 Android 做了一下封装而已。
+
+　　得到了 LayoutInflater 的实例之后就可以调用它的 inflate() 方法来加载布局了，如下：
+
+```java
+layoutInflater.inflate();
 ```
+
+　　inflate() 方法一般接收两个参数，似一个参数就是要加载的布局 id，第二个参数是指给该布局的外部再嵌套一层复布局，如果不需要就直接传 null。这样就成功创建了一个布局的实例，之后再将它添加到指定的位置就可以显示了。
+
+## 3. 源码分析
+
+　　从 Activity 的 setContentView 开始看起。
+
+### 3.1. Activity#setContentView() 方法
+
+```java
 public class Activity extends ContextThemeWrapper
         implements LayoutInflater.Factory2,
         Window.Callback, KeyEvent.Callback,
@@ -20,13 +51,17 @@ public class Activity extends ContextThemeWrapper
      * @see #setContentView(android.view.View, android.view.ViewGroup.LayoutParams)
      */
     public void setContentView(@LayoutRes int layoutResID) {
+      	// 调用的 Window 的 setContent 方法
         getWindow().setContentView(layoutResID);
         initWindowDecorActionBar();
     }
 }
 ```
-　　getWindow() 获得的是一个 Window 对象，而 Window 是一个抽象类，而唯一实现它的雷士 android.view.PhotoWindow，所以 getWindow().setContentView(layoutResID) 实际上调用的是 PhotoWindow 的 setContentView(layoutResId) ：
-```
+　　getWindow() 获得的是一个 Window 对象，而 Window 是一个抽象类，而唯一实现它的类是 android.view.PhoneWindow，所以 getWindow().setContentView(layoutResID) 实际上调用的是 PhotoWindow 的 setContentView(layoutResId) 。
+
+#### 3.1.1. PhoneWindow#setContentView
+
+```java
 public class PhoneWindow extends Window implements MenuBuilder.Callback {
     @Override
     public void setContentView(int layoutResID) {
@@ -44,7 +79,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                     getContext());
             transitionTo(newScene);
         } else {
-			//使用 LayoutInflater.inflate() 加载布局
+						//使用 LayoutInflater.inflate() 加载布局
             mLayoutInflater.inflate(layoutResID, mContentParent);
         }
         mContentParent.requestApplyInsets();
@@ -56,8 +91,11 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
     }
 }
 ```
-　　setContentView(int layoutResID) 方法调用 LayoutInflater 的 inflate() 方法加载布局：
-```
+　　setContentView(int layoutResID) 方法调用 LayoutInflater 的 inflate() 方法加载布局。
+
+#### 3.1.2. LayoutInflater#inflate
+
+```java
 public abstract class LayoutInflater {
     public View inflate(@LayoutRes int resource, @Nullable ViewGroup root) {
         return inflate(resource, root, root != null);
@@ -78,6 +116,7 @@ public abstract class LayoutInflater {
         }
     }
 
+  	// inflate 的方法都会调用到这里
     public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean attachToRoot) {
         synchronized (mConstructorArgs) {
             Trace.traceBegin(Trace.TRACE_TAG_VIEW, "inflate");
@@ -110,6 +149,7 @@ public abstract class LayoutInflater {
                     System.out.println("**************************");
                 }
 
+              	// 如果是 merge 标签
                 if (TAG_MERGE.equals(name)) {
                     if (root == null || !attachToRoot) {
                         throw new InflateException("<merge /> can be used only with a valid "
@@ -119,7 +159,7 @@ public abstract class LayoutInflater {
                     rInflate(parser, root, inflaterContext, attrs, false);
                 } else {
                     // Temp is the root view that was found in the xml
-					//找到 xml 文件中的根视图
+										// 找到 xml 文件中的根视图
                     final View temp = createViewFromTag(root, name, inflaterContext, attrs);
 
                     ViewGroup.LayoutParams params = null;
@@ -143,7 +183,7 @@ public abstract class LayoutInflater {
                     }
 
                     // Inflate all children under temp against its context.
-					//加载根视图的所有子视图
+										//加载根视图的所有子视图
                     rInflateChildren(parser, temp, attrs, true);
 
                     if (DEBUG) {
@@ -152,7 +192,7 @@ public abstract class LayoutInflater {
 
                     // We are supposed to attach all the views we found (int temp)
                     // to root. Do that now.
-					//将找到的所有子图添加到根视图上去
+										//将找到的所有子图添加到根视图上去
                     if (root != null && attachToRoot) {
                         root.addView(temp, params);
                     }
@@ -186,10 +226,15 @@ public abstract class LayoutInflater {
     }
 }
 ```
-　　LayoutInflater 其实就是使用 Android 提供的 pull 解析方式来解析布局文件的。createViewFromTag() 方法适用于根据节点名来创建 View 对象的。在 createViewFrom() 方法的内部又会去调用 createView() 方法，然后使用反射的方式创建出 View 的实例并返回。
+　　LayoutInflater 其实就是使用 Android 提供的 pull 解析方式来解析布局文件的。
 
-　　inflate() 方法只是创建出了一个根布局的实例而已，接着会调用 rInflateChildren() 方法来循环遍历这个根布局下的子元素：
-```
+　　createViewFromTag() 方法将节点名和参数都传了进入，它是用于根据节点名来创建 View 对象的。在 createViewFromTag() 方法的内部又会去调用 createView() 方法，然后使用反射的方式创建出 View 的实例并返回。
+
+　　inflate() 方法只是创建出了一个根布局的实例而已，接着会调用 rInflateChildren() 方法来循环遍历这个根布局下的子元素。
+
+#### 3.1.3. LayoutInflater#rInflateChildren
+
+```java
 public abstract class LayoutInflater {
     final void rInflateChildren(XmlPullParser parser, View parent, AttributeSet attrs,
             boolean finishInflate) throws XmlPullParserException, IOException {
@@ -215,17 +260,19 @@ public abstract class LayoutInflater {
                 parseRequestFocus(parser, parent);
             } else if (TAG_TAG.equals(name)) {
                 parseViewTag(parser, parent, attrs);
-            } else if (TAG_INCLUDE.equals(name)) {
+            } else if (TAG_INCLUDE.equals(name)) { // include 标签
                 if (parser.getDepth() == 0) {
                     throw new InflateException("<include /> cannot be the root element");
                 }
                 parseInclude(parser, context, parent, attrs);
-            } else if (TAG_MERGE.equals(name)) {
+            } else if  (TAG_MERGE.equals(name)) { // merge 标签
                 throw new InflateException("<merge /> must be the root element");
             } else {
+              	// 调用 createViewFromTag 方法创建 View 的实例
                 final View view = createViewFromTag(parent, name, context, attrs);
                 final ViewGroup viewGroup = (ViewGroup) parent;
                 final ViewGroup.LayoutParams params = viewGroup.generateLayoutParams(attrs);
+              	// 查找 view 下的子元素
                 rInflateChildren(parser, view, attrs, true);
                 viewGroup.addView(view, params);
             }
@@ -237,9 +284,42 @@ public abstract class LayoutInflater {
     }
 }
 ```
-　　子元素的处理同样也是 createViewFromTag() 方法来创建 View 的实例，调用 rInflateChildren() 方法来查找当前 View 下的子元素，每次递归完成后则将这个 View 添加到父布局当中。
+　　子元素的处理同样也是调用 createViewFromTag() 方法来创建 View 的实例，调用 rInflateChildren() 方法来查找当前 View 下的子元素，每次递归完成后则将这个 View 添加到父布局当中。
 
-　　这样的话，把整个布局文件都解析完成后就形成了一个完整的 DOM 结构，最终会把最顶层的根布局返回，至此 inflate() 过程全部结束。setContentView() 的方法在 onCreate() 方法中调用完成之后，随后会进入 resume 状态，接下来继续去 ActivityThread 查看 resume 的处理。
+　　这样的话，把整个布局文件都解析完成后就形成了一个完整的 DOM 结构，最终会把最顶层的根布局返回，至此 inflate() 过程全部结束。
+
+　　setContentView() 的方法在 onCreate() 方法中调用完成之后，随后会进入 resume 状态，接下来继续去 ActivityThread 查看 resume 的处理。
+
+### 3.2. inflate 方法
+
+　　inflate() 方法还有个接收三个参数的方法重载，如下：
+
+```java
+public View inflate(@LayoutRes int resource, @Nullable ViewGroup root, boolean attachToRoot)
+```
+
+　　关于第三个参数 attachToRoot 的一些结论：
+
+1. 如果 root 为 null，attachToRoot 将失去作用，设置任何值都没有意义。
+2. 如果 root 不为 null，attachToRoot 设为 true，则会给加载的布局文件指定一个父布局，即 root。
+3. 如果 root 不为 null，attachToRoot 设为 false，则会将布局文件最外层的所有 layout 属性进行设置，当该 view 被添加到父 view 当中时，这些 layout 属性会自动生效。
+4. 在不设置 attachToRoot 参数的情况下，如果 root 不为 null，attachToRoot 参数默认为 true。
+
+## 关于 layout_width 和 layout_height
+
+　　layout_width 和 layout_height 是用于设置 View 在布局中的大小的，也就是说，首先 View 必须存在于一个布局中，之后如果将 layout_width 设置成 match_parent 表示让 View 的宽度填充满布局，如果设置成 wrap_content 表示让 View 的宽度刚好可以包含其内容，如果设置成具体的数值则 View 的宽度会变成相应的数值。这也是为什么这两个属性叫做 layout_width 和 layout_height，而不是 width 和 height。
+
+　　平时在 Activity 中指定布局文件的时候，最外层的那个布局是可以指定大小的，layout_width 和 layout_height 都是有作用的，这是因为，在 setContentView() 方法中，Android 会自动在布局文件的最外层再嵌套一个 FrameLayout，所以 layout_width 和 layout_height 属性才会有效果。
+
+　　任何一个 Activity 中显示的界面其实主要都由两部分组成，标题栏和内容栏布局。标题栏就是很多界面顶部显示的那部分内容，可以在代码中控制让它是否显示。而内容栏内容就是一个 FrameLayout，这个布局的 id 叫做 content，调用 setContentView() 方法时所传入的布局其实就是放到这个 Fragment 中的，这也是为什么这个方法叫做 setContentView() ，而不是 setView()。
+
+　　Activity 窗口的组成图：
+
+![](image/Activity窗口的组成图.png)
+
+
+
+
 
 ## 从 ActivityThread 的 resume 处理开始
 ```

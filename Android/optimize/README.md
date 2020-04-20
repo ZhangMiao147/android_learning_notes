@@ -7,12 +7,6 @@
 - [内存泄漏](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/optimize/内存泄漏.md)
 - [内存溢出](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/optimize/内存溢出.md)
 - [布局优化之 include](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/optimize/布局优化之include.md)
-- 布局优化之 merge
-- 布局优化之 ViewStub
-- 
-- 布局优化
-
-
-
-- 3.[布局优化之 ViewStub、include、merge](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/optimize/%E5%B8%83%E5%B1%80%E4%BC%98%E5%8C%96%E4%B9%8BViewStub_include_merge.md)  -文章梳理
+- [布局优化之 merge](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/optimize/布局优化之merge.md)
+- [布局优化之 ViewStub](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/optimize/布局优化之ViewStub.md)
 

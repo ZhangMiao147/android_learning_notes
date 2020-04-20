@@ -5,7 +5,7 @@
 
 　　官方文档说明：merge 用于视图层级结构中的冗余视图，例如根布局是 LinearLayout，那么又 include 一个 LinearLayout 布局就没意义了，反而会减慢 UI 加载速度。
 
-　　减少在 include 布局文件时的层级。
+　　merge 就是为了减少在使用 include 布局文件时的层级。
 
 ## 2. merge 标签常用场景
 
@@ -23,7 +23,7 @@
 
 ## 4. merge 源码分析
 
-　　相关的代码还是从 LayoutInflate 的 inflate() 函数中开始，从 include 的源码分析贴出的 inflate() 代码可以看到，如果标签是 merge 的话就会调用 rInflate() 方法解析子 view：
+　　相关的代码还是从 LayoutInflate 的 inflate() 函数中开始，从 include 的源码分析贴出的 inflate() 代码可以看到，如果标签是 merge 的话就会调用 rInflate() 方法解析子 view。
 
 ```java
     /**

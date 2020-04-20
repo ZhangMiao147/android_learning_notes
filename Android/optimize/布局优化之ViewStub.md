@@ -2,13 +2,15 @@
 
 
 ## 1. 概述
-　　ViewStub 标签最大的优点是当需要时才会加载，使用它并不会影响 UI 初始化的性能。各种不常用的布局像加载条、显示错误信息等可以使用 ViewStub 标签，以减少内存使用量，加快渲染速度。ViewStub 是一个不可见的，实际上是把宽高设置为 0 的 View。效果有点类似普通的 view.setVisible()，但性能体验提高不少。
+　　ViewStub 标签最大的优点是当需要时才会加载，所以使用它并不会影响 UI 初始化的性能。各种不常用的布局像加载条、显示错误信息等可以使用 ViewStub 标签，以减少内存使用量，加快渲染速度。
+
+　　ViewStub 是一个不可见的，实际上是把宽高设置为 0 的 View。效果有点类似普通的 view.setVisible()，但性能体验提高不少。
+
+　　ViewStub 默认是不可见的，只有通过调用 setVisibility 函数或者 Inflate 函数才会将其要装载的目标布局给加载出来，从而达到延迟加载的效果，这个要被加载的布局通过 android:layout 属性来设置。
 
 　　第一次初始化时，初始化的是 ViewStub View，当调用 inflate() 或 setVisibility() 后会被 remove 掉，然后再将其中的 layout 加到当前 view hierarchy 中。
 
-　　其实 ViewStub 就是一个宽高为 0 的一个 View，它默认是不可见的，只有通过调用 setVisibility 函数或者 Inflate 函数才会将其要装载的目标布局给加载出来，从而达到延迟加载的效果，这个要被加载的布局通过 android:layout 属性来设置。
-
-## 2. 判断 ViewStub （做单例）是否已经加载过
+## 2. 判断 ViewStub 是否已经加载过
 
 1. 如果通过 setVisibility 来加载，那么通过判断可见性即可。
 2. 如果通过 inflate() 来加载，判断 ViewStub 是否为 null 来判断。
@@ -30,7 +32,8 @@
 ```java
 @RemoteView
 public final class ViewStub extends View {
-	...
+  
+		...
 
     public ViewStub(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context);
@@ -121,11 +124,10 @@ public final class ViewStub extends View {
 
                 final ViewGroup.LayoutParams layoutParams = getLayoutParams();
               
-								// 4. 将目标布局的根元素添加到 parent 中，有参数
+								// 4. 将目标布局的根元素添加到 parent 中
                 if (layoutParams != null) {
                     parent.addView(view, index, layoutParams);
                 } else {
-                  // 4. 将目标布局的根元素添加到 parent 中
                     parent.addView(view, index);
                 }
 
@@ -145,7 +147,9 @@ public final class ViewStub extends View {
     }
 }
 ```
-　　可以看出，其实最终加载目标布局的还是 inflate() 函数，在该函数中将加载目标布局，获取到根元素后，如果 mInflatedId 不为 NO_ID 则把 mInflatedId 设置为根元素的 id，这也是为什么在获取根元素时会使用 ViewStub 的 inflatedId。如果没有设置 inflatedId 的话可以通过根元素的 id 来获取。然后将 ViewStub 从 parent 中移除，将目标布局的根元素添加到 parent 中。最后会把目标布局的根元素返回。因此在调用 inflate() 函数时可以直接获得根元素，省掉了 findViewById 的过程。
+　　可以看出，其实最终加载目标布局的还是 inflate() 函数，在该函数中将加载目标布局，获取到根元素后，如果 mInflatedId 不为 NO_ID 则把 mInflatedId 设置为根元素的 id，这也是为什么在获取根元素时会使用 ViewStub 的 inflatedId。如果没有设置 inflatedId 的话可以通过根元素的 id 来获取。
+
+　　然后将 ViewStub 从 parent 中移除，将目标布局的根元素添加到 parent 中。最后会把目标布局的根元素返回。因此在调用 inflate() 函数时可以直接获得根元素，省掉了 findViewById 的过程。
 
 
 ## 5. Space 组件
