@@ -2037,6 +2037,7 @@
             String[] usesStaticLibraries, int[] usesStaticLibrariesVersions) {
         final PackageSetting pkgSetting;
         if (originalPkg != null) {
+            // 更新 apk 相关
             if (PackageManagerService.DEBUG_UPGRADE) Log.v(PackageManagerService.TAG, "Package "
                     + pkgName + " is adopting original package " + originalPkg.name);
             pkgSetting = new PackageSetting(originalPkg, pkgName /*realPkgName*/);
@@ -2077,6 +2078,7 @@
                 List<UserInfo> users = getAllUsers(userManager);
                 final int installUserId = installUser != null ? installUser.getIdentifier() : 0;
                 if (users != null && allowInstall) {
+                    // 多用户的部分
                     for (UserInfo user : users) {
                         // By default we consider this app to be installed
                         // for the user if no user has been specified (which
@@ -2106,6 +2108,7 @@
             if (sharedUser != null) {
                 pkgSetting.appId = sharedUser.userId;
             } else {
+                // 更新系统 apk 相关
                 // Clone the setting here for disabled system packages
                 if (disabledPkg != null) {
                     // For disabled packages a new setting is created
