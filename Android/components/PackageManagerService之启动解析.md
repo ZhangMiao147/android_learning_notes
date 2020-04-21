@@ -1,4 +1,4 @@
-# PackageManagerService
+# PackageManagerService 之启动解析
 
 ## 1. 概述
 
@@ -1640,7 +1640,7 @@
                 }
             }
 
-            // 调用 mSettings 的 getPackageLPr 方法来初始画 pkgSetting
+            // 调用 mSettings 的 getPackageLPr 方法来初始化 pkgSetting
             pkgSetting = mSettings.getPackageLPr(pkg.packageName);
             if (pkgSetting != null && pkgSetting.sharedUser != suid) {
                 PackageManagerService.reportSettingsProblem(Log.WARN,
@@ -1994,7 +1994,7 @@
     }
 ```
 
-　　如果在 Manifest 中制定了 SharedUserId，则首先获取一个关联的 SharedUserSetting 对象。
+　　如果在 Manifest 中指定了 SharedUserId，则首先获取一个关联的 SharedUserSetting 对象。
 
 ###### 2.6.2.5.1. Settings#getSharedUserLPw
 
@@ -2744,6 +2744,7 @@
                         mSettings.enableSystemPackageLPw(packageName);
 
                         try {
+                            // 扫描包文件
                             scanPackageTracedLI(scanFile, reparseFlags, scanFlags, 0, null);
                         } catch (PackageManagerException e) {
                             Slog.e(TAG, "Failed to parse original system package: "
@@ -2815,6 +2816,716 @@
 
 1. /data/app
 2. /data/app-private
+
+##### 2.6.3.1. PackageManagerService#scanPackageTracedLI
+
+```java
+    /**
+     *  Traces a package scan.
+     *  @see #scanPackageLI(File, int, int, long, UserHandle)
+     */
+    private PackageParser.Package scanPackageTracedLI(File scanFile, final int parseFlags,
+            int scanFlags, long currentTime, UserHandle user) throws PackageManagerException {
+        Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "scanPackage [" + scanFile.toString() + "]");
+        try {
+            return scanPackageLI(scanFile, parseFlags, scanFlags, currentTime, user);
+        } finally {
+            Trace.traceEnd(TRACE_TAG_PACKAGE_MANAGER);
+        }
+    }
+```
+
+　　scanPackageTracedLI 方法用于扫描指定文件 dir。调用了 scanPackageLI方法。
+
+##### 2.6.3.2. PackageManagerService#scanPackageLI
+
+```java
+    /**
+     *  Scans a package and returns the newly parsed package.
+     *  Returns {@code null} in case of errors and the error code is stored in mLastScanError
+     */
+    private PackageParser.Package scanPackageLI(File scanFile, int parseFlags, int scanFlags,
+            long currentTime, UserHandle user) throws PackageManagerException {
+        if (DEBUG_INSTALL) Slog.d(TAG, "Parsing: " + scanFile);
+        // 创建 PackageParser 对象 pp
+        PackageParser pp = new PackageParser();
+        pp.setSeparateProcesses(mSeparateProcesses);
+        pp.setOnlyCoreApps(mOnlyCore);
+        pp.setDisplayMetrics(mMetrics);
+        pp.setCallback(mPackageParserCallback);
+
+        if ((scanFlags & SCAN_TRUSTED_OVERLAY) != 0) {
+            parseFlags |= PackageParser.PARSE_TRUSTED_OVERLAY;
+        }
+
+        Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "parsePackage");
+        final PackageParser.Package pkg;
+        try {
+            // 解析出一个 Package 对象
+            pkg = pp.parsePackage(scanFile, parseFlags);
+        } catch (PackageParserException e) {
+            throw PackageManagerException.from(e);
+        } finally {
+            Trace.traceEnd(TRACE_TAG_PACKAGE_MANAGER);
+        }
+
+        // Static shared libraries have synthetic package names
+        if (pkg.applicationInfo.isStaticSharedLibrary()) {
+            renameStaticSharedLibraryPackage(pkg);
+        }
+
+        return scanPackageLI(pkg, scanFile, parseFlags, scanFlags, currentTime, user);
+    }
+```
+
+　　在 PackageManagerService 的 scanPackageLI 的方法中会调用 PackageParser 的 parsePackage 方法去解析 package 信息。
+
+##### 2.6.3.3. PackageParser#parsePackage
+
+```java
+    /**
+     * Parse the package at the given location. Automatically detects if the
+     * package is a monolithic style (single APK file) or cluster style
+     * (directory of APKs).
+     * <p>
+     * This performs sanity checking on cluster style packages, such as
+     * requiring identical package name and version codes, a single base APK,
+     * and unique split names.
+     * <p>
+     * Note that this <em>does not</em> perform signature verification; that
+     * must be done separately in {@link #collectCertificates(Package, int)}.
+     *
+     * If {@code useCaches} is true, the package parser might return a cached
+     * result from a previous parse of the same {@code packageFile} with the same
+     * {@code flags}. Note that this method does not check whether {@code packageFile}
+     * has changed since the last parse, it's up to callers to do so.
+     *
+     * @see #parsePackageLite(File, int)
+     */
+    public Package parsePackage(File packageFile, int flags, boolean useCaches)
+            throws PackageParserException {
+        Package parsed = useCaches ? getCachedResult(packageFile, flags) : null;
+        if (parsed != null) {
+            return parsed;
+        }
+
+        // 如果是目录
+        if (packageFile.isDirectory()) {
+            parsed = parseClusterPackage(packageFile, flags);
+        } else {
+            // 是文件
+            parsed = parseMonolithicPackage(packageFile, flags);
+        }
+
+        // 使用标志 flags 缓存 packageFile 的分析结果
+        cacheResult(packageFile, flags, parsed);
+
+        return parsed;
+    }
+
+    /**
+     * Equivalent to {@link #parsePackage(File, int, boolean)} with {@code useCaches == false}.
+     */
+    public Package parsePackage(File packageFile, int flags) throws PackageParserException {
+        return parsePackage(packageFile, flags, false /* useCaches */);
+    }
+```
+
+　　在 PackageParse 的 parsePackage 的方法中对于文件会调用 parseClusterPackage 方法去解析，如果是文件，就调用 parseMonolithicPackage 方法去解析。但是这两个方法最后都会调用到 parseBaseApkCommon 方法去解析文件。
+
+##### 2.6.3.4. PackageParse#parseBaseApkCommom
+
+```java
+    /**
+     * This is the common parsing routing for handling parent and child
+     * packages in a base APK. The difference between parent and child
+     * parsing is that some tags are not supported by child packages as
+     * well as some manifest attributes are ignored. The implementation
+     * assumes the calling code has already handled the manifest tag if needed
+     * (this applies to the parent only).
+     *
+     * @param pkg The package which to populate
+     * @param acceptedTags Which tags to handle, null to handle all
+     * @param res Resources against which to resolve values
+     * @param parser Parser of the manifest
+     * @param flags Flags about how to parse
+     * @param outError Human readable error if parsing fails
+     * @return The package if parsing succeeded or null.
+     *
+     * @throws XmlPullParserException
+     * @throws IOException
+     */
+    private Package parseBaseApkCommon(Package pkg, Set<String> acceptedTags, Resources res,
+            XmlResourceParser parser, int flags, String[] outError) throws XmlPullParserException,
+            IOException {
+        mParseInstrumentationArgs = null;
+        mParseActivityArgs = null;
+        mParseServiceArgs = null;
+        mParseProviderArgs = null;
+
+        int type;
+        boolean foundApp = false;
+
+        TypedArray sa = res.obtainAttributes(parser,
+                com.android.internal.R.styleable.AndroidManifest);
+
+        String str = sa.getNonConfigurationString(
+                com.android.internal.R.styleable.AndroidManifest_sharedUserId, 0);
+        if (str != null && str.length() > 0) {
+            if ((flags & PARSE_IS_EPHEMERAL) != 0) {
+                outError[0] = "sharedUserId not allowed in ephemeral application";
+                mParseError = PackageManager.INSTALL_PARSE_FAILED_BAD_SHARED_USER_ID;
+                return null;
+            }
+            String nameError = validateName(str, true, false);
+            if (nameError != null && !"android".equals(pkg.packageName)) {
+                outError[0] = "<manifest> specifies bad sharedUserId name \""
+                    + str + "\": " + nameError;
+                mParseError = PackageManager.INSTALL_PARSE_FAILED_BAD_SHARED_USER_ID;
+                return null;
+            }
+            pkg.mSharedUserId = str.intern();
+            pkg.mSharedUserLabel = sa.getResourceId(
+                    com.android.internal.R.styleable.AndroidManifest_sharedUserLabel, 0);
+        }
+
+        pkg.installLocation = sa.getInteger(
+                com.android.internal.R.styleable.AndroidManifest_installLocation,
+                PARSE_DEFAULT_INSTALL_LOCATION);
+        pkg.applicationInfo.installLocation = pkg.installLocation;
+
+        final int targetSandboxVersion = sa.getInteger(
+                com.android.internal.R.styleable.AndroidManifest_targetSandboxVersion,
+                PARSE_DEFAULT_TARGET_SANDBOX);
+        pkg.applicationInfo.targetSandboxVersion = targetSandboxVersion;
+
+        /* Set the global "forward lock" flag */
+        if ((flags & PARSE_FORWARD_LOCK) != 0) {
+            pkg.applicationInfo.privateFlags |= ApplicationInfo.PRIVATE_FLAG_FORWARD_LOCK;
+        }
+
+        /* Set the global "on SD card" flag */
+        if ((flags & PARSE_EXTERNAL_STORAGE) != 0) {
+            pkg.applicationInfo.flags |= ApplicationInfo.FLAG_EXTERNAL_STORAGE;
+        }
+
+        if (sa.getBoolean(com.android.internal.R.styleable.AndroidManifest_isolatedSplits, false)) {
+            pkg.applicationInfo.privateFlags |= ApplicationInfo.PRIVATE_FLAG_ISOLATED_SPLIT_LOADING;
+        }
+
+        // Resource boolean are -1, so 1 means we don't know the value.
+        int supportsSmallScreens = 1;
+        int supportsNormalScreens = 1;
+        int supportsLargeScreens = 1;
+        int supportsXLargeScreens = 1;
+        int resizeable = 1;
+        int anyDensity = 1;
+
+        int outerDepth = parser.getDepth();
+        while ((type = parser.next()) != XmlPullParser.END_DOCUMENT
+                && (type != XmlPullParser.END_TAG || parser.getDepth() > outerDepth)) {
+            if (type == XmlPullParser.END_TAG || type == XmlPullParser.TEXT) {
+                continue;
+            }
+
+            String tagName = parser.getName();
+
+            if (acceptedTags != null && !acceptedTags.contains(tagName)) {
+                Slog.w(TAG, "Skipping unsupported element under <manifest>: "
+                        + tagName + " at " + mArchiveSourcePath + " "
+                        + parser.getPositionDescription());
+                XmlUtils.skipCurrentTag(parser);
+                continue;
+            }
+
+            // 开始解析标签
+            // application 标签
+            if (tagName.equals(TAG_APPLICATION)) {
+                if (foundApp) {
+                    if (RIGID_PARSER) {
+                        outError[0] = "<manifest> has more than one <application>";
+                        mParseError = PackageManager.INSTALL_PARSE_FAILED_MANIFEST_MALFORMED;
+                        return null;
+                    } else {
+                        Slog.w(TAG, "<manifest> has more than one <application>");
+                        XmlUtils.skipCurrentTag(parser);
+                        continue;
+                    }
+                }
+
+                foundApp = true;
+                if (!parseBaseApplication(pkg, res, parser, flags, outError)) {
+                    return null;
+                }
+                // overlay 标签
+            } else if (tagName.equals(TAG_OVERLAY)) {
+                sa = res.obtainAttributes(parser,
+                        com.android.internal.R.styleable.AndroidManifestResourceOverlay);
+                pkg.mOverlayTarget = sa.getString(
+                        com.android.internal.R.styleable.AndroidManifestResourceOverlay_targetPackage);
+                pkg.mOverlayPriority = sa.getInt(
+                        com.android.internal.R.styleable.AndroidManifestResourceOverlay_priority,
+                        0);
+                pkg.mIsStaticOverlay = sa.getBoolean(
+                        com.android.internal.R.styleable.AndroidManifestResourceOverlay_isStatic,
+                        false);
+                final String propName = sa.getString(
+                        com.android.internal.R.styleable
+                        .AndroidManifestResourceOverlay_requiredSystemPropertyName);
+                final String propValue = sa.getString(
+                        com.android.internal.R.styleable
+                        .AndroidManifestResourceOverlay_requiredSystemPropertyValue);
+                sa.recycle();
+
+                if (pkg.mOverlayTarget == null) {
+                    outError[0] = "<overlay> does not specify a target package";
+                    mParseError = PackageManager.INSTALL_PARSE_FAILED_MANIFEST_MALFORMED;
+                    return null;
+                }
+
+                if (pkg.mOverlayPriority < 0 || pkg.mOverlayPriority > 9999) {
+                    outError[0] = "<overlay> priority must be between 0 and 9999";
+                    mParseError =
+                        PackageManager.INSTALL_PARSE_FAILED_MANIFEST_MALFORMED;
+                    return null;
+                }
+
+                // check to see if overlay should be excluded based on system property condition
+                if (!checkOverlayRequiredSystemProperty(propName, propValue)) {
+                    Slog.i(TAG, "Skipping target and overlay pair " + pkg.mOverlayTarget + " and "
+                        + pkg.baseCodePath+ ": overlay ignored due to required system property: "
+                        + propName + " with value: " + propValue);
+                    return null;
+                }
+
+                XmlUtils.skipCurrentTag(parser);
+			// key-sets 标签
+            } else if (tagName.equals(TAG_KEY_SETS)) {
+                if (!parseKeySets(pkg, res, parser, outError)) {
+                    return null;
+                }
+                // permission-group 标签
+            } else if (tagName.equals(TAG_PERMISSION_GROUP)) {
+                if (!parsePermissionGroup(pkg, flags, res, parser, outError)) {
+                    return null;
+                }
+                // permission 标签
+            } else if (tagName.equals(TAG_PERMISSION)) {
+                if (!parsePermission(pkg, res, parser, outError)) {
+                    return null;
+                }
+                // permission-tree 标签
+            } else if (tagName.equals(TAG_PERMISSION_TREE)) {
+                if (!parsePermissionTree(pkg, res, parser, outError)) {
+                    return null;
+                }
+                // uses-permission 标签
+            } else if (tagName.equals(TAG_USES_PERMISSION)) {
+                if (!parseUsesPermission(pkg, res, parser)) {
+                    return null;
+                }
+                // uses-permission-sdk-m 或 uses-permission-sdk-23 标签
+            } else if (tagName.equals(TAG_USES_PERMISSION_SDK_M)
+                    || tagName.equals(TAG_USES_PERMISSION_SDK_23)) {
+                if (!parseUsesPermission(pkg, res, parser)) {
+                    return null;
+                }
+                // uses-configuration 标签
+            } else if (tagName.equals(TAG_USES_CONFIGURATION)) {
+                ConfigurationInfo cPref = new ConfigurationInfo();
+                sa = res.obtainAttributes(parser,
+                        com.android.internal.R.styleable.AndroidManifestUsesConfiguration);
+                cPref.reqTouchScreen = sa.getInt(
+                        com.android.internal.R.styleable.AndroidManifestUsesConfiguration_reqTouchScreen,
+                        Configuration.TOUCHSCREEN_UNDEFINED);
+                cPref.reqKeyboardType = sa.getInt(
+                        com.android.internal.R.styleable.AndroidManifestUsesConfiguration_reqKeyboardType,
+                        Configuration.KEYBOARD_UNDEFINED);
+                if (sa.getBoolean(
+                        com.android.internal.R.styleable.AndroidManifestUsesConfiguration_reqHardKeyboard,
+                        false)) {
+                    cPref.reqInputFeatures |= ConfigurationInfo.INPUT_FEATURE_HARD_KEYBOARD;
+                }
+                cPref.reqNavigation = sa.getInt(
+                        com.android.internal.R.styleable.AndroidManifestUsesConfiguration_reqNavigation,
+                        Configuration.NAVIGATION_UNDEFINED);
+                if (sa.getBoolean(
+                        com.android.internal.R.styleable.AndroidManifestUsesConfiguration_reqFiveWayNav,
+                        false)) {
+                    cPref.reqInputFeatures |= ConfigurationInfo.INPUT_FEATURE_FIVE_WAY_NAV;
+                }
+                sa.recycle();
+                pkg.configPreferences = ArrayUtils.add(pkg.configPreferences, cPref);
+
+                XmlUtils.skipCurrentTag(parser);
+
+                // uses-feature 标签
+            } else if (tagName.equals(TAG_USES_FEATURE)) {
+                FeatureInfo fi = parseUsesFeature(res, parser);
+                pkg.reqFeatures = ArrayUtils.add(pkg.reqFeatures, fi);
+
+                if (fi.name == null) {
+                    ConfigurationInfo cPref = new ConfigurationInfo();
+                    cPref.reqGlEsVersion = fi.reqGlEsVersion;
+                    pkg.configPreferences = ArrayUtils.add(pkg.configPreferences, cPref);
+                }
+
+                XmlUtils.skipCurrentTag(parser);
+			// feature-group 标签
+            } else if (tagName.equals(TAG_FEATURE_GROUP)) {
+                FeatureGroupInfo group = new FeatureGroupInfo();
+                ArrayList<FeatureInfo> features = null;
+                final int innerDepth = parser.getDepth();
+                while ((type = parser.next()) != XmlPullParser.END_DOCUMENT
+                        && (type != XmlPullParser.END_TAG || parser.getDepth() > innerDepth)) {
+                    if (type == XmlPullParser.END_TAG || type == XmlPullParser.TEXT) {
+                        continue;
+                    }
+
+                    final String innerTagName = parser.getName();
+                    if (innerTagName.equals("uses-feature")) {
+                        FeatureInfo featureInfo = parseUsesFeature(res, parser);
+                        // FeatureGroups are stricter and mandate that
+                        // any <uses-feature> declared are mandatory.
+                        featureInfo.flags |= FeatureInfo.FLAG_REQUIRED;
+                        features = ArrayUtils.add(features, featureInfo);
+                    } else {
+                        Slog.w(TAG, "Unknown element under <feature-group>: " + innerTagName +
+                                " at " + mArchiveSourcePath + " " +
+                                parser.getPositionDescription());
+                    }
+                    XmlUtils.skipCurrentTag(parser);
+                }
+
+                if (features != null) {
+                    group.features = new FeatureInfo[features.size()];
+                    group.features = features.toArray(group.features);
+                }
+                pkg.featureGroups = ArrayUtils.add(pkg.featureGroups, group);
+
+                // uses-sdk 标签
+            } else if (tagName.equals(TAG_USES_SDK)) {
+                if (SDK_VERSION > 0) {
+                    sa = res.obtainAttributes(parser,
+                            com.android.internal.R.styleable.AndroidManifestUsesSdk);
+
+                    int minVers = 1;
+                    String minCode = null;
+                    int targetVers = 0;
+                    String targetCode = null;
+
+                    TypedValue val = sa.peekValue(
+                            com.android.internal.R.styleable.AndroidManifestUsesSdk_minSdkVersion);
+                    if (val != null) {
+                        if (val.type == TypedValue.TYPE_STRING && val.string != null) {
+                            targetCode = minCode = val.string.toString();
+                        } else {
+                            // If it's not a string, it's an integer.
+                            targetVers = minVers = val.data;
+                        }
+                    }
+
+                    val = sa.peekValue(
+                            com.android.internal.R.styleable.AndroidManifestUsesSdk_targetSdkVersion);
+                    if (val != null) {
+                        if (val.type == TypedValue.TYPE_STRING && val.string != null) {
+                            targetCode = val.string.toString();
+                            if (minCode == null) {
+                                minCode = targetCode;
+                            }
+                        } else {
+                            // If it's not a string, it's an integer.
+                            targetVers = val.data;
+                        }
+                    }
+
+                    sa.recycle();
+
+                    final int minSdkVersion = PackageParser.computeMinSdkVersion(minVers, minCode,
+                            SDK_VERSION, SDK_CODENAMES, outError);
+                    if (minSdkVersion < 0) {
+                        mParseError = PackageManager.INSTALL_FAILED_OLDER_SDK;
+                        return null;
+                    }
+
+                    final int targetSdkVersion = PackageParser.computeTargetSdkVersion(targetVers,
+                            targetCode, SDK_VERSION, SDK_CODENAMES, outError);
+                    if (targetSdkVersion < 0) {
+                        mParseError = PackageManager.INSTALL_FAILED_OLDER_SDK;
+                        return null;
+                    }
+
+                    pkg.applicationInfo.minSdkVersion = minSdkVersion;
+                    pkg.applicationInfo.targetSdkVersion = targetSdkVersion;
+                }
+
+                XmlUtils.skipCurrentTag(parser);
+
+                // supports-screens 标签
+            } else if (tagName.equals(TAG_SUPPORT_SCREENS)) {
+                sa = res.obtainAttributes(parser,
+                        com.android.internal.R.styleable.AndroidManifestSupportsScreens);
+
+                pkg.applicationInfo.requiresSmallestWidthDp = sa.getInteger(
+                        com.android.internal.R.styleable.AndroidManifestSupportsScreens_requiresSmallestWidthDp,
+                        0);
+                pkg.applicationInfo.compatibleWidthLimitDp = sa.getInteger(
+                        com.android.internal.R.styleable.AndroidManifestSupportsScreens_compatibleWidthLimitDp,
+                        0);
+                pkg.applicationInfo.largestWidthLimitDp = sa.getInteger(
+                        com.android.internal.R.styleable.AndroidManifestSupportsScreens_largestWidthLimitDp,
+                        0);
+
+                // This is a trick to get a boolean and still able to detect
+                // if a value was actually set.
+                supportsSmallScreens = sa.getInteger(
+                        com.android.internal.R.styleable.AndroidManifestSupportsScreens_smallScreens,
+                        supportsSmallScreens);
+                supportsNormalScreens = sa.getInteger(
+                        com.android.internal.R.styleable.AndroidManifestSupportsScreens_normalScreens,
+                        supportsNormalScreens);
+                supportsLargeScreens = sa.getInteger(
+                        com.android.internal.R.styleable.AndroidManifestSupportsScreens_largeScreens,
+                        supportsLargeScreens);
+                supportsXLargeScreens = sa.getInteger(
+                        com.android.internal.R.styleable.AndroidManifestSupportsScreens_xlargeScreens,
+                        supportsXLargeScreens);
+                resizeable = sa.getInteger(
+                        com.android.internal.R.styleable.AndroidManifestSupportsScreens_resizeable,
+                        resizeable);
+                anyDensity = sa.getInteger(
+                        com.android.internal.R.styleable.AndroidManifestSupportsScreens_anyDensity,
+                        anyDensity);
+
+                sa.recycle();
+
+                XmlUtils.skipCurrentTag(parser);
+
+                // protected-broadcast 标签
+            } else if (tagName.equals(TAG_PROTECTED_BROADCAST)) {
+                sa = res.obtainAttributes(parser,
+                        com.android.internal.R.styleable.AndroidManifestProtectedBroadcast);
+
+                // Note: don't allow this value to be a reference to a resource
+                // that may change.
+                String name = sa.getNonResourceString(
+                        com.android.internal.R.styleable.AndroidManifestProtectedBroadcast_name);
+
+                sa.recycle();
+
+                if (name != null && (flags&PARSE_IS_SYSTEM) != 0) {
+                    if (pkg.protectedBroadcasts == null) {
+                        pkg.protectedBroadcasts = new ArrayList<String>();
+                    }
+                    if (!pkg.protectedBroadcasts.contains(name)) {
+                        pkg.protectedBroadcasts.add(name.intern());
+                    }
+                }
+
+                XmlUtils.skipCurrentTag(parser);
+
+                // instrumentation 标签
+            } else if (tagName.equals(TAG_INSTRUMENTATION)) {
+                if (parseInstrumentation(pkg, res, parser, outError) == null) {
+                    return null;
+                }
+                // original-package 标签
+            } else if (tagName.equals(TAG_ORIGINAL_PACKAGE)) {
+                sa = res.obtainAttributes(parser,
+                        com.android.internal.R.styleable.AndroidManifestOriginalPackage);
+
+                String orig =sa.getNonConfigurationString(
+                        com.android.internal.R.styleable.AndroidManifestOriginalPackage_name, 0);
+                if (!pkg.packageName.equals(orig)) {
+                    if (pkg.mOriginalPackages == null) {
+                        pkg.mOriginalPackages = new ArrayList<String>();
+                        pkg.mRealPackage = pkg.packageName;
+                    }
+                    pkg.mOriginalPackages.add(orig);
+                }
+
+                sa.recycle();
+
+                XmlUtils.skipCurrentTag(parser);
+
+                // adopt-permissions 标签
+            } else if (tagName.equals(TAG_ADOPT_PERMISSIONS)) {
+                sa = res.obtainAttributes(parser,
+                        com.android.internal.R.styleable.AndroidManifestOriginalPackage);
+
+                String name = sa.getNonConfigurationString(
+                        com.android.internal.R.styleable.AndroidManifestOriginalPackage_name, 0);
+
+                sa.recycle();
+
+                if (name != null) {
+                    if (pkg.mAdoptPermissions == null) {
+                        pkg.mAdoptPermissions = new ArrayList<String>();
+                    }
+                    pkg.mAdoptPermissions.add(name);
+                }
+
+                XmlUtils.skipCurrentTag(parser);
+
+                // uses-gl-texture 标签
+            } else if (tagName.equals(TAG_USES_GL_TEXTURE)) {
+                // Just skip this tag
+                XmlUtils.skipCurrentTag(parser);
+                continue;
+
+                // compatible-screens 标签
+            } else if (tagName.equals(TAG_COMPATIBLE_SCREENS)) {
+                // Just skip this tag
+                XmlUtils.skipCurrentTag(parser);
+                continue;
+                // supports-input 标签
+            } else if (tagName.equals(TAG_SUPPORTS_INPUT)) {//
+                XmlUtils.skipCurrentTag(parser);
+                continue;
+
+            // eat-comment 标签
+            } else if (tagName.equals(TAG_EAT_COMMENT)) {
+                // Just skip this tag
+                XmlUtils.skipCurrentTag(parser);
+                continue;
+
+                // package 标签
+            } else if (tagName.equals(TAG_PACKAGE)) {
+                if (!MULTI_PACKAGE_APK_ENABLED) {
+                    XmlUtils.skipCurrentTag(parser);
+                    continue;
+                }
+                if (!parseBaseApkChild(pkg, res, parser, flags, outError)) {
+                    // If parsing a child failed the error is already set
+                    return null;
+                }
+
+                // restrict-update 标签
+            } else if (tagName.equals(TAG_RESTRICT_UPDATE)) {
+                if ((flags & PARSE_IS_SYSTEM_DIR) != 0) {
+                    sa = res.obtainAttributes(parser,
+                            com.android.internal.R.styleable.AndroidManifestRestrictUpdate);
+                    final String hash = sa.getNonConfigurationString(
+                            com.android.internal.R.styleable.AndroidManifestRestrictUpdate_hash, 0);
+                    sa.recycle();
+
+                    pkg.restrictUpdateHash = null;
+                    if (hash != null) {
+                        final int hashLength = hash.length();
+                        final byte[] hashBytes = new byte[hashLength / 2];
+                        for (int i = 0; i < hashLength; i += 2){
+                            hashBytes[i/2] = (byte) ((Character.digit(hash.charAt(i), 16) << 4)
+                                    + Character.digit(hash.charAt(i + 1), 16));
+                        }
+                        pkg.restrictUpdateHash = hashBytes;
+                    }
+                }
+
+                XmlUtils.skipCurrentTag(parser);
+
+                // uses-split 标签
+            } else if (RIGID_PARSER) {
+                outError[0] = "Bad element under <manifest>: "
+                    + parser.getName();
+                mParseError = PackageManager.INSTALL_PARSE_FAILED_MANIFEST_MALFORMED;
+                return null;
+
+            } else {
+                Slog.w(TAG, "Unknown element under <manifest>: " + parser.getName()
+                        + " at " + mArchiveSourcePath + " "
+                        + parser.getPositionDescription());
+                XmlUtils.skipCurrentTag(parser);
+                continue;
+            }
+        }
+
+        if (!foundApp && pkg.instrumentation.size() == 0) {
+            outError[0] = "<manifest> does not contain an <application> or <instrumentation>";
+            mParseError = PackageManager.INSTALL_PARSE_FAILED_MANIFEST_EMPTY;
+        }
+
+        final int NP = PackageParser.NEW_PERMISSIONS.length;
+        StringBuilder implicitPerms = null;
+        for (int ip=0; ip<NP; ip++) {
+            final PackageParser.NewPermissionInfo npi
+                    = PackageParser.NEW_PERMISSIONS[ip];
+            if (pkg.applicationInfo.targetSdkVersion >= npi.sdkVersion) {
+                break;
+            }
+            if (!pkg.requestedPermissions.contains(npi.name)) {
+                if (implicitPerms == null) {
+                    implicitPerms = new StringBuilder(128);
+                    implicitPerms.append(pkg.packageName);
+                    implicitPerms.append(": compat added ");
+                } else {
+                    implicitPerms.append(' ');
+                }
+                implicitPerms.append(npi.name);
+                pkg.requestedPermissions.add(npi.name);
+            }
+        }
+        if (implicitPerms != null) {
+            Slog.i(TAG, implicitPerms.toString());
+        }
+
+        final int NS = PackageParser.SPLIT_PERMISSIONS.length;
+        for (int is=0; is<NS; is++) {
+            final PackageParser.SplitPermissionInfo spi
+                    = PackageParser.SPLIT_PERMISSIONS[is];
+            if (pkg.applicationInfo.targetSdkVersion >= spi.targetSdk
+                    || !pkg.requestedPermissions.contains(spi.rootPerm)) {
+                continue;
+            }
+            for (int in=0; in<spi.newPerms.length; in++) {
+                final String perm = spi.newPerms[in];
+                if (!pkg.requestedPermissions.contains(perm)) {
+                    pkg.requestedPermissions.add(perm);
+                }
+            }
+        }
+
+        if (supportsSmallScreens < 0 || (supportsSmallScreens > 0
+                && pkg.applicationInfo.targetSdkVersion
+                        >= android.os.Build.VERSION_CODES.DONUT)) {
+            pkg.applicationInfo.flags |= ApplicationInfo.FLAG_SUPPORTS_SMALL_SCREENS;
+        }
+        if (supportsNormalScreens != 0) {
+            pkg.applicationInfo.flags |= ApplicationInfo.FLAG_SUPPORTS_NORMAL_SCREENS;
+        }
+        if (supportsLargeScreens < 0 || (supportsLargeScreens > 0
+                && pkg.applicationInfo.targetSdkVersion
+                        >= android.os.Build.VERSION_CODES.DONUT)) {
+            pkg.applicationInfo.flags |= ApplicationInfo.FLAG_SUPPORTS_LARGE_SCREENS;
+        }
+        if (supportsXLargeScreens < 0 || (supportsXLargeScreens > 0
+                && pkg.applicationInfo.targetSdkVersion
+                        >= android.os.Build.VERSION_CODES.GINGERBREAD)) {
+            pkg.applicationInfo.flags |= ApplicationInfo.FLAG_SUPPORTS_XLARGE_SCREENS;
+        }
+        if (resizeable < 0 || (resizeable > 0
+                && pkg.applicationInfo.targetSdkVersion
+                        >= android.os.Build.VERSION_CODES.DONUT)) {
+            pkg.applicationInfo.flags |= ApplicationInfo.FLAG_RESIZEABLE_FOR_SCREENS;
+        }
+        if (anyDensity < 0 || (anyDensity > 0
+                && pkg.applicationInfo.targetSdkVersion
+                        >= android.os.Build.VERSION_CODES.DONUT)) {
+            pkg.applicationInfo.flags |= ApplicationInfo.FLAG_SUPPORTS_SCREEN_DENSITIES;
+        }
+
+        // At this point we can check if an application is not supporting densities and hence
+        // cannot be windowed / resized. Note that an SDK version of 0 is common for
+        // pre-Doughnut applications.
+        if (pkg.applicationInfo.usesCompatibilityMode()) {
+            adjustPackageToBeUnresizeableAndUnpipable(pkg);
+        }
+        return pkg;
+    }
+```
+
+　　方法比较长，主要是解析 AndroidManifest.xml 文件，建立一个 Package 对象。
+
+
 
 #### 2.6.4. PackageManagerService 的构造函数 4
 
@@ -3266,6 +3977,4 @@
 ## 参考文章
 
 1. [Android PackageManagerService 分析一：PMS 的启动](https://blog.csdn.net/lilian0118/article/details/24455019)
-2. [Android PackageManagerService分析二：安装APK](https://blog.csdn.net/lilian0118/article/details/25792601)
-3. [Android PackageManagerService分析三：卸载APK](https://blog.csdn.net/lilian0118/article/details/26362359)
 4. [PackageManagerService启动流程源码解析](https://blog.csdn.net/u012124438/article/details/54882771)
