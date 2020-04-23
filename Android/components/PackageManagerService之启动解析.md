@@ -85,12 +85,19 @@
 
 　　使用 startBootstrapServices()、startCoreServices()、startOtherServices() 三个方法启动的服务的父类为 SystemService。
 
-　　官方把大概 100 多个系统服务分为了三种类型，分别是引导服务、核心服务和其他服务，其中其他服务为一些非紧要和一些不需要立即启动的服务，WMS 就是其他服务的一种。
+　　官方把大概 100 多个系统服务分为了三种类型，分别是引导服务、核心服务和其他服务，其中其他服务为一些非紧要和一些不需要立即启动的服务。
 
 ### 2.3. SystemServer#startBootstrapServices
 
 ```java
     private void startBootstrapServices() {
+        ...
+        // Wait for installd to finish starting up so that it has a chance to
+        // create critical directories such as /data/user with the appropriate
+        // permissions.  We need this to complete before we initialize other services.
+        traceBeginAndSlog("StartInstaller");
+        Installer installer = mSystemServiceManager.startService(Installer.class);
+        traceEnd();
     	...
 
 		traceBeginAndSlog("StartPackageManagerService");
@@ -126,9 +133,33 @@
 }
 ```
 
+　　在 SystemService 的 startBootstrapServices() 方法中，调用 PackageManagerService 的 main 方法创建了 PackageManagerSerive 的对象 mPackageManagerService。
 
+#### 2.3.1. PackageManagerService#main
+
+```java
+    public static PackageManagerService main(Context context, Installer installer,
+            boolean factoryTest, boolean onlyCore) {
+        // Self-check for initial settings.
+
+        PackageManagerServiceCompilerMapping.checkProperties();
+        // 构造一个 PMS 对象
+        PackageManagerService m = new PackageManagerService(context, installer,
+                factoryTest, onlyCore);
+        m.enableSystemUserPackages();
+        // 调用 ServiceManager 的 addService 注册这个服务
+        ServiceManager.addService("package", m);
+        return m;
+    }
+```
+
+　　首先构造一个 PMS 对象，然后调用 ServiceManager 的 addService 注册这个服务。
+
+　　PackageManagerService 的构造函数的第二个参数是一个 Installer 对象，用于和 Installd 通信使用，第三个参数 factoryTest 为出厂测试，默认为 false，第四个参数 onlyCore 与 Vold 相关，也为 false。
 
 ### 2.4. SystemServer#startOtherServices
+
+　　在 SystemServer 的 run 方法中先调用了 startBootstraptServices() 方法后，接着调用了 startOtherSerivces() 方法。
 
 ```java
     private void startOtherServices() {
@@ -172,44 +203,179 @@
     }
 ```
 
-### 2.5. PackageManagerService#main
+　　而在 SystemServer 的 startOtherServices 方法中调用了 PackageManagerService 的 systemReady() 方法。
+
+#### 2.4.1. PackageManagerService#systemReady
 
 ```java
-    public static PackageManagerService main(Context context, Installer installer,
-            boolean factoryTest, boolean onlyCore) {
-        // Self-check for initial settings.
+    @Override
+    public void systemReady() {
+        enforceSystemOrRoot("Only the system can claim the system is ready");
 
-        PackageManagerServiceCompilerMapping.checkProperties();
-        // 构造一个 PMS 对象
-        PackageManagerService m = new PackageManagerService(context, installer,
-                factoryTest, onlyCore);
-        m.enableSystemUserPackages();
-        // 调用 ServiceManager 的 addService 注册这个服务
-        ServiceManager.addService("package", m);
-        return m;
+        mSystemReady = true;
+        final ContentResolver resolver = mContext.getContentResolver();
+        ContentObserver co = new ContentObserver(mHandler) {
+            @Override
+            public void onChange(boolean selfChange) {
+                mEphemeralAppsDisabled =
+                        (Global.getInt(resolver, Global.ENABLE_EPHEMERAL_FEATURE, 1) == 0) ||
+                                (Secure.getInt(resolver, Secure.INSTANT_APPS_ENABLED, 1) == 0);
+            }
+        };
+        mContext.getContentResolver().registerContentObserver(android.provider.Settings.Global
+                        .getUriFor(Global.ENABLE_EPHEMERAL_FEATURE),
+                false, co, UserHandle.USER_SYSTEM);
+        mContext.getContentResolver().registerContentObserver(android.provider.Settings.Global
+                        .getUriFor(Secure.INSTANT_APPS_ENABLED), false, co, UserHandle.USER_SYSTEM);
+        co.onChange(true);
+
+        // Disable any carrier apps. We do this very early in boot to prevent the apps from being
+        // disabled after already being started.
+        CarrierAppUtils.disableCarrierAppsUntilPrivileged(mContext.getOpPackageName(), this,
+                mContext.getContentResolver(), UserHandle.USER_SYSTEM);
+
+        // Read the compatibilty setting when the system is ready.
+        // 当系统已经准备好了，读取兼容设备
+        boolean compatibilityModeEnabled = android.provider.Settings.Global.getInt(
+                mContext.getContentResolver(),
+                android.provider.Settings.Global.COMPATIBILITY_MODE, 1) == 1;
+        PackageParser.setCompatibilityModeEnabled(compatibilityModeEnabled);
+        if (DEBUG_SETTINGS) {
+            Log.d(TAG, "compatibility mode:" + compatibilityModeEnabled);
+        }
+
+        int[] grantPermissionsUserIds = EMPTY_INT_ARRAY;
+
+        synchronized (mPackages) {
+            // Verify that all of the preferred activity components actually
+            // exist.  It is possible for applications to be updated and at
+            // that point remove a previously declared activity component that
+            // had been set as a preferred activity.  We try to clean this up
+            // the next time we encounter that preferred activity, but it is
+            // possible for the user flow to never be able to return to that
+            // situation so here we do a sanity check to make sure we haven't
+            // left any junk around.
+            ArrayList<PreferredActivity> removed = new ArrayList<PreferredActivity>();
+            for (int i=0; i<mSettings.mPreferredActivities.size(); i++) {
+                PreferredIntentResolver pir = mSettings.mPreferredActivities.valueAt(i);
+                removed.clear();
+                for (PreferredActivity pa : pir.filterSet()) {
+                    if (mActivities.mActivities.get(pa.mPref.mComponent) == null) {
+                        removed.add(pa);
+                    }
+                }
+                if (removed.size() > 0) {
+                    for (int r=0; r<removed.size(); r++) {
+                        PreferredActivity pa = removed.get(r);
+                        Slog.w(TAG, "Removing dangling preferred activity: "
+                                + pa.mPref.mComponent);
+                        pir.removeFilter(pa);
+                    }
+                    mSettings.writePackageRestrictionsLPr(
+                            mSettings.mPreferredActivities.keyAt(i));
+                }
+            }
+
+            for (int userId : UserManagerService.getInstance().getUserIds()) {
+                if (!mSettings.areDefaultRuntimePermissionsGrantedLPr(userId)) {
+                    grantPermissionsUserIds = ArrayUtils.appendInt(
+                            grantPermissionsUserIds, userId);
+                }
+            }
+        }
+        // 调用用户服务 UserManagerService 的 systemReady() 方法
+        sUserManager.systemReady();
+
+        // If we upgraded grant all default permissions before kicking off.
+        // 如果升级了，则设置所有已获取的默认权限
+        for (int userId : grantPermissionsUserIds) {
+            mDefaultPermissionPolicy.grantDefaultPermissions(userId);
+        }
+
+        // If we did not grant default permissions, we preload from this the
+        // default permission exceptions lazily to ensure we don't hit the
+        // disk on a new user creation.
+        if (grantPermissionsUserIds == EMPTY_INT_ARRAY) {
+            mDefaultPermissionPolicy.scheduleReadDefaultPermissionExceptions();
+        }
+
+        // Kick off any messages waiting for system ready
+        // 发出所有等待系统准备就绪的消息
+        if (mPostSystemReadyMessages != null) {
+            for (Message msg : mPostSystemReadyMessages) {
+                msg.sendToTarget();
+            }
+            mPostSystemReadyMessages = null;
+        }
+
+        // Watch for external volumes that come and go over time
+        // 观察外部存储设备
+        final StorageManager storage = mContext.getSystemService(StorageManager.class);
+        storage.registerListener(mStorageListener);
+		// 调用安装服务 PackageInstallerService 的 systemReady
+        mInstallerService.systemReady();
+        // 调用 PackageDexOptimizer （用于在包上运行dexopt命令的帮助程序类，dexopt 用来优化 dex 文件以及查看问源文件的详细信息）的 systemReady
+        mPackageDexOptimizer.systemReady();
+
+        StorageManagerInternal StorageManagerInternal = LocalServices.getService(
+                StorageManagerInternal.class);
+        StorageManagerInternal.addExternalStoragePolicy(
+                new StorageManagerInternal.ExternalStorageMountPolicy() {
+            @Override
+            public int getMountMode(int uid, String packageName) {
+                if (Process.isIsolated(uid)) {
+                    return Zygote.MOUNT_EXTERNAL_NONE;
+                }
+                if (checkUidPermission(WRITE_MEDIA_STORAGE, uid) == PERMISSION_GRANTED) {
+                    return Zygote.MOUNT_EXTERNAL_DEFAULT;
+                }
+                if (checkUidPermission(READ_EXTERNAL_STORAGE, uid) == PERMISSION_DENIED) {
+                    return Zygote.MOUNT_EXTERNAL_DEFAULT;
+                }
+                if (checkUidPermission(WRITE_EXTERNAL_STORAGE, uid) == PERMISSION_DENIED) {
+                    return Zygote.MOUNT_EXTERNAL_READ;
+                }
+                return Zygote.MOUNT_EXTERNAL_WRITE;
+            }
+
+            @Override
+            public boolean hasExternalStorage(int uid, String packageName) {
+                return true;
+            }
+        });
+
+        // Now that we're mostly running, clean up stale users and apps
+        // 清理过期的用户和应用程序
+        sUserManager.reconcileUsers(StorageManager.UUID_PRIVATE_INTERNAL);
+        reconcileApps(StorageManager.UUID_PRIVATE_INTERNAL);
+
+        if (mPrivappPermissionsViolations != null) {
+            Slog.wtf(TAG,"Signature|privileged permissions not in "
+                    + "privapp-permissions whitelist: " + mPrivappPermissionsViolations);
+            mPrivappPermissionsViolations = null;
+        }
     }
 ```
 
-　　首先构造一个 PMS 对象，然后调用 ServiceManager 的 addService 注册这个服务。
+　　PackageManagerService 的 systemReady 方法主要是做一些 PackageManagerService 启动后的工作，主要是通知在等待系统启动的服务。
 
-　　PackageManagerService 的构造函数的第二个参数是一个 Installer 对象，用于和 Installd 通信使用，第三个参数 factoryTest 为出厂测试，默认为 false，第四个参数 onlyCore 与 Vold 相关，也为 false。
+## 3. PackageManagerService 的构造函数
 
-### 2.6. PackageManagerService 的构造函数
+　　PackageManagerService 构造函数比较长，在这里将 PackageManagerService 构造函数分为 5 个部分来解析。
 
-　　PackageManagerService 构造函数比较长，将 PackageManagerService 构造函数分为 5 个部分来解析。
-
-#### 2.6.1. PackageManagerService 的构造函数 1
+### 3.1. PackageManagerService 的构造函数 1：PMS_START 阶段
 
 ```java
     public PackageManagerService(Context context, Installer installer,
             boolean factoryTest, boolean onlyCore) {
         LockGuard.installLock(mPackages, LockGuard.INDEX_PACKAGES);
         Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "create package manager");
+        
         // 向事件日志写入事件，标识 PackageManagerService 启动
         EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_PMS_START,
                 SystemClock.uptimeMillis());
+        
         // SDK 版本检查
-
         if (mSdkVersion <= 0) {
             Slog.w(TAG, "**** ro.build.version.sdk not set!");
         }
@@ -218,16 +384,20 @@
 
         mPermissionReviewRequired = context.getResources().getBoolean(
                 R.bool.config_permissionReviewRequired);
-        // 开机模式是否为工厂模式
-
+        
+        // 开机模式是否为工厂模式，一般都为 false
         mFactoryTest = factoryTest;
+        
         // 是否仅启动内核
         mOnlyCore = onlyCore;
+        
         // 构造 DisplayMetrics 对象以便获取尺寸数据数据
         mMetrics = new DisplayMetrics();
+        
         // 构造 Settings 对象存储运行时的设置信息
         // Settings 是 Android 的全局管理者，用于协助 PMS 保存所有的安装包信息
         mSettings = new Settings(mPackages);
+        
         // 添加一些用户 uid
         mSettings.addSharedUserLPw("android.uid.system", Process.SYSTEM_UID,
                 ApplicationInfo.FLAG_SYSTEM, ApplicationInfo.PRIVATE_FLAG_PRIVILEGED);
@@ -243,7 +413,6 @@
                 ApplicationInfo.FLAG_SYSTEM, ApplicationInfo.PRIVATE_FLAG_PRIVILEGED);
         
         // 判断是否在不同的进程
-
         String separateProcesses = SystemProperties.get("debug.separate_processes");
         if (separateProcesses != null && separateProcesses.length() > 0) {
             if ("*".equals(separateProcesses)) {
@@ -260,9 +429,10 @@
             mDefParseFlags = 0;
             mSeparateProcesses = null;
         }
+        
         // installer 由 systemServer 构造，这里通过该对象与底层进行通信，进行具体安装、卸载的操作
-
         mInstaller = installer;
+        
         // 创建 PackageDexOptimizer，该类用于辅助进行 dex 优化
         mPackageDexOptimizer = new PackageDexOptimizer(installer, mInstallLock, context,
                 "*dexopt*");
@@ -271,10 +441,12 @@
 
         mOnPermissionChangeListeners = new OnPermissionChangeListeners(
                 FgThread.get().getLooper());
+        
 		// 获得显示屏的相关信息并保存在 mMetrics
         getDefaultDisplayMetrics(context, mMetrics);
 
         Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "get system config");
+        
         // 获取系统配置信息
         // 创建 SystemConfig 对象
         SystemConfig systemConfig = SystemConfig.getInstance();
@@ -292,28 +464,31 @@
             mHandlerThread = new ServiceThread(TAG,
                     Process.THREAD_PRIORITY_BACKGROUND, true /*allowIo*/);
             mHandlerThread.start();
+            
             // 通过消息处理线程的 Looper 对象构造一个处理消息的 Handler 对象
             // 启动 "PackageManager" 的 HandleThread 并绑定到 PackageHandler 上，这就是最后处理所有的跨进程消息的 handler
             mHandler = new PackageHandler(mHandlerThread.getLooper());
             mProcessLoggingHandler = new ProcessLoggingHandler();
+            
             // 使用看门狗检测当前消息处理线程
             Watchdog.getInstance().addThread(mHandler, WATCHDOG_TIMEOUT);
 
             mDefaultPermissionPolicy = new DefaultPermissionGrantPolicy(this);
             mInstantAppRegistry = new InstantAppRegistry(this);
+            
             // 获取当前的 Data 目录
-
             File dataDir = Environment.getDataDirectory();
             mAppInstallDir = new File(dataDir, "app");
             mAppLib32InstallDir = new File(dataDir, "app-lib");
             mAsecInternalPath = new File(dataDir, "app-asec").getPath();
             mDrmAppPrivateInstallDir = new File(dataDir, "app-private");
+            
             // 构造 UserManagerService 对象，创建用户管理服务
             sUserManager = new UserManagerService(context, this,
                     new UserDataPreparer(mInstaller, mInstallLock, mContext, mOnlyCore), mPackages);
 
             // Propagate permission configuration in to package manager.
-            // 读取权限配置文件中的信息，保存到 mPermissions 这个 ArrayMap 中
+            // 读取权限配置文件中的信息，保存到 mSettings.mPermissions 这个 ArrayMap 中
             // 将权限配置到包管理器
             ArrayMap<String, SystemConfig.PermissionEntry> permConfig
                     = systemConfig.getPermissions();
@@ -343,6 +518,7 @@
             mFoundPolicyFile = SELinuxMMAC.readInstallPolicy();
 
             Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "read user settings");
+            
             // 读取并解析 packages.xml 和 packages-backup.xml 等文件
             // 检查是否是第一次开机
             mFirstBoot = !mSettings.readLPw(sUserManager.getUsers(false));
@@ -363,8 +539,8 @@
             if (mFirstBoot) {
                 requestCopyPreoptedFiles();
             }
+            
             // 判断是否自定义的解析界面
-
             String customResolverActivity = Resources.getSystem().getString(
                     R.string.config_customResolverActivity);
             if (TextUtils.isEmpty(customResolverActivity)) {
@@ -396,7 +572,7 @@
 
 ![](image/PMS与Settings之间的类图关系.jpg)
 
-##### 2.6.1.1. Settings 的构造函数
+#### 3.1.1. Settings 的构造函数
 
 ```java
     Settings(Object lock) {
@@ -409,6 +585,7 @@
         mRuntimePermissionsPersistence = new RuntimePermissionPersistence(mLock);
 
         mSystemDir = new File(dataDir, "system");
+        
         // 创建 /data/system
         mSystemDir.mkdirs();
         FileUtils.setPermissions(mSystemDir.toString(),
@@ -439,11 +616,11 @@
 | packages-stoppped-backup.xml | 备份文件                 |
 | packages.list                | 记录应用的数据信息       |
 
-　　Environment.getDataDirectory() 返回 /data 目录，然后创建 /data/system/目录，并设置它的权限，并在 /data/system 目录中创建 mSettingsFilename、mBackupSettingsFilename、mPackageListFilename、mStoppedPackagesFilename 和 mBackupStoppedPackagesFilename 几个文件。
+　　Environment.getDataDirectory() 返回 /data 目录，然后创建 /data/system/ 目录，并设置它的权限，并在 /data/system 目录中创建 mSettingsFilename、mBackupSettingsFilename、mPackageListFilename、mStoppedPackagesFilename 和 mBackupStoppedPackagesFilename 几个文件。
 
 　　packages.xml 就是保存了系统所有的 Package 信息，packages-backup.xml 是 packages.xml 的备份，防止在写 packages.xml 突然断电等问题。
 
-##### 2.6.1.2. Process 中提供的 UID 列表
+##### 3.1.1.1. Process 中提供的 UID 列表
 
 　　在 PMS 的构造函数，调用 addSharedUserLPw 将几种 SharedUserId 的名字和它对应的 UID 对应写到 Settings 当中。
 
@@ -579,12 +756,14 @@
 
 　　上面定义了一系列的 UID，其中 application 的 uid 从 10000 开始到 19999 结束。
 
-##### 2.6.1.3. Settings#addSharedUserLPw
+#### 3.1.2. Settings#addSharedUserLPw
 
 ```java
     SharedUserSetting addSharedUserLPw(String name, int uid, int pkgFlags, int pkgPrivateFlags) {
         SharedUserSetting s = mSharedUsers.get(name);
+        // 如果 mSahredUsers 中存储了 SharedSetting 对象
         if (s != null) {
+            // 并且存储的 ShreadSetting 对象的 id 是复合要求的，则返回 s，也就不需要创建新得 SharedUserSetting 对象了
             if (s.userId == uid) {
                 return s;
             }
@@ -592,15 +771,21 @@
                     "Adding duplicate shared user, keeping first: " + name);
             return null;
         }
+        // 创建 SharedUserSetting 对象 s
         s = new SharedUserSetting(name, pkgFlags, pkgPrivateFlags);
         s.userId = uid;
+        // 调用 addUserIdLPw 方法
         if (addUserIdLPw(uid, s, name)) {
+            // 将 s 存储在 mSharedUsers 中
             mSharedUsers.put(name, s);
+            // 返回 s
             return s;
         }
         return null;
     }
+
     private boolean addUserIdLPw(int uid, Object obj, Object name) {
+        // 如果 uid 不在合理的位置内，则返回 false
         if (uid > Process.LAST_APPLICATION_UID) {
             return false;
         }
@@ -618,14 +803,17 @@
                         + " name=" + name);
                 return false;
             }
+            // 将 SharedUserSetting 对象 obj 存储在 mUserIds 中
             mUserIds.set(index, obj);
         } else {
+            // uid 不是合理的范围内，返回 false
             if (mOtherUserIds.get(uid) != null) {
                 PackageManagerService.reportSettingsProblem(Log.ERROR,
                         "Adding duplicate shared id: " + uid
                                 + " name=" + name);
                 return false;
             }
+            // 如果 uid 不是 application id 的范围，将 SharedUserSetting 对象 obj 存储在 mOtherUserIds 中
             mOtherUserIds.put(uid, obj);
         }
         return true;
@@ -634,11 +822,11 @@
 
 　　mSharedUsers 是一个 ArrayMap，保存着所有的 name 和 SharedUserSetting 的映射关系。
 
-　　这里先调用 addUserIdLPw 将 uid 和 SharedUserSetting 添加到 mOtherUserIds 中，然后将 name 和 SharedUserSetting 添加到 mSharedUsers 中方便以后查找。
+　　这里先调用 addUserIdLPw 方法将 SharedUserSetting 对象 obj 添加到 mUserIds（uid 在 Application id 范围） 或 mOtherUserIds 中，然后将 name 和 SharedUserSetting 添加到 mSharedUsers 中方便以后查找。
 
-##### 2.6.1.2. SystemConfig#getInstance
+#### 3.1.3. SystemConfig#getInstance
 
-　　还调用了 SystemConfig.getInstance() 方法来获取 SystemConfig。
+　　在 PMS 的构造放啊中调用了 SystemConfig.getInstance() 方法来获取 SystemConfig。
 
 ```java
     public static SystemConfig getInstance() {
@@ -652,13 +840,14 @@
     }
 ```
 
-　　可以看到 SystemConfig 是单例模式，全局一周一个对象。
+　　可以看到 SystemConfig 是单例模式，全局只有一个对象。
 
-##### 2.6.1.3. SystemConfig 的构造方法
+##### 3.1.3.1. SystemConfig 的构造方法
 
 ```java
     SystemConfig() {
         // Read configuration from system
+        // 调用 readPermissions 方法解析指定目录下的所有 xml 文件
         readPermissions(Environment.buildPath(
                 Environment.getRootDirectory(), "etc", "sysconfig"), ALLOW_ALL);
         // Read configuration from the old permissions dir
@@ -696,9 +885,7 @@
 5. /oem/etc/sysconfig
 6. /oem/etc/permissions
 
-
-
-##### 2.6.1.4. SystemConfig#readPermissions
+##### 3.1.3.2. SystemConfig#readPermissions
 
 ```java
     void readPermissions(File libraryDir, int permissionFlag) {
@@ -715,6 +902,7 @@
         }
 
         // Iterate over the files in the directory and scan .xml files
+        // 遍历目录中的文件并扫描 .xml 文件
         File platformFile = null;
         for (File f : libraryDir.listFiles()) {
             // We'll read platform.xml last
@@ -731,11 +919,12 @@
                 Slog.w(TAG, "Permissions library file " + f + " cannot be read");
                 continue;
             }
-
+			// 调用 readPermissionsFromXml 方法读取除 etc/permissions/platform.xml 以外的 xml 文件
             readPermissionsFromXml(f, permissionFlag);
         }
 
         // Read platform permissions last so it will take precedence
+        // 最后读取 etc/permissions/platform.xml 文件
         if (platformFile != null) {
             readPermissionsFromXml(platformFile, permissionFlag);
         }
@@ -746,7 +935,7 @@
 
 　　该方法是解析指定目录下所有的具有可读权限的，且以 xml 后缀文件。
 
-##### 2.6.1.5. SystemConfig#readPermissionsFromXml
+##### 3.1.3.3. SystemConfig#readPermissionsFromXml
 
 ```java
     private void readPermissionsFromXml(File permFile, int permissionFlag) {
@@ -804,7 +993,9 @@
 
                     XmlUtils.skipCurrentTag(parser);
                     continue;
+                // 处理 "permission" 标签
                 } else if ("permission".equals(name) && allowPermissions) {
+                    // 获取 "name" 字段的值
                     String perm = parser.getAttributeValue(null, "name");
                     if (perm == null) {
                         Slog.w(TAG, "<permission> without name in " + permFile + " at "
@@ -813,9 +1004,11 @@
                         continue;
                     }
                     perm = perm.intern();
+                    // 调用 readPermission 方法
                     readPermission(parser, perm);
-
+				// 处理 "assign-permission" 标签
                 } else if ("assign-permission".equals(name) && allowPermissions) {
+                    // 获取 "name" 字段
                     String perm = parser.getAttributeValue(null, "name");
                     if (perm == null) {
                         Slog.w(TAG, "<assign-permission> without name in " + permFile + " at "
@@ -844,6 +1037,7 @@
                         perms = new ArraySet<String>();
                         mSystemPermissions.put(uid, perms);
                     }
+                    // 将 perm 存储在 perms 中
                     perms.add(perm);
                     XmlUtils.skipCurrentTag(parser);
 
@@ -862,8 +1056,9 @@
                     }
                     XmlUtils.skipCurrentTag(parser);
                     continue;
-
+				// 处理 feature 标签
                 } else if ("feature".equals(name) && allowFeatures) {
+                    // 获取 feature 字段里的值
                     String fname = parser.getAttributeValue(null, "name");
                     int fversion = XmlUtils.readIntAttribute(parser, "version", 0);
                     boolean allowed;
@@ -877,6 +1072,7 @@
                         Slog.w(TAG, "<feature> without name in " + permFile + " at "
                                 + parser.getPositionDescription());
                     } else if (allowed) {
+                        // 调用 addFeature 方法
                         addFeature(fname, fversion);
                     }
                     XmlUtils.skipCurrentTag(parser);
@@ -912,15 +1108,17 @@
 
 　　首先来看处理 feature 这个 tag 的代码，在 fname 中保存 feature 的名字，然后调用 addFeature 方法。
 
-###### 2.6.1.5.1. SystemConfig#addFeature
+##### 3.1.3.4. SystemConfig#addFeature
 
 ```java
     private void addFeature(String name, int version) {
         FeatureInfo fi = mAvailableFeatures.get(name);
         if (fi == null) {
+            // 创建 FeatureInfo 对象
             fi = new FeatureInfo();
             fi.name = name;
             fi.version = version;
+            // 将 FeatureInfo 对象 fi 保存在 mAvailableReatures 结构中，方便下次使用。
             mAvailableFeatures.put(name, fi);
         } else {
             fi.version = Math.max(fi.version, version);
@@ -932,7 +1130,7 @@
 
 　　接着看处理 permission tag ，首先读出 permission 的 name，然后调用 readPermission 去处理后面的 group 信息。
 
-###### 2.6.1.5.2. SystemConfig#readPermission
+##### 3.1.3.5. SystemConfig#readPermission
 
 ```java
     void readPermission(XmlPullParser parser, String name)
@@ -941,8 +1139,11 @@
             throw new IllegalStateException("Duplicate permission definition for " + name);
         }
 
+        // 拿到 "perUser" 字段的值
         final boolean perUser = XmlUtils.readBooleanAttribute(parser, "perUser", false);
+        // 创建 PermissionEntry 对象 perm，里面存储着 name 和 perUser 信息
         final PermissionEntry perm = new PermissionEntry(name, perUser);
+        // 将 PermissionEntry 对象 perm 存储到 mPermissions 中
         mPermissions.put(name, perm);
 
         int outerDepth = parser.getDepth();
@@ -957,8 +1158,10 @@
 
             String tagName = parser.getName();
             if ("group".equals(tagName)) {
+                // 获取 gid 字段的值
                 String gidStr = parser.getAttributeValue(null, "gid");
                 if (gidStr != null) {
+                    // 通过 JNI 调用 getrnam 系统喊出获取相应的子名称对应的 gid
                     int gid = Process.getGidForName(gidStr);
                     perm.gids = appendInt(perm.gids, gid);
                 } else {
@@ -971,17 +1174,17 @@
     }
 ```
 
-　　readPermission 方法显示拿到 perUser 字段的值，用 name 和 perUser 创建一个 PermissionEntry 对象 perm，将 name 作为 key，perm 为 value 存储在 mPermission 中。
+　　readPermission 方法先是拿到 perUser 字段的值，用 name 和 perUser 创建一个 PermissionEntry 对象 perm，将 name 作为 key，perm 为 value 存储在 mPermission 中。
 
-　　Android 管理权限的机制其实就是对应相应的 permission，用一个 gid 号来描述，当一个应用程序亲亲贵这个 permission 的时候，就把这个 hid 号添加到对对应的 application 中去。
+　　Android 管理权限的机制其实就是对应相应的 permission，用一个 gid 号来描述，当一个应用程序请求这个 permission 的时候，就把这个 gid 号添加到对对应的 application 中去。
 
-　　process.getGidForName 方法通过 JNI 调用 getgrnam 系统喊出去获取相应的组名称所对应的 gid 号，并把它添加到 BasePermission 对象的 gids 数组中。
+　　process.getGidForName 方法通过 JNI 调用 getgrnam 系统函数去获取相应的组名称所对应的 gid 号，并把它添加到 BasePermission 对象的 gids 数组中。
 
 　　再看处理 assign-permission 这个 tag 的代码，首先读出 permission 的名字和 uid，保存在 perm 和 uidStr 中，Process.getUidForName 方法通过 JNI 调用 getpwnam 系统函数获取相应的用户名所对应的 uid 号，并把刚解析的 permission 名添加到 ArraySet perms当中，最后把上面的 uid 和 perms 添加到 mSystemPermissions 这个 SparseArray 类型数组中。
 
 　　最后再看处理 library 这个 tag 的代码，这里把解析处理的 library 名字和路径保存在 mSharedLibraries 这个 ArrayMap 中。
 
-#### 2.6.2. PackageManagerService 的构造函数 2
+### 3.2. PackageManagerService 的构造函数 2
 
 ```java
     public PackageManagerService(Context context, Installer installer,
@@ -3822,157 +4025,6 @@
 5. PMS_READY 阶段
 
    创建服务 PackageInstallerService；
-
-### 2.7. PackageManagerService#systemReady
-
-```java
-    @Override
-    public void systemReady() {
-        enforceSystemOrRoot("Only the system can claim the system is ready");
-
-        mSystemReady = true;
-        final ContentResolver resolver = mContext.getContentResolver();
-        ContentObserver co = new ContentObserver(mHandler) {
-            @Override
-            public void onChange(boolean selfChange) {
-                mEphemeralAppsDisabled =
-                        (Global.getInt(resolver, Global.ENABLE_EPHEMERAL_FEATURE, 1) == 0) ||
-                                (Secure.getInt(resolver, Secure.INSTANT_APPS_ENABLED, 1) == 0);
-            }
-        };
-        mContext.getContentResolver().registerContentObserver(android.provider.Settings.Global
-                        .getUriFor(Global.ENABLE_EPHEMERAL_FEATURE),
-                false, co, UserHandle.USER_SYSTEM);
-        mContext.getContentResolver().registerContentObserver(android.provider.Settings.Global
-                        .getUriFor(Secure.INSTANT_APPS_ENABLED), false, co, UserHandle.USER_SYSTEM);
-        co.onChange(true);
-
-        // Disable any carrier apps. We do this very early in boot to prevent the apps from being
-        // disabled after already being started.
-        CarrierAppUtils.disableCarrierAppsUntilPrivileged(mContext.getOpPackageName(), this,
-                mContext.getContentResolver(), UserHandle.USER_SYSTEM);
-
-        // Read the compatibilty setting when the system is ready.
-        boolean compatibilityModeEnabled = android.provider.Settings.Global.getInt(
-                mContext.getContentResolver(),
-                android.provider.Settings.Global.COMPATIBILITY_MODE, 1) == 1;
-        PackageParser.setCompatibilityModeEnabled(compatibilityModeEnabled);
-        if (DEBUG_SETTINGS) {
-            Log.d(TAG, "compatibility mode:" + compatibilityModeEnabled);
-        }
-
-        int[] grantPermissionsUserIds = EMPTY_INT_ARRAY;
-
-        synchronized (mPackages) {
-            // Verify that all of the preferred activity components actually
-            // exist.  It is possible for applications to be updated and at
-            // that point remove a previously declared activity component that
-            // had been set as a preferred activity.  We try to clean this up
-            // the next time we encounter that preferred activity, but it is
-            // possible for the user flow to never be able to return to that
-            // situation so here we do a sanity check to make sure we haven't
-            // left any junk around.
-            ArrayList<PreferredActivity> removed = new ArrayList<PreferredActivity>();
-            for (int i=0; i<mSettings.mPreferredActivities.size(); i++) {
-                PreferredIntentResolver pir = mSettings.mPreferredActivities.valueAt(i);
-                removed.clear();
-                for (PreferredActivity pa : pir.filterSet()) {
-                    if (mActivities.mActivities.get(pa.mPref.mComponent) == null) {
-                        removed.add(pa);
-                    }
-                }
-                if (removed.size() > 0) {
-                    for (int r=0; r<removed.size(); r++) {
-                        PreferredActivity pa = removed.get(r);
-                        Slog.w(TAG, "Removing dangling preferred activity: "
-                                + pa.mPref.mComponent);
-                        pir.removeFilter(pa);
-                    }
-                    mSettings.writePackageRestrictionsLPr(
-                            mSettings.mPreferredActivities.keyAt(i));
-                }
-            }
-
-            for (int userId : UserManagerService.getInstance().getUserIds()) {
-                if (!mSettings.areDefaultRuntimePermissionsGrantedLPr(userId)) {
-                    grantPermissionsUserIds = ArrayUtils.appendInt(
-                            grantPermissionsUserIds, userId);
-                }
-            }
-        }
-        // 多用户服务
-        sUserManager.systemReady();
-
-        // If we upgraded grant all default permissions before kicking off.
-        // 升级所有已获取的默认权限
-        for (int userId : grantPermissionsUserIds) {
-            mDefaultPermissionPolicy.grantDefaultPermissions(userId);
-        }
-
-        // If we did not grant default permissions, we preload from this the
-        // default permission exceptions lazily to ensure we don't hit the
-        // disk on a new user creation.
-        if (grantPermissionsUserIds == EMPTY_INT_ARRAY) {
-            mDefaultPermissionPolicy.scheduleReadDefaultPermissionExceptions();
-        }
-
-        // Kick off any messages waiting for system ready
-        // 处理所有等待系统准备就绪的消息
-        if (mPostSystemReadyMessages != null) {
-            for (Message msg : mPostSystemReadyMessages) {
-                msg.sendToTarget();
-            }
-            mPostSystemReadyMessages = null;
-        }
-
-        // Watch for external volumes that come and go over time
-        // 观察外部存储设备
-        final StorageManager storage = mContext.getSystemService(StorageManager.class);
-        storage.registerListener(mStorageListener);
-
-        mInstallerService.systemReady();
-        mPackageDexOptimizer.systemReady();
-
-        StorageManagerInternal StorageManagerInternal = LocalServices.getService(
-                StorageManagerInternal.class);
-        StorageManagerInternal.addExternalStoragePolicy(
-                new StorageManagerInternal.ExternalStorageMountPolicy() {
-            @Override
-            public int getMountMode(int uid, String packageName) {
-                if (Process.isIsolated(uid)) {
-                    return Zygote.MOUNT_EXTERNAL_NONE;
-                }
-                if (checkUidPermission(WRITE_MEDIA_STORAGE, uid) == PERMISSION_GRANTED) {
-                    return Zygote.MOUNT_EXTERNAL_DEFAULT;
-                }
-                if (checkUidPermission(READ_EXTERNAL_STORAGE, uid) == PERMISSION_DENIED) {
-                    return Zygote.MOUNT_EXTERNAL_DEFAULT;
-                }
-                if (checkUidPermission(WRITE_EXTERNAL_STORAGE, uid) == PERMISSION_DENIED) {
-                    return Zygote.MOUNT_EXTERNAL_READ;
-                }
-                return Zygote.MOUNT_EXTERNAL_WRITE;
-            }
-
-            @Override
-            public boolean hasExternalStorage(int uid, String packageName) {
-                return true;
-            }
-        });
-
-        // Now that we're mostly running, clean up stale users and apps
-        sUserManager.reconcileUsers(StorageManager.UUID_PRIVATE_INTERNAL);
-        reconcileApps(StorageManager.UUID_PRIVATE_INTERNAL);
-
-        if (mPrivappPermissionsViolations != null) {
-            Slog.wtf(TAG,"Signature|privileged permissions not in "
-                    + "privapp-permissions whitelist: " + mPrivappPermissionsViolations);
-            mPrivappPermissionsViolations = null;
-        }
-    }
-```
-
-
 
 ## 参考文章
 
