@@ -100,7 +100,8 @@
         traceEnd();
     	...
 
-		traceBeginAndSlog("StartPackageManagerService");
+				traceBeginAndSlog("StartPackageManagerService");
+      
         // 创建 mPackageManagerService 对象
         mPackageManagerService = PackageManagerService.main(mSystemContext, installer,
                 mFactoryTestMode != FactoryTest.FACTORY_TEST_OFF, mOnlyCore);
@@ -312,7 +313,7 @@
         // 观察外部存储设备
         final StorageManager storage = mContext.getSystemService(StorageManager.class);
         storage.registerListener(mStorageListener);
-		// 调用安装服务 PackageInstallerService 的 systemReady
+				// 调用安装服务 PackageInstallerService 的 systemReady
         mInstallerService.systemReady();
         // 调用 PackageDexOptimizer （用于在包上运行dexopt命令的帮助程序类，dexopt 用来优化 dex 文件以及查看问源文件的详细信息）的 systemReady
         mPackageDexOptimizer.systemReady();
@@ -357,7 +358,7 @@
     }
 ```
 
-　　PackageManagerService 的 systemReady 方法主要是做一些 PackageManagerService 启动后的工作，主要是通知在等待系统启动的服务。
+　　PackageManagerService 的 systemReady 方法主要是做一些 PackageManagerService 启动后的工作，比如通知在等待系统启动的服务。
 
 ## 3. PackageManagerService 的构造函数
 
@@ -391,7 +392,7 @@
         // 是否仅启动内核
         mOnlyCore = onlyCore;
         
-        // 构造 DisplayMetrics 对象以便获取尺寸数据数据
+        // 构造 DisplayMetrics 对象以便获取尺寸数据
         mMetrics = new DisplayMetrics();
         
         // 构造 Settings 对象存储运行时的设置信息
@@ -442,7 +443,7 @@
         mOnPermissionChangeListeners = new OnPermissionChangeListeners(
                 FgThread.get().getLooper());
         
-		// 获得显示屏的相关信息并保存在 mMetrics
+				// 获得显示屏的相关信息并保存在 mMetrics
         getDefaultDisplayMetrics(context, mMetrics);
 
         Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "get system config");
@@ -592,8 +593,11 @@
                 FileUtils.S_IRWXU|FileUtils.S_IRWXG
                 |FileUtils.S_IROTH|FileUtils.S_IXOTH,
                 -1, -1);
+      	// 记录所有安装 app 的信息
         mSettingsFilename = new File(mSystemDir, "packages.xml");
+      	// 备份文件
         mBackupSettingsFilename = new File(mSystemDir, "packages-backup.xml");
+      // 记录应用的数据信息
         mPackageListFilename = new File(mSystemDir, "packages.list");
         FileUtils.setPermissions(mPackageListFilename, 0640, SYSTEM_UID, PACKAGE_INFO_GID);
 
@@ -601,7 +605,9 @@
         mKernelMappingFilename = kernelDir.exists() ? kernelDir : null;
 
         // Deprecated: Needed for migration
+      	// 记录系统被强制停止的文件
         mStoppedPackagesFilename = new File(mSystemDir, "packages-stopped.xml");
+      	// 备份文件
         mBackupStoppedPackagesFilename = new File(mSystemDir, "packages-stopped-backup.xml");
     }
 ```
@@ -620,7 +626,7 @@
 
 　　packages.xml 就是保存了系统所有的 Package 信息，packages-backup.xml 是 packages.xml 的备份，防止在写 packages.xml 突然断电等问题。
 
-##### 3.1.1.1. Process 中提供的 UID 列表
+#### 3.1.2. Process 中提供的 UID 列表
 
 　　在 PMS 的构造函数，调用 addSharedUserLPw 将几种 SharedUserId 的名字和它对应的 UID 对应写到 Settings 当中。
 
@@ -756,14 +762,14 @@
 
 　　上面定义了一系列的 UID，其中 application 的 uid 从 10000 开始到 19999 结束。
 
-#### 3.1.2. Settings#addSharedUserLPw
+#### 3.1.3. Settings#addSharedUserLPw
 
 ```java
     SharedUserSetting addSharedUserLPw(String name, int uid, int pkgFlags, int pkgPrivateFlags) {
         SharedUserSetting s = mSharedUsers.get(name);
         // 如果 mSahredUsers 中存储了 SharedSetting 对象
         if (s != null) {
-            // 并且存储的 ShreadSetting 对象的 id 是复合要求的，则返回 s，也就不需要创建新得 SharedUserSetting 对象了
+            // 并且存储的 ShreadSetting 对象的 id 是符合要求的，则返回 s，也就不需要创建新的 SharedUserSetting 对象了
             if (s.userId == uid) {
                 return s;
             }
@@ -824,9 +830,9 @@
 
 　　这里先调用 addUserIdLPw 方法将 SharedUserSetting 对象 obj 添加到 mUserIds（uid 在 Application id 范围） 或 mOtherUserIds 中，然后将 name 和 SharedUserSetting 添加到 mSharedUsers 中方便以后查找。
 
-#### 3.1.3. SystemConfig#getInstance
+#### 3.1.4. SystemConfig#getInstance
 
-　　在 PMS 的构造放啊中调用了 SystemConfig.getInstance() 方法来获取 SystemConfig。
+　　在 PMS 的构造方法中调用了 SystemConfig.getInstance() 方法来获取 SystemConfig。
 
 ```java
     public static SystemConfig getInstance() {
@@ -842,7 +848,7 @@
 
 　　可以看到 SystemConfig 是单例模式，全局只有一个对象。
 
-##### 3.1.3.1. SystemConfig 的构造方法
+##### 3.1.4.1. SystemConfig 的构造方法
 
 ```java
     SystemConfig() {
@@ -885,7 +891,7 @@
 5. /oem/etc/sysconfig
 6. /oem/etc/permissions
 
-##### 3.1.3.2. SystemConfig#readPermissions
+##### 3.1.4.2. SystemConfig#readPermissions
 
 ```java
     void readPermissions(File libraryDir, int permissionFlag) {
@@ -919,7 +925,7 @@
                 Slog.w(TAG, "Permissions library file " + f + " cannot be read");
                 continue;
             }
-			// 调用 readPermissionsFromXml 方法读取除 etc/permissions/platform.xml 以外的 xml 文件
+						// 调用 readPermissionsFromXml 方法读取除 etc/permissions/platform.xml 以外的 xml 文件
             readPermissionsFromXml(f, permissionFlag);
         }
 
@@ -931,11 +937,11 @@
     }
 ```
 
-　　首先不断地读出 /etc/permissions 或 /etc/sysconfig 下面的文件，并依次处理处理除了 platform.xml 以外的其他 xml 文件，并最后处理 platform.xml 文件。
+　　首先不断地读出注定目录下的文件，并依次处理处理除了 platform.xml 以外的其他 xml 文件，并最后处理 platform.xml 文件。
 
 　　该方法是解析指定目录下所有的具有可读权限的，且以 xml 后缀文件。
 
-##### 3.1.3.3. SystemConfig#readPermissionsFromXml
+##### 3.1.4.3. SystemConfig#readPermissionsFromXml
 
 ```java
     private void readPermissionsFromXml(File permFile, int permissionFlag) {
@@ -981,6 +987,7 @@
                 }
 
                 String name = parser.getName();
+              	
                 if ("group".equals(name) && allowAll) {
                     String gidStr = parser.getAttributeValue(null, "gid");
                     if (gidStr != null) {
@@ -990,7 +997,7 @@
                         Slog.w(TAG, "<group> without gid in " + permFile + " at "
                                 + parser.getPositionDescription());
                     }
-
+										
                     XmlUtils.skipCurrentTag(parser);
                     continue;
                 // 处理 "permission" 标签
@@ -1006,7 +1013,7 @@
                     perm = perm.intern();
                     // 调用 readPermission 方法
                     readPermission(parser, perm);
-				// 处理 "assign-permission" 标签
+								// 处理 "assign-permission" 标签
                 } else if ("assign-permission".equals(name) && allowPermissions) {
                     // 获取 "name" 字段
                     String perm = parser.getAttributeValue(null, "name");
@@ -1039,6 +1046,7 @@
                     }
                     // 将 perm 存储在 perms 中
                     perms.add(perm);
+                  	// 调用 XmlUtils.skipCurrentTag() 方法
                     XmlUtils.skipCurrentTag(parser);
 
                 } else if ("library".equals(name) && allowLibs) {
@@ -1056,9 +1064,9 @@
                     }
                     XmlUtils.skipCurrentTag(parser);
                     continue;
-				// 处理 feature 标签
+								// 处理 feature 标签
                 } else if ("feature".equals(name) && allowFeatures) {
-                    // 获取 feature 字段里的值
+                    // 获取 name 和 version 字段里的值
                     String fname = parser.getAttributeValue(null, "name");
                     int fversion = XmlUtils.readIntAttribute(parser, "version", 0);
                     boolean allowed;
@@ -1075,6 +1083,7 @@
                         // 调用 addFeature 方法
                         addFeature(fname, fversion);
                     }
+                  	// 调用 XmlUtils.skipCurrentTag() 方法
                     XmlUtils.skipCurrentTag(parser);
                     continue;
 
@@ -1106,9 +1115,9 @@
 
 　　这个方法比较长，主要看处理 feature、permission、assign-permission 和 library 的部分。
 
-　　首先来看处理 feature 这个 tag 的代码，在 fname 中保存 feature 的名字，然后调用 addFeature 方法。
+###### 3.1.4.3.1. SystemConfig#addFeature
 
-##### 3.1.3.4. SystemConfig#addFeature
+　　首先来看处理 feature 这个 tag 的代码，在 fname 中保存 feature 的名字，然后调用 addFeature 方法。
 
 ```java
     private void addFeature(String name, int version) {
@@ -1128,9 +1137,9 @@
 
 　　addFeature 方法创建了一个 FeatureInfo 对象，并将 fname 和 FeatureInfo 保存到 mAvailableFeatures 这个 HashMap 中。
 
-　　接着看处理 permission tag ，首先读出 permission 的 name，然后调用 readPermission 去处理后面的 group 信息。
+###### 3.1.4.3.2. SystemConfig#readPermission
 
-##### 3.1.3.5. SystemConfig#readPermission
+　　接着看处理 permission tag ，首先读出 permission 的 name，然后调用 readPermission 去处理后面的 group 信息。
 
 ```java
     void readPermission(XmlPullParser parser, String name)
@@ -1161,7 +1170,7 @@
                 // 获取 gid 字段的值
                 String gidStr = parser.getAttributeValue(null, "gid");
                 if (gidStr != null) {
-                    // 通过 JNI 调用 getrnam 系统喊出获取相应的子名称对应的 gid
+                    // 通过 JNI 调用 getrnam 系统函数获取相应的子名称对应的 gid
                     int gid = Process.getGidForName(gidStr);
                     perm.gids = appendInt(perm.gids, gid);
                 } else {
@@ -1180,26 +1189,30 @@
 
 　　process.getGidForName 方法通过 JNI 调用 getgrnam 系统函数去获取相应的组名称所对应的 gid 号，并把它添加到 BasePermission 对象的 gids 数组中。
 
+###### 3.1.4.3.3. 处理 assign-permission
+
 　　再看处理 assign-permission 这个 tag 的代码，首先读出 permission 的名字和 uid，保存在 perm 和 uidStr 中，Process.getUidForName 方法通过 JNI 调用 getpwnam 系统函数获取相应的用户名所对应的 uid 号，并把刚解析的 permission 名添加到 ArraySet perms当中，最后把上面的 uid 和 perms 添加到 mSystemPermissions 这个 SparseArray 类型数组中。
+
+###### 3.1.4.3.4. 处理 library
 
 　　最后再看处理 library 这个 tag 的代码，这里把解析处理的 library 名字和路径保存在 mSharedLibraries 这个 ArrayMap 中。
 
-### 3.2. PackageManagerService 的构造函数 2
+### 3.2. PackageManagerService 的构造函数 2：PMS_SYSTEM_SCAN_START 阶段
 
 ```java
     public PackageManagerService(Context context, Installer installer,
             boolean factoryTest, boolean onlyCore) {
         ... 
-		synchronized (mPackages) {
+				synchronized (mPackages) {
             ...
             // 标记扫描开始的事件
             long startTime = SystemClock.uptimeMillis();
+          
             // 将扫描开始的事件写入日志
-
             EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_PMS_SYSTEM_SCAN_START,
                     startTime);
+          
             // 获取 java 启动类库的路径
-
             final String bootClassPath = System.getenv("BOOTCLASSPATH");
             // 获取 systemServer 的路径
             final String systemServerClassPath = System.getenv("SYSTEMSERVERCLASSPATH");
@@ -1268,7 +1281,6 @@
 
             // Find base frameworks (resource packages without code).
             // 扫描 frameworkDir 目录下的 apk 进行安装，扫描模式为非优化模式
-
             scanDirTracedLI(frameworkDir, mDefParseFlags
                     | PackageParser.PARSE_IS_SYSTEM
                     | PackageParser.PARSE_IS_SYSTEM_DIR
@@ -1350,8 +1362,8 @@
 
                         continue;
                     }
+                  
                     // 如果不在 disbale 列表中，则直接清除相应的数据
-
                     if (!mSettings.isDisabledSystemPackageLPr(ps.name)) {
                         psit.remove();
                         logCriticalInfo(Log.WARN, "System package " + ps.name
@@ -1402,11 +1414,9 @@
 
 　　BOOTCLASSPATH：该环境变量内容较多，不同 ROM 可能有所不同，常见内容包含  /system/framework 目录下的 framework.jar、ext.jar、core-libart.jar、telephony-common.jar、ims-common.jar、core-junit.jar 等文件。
 
-　　scanDirLI()：扫描指定目录下的 apk 文件，最终调用 PackageParser.parseBaseApk 来完成 AndroidManifest.xml 文件的解析，生成 Application、Activity、Service、Broadcast、Provider 等信息。
+　　scanDirTracedLI() 方法扫描指定目录下的 apk 文件，最终调用 PackageManagerService 的commitPackageSettings 来完成 AndroidManifest.xml 文件的解析，生成 Application、Activity、Service、Broadcast、Provider 等信息。
 
-
-
-##### 2.6.2.1. PackageManagerService#scanDirTracedLI/#scanDirLI
+#### 3.2.1. PackageManagerService#scanDirTracedLI#scanDirTracedLI#scanDirLI
 
 ```java
     private void scanDirTracedLI(File dir, final int parseFlags, int scanFlags, long currentTime) {
@@ -1430,6 +1440,7 @@
             Log.d(TAG, "Scanning app dir " + dir + " scanFlags=" + scanFlags
                     + " flags=0x" + Integer.toHexString(parseFlags));
         }
+      
         // 创建 ParallelPackageParser 对象
         ParallelPackageParser parallelPackageParser = new ParallelPackageParser(
                 mSeparateProcesses, mOnlyCore, mMetrics, mCacheDir,
@@ -1492,9 +1503,9 @@
     }
 ```
 
-　　scanDirLI 调用 scanPackageLI 依次扫描并解析上面四个目录的目录下所有的 apk 文件。
+　　scanDirLI 调用 scanPackageLI 依次扫描并解析指定的目录下所有的 apk 文件。
 
-##### 2.6.2.2. PackageManagerService#scanPackageLI
+#### 3.2.2. PackageManagerService#scanPackageLI
 
 ```java
     /**
@@ -1509,6 +1520,7 @@
         // packages (parent and children) would be successfully scanned before the
         // actual scan since scanning mutates internal state and we want to atomically
         // install the package and its children.
+      	// 设置扫描标志
         if ((scanFlags & SCAN_CHECK_ONLY) == 0) {
             if (pkg.childPackages != null && pkg.childPackages.size() > 0) {
                 scanFlags |= SCAN_CHECK_ONLY;
@@ -1543,7 +1555,7 @@
 
 　　scanPackageLI 方法中调用 scanPackageInternalLI 来扫描父类和子类。
 
-##### 2.6.2.3. PackageManagerService#scanPackageInternalLI
+#### 3.2.3. PackageManagerService#scanPackageInternalLI
 
 ```java
     /**
@@ -1739,9 +1751,9 @@
     }
 ```
 
+　　调用了 PackageManagerService 的 scanPackageLI 方法，这个 scanPackageLI 方法与 上面的 scanPackageLI 方法是不同参数的重载方法。
 
-
-##### 2.6.2.4. PackageManagerService#scanPackageLI
+#### 3.2.4. PackageManagerService#scanPackageLI
 
 ```java
     private PackageParser.Package scanPackageLI(PackageParser.Package pkg, final int policyFlags,
@@ -1765,9 +1777,9 @@
     }
 ```
 
+　　scanPackageLI 方法调用了 scanPackageDirtyLI 方法，并返回方法的返回值。
 
-
-##### 2.6.2.5. PackageManagerService#scanPackageDirtyLI
+#### 3.2.5. PackageManagerService#scanPackageDirtyLI
 
 ```java
     private PackageParser.Package scanPackageDirtyLI(PackageParser.Package pkg,
@@ -1843,7 +1855,7 @@
                 }
             }
 
-            // 调用 mSettings 的 getPackageLPr 方法来初始化 pkgSetting
+            // 调用 mSettings 的 getPackageLPr 方法来初始化 pkgSetting，也就是在 mSettings 的 mPackages 成员中查找
             pkgSetting = mSettings.getPackageLPr(pkg.packageName);
             if (pkgSetting != null && pkgSetting.sharedUser != suid) {
                 PackageManagerService.reportSettingsProblem(Log.WARN,
@@ -1866,6 +1878,7 @@
                 pkg.usesStaticLibraries.toArray(usesStaticLibraries);
             }
 
+          	// 如果 mSettings 的 mPackages 成员中没有找到
             if (pkgSetting == null) {
                 final String parentPackageName = (pkg.parentPackage != null)
                         ? pkg.parentPackage.packageName : null;
@@ -1884,6 +1897,7 @@
                 if (origPackage != null) {
                     mSettings.addRenamedPackageLPw(pkg.packageName, origPackage.name);
                 }
+              	// 将创建的 pkgSetting 存储在 mSettings 的 mUserId 中
                 mSettings.addUserToSettingLPw(pkgSetting);
             } else {
                 // REMOVE SharedUserSetting from method; update in a separate call.
@@ -2199,7 +2213,7 @@
 
 　　如果在 Manifest 中指定了 SharedUserId，则首先获取一个关联的 SharedUserSetting 对象。
 
-###### 2.6.2.5.1. Settings#getSharedUserLPw
+#### 3.2.6. Settings#getSharedUserLPw
 
 ```java
     /** Gets and optionally creates a new shared user id. */
@@ -2221,9 +2235,9 @@
     }
 ```
 
-　　在 PMS 的构造函数里面，系统会首先添加一系列的 system 的 user id 到 mSharedUsers 中，所以如果能够从 mSharedUsers 获得到就直接返回，如果不能，则首先构造一个 SharedUserSetting，并指派一个没有使用的 APPLICATION UID，当然 APPLICATION UID 的值是在 FIRST_APPLICATION_UID 到 LAST_APPLICATION_UID 之间。最后把创建的 SharedUserSetting 添加到 mShreadUsers 和 mUserIds 数组当中。
+　　在 PMS 的构造函数里面，系统会首先添加一系列的 system 的 user id 到 mSharedUsers 中，所以如果能够从 mSharedUsers 获得到就直接返回，如果不能，则首先构造一个 SharedUserSetting，并指派一个没有使用的 APPLICATION UID，当然 APPLICATION UID 的值是在 FIRST_APPLICATION_UID 到 LAST_APPLICATION_UID 之间。最后把创建的 SharedUserSetting 添加到 mShreadUsers 和 mUserIds 数组当中，方便后续使用。
 
-###### 2.6.2.5.2. Settings#createNewSetting
+#### 3.2.7. Settings#createNewSetting
 
 ```java
     /**
@@ -2340,9 +2354,9 @@
     }
 ```
 
+　　在 Settings 的 createNewSetting() 方法中会创建一个 Settings 的对象 pkgSetting，并且设置它的成员变量。
 
-
-##### 2.6.2.6. PackageManagerService#commitPackageSettings
+#### 3.2.8. PackageManagerService#commitPackageSettings
 
 ```java
     /**
@@ -2365,7 +2379,8 @@
                     pkg.mVersionCode = mSdkVersion;
                     mAndroidApplication = pkg.applicationInfo;
                     if (!mResolverReplaced) {
-                        // 采用 ResolverActivity 去解析 intent
+                        // 在 mResolveActvity 和 mResolveInfo 保存 ResolverActivity 的信息
+                        // ResolverActivity 用于在启动 Activity 的时候
                         mResolveActivity.applicationInfo = mAndroidApplication;
                         mResolveActivity.name = ResolverActivity.class.getName();
                         mResolveActivity.packageName = mAndroidApplication.packageName;
@@ -2500,6 +2515,7 @@
             // We don't expect installation to fail beyond this point
 
             // Add the new setting to mSettings
+          // 将 pkgSetting 对象加入到 Settings 的 mPackages 这个 ArrayMap 中。
             mSettings.insertPackageSettingLPw(pkgSetting, pkg);
             // Add the new setting to mPackages
             mPackages.put(pkg.applicationInfo.packageName, pkg);
@@ -2844,8 +2860,6 @@
 
 　　首先调用 Settings 的 insertPackageSettingLPw 方法将 pkgSetting 对象加入到 Settings 中的 mPackages 这个 ArrayMap 中。在 insertPackageSettingLPw 方法中，首先将 Package 中的一些信息赋予给 PackageSetting，然后调用 addPackageSettingLPw 方法将 PackageSetting 对象添加到 mPackages 中，并将 PackageSetting 加入到 SharedUserSetting 中的 packages 这个 HashSet 中。
 
-
-
 　　然后就是将从 AndroidManifest 里面 Parse 出来的 providers、services、receivers、activities、permissionGroups、permission 和 intrumentation 添加到 PMS 的相应数据结构中。providers 保存在 ProviderIntentResolver 对象中，services 保存在 ServiceIntentResolver 对象中，receivers 和 activities 保存在 ActivityIntentResolver 中，permissionGroups、permissions 保存在 ArrayMap 中。
 
 　　ProviderIntentResolver、ServiceIntentResolver 和 ActivityIntentResolver 都是继承于 IntentResolver，它们的类图关系如下：
@@ -2854,9 +2868,7 @@
 
 　　到这里扫描就完了，依次扫描完了 目录下所有的 APK 文件，并解析成一个个 Package 对象，并把它们加入到 PMS 和 Settings 中的一些数据结构中。
 
-
-
-#### 2.6.3. PackageManagerService 的构造函数 3
+### 3.3. PackageManagerService 的构造函数 3：PMS_DATA_SCAN_START 阶段
 
 ```java
     public PackageManagerService(Context context, Installer installer,
@@ -2868,7 +2880,7 @@
         synchronized (mPackages) {   
             ...
             // Remove any shared userIDs that have no associated packages
-            // 清除在 mSettings 中没有被使用得 SharedUserSettings
+            // 清除在 mSettings 中没有被使用的 SharedUserSettings
             mSettings.pruneSharedUsersLPw();
 
             // 如果是普通模式，则需要进行一些额外操作
@@ -2888,7 +2900,7 @@
                  * previously-updated app, remove them completely.
                  * Otherwise, just revoke their system-level permissions.
                  */
-                // 后面这部分代码逻辑简单，就是遍历 possiblyDeletedUpdatedSystemApps，处理通过 OTA 更新和删除得 APK 文件
+                // 后面这部分代码逻辑简单，就是遍历 possiblyDeletedUpdatedSystemApps，处理通过 OTA 更新和删除的 APK 文件
                 for (String deletedAppName : possiblyDeletedUpdatedSystemApps) {
                     PackageParser.Package deletedPkg = mPackages.get(deletedAppName);
                     mSettings.removeDisabledSystemPackageLPw(deletedAppName);
@@ -3015,12 +3027,12 @@
 
 ```
 
-　　当 mOnlyCore = false 时，则 scanDirLi() 还会手机如下目录中的 apk：
+　　当 mOnlyCore = false 时，则 scanDirLi() 就会收集如下目录中的 apk：
 
 1. /data/app
 2. /data/app-private
 
-##### 2.6.3.1. PackageManagerService#scanPackageTracedLI
+#### 3.3.1. PackageManagerService#scanPackageTracedLI
 
 ```java
     /**
@@ -3038,9 +3050,9 @@
     }
 ```
 
-　　scanPackageTracedLI 方法用于扫描指定文件 dir。调用了 scanPackageLI方法。
+　　scanPackageTracedLI 方法用于扫描指定文件 dir，调用了 scanPackageLI方法。
 
-##### 2.6.3.2. PackageManagerService#scanPackageLI
+#### 3.3.2. PackageManagerService#scanPackageLI
 
 ```java
     /**
@@ -3081,9 +3093,9 @@
     }
 ```
 
-　　在 PackageManagerService 的 scanPackageLI 的方法中会调用 PackageParser 的 parsePackage 方法去解析 package 信息。
+　　在 PackageManagerService 的 scanPackageLI 的方法中会调用 PackageParser 的 parsePackage 方法去解析出 package 信息。
 
-##### 2.6.3.3. PackageParser#parsePackage
+#### 3.3.3. PackageParser#parsePackage
 
 ```java
     /**
@@ -3134,9 +3146,9 @@
     }
 ```
 
-　　在 PackageParse 的 parsePackage 的方法中对于文件会调用 parseClusterPackage 方法去解析，如果是文件，就调用 parseMonolithicPackage 方法去解析。但是这两个方法最后都会调用到 parseBaseApkCommon 方法去解析文件。
+　　在 PackageParse 的 parsePackage 的方法中对于文件夹会调用 parseClusterPackage 方法去解析，如果是文件，就调用 parseMonolithicPackage 方法去解析。但是这两个方法最后都会调用到 parseBaseApkCommon 方法去解析文件。
 
-##### 2.6.3.4. PackageParse#parseBaseApkCommom
+#### 3.3.4. PackageParse#parseBaseApkCommom
 
 ```java
     /**
@@ -3260,7 +3272,7 @@
                 if (!parseBaseApplication(pkg, res, parser, flags, outError)) {
                     return null;
                 }
-                // overlay 标签
+            // overlay 标签
             } else if (tagName.equals(TAG_OVERLAY)) {
                 sa = res.obtainAttributes(parser,
                         com.android.internal.R.styleable.AndroidManifestResourceOverlay);
@@ -3302,38 +3314,38 @@
                 }
 
                 XmlUtils.skipCurrentTag(parser);
-			// key-sets 标签
+						// key-sets 标签
             } else if (tagName.equals(TAG_KEY_SETS)) {
                 if (!parseKeySets(pkg, res, parser, outError)) {
                     return null;
                 }
-                // permission-group 标签
+            // permission-group 标签
             } else if (tagName.equals(TAG_PERMISSION_GROUP)) {
                 if (!parsePermissionGroup(pkg, flags, res, parser, outError)) {
                     return null;
                 }
-                // permission 标签
+            // permission 标签
             } else if (tagName.equals(TAG_PERMISSION)) {
                 if (!parsePermission(pkg, res, parser, outError)) {
                     return null;
                 }
-                // permission-tree 标签
+            // permission-tree 标签
             } else if (tagName.equals(TAG_PERMISSION_TREE)) {
                 if (!parsePermissionTree(pkg, res, parser, outError)) {
                     return null;
                 }
-                // uses-permission 标签
+            // uses-permission 标签
             } else if (tagName.equals(TAG_USES_PERMISSION)) {
                 if (!parseUsesPermission(pkg, res, parser)) {
                     return null;
                 }
-                // uses-permission-sdk-m 或 uses-permission-sdk-23 标签
+            // uses-permission-sdk-m 或 uses-permission-sdk-23 标签
             } else if (tagName.equals(TAG_USES_PERMISSION_SDK_M)
                     || tagName.equals(TAG_USES_PERMISSION_SDK_23)) {
                 if (!parseUsesPermission(pkg, res, parser)) {
                     return null;
                 }
-                // uses-configuration 标签
+            // uses-configuration 标签
             } else if (tagName.equals(TAG_USES_CONFIGURATION)) {
                 ConfigurationInfo cPref = new ConfigurationInfo();
                 sa = res.obtainAttributes(parser,
@@ -3374,7 +3386,7 @@
                 }
 
                 XmlUtils.skipCurrentTag(parser);
-			// feature-group 标签
+						// feature-group 标签
             } else if (tagName.equals(TAG_FEATURE_GROUP)) {
                 FeatureGroupInfo group = new FeatureGroupInfo();
                 ArrayList<FeatureInfo> features = null;
@@ -3406,7 +3418,7 @@
                 }
                 pkg.featureGroups = ArrayUtils.add(pkg.featureGroups, group);
 
-                // uses-sdk 标签
+            // uses-sdk 标签
             } else if (tagName.equals(TAG_USES_SDK)) {
                 if (SDK_VERSION > 0) {
                     sa = res.obtainAttributes(parser,
@@ -3464,7 +3476,7 @@
 
                 XmlUtils.skipCurrentTag(parser);
 
-                // supports-screens 标签
+            // supports-screens 标签
             } else if (tagName.equals(TAG_SUPPORT_SCREENS)) {
                 sa = res.obtainAttributes(parser,
                         com.android.internal.R.styleable.AndroidManifestSupportsScreens);
@@ -3504,7 +3516,7 @@
 
                 XmlUtils.skipCurrentTag(parser);
 
-                // protected-broadcast 标签
+            // protected-broadcast 标签
             } else if (tagName.equals(TAG_PROTECTED_BROADCAST)) {
                 sa = res.obtainAttributes(parser,
                         com.android.internal.R.styleable.AndroidManifestProtectedBroadcast);
@@ -3527,12 +3539,12 @@
 
                 XmlUtils.skipCurrentTag(parser);
 
-                // instrumentation 标签
+            // instrumentation 标签
             } else if (tagName.equals(TAG_INSTRUMENTATION)) {
                 if (parseInstrumentation(pkg, res, parser, outError) == null) {
                     return null;
                 }
-                // original-package 标签
+            // original-package 标签
             } else if (tagName.equals(TAG_ORIGINAL_PACKAGE)) {
                 sa = res.obtainAttributes(parser,
                         com.android.internal.R.styleable.AndroidManifestOriginalPackage);
@@ -3551,7 +3563,7 @@
 
                 XmlUtils.skipCurrentTag(parser);
 
-                // adopt-permissions 标签
+            // adopt-permissions 标签
             } else if (tagName.equals(TAG_ADOPT_PERMISSIONS)) {
                 sa = res.obtainAttributes(parser,
                         com.android.internal.R.styleable.AndroidManifestOriginalPackage);
@@ -3570,18 +3582,18 @@
 
                 XmlUtils.skipCurrentTag(parser);
 
-                // uses-gl-texture 标签
+            // uses-gl-texture 标签
             } else if (tagName.equals(TAG_USES_GL_TEXTURE)) {
                 // Just skip this tag
                 XmlUtils.skipCurrentTag(parser);
                 continue;
 
-                // compatible-screens 标签
+            // compatible-screens 标签
             } else if (tagName.equals(TAG_COMPATIBLE_SCREENS)) {
                 // Just skip this tag
                 XmlUtils.skipCurrentTag(parser);
                 continue;
-                // supports-input 标签
+            // supports-input 标签
             } else if (tagName.equals(TAG_SUPPORTS_INPUT)) {//
                 XmlUtils.skipCurrentTag(parser);
                 continue;
@@ -3592,7 +3604,7 @@
                 XmlUtils.skipCurrentTag(parser);
                 continue;
 
-                // package 标签
+            // package 标签
             } else if (tagName.equals(TAG_PACKAGE)) {
                 if (!MULTI_PACKAGE_APK_ENABLED) {
                     XmlUtils.skipCurrentTag(parser);
@@ -3603,7 +3615,7 @@
                     return null;
                 }
 
-                // restrict-update 标签
+            // restrict-update 标签
             } else if (tagName.equals(TAG_RESTRICT_UPDATE)) {
                 if ((flags & PARSE_IS_SYSTEM_DIR) != 0) {
                     sa = res.obtainAttributes(parser,
@@ -3626,7 +3638,7 @@
 
                 XmlUtils.skipCurrentTag(parser);
 
-                // uses-split 标签
+            // uses-split 标签
             } else if (RIGID_PARSER) {
                 outError[0] = "Bad element under <manifest>: "
                     + parser.getName();
@@ -3728,9 +3740,7 @@
 
 　　方法比较长，主要是解析 AndroidManifest.xml 文件，建立一个 Package 对象。
 
-
-
-#### 2.6.4. PackageManagerService 的构造函数 4
+### 3.4. PackageManagerService 的构造函数 4：PMS_SCAN_END 阶段
 
 ```java
     public PackageManagerService(Context context, Installer installer,
@@ -3765,7 +3775,7 @@
             // If this is the first boot or an update from pre-M, and it is a normal
             // boot, then we need to initialize the default preferred apps across
             // all defined users.
-            // 当这是 ota 后的首次启动，正常启动启动则需要清除目录的缓存代码
+            // 当这是 ota 后的首次启动，正常启动则需要清除目录的缓存代码
             if (!onlyCore && (mPromoteSystemApps || mFirstBoot)) {
                 for (UserInfo user : sUserManager.getUsers(true)) {
                     mSettings.applyDefaultPreferredAppsLPw(this, user.id);
@@ -3863,35 +3873,9 @@
 }
 ```
 
+　　在这里会将信息写到 packages.xml 文件中。　
 
-
-##### 2.6.4.1. PackageInstallerService 构造方法
-
-```java
-    public PackageInstallerService(Context context, PackageManagerService pm) {
-        mContext = context;
-        mPm = pm;
-        // 创建名为 "PackageInstaller" 的 Handler 线程
-
-        mInstallThread = new HandlerThread(TAG);
-        mInstallThread.start();
-
-        mInstallHandler = new Handler(mInstallThread.getLooper());
-
-        mCallbacks = new Callbacks(mInstallThread.getLooper());
-
-        mSessionsFile = new AtomicFile(
-                new File(Environment.getDataSystemDirectory(), "install_sessions.xml"));
-        mSessionsDir = new File(Environment.getDataSystemDirectory(), "install_sessions");
-        mSessionsDir.mkdirs();
-    }
-```
-
-
-
-
-
-#### 2.6.5. PackageManagerService 的构造函数 5
+### 3.5. PackageManagerService 的构造函数 5：PMS_READY 阶段
 
 ```java
     public PackageManagerService(Context context, Installer installer,
@@ -3902,7 +3886,7 @@
         synchronized (mPackages) {
             ...
 
-			EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_PMS_READY,
+						EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_PMS_READY,
                     SystemClock.uptimeMillis());
 
             if (!mOnlyCore) {
@@ -3932,6 +3916,7 @@
                 mSharedSystemSharedLibraryPackageName = null;
             }
 
+          	// 创建 PackagerInstallerService 对象 mInstallerService
             mInstallerService = new PackageInstallerService(context, this);
             final Pair<ComponentName, String> instantAppResolverComponent =
                     getInstantAppResolverLPr();
@@ -3990,7 +3975,33 @@
 
 ```
 
-#### 2.6.6. PMS 初始化总结
+　　在这里会创建 PackageInstallerService 对象。
+
+#### 3.5.1. PackageInstallerService 构造方法
+
+```java
+    public PackageInstallerService(Context context, PackageManagerService pm) {
+        mContext = context;
+        mPm = pm;
+      
+        // 创建名为 "PackageInstaller" 的 Handler 线程
+        mInstallThread = new HandlerThread(TAG);
+        mInstallThread.start();
+
+        mInstallHandler = new Handler(mInstallThread.getLooper());
+
+        mCallbacks = new Callbacks(mInstallThread.getLooper());
+
+        mSessionsFile = new AtomicFile(
+                new File(Environment.getDataSystemDirectory(), "install_sessions.xml"));
+        mSessionsDir = new File(Environment.getDataSystemDirectory(), "install_sessions");
+        mSessionsDir.mkdirs();
+    }
+```
+
+　　在 PackageInstallService 的构造方法中会创建一个 "PackageInstaller" 的 Handler 线程，并启动它。　
+
+### 3.6. PMS 初始化总结
 
 　　PMS 的初始化过程分为 5 个阶段：
 
@@ -4026,7 +4037,7 @@
 
    创建服务 PackageInstallerService；
 
-## 参考文章
+## 4. 参考文章
 
 1. [Android PackageManagerService 分析一：PMS 的启动](https://blog.csdn.net/lilian0118/article/details/24455019)
 4. [PackageManagerService启动流程源码解析](https://blog.csdn.net/u012124438/article/details/54882771)

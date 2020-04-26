@@ -1,30 +1,42 @@
 # View 绘制流程
 
-## View 绘制
+　　Android 中的任何一个布局、任何一个空间其实都是直接或间接继承自 View 的，如 TextView、Button、ImageView、ListView 等。
+
 　　每一个视图的绘制过程都必须经历三个最主要的阶段，即 onMeasure()、onLayout() 和 onDraw()。
 
-### onMeasure()
-　　measure 是测量的意思，那么 onMeasure() 方法顾名思义就是用来测量视图的大小的。View 系统的绘制流程会从 ViewRoot 的 performTravesals() 方法中开始，在其内部调用 View 的 measure() 方法。measure() 方法接收两个参数，widthMeasureSpec 和 heightMeasureSpec，这两个值分别用于确定视图的宽度和高度的规格和大小。
+## 1. onMeasure()
+
+　　measure 是测量的意思，那么 onMeasure() 方法顾名思义就是用来测量视图的大小的。
+
+　　View 系统的绘制流程会从 ViewRoot 的 performTravesals() 方法中开始，在其内部调用 View 的 measure() 方法。measure() 方法接收两个参数，widthMeasureSpec 和 heightMeasureSpec，这两个值分别用于确定视图的宽度和高度的规格和大小。
 
 　　MeasureSpec 的值由 specSize 和 specMode 共同组成的，其中 specSize 记录的是大小，specMode 记录的是规格。
 
 　　specMode 一共有三种类型：
 
-　　1.EXACTLY
+1. EXACTLY
 
-　　表示父视图希望子视图的大小应该是由 specSize 的值来决定的，系统默认会按照这个规则来设置子视图的大小，开发人员当然也可以按照自己的意愿设置成任意的大小。
+   表示父视图希望子视图的大小应该是由 specSize 的值来决定的。
 
-　　2.AT_MOST
+   系统默认会按照这个规则来设置子视图的大小，开发人员当然也可以按照自己的意愿设置成任意的大小。
 
-　　表示子视图最多只能是 specSize 中指定的大小，开发人员应该尽可能小得去设置这个视图，并且保证不会超过 specSize。系统默认会按照这个规则来设置子视图的大小，开发人员当然也可以按照自己的意愿设置成任意的大小。
+2. AT_MOST
 
-　　3.UNSPECIFIED
+   表示子视图最多只能是 specSize 中指定的大小，开发人员应该尽可能小的去设置这个视图，并且保证不会超过 specSize。
 
-　　表示开发人员可以将视图按照自己的意愿设置成任意的大小，没有任何限制。这种情况比较少见，不太会用到。
+   系统默认会按照这个规则来设置子视图的大小，开发人员当然也可以按照自己的意愿设置成任意的大小。
 
-　　通常情况下，这两个值都是由父视图经过计算后传递给子视图的，说明父视图会在一定程度上决定子视图的大小。但是最外层的根视图，它的 widthMeasureSpace 和 heightMeasureSpec 从哪里得到？这就需要去分析 ViewRoot 中的源码了，观察 performTraversals() 方法：
-```
-ViewRootImpl.java
+3. UNSPECIFIED
+
+   表示开发人员可以将视图按照自己的意愿设置成任意的大小，没有任何限制。
+
+   这种情况比较少见，不太会用到。
+
+　　通常情况下，这两个值都是由父视图经过计算后传递给子视图的，说明父视图会在一定程度上决定子视图的大小。但是最外层的根视图，它的 widthMeasureSpace 和 heightMeasureSpec 从哪里得到？这就需要去分析 ViewRoot 中的源码了，观察 performTraversals() 方法。
+
+### 1.1. ViewRootImpl#performTranversals
+
+```java
 /**
  * The top of a view hierarchy, implementing the needed protocol between View
  * and the WindowManager.  This is for the most part an internal implementation
@@ -45,8 +57,11 @@ public final class ViewRootImpl implements ViewParent,
 }
 ```
 
-　　可以看到，调用了 getRootMeasureSpec() 方法去获取 widthMeasureSpec 和 heightMeasureSpec 的值，注意方法中传入的参数，其中 lp.width 和 lp.height 在创建 ViewGroup 实例的时候就被赋值了，它们都等于 MATCH_PARENT。然后看下 getRootMeasureSpec() 方法中的代码：
-```
+　　可以看到，调用了 getRootMeasureSpec() 方法去获取 widthMeasureSpec 和 heightMeasureSpec 的值，注意方法中传入的参数，其中 lp.width 和 lp.height 在创建 ViewGroup 实例的时候就被赋值了，它们都等于 MATCH_PARENT。然后看下 getRootMeasureSpec() 方法中的代码。
+
+### 1.2. ViewRootImpl#getRootMeasureSpec
+
+```java
     /**
      * Figures out the measure spec for the root view in a window based on it's
      * layout params.
@@ -83,8 +98,10 @@ public final class ViewRootImpl implements ViewParent,
 
 　　可以看到，这里使用了 MeasureSpec.makeMeasureSpec() 方法来组装一个 MeasureSpec，当 rootDimension 参数等于 MATCH_PARENT 的时候，MeasureSpec 的 specMode 就等于 EXACTLY，当 rootDimension 等于 WRAP_CONTENT 的时候，MeasureSpec 的 specMode 就等于 AT_MOST。并且 MATCH_PARENT 和 WRAP_CONTENT 时的 specSize 都是等于 windowSize 的，也就意味着根视图总是会充满全屏的。
 
+### 1.3. View#measure
+
 　　查看 View 的 mesaure() 方法：
-```
+```java
 public class View implements Drawable.Callback, KeyEvent.Callback,
         AccessibilityEventSource {
     /**
@@ -144,6 +161,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             int cacheIndex = forceLayout ? -1 : mMeasureCache.indexOfKey(key);
             if (cacheIndex < 0 || sIgnoreMeasureCache) {
                 // measure ourselves, this should set the measured dimension flag back
+              	// 真正测量宽高的地方
                 onMeasure(widthMeasureSpec, heightMeasureSpec);
                 mPrivateFlags3 &= ~PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT;
             } else {
@@ -173,8 +191,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     }
 }
 ```
-　　measure() 这个方法是 final 的，因此是无法在子类中重写这个方法，说明 Android 是不允许改变 View 的 measure 框架的。在 measure() 方法中调用了 onMeasure() 方法，这才是真正去测量并设置 View 大小的地方，默认会调用 getDefaultSize() 方法来获取视图的大小。
-```
+　　measure() 这个方法是 final 的，因此是无法在子类中重写这个方法，说明 Android 是不允许改变 View 的 measure 框架的。在 measure() 方法中调用了 onMeasure() 方法，这才是真正去测量并设置 View 大小的地方。
+
+### 1.4. View#onMeasure
+
+```java
 public class View implements Drawable.Callback, KeyEvent.Callback,
         AccessibilityEventSource {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -209,10 +230,14 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     }
 }
 ```
-　　参数 measureSpec 是一直从 measure() 方法中传递过来的。然后调用 MeasureSpec.getMode() 方法可以解析出 specMode，调用 MeasureSpec.getSize() 方法可以解析出 specMode，调用 MeasureSpec.getSize() 方法可以解析出 specSize。接下来进行判断，如果 specMode 等于 AT_MOST 或 EXACTLY 就可以返回 specSize，这也是系统默认的行为，之后会在 onMeasure() 方法中调用 setMeasuredDimension() 方法来设定测量出的大小，这样一次 measure 过程就结束了。
+　　onMeasure 方法默认会调用 getDefaultSize() 方法来获取视图的大小。
 
-　　一个界面的展示可能会涉及到很多次的 measure，因为一个布局中一般都会包含多个子视图，每个视图都需要经历一次 measure 过程。ViewGroup 中定义了一个 measureChildren() 方法来去测量子视图的大小：
-```
+　　参数 measureSpec 是一直从 measure() 方法中传递过来的，然后调用 MeasureSpec.getMode() 方法可以解析出 specMode，调用 MeasureSpec.getSize() 方法可以解析出 specSize。接下来进行判断，如果 specMode 等于 AT_MOST 或 EXACTLY 就可以返回 specSize，这也是系统默认的行为，之后会在 onMeasure() 方法中调用 setMeasuredDimension() 方法来设定测量出的大小，这样一次 measure 过程就结束了。
+
+### 1.5. ViewGroup#measureChild
+
+　　一个界面的展示可能会涉及到很多次的 measure，因为一个布局中一般都会包含多个子视图，每个视图都需要经历一次 measure 过程。ViewGroup 中定义了一个 measureChildren() 方法来去测量子视图的大小。
+```java
     /**
      * Ask one of the children of this view to measure itself, taking into
      * account both the MeasureSpec requirements for this view and its padding.
@@ -226,23 +251,26 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             int parentHeightMeasureSpec) {
         final LayoutParams lp = child.getLayoutParams();
 
+      	// 计算子视图的 MeasureSpec
         final int childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec,
                 mPaddingLeft + mPaddingRight, lp.width);
         final int childHeightMeasureSpec = getChildMeasureSpec(parentHeightMeasureSpec,
                 mPaddingTop + mPaddingBottom, lp.height);
 
+      	// 调用子视图的 measure() 方法
         child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
     }
 ```
-　　调用 getChildMeasureSpec() 方法来计算子视图的 MeasureSpec，计算的依据就是布局文件中定义的 MATCH_PARENT、WRAP_CONTENT 等值，然后调用字数图的 measure() 方法，并把计算出的 MeasureSpec 传递进去。
+　　调用 getChildMeasureSpec() 方法来计算子视图的 MeasureSpec，计算的依据就是布局文件中定义的 MATCH_PARENT、WRAP_CONTENT 等值，然后调用子试图的 measure() 方法，并把计算出的 MeasureSpec 传递进去。
 
-　　onMeasure() 方法是可以重写的，也就是说，如果你不想使用系统默认的测量方式，可以按照自己的意愿进行定制。
+　　onMeasure() 方法是可以重写的，也就是说，如果不想使用系统默认的测量方式，可以按照自己的意愿进行定制。
 
-　　需要注意的是，在 setMeasuredDimension() 方法调用之后，才能使用 getMeasuredWidth() 和 getMeasuredHeight() 来获取视图测量出的宽高，以此之前调用这两个方法得到的值都会是 0。
+　　需要注意的是，在 setMeasuredDimension() 方法调用之后，才能使用 getMeasuredWidth() 和 getMeasuredHeight() 来获取视图测量出的宽高，在此之前调用这两个方法得到的值都会是 0。
 
 　　由此可见，视图大小的控制是由父视图、布局文件以及视图本身共同完成的，父视图会提供给子视图参考的大小，而开发人员可以在 XML 文件中指定视图的大小，然后视图本身会对最终的大小进行拍板。
 
-#### onLayout()
+## 2. onLayout()
+
 　　measure 过程结束后，视图的大小就已经测量好了，接下来就是 layout 的过程了。正如其名字所描述的一样，这个方法是用于给视图进行布局的，也就是确定视图的位置。ViewRoot 的 performTraversals() 方法会在 measure 结束后继续执行，会调用 performLayout() 方法，在 performLayout() 方法中会调用 View 的 layout() 方法来执行此过程：
 ```
 public final class ViewRootImpl implements ViewParent,
@@ -704,8 +732,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
 
 ## 参考文章
-[Android LayoutInflater 原理分析，带你一步步深入了解 View（一）](https://blog.csdn.net/guolin_blog/article/details/12921889)
-
 [Android视图绘制流程完全解析，带你一步步深入了解 View（二）](https://blog.csdn.net/guolin_blog/article/details/16330267)
 
 [Android视图状态及重绘流程分析，带你一步步深入了解 View（三）](https://blog.csdn.net/guolin_blog/article/details/17045157)
