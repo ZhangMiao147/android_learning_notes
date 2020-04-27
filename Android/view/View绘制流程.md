@@ -234,9 +234,40 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
 　　参数 measureSpec 是一直从 measure() 方法中传递过来的，然后调用 MeasureSpec.getMode() 方法可以解析出 specMode，调用 MeasureSpec.getSize() 方法可以解析出 specSize。接下来进行判断，如果 specMode 等于 AT_MOST 或 EXACTLY 就可以返回 specSize，这也是系统默认的行为，之后会在 onMeasure() 方法中调用 setMeasuredDimension() 方法来设定测量出的大小，这样一次 measure 过程就结束了。
 
-### 1.5. ViewGroup#measureChild
+### 1.5. ViewGroup#measureChildren
 
 　　一个界面的展示可能会涉及到很多次的 measure，因为一个布局中一般都会包含多个子视图，每个视图都需要经历一次 measure 过程。ViewGroup 中定义了一个 measureChildren() 方法来去测量子视图的大小。
+
+```java
+public abstract class ViewGroup extends View implements ViewParent, ViewManager {
+
+    /**
+     * Ask all of the children of this view to measure themselves, taking into
+     * account both the MeasureSpec requirements for this view and its padding.
+     * We skip children that are in the GONE state The heavy lifting is done in
+     * getChildMeasureSpec.
+     *
+     * @param widthMeasureSpec The width requirements for this view
+     * @param heightMeasureSpec The height requirements for this view
+     */
+    protected void measureChildren(int widthMeasureSpec, int heightMeasureSpec) {
+        final int size = mChildrenCount;
+        final View[] children = mChildren;
+        for (int i = 0; i < size; ++i) {
+            final View child = children[i];
+            if ((child.mViewFlags & VISIBILITY_MASK) != GONE) {
+                measureChild(child, widthMeasureSpec, heightMeasureSpec);
+            }
+        }
+    }
+
+}
+```
+
+　　这里首先会去遍历当前布局下的所有子视图，然后逐个调用 measureChild() 方法来测量相应子视图的大小。
+
+### 1.6. ViewGroup#measureChild
+
 ```java
     /**
      * Ask one of the children of this view to measure itself, taking into
@@ -261,9 +292,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
     }
 ```
-　　调用 getChildMeasureSpec() 方法来计算子视图的 MeasureSpec，计算的依据就是布局文件中定义的 MATCH_PARENT、WRAP_CONTENT 等值，然后调用子试图的 measure() 方法，并把计算出的 MeasureSpec 传递进去。
+　　调用 getChildMeasureSpec() 方法来计算子视图的 MeasureSpec，计算的依据就是布局文件中定义的 MATCH_PARENT、WRAP_CONTENT 等值，然后调用子视图的 measure() 方法，并把计算出的 MeasureSpec 传递进去。
 
-　　onMeasure() 方法是可以重写的，也就是说，如果不想使用系统默认的测量方式，可以按照自己的意愿进行定制。
+　　当然，onMeasure() 方法是可以重写的，也就是说，如果不想使用系统默认的测量方式，可以按照自己的意愿进行定制。
 
 　　需要注意的是，在 setMeasuredDimension() 方法调用之后，才能使用 getMeasuredWidth() 和 getMeasuredHeight() 来获取视图测量出的宽高，在此之前调用这两个方法得到的值都会是 0。
 
@@ -271,14 +302,20 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
 ## 2. onLayout()
 
-　　measure 过程结束后，视图的大小就已经测量好了，接下来就是 layout 的过程了。正如其名字所描述的一样，这个方法是用于给视图进行布局的，也就是确定视图的位置。ViewRoot 的 performTraversals() 方法会在 measure 结束后继续执行，会调用 performLayout() 方法，在 performLayout() 方法中会调用 View 的 layout() 方法来执行此过程：
-```
+　　measure 过程结束后，视图的大小就已经测量好了，接下来就是 layout 的过程了。正如其名字所描述的一样，这个方法是用于给视图进行布局的，也就是确定视图的位置。
+
+　　ViewRoot 的 performTraversals() 方法会在 measure 结束后继续执行，会调用 performLayout() 方法，在 performLayout() 方法中会调用 View 的 layout() 方法来执行此过程。
+
+### 2.1. ViewRootImpl#performLayout
+
+```java
 public final class ViewRootImpl implements ViewParent,
         View.AttachInfo.Callbacks, ThreadedRenderer.HardwareDrawCallbacks {
     private void performLayout(WindowManager.LayoutParams lp, int desiredWindowWidth,
             int desiredWindowHeight) {
 		Trace.traceBegin(Trace.TRACE_TAG_VIEW, "layout");
         try {
+            // 调用 view 的 layout 方法
             host.layout(0, 0, host.getMeasuredWidth(), host.getMeasuredHeight());
 			...
 		}
@@ -286,8 +323,13 @@ public final class ViewRootImpl implements ViewParent,
 	}
 }
 ```
-　　layout() 方法接收四个参数，分别表达着左、上、右、下的坐标，当然这个坐标是相对于当前视图的父视图而言的。可以看到，这里把刚才测量出的宽度和高度传到了 layout() 方法中：
-```
+　　ViewRootImple 的 performLayout() 方法中调用了 view 的 layout 方法。
+
+### 2.2. View#layout
+
+　　layout() 方法接收四个参数，分别表达着左、上、右、下的坐标，当然这个坐标是相对于当前视图的父视图而言的。可以看到，这里把刚才测量出的宽度和高度传到了 layout() 方法中。
+
+```java
 public class View implements Drawable.Callback, KeyEvent.Callback,
         AccessibilityEventSource {
     public void layout(int l, int t, int r, int b) {
@@ -334,22 +376,33 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 }
 ```
 　　在 layout() 方法中，首先会调用 setFrame() 方法来判断视图的大小是否发生过变化，以确定有没有必要对当前的视图进行重绘，同时还会在这里把传递过来的四个参数分别赋值给 mLeft、mTop、mRight 和 mBottom 这几个变量。接下来会调用 onLayout() 方法。
-```
+
+### 2.3. View#onLayout
+
+```java
 public class View implements Drawable.Callback, KeyEvent.Callback,
         AccessibilityEventSource {
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
     }
 }
 ```
-　　onLayout 是一个空方法，因为 onLayout() 过程是为了确定视图在布局中所在的位置，而这个操作应该是由布局来完成的，即父视图决定字数图的显示位置。接着查看 ViewGroup 的 onLayout() 方法:
-```
+　　View 的 onLayout 是一个空方法，因为 onLayout() 过程是为了确定视图在布局中所在的位置，而这个操作应该是由布局来完成的，即父视图决定子视图的显示位置。
+
+### 2.4. ViewGroup#onLayout
+
+　　接着查看 ViewGroup 的 onLayout() 方法:
+
+```java
 public abstract class ViewGroup extends View implements ViewParent, ViewManager {
     @Override
     protected abstract void onLayout(boolean changed,
             int l, int t, int r, int b);
 }
 ```
-　　可以看到，ViewGroup 中的 onLayout() 方法竟然是一个抽象方法，这就意味着所有 ViewGrouup 的子类都必须重写这个方法。像 LinearLayout、RelativeLayout 和 FrameLayout 等布局，都是重写了这个方法，然后在内部按照各自的规则对子视图进行布局的。由于 LinearLayout 和 RelativeLayout 的布局规则都比较复杂，在这里通过分析 FrameLayout 的 onLayout() 方法来解析这部分的知识：
+　　可以看到，ViewGroup 中的 onLayout() 方法是一个抽象方法，这就意味着所有 ViewGrouup 的子类都必须重写这个方法。像 LinearLayout、RelativeLayout 和 FrameLayout 等布局，都是重写了这个方法，然后在内部按照各自的规则对子视图进行布局的。由于 LinearLayout 和 RelativeLayout 的布局规则都比较复杂，在这里通过分析 FrameLayout 的 onLayout() 方法来解析这部分的知识。、
+
+### 2.5. FrameLayout#onLayout
+
 ```
 public class FrameLayout extends ViewGroup {
     @Override
@@ -424,13 +477,19 @@ public class FrameLayout extends ViewGroup {
 ```
 　　在 onLayout() 方法中，对子视图进行循环处理，调用子视图的 layout() 方法来确定它在 FrameLayout 布局中的位置，传入的 childLeft、childTop、childLeft + width、childTop + height，分别代表着子视图在 FrameLayout 中左上右下四个点的坐标。其中，调用 childView.getMeasuredWidth() 和 childView.getMeasuredHeight() 方法得到的值就是在 onMeasure() 方法中测量出的宽和高。
 
-　　在 onLayout() 过程结束后，就可以调用 geiWidth() 方法和 getHeight() 方法来虎丘视图的宽高了。
+　　在 onLayout() 过程结束后，就可以调用 geiWidth() 方法和 getHeight() 方法来获取视图的宽高了。
 
-　　gieMeasureWidth() 和 getWidth() 方法的区别：首先 getMeasureWidth() 方法在 measure() 过程结束后就可以获取到了，而 getWidth() 方法要在 layout() 过程结束后才能获取到。另外，getMeasureWidth() 方法中的值是通过 setMeasuredDimension() 方法来进行设置的，而 getWidth() 方法中值则是通过视图右边的坐标减去左边的坐标计算出来的。
+　　**gieMeasureWidth() 和 getWidth() 方法的区别**：首先 getMeasureWidth() 方法在 measure() 过程结束后就可以获取到了，而 getWidth() 方法要在 layout() 过程结束后才能获取到。另外，getMeasureWidth() 方法中的值是通过 setMeasuredDimension() 方法来进行设置的，而 getWidth() 方法中值则是通过视图右边的坐标减去左边的坐标计算出来的。
 
-#### onDraw()
-　　measure 和 layout 的过程都结束后，接下来就进入到 draw 的过程了。到这里才真正地开始对视图进行绘制。ViewRoot 中的代码会继续执行并创建出一个 Canvas 对象，然后调用 View 的 draw() 方法来执行具体的绘制工作:
-```
+## 3. onDraw()
+
+　　measure 和 layout 的过程都结束后，接下来就进入到 draw 的过程了。到这里才真正地开始对视图进行绘制。
+
+　　ViewRoot 中的代码会继续执行并创建出一个 Canvas 对象，然后调用 View 的 draw() 方法来执行具体的绘制工作。
+
+### 3.1. View#draw
+
+```java
 public class View implements Drawable.Callback, KeyEvent.Callback,
         AccessibilityEventSource {
     /**
@@ -472,6 +531,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         int saveCount;
 
         if (!dirtyOpaque) {
+            // 调用 drawBackground 方法绘制背景
             drawBackground(canvas);
         }
 
@@ -481,9 +541,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         boolean verticalEdges = (viewFlags & FADING_EDGE_VERTICAL) != 0;
         if (!verticalEdges && !horizontalEdges) {
             // Step 3, draw the content
+            // 调用 onDraw() 绘制视图的内容
             if (!dirtyOpaque) onDraw(canvas);
 
             // Step 4, draw the children
+            // 绘制子视图
             dispatchDraw(canvas);
 
             // Overlay is part of the content and draws beneath Foreground
@@ -492,6 +554,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             }
 
             // Step 6, draw decorations (foreground, scrollbars)
+            // 绘制装饰，foreground、scrollbars 等
             onDrawForeground(canvas);
 
             // we're done...
@@ -645,8 +708,13 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     }
 }
 ```
+　　draw() 方法内部的绘制过程总共可以分为六部，其中第二步和第五步在一般情况下很少用到。
+
+### 3.2. View#drawBackground
+
 　　第一步的作用是对视图的背景进行绘制。调用了 drawBackground() 方法来绘制：
-```
+
+```java
     /**
      * Draws the background onto the specified canvas.
      *
@@ -698,10 +766,12 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         }
     }
 ```
-　　在 drawBackground() 方法中先将 mBackground 对象设置给了 background，然后调用 setBackgroundounds() 方法来设置 mBackground 的位置，最后调用了 background.draw() 方法绘制背景。而启动 mBackground 对象是在 XML 中通过 android:background 属性或者 setBackgroundColor() 、 setBackgroundResource() 方法设置的图片或者颜色。
+　　在 drawBackground() 方法中先将 mBackground 对象设置给了 background，然后调用 setBackgroundounds() 方法根据 layout 过程确定的视图位置来设置 mBackground 的位置，最后调用了 background.draw() 方法绘制背景。而启动 mBackground 对象是在 XML 中通过 android:background 属性或者 setBackgroundColor() 、 setBackgroundResource() 方法设置的图片或者颜色。
+
+### 3.3. View#onDraw
 
 　　第三步的作用是对视图的内容进行绘制。调用了 onDraw() 方法：
-```
+```java
     /**
      * Implement this to do your drawing.
      *
@@ -712,8 +782,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 ```
 　　而 onDraw() 是一个空方法，因为每个视图的内容部分肯定都是各不相同的，这部分的功能交给子类来实现是理所当然的。
 
+### 3.4. View#dispatchDraw
+
 　　第四步的作用是对当前视图的所有子视图进行绘制。调用了 dispatchDraw() 方法：
-```
+```java
     /**
      * Called by draw to draw the child views. This may be overridden
      * by derived classes to gain control just before its children are drawn
@@ -728,7 +800,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
 　　第六步的作用是对视图的滚动条进行绘制。任何一个视图都是有滚动条的，只是一般情况下都没有让它显示出来。
 
-　　View 是不会绘制内容部分的，因此需要每个视图根据想要展示的内容来自行绘制。绘制的方式主要是借助 Canvas 这个类，它会作为参数传入到 onDraw() 方法中，供给每个视图使用。
+　　通过以上流程分析，发现 View 是不会绘制内容部分的，因此需要每个视图根据想要展示的内容来自行绘制。绘制的方式主要是借助 Canvas 这个类，它会作为参数传入到 onDraw() 方法中，供给每个视图使用。
 
 
 ## 参考文章

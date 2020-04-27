@@ -937,10 +937,134 @@ public void loadImage(View view) {
 
 　　在 into() 方法之前串接了一个 listener() 方法，然后实现了一个 RequestListener 的实例。其中 RequestListener 需要实现两个方法，一个 onResourceRead() 方法，一个 onException() 方法。从方法名上就可以看出来了，当图片加载完成的时候就会回调 onResourceReady() 方法，而当图片加载失败的时候就会回调 onException() 方法，onException() 方法中会将失败的 Exception 参数传进来，这样就可以定位具体失败的原因了。
 
+　　listener() 方法就是这么简单。不过还有一点需要处理，onResourceReady() 方法和 onException() 方法都有一个布尔值的返回值，返回 false 就表示这个事件没有被处理，还会继续向下传递，返回 true 就表示这个事件已经被处理掉了，从而不会再继续向下传递。
+
+### 5.2. listener 源码分析
+
+　　首先，listener() 方法是定义在 GenericRequestBuilder 类当中的，而传入到 listener() 方法中的实例则会赋值到一个 requestListener 变量当中。
+
+#### 5.2.1. GenericRequestBuilder#listener
+
+```java
+/**
+ * A generic class that can handle setting options and staring loads for generic resource types.
+ *
+ * @param <ModelType> The type of model representing the resource.
+ * @param <DataType> The data type that the resource {@link com.bumptech.glide.load.model.ModelLoader} will provide that
+ *                  can be decoded by the {@link com.bumptech.glide.load.ResourceDecoder}.
+ * @param <ResourceType> The type of the resource that will be loaded.
+ * @param <TranscodeType> The type of resource the decoded resource will be transcoded to.
+ */
+public class GenericRequestBuilder<ModelType, DataType, ResourceType, TranscodeType> implements Cloneable {
+
+    private RequestListener<? super ModelType, TranscodeType> requestListener;
+    
+    /**
+     * Sets a RequestBuilder listener to monitor the resource load. It's best to create a single instance of an
+     * exception handler per type of request (usually activity/fragment) rather than pass one in per request to
+     * avoid some redundant object allocation.
+     *
+     * @param requestListener The request listener to use.
+     * @return This request builder.
+     */
+    public GenericRequestBuilder<ModelType, DataType, ResourceType, TranscodeType> listener(
+            RequestListener<? super ModelType, TranscodeType> requestListener) {
+        this.requestListener = requestListener;
+
+        return this;
+    }
+
+}
+```
+
+　　在 listener() 方法中，会设置 GenericRequestBuilder 的 requestLister 成员为传递进来的 requestListener ，接下来在在构建 GenericRequest 的时候这个变量也会被一起传进入。
+
+#### 5.2.2. GenericRequest#onResourceReady
+
+```java
+/**
+ * A {@link Request} that loads a {@link com.bumptech.glide.load.engine.Resource} into a given {@link Target}.
+ *
+ * @param <A> The type of the model that the resource will be loaded from.
+ * @param <T> The type of the data that the resource will be loaded from.
+ * @param <Z> The type of the resource that will be loaded.
+ * @param <R> The type of the resource that will be transcoded from the loaded resource.
+ */
+public final class GenericRequest<A, T, Z, R> implements Request, SizeReadyCallback,
+        ResourceCallback {
+ 
+    private RequestListener<? super A, R> requestListener;
+            
+    /**
+     * Internal {@link #onResourceReady(Resource)} where arguments are known to be safe.
+     *
+     * @param resource original {@link Resource}, never <code>null</code>
+     * @param result object returned by {@link Resource#get()}, checked for type and never <code>null</code>
+     */
+    private void onResourceReady(Resource<?> resource, R result) {
+        // We must call isFirstReadyResource before setting status.
+        boolean isFirstResource = isFirstReadyResource();
+        status = Status.COMPLETE;
+        this.resource = resource;
+
+        if (requestListener == null || !requestListener.onResourceReady(result, model, target, loadedFromMemoryCache,
+                isFirstResource)) {
+            GlideAnimation<R> animation = animationFactory.build(loadedFromMemoryCache, isFirstResource);
+            target.onResourceReady(result, animation);
+        }
+
+        notifyLoadSuccess();
+
+        if (Log.isLoggable(TAG, Log.VERBOSE)) {
+            logV("Resource ready in " + LogTime.getElapsedMillis(startTime) + " size: "
+                    + (resource.getSize() * TO_MEGABYTE) + " fromCache: " + loadedFromMemoryCache);
+        }
+    }       
+            
+}
+```
+
+　　最后在图片加载完成的时候，调用到 GenericRequest 的 onResourceReady() 方法，而 onResourceReady() 方法会先回调 requestListener 的 onResourceReady() 方法，只有当这个 onResourceReady() 方法返回 false 的时候，才会继续调用 Target 的 onResourceReady() 方法，这也就是 listener() 方法的实现原理。
+
+　　另一个 onException() 方法的实现机制也是一摸一样的，代码同样是在 GenericRequest 类中。
+
+#### 5.2.3. GenericRequest#onException
+
+```java
+/**
+ * A {@link Request} that loads a {@link com.bumptech.glide.load.engine.Resource} into a given {@link Target}.
+ *
+ * @param <A> The type of the model that the resource will be loaded from.
+ * @param <T> The type of the data that the resource will be loaded from.
+ * @param <Z> The type of the resource that will be loaded.
+ * @param <R> The type of the resource that will be transcoded from the loaded resource.
+ */
+public final class GenericRequest<A, T, Z, R> implements Request, SizeReadyCallback,
+        ResourceCallback {
+        
+    /**
+     * A callback method that should never be invoked directly.
+     */
+    @Override
+    public void onException(Exception e) {
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG, "load failed", e);
+        }
+
+        status = Status.FAILED;
+        //TODO: what if this is a thumbnail request?
+        if (requestListener == null || !requestListener.onException(e, model, target, isFirstReadyResource())) {
+            setErrorPlaceholder(e);
+        }
+    }
+        
+}
+```
+
+　　可以看到，会回调 requestListener 的 onException() 方法，只有在 onException() 方法返回 false 的情况下才会继续调用 setErrorPlaceholder() 方法。也就是说，如果在 onException() 方法中返回了 true，那么 Glide 请求中使用 error(int resourceId) 方法设置的异常占位图就失效了。
 
 
-
-## 参考文章
+## 6. 参考文章
 1. [Android图片加载框架最全解析（四），玩转Glide的回调与监听](https://blog.csdn.net/guolin_blog/article/details/70215985)
 
 
