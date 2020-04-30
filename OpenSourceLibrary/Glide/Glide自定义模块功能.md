@@ -285,7 +285,7 @@ public class MyGlideModule implements GlideModule {
 
 　　默认情况下，Glide 使用的是基于原生 HttpURLConnection 进行订制的 HTTP 通讯组件，但是现在大多数的 Android 开发者都更喜欢使用 OkHttp，因此将 Glide 中的 HTTP 通讯组件修改成 OkHttp 的这个需求比较常见。
 
-### 4.1. Glide 有哪些组件
+### 4.1. Glide 组件源码分析
 
 　　首先来看 Glide 中目前有哪些组件，在 Glide 类的构造方法当中，如下所示：
 
@@ -297,36 +297,7 @@ public class MyGlideModule implements GlideModule {
  */
 public class Glide {
     Glide(Engine engine, MemoryCache memoryCache, BitmapPool bitmapPool, Context context, DecodeFormat decodeFormat) {
-        this.engine = engine;
-        this.bitmapPool = bitmapPool;
-        this.memoryCache = memoryCache;
-        this.decodeFormat = decodeFormat;
-        loaderFactory = new GenericLoaderFactory(context);
-        mainHandler = new Handler(Looper.getMainLooper());
-        bitmapPreFiller = new BitmapPreFiller(memoryCache, bitmapPool, decodeFormat);
-
-        dataLoadProviderRegistry = new DataLoadProviderRegistry();
-
-        StreamBitmapDataLoadProvider streamBitmapLoadProvider =
-                new StreamBitmapDataLoadProvider(bitmapPool, decodeFormat);
-        dataLoadProviderRegistry.register(InputStream.class, Bitmap.class, streamBitmapLoadProvider);
-
-        FileDescriptorBitmapDataLoadProvider fileDescriptorLoadProvider =
-                new FileDescriptorBitmapDataLoadProvider(bitmapPool, decodeFormat);
-        dataLoadProviderRegistry.register(ParcelFileDescriptor.class, Bitmap.class, fileDescriptorLoadProvider);
-
-        ImageVideoDataLoadProvider imageVideoDataLoadProvider =
-                new ImageVideoDataLoadProvider(streamBitmapLoadProvider, fileDescriptorLoadProvider);
-        dataLoadProviderRegistry.register(ImageVideoWrapper.class, Bitmap.class, imageVideoDataLoadProvider);
-
-        GifDrawableLoadProvider gifDrawableLoadProvider =
-                new GifDrawableLoadProvider(context, bitmapPool);
-        dataLoadProviderRegistry.register(InputStream.class, GifDrawable.class, gifDrawableLoadProvider);
-
-        dataLoadProviderRegistry.register(ImageVideoWrapper.class, GifBitmapWrapper.class,
-                new ImageVideoGifDrawableLoadProvider(imageVideoDataLoadProvider, gifDrawableLoadProvider, bitmapPool));
-
-        dataLoadProviderRegistry.register(InputStream.class, File.class, new StreamFileDataLoadProvider());
+        ...
 
         register(File.class, ParcelFileDescriptor.class, new FileDescriptorFileLoader.Factory());
         register(File.class, InputStream.class, new StreamFileLoader.Factory());
@@ -342,45 +313,413 @@ public class Glide {
         register(GlideUrl.class, InputStream.class, new HttpUrlGlideUrlLoader.Factory());
         register(byte[].class, InputStream.class, new StreamByteArrayLoader.Factory());
 
-        transcoderRegistry.register(Bitmap.class, GlideBitmapDrawable.class,
-                new GlideBitmapDrawableTranscoder(context.getResources(), bitmapPool));
-        transcoderRegistry.register(GifBitmapWrapper.class, GlideDrawable.class,
-                new GifBitmapWrapperDrawableTranscoder(
-                        new GlideBitmapDrawableTranscoder(context.getResources(), bitmapPool)));
-
-        bitmapCenterCrop = new CenterCrop(bitmapPool);
-        drawableCenterCrop = new GifBitmapWrapperTransformation(bitmapPool, bitmapCenterCrop);
-
-        bitmapFitCenter = new FitCenter(bitmapPool);
-        drawableFitCenter = new GifBitmapWrapperTransformation(bitmapPool, bitmapFitCenter);
+        ...
     }
     
 }
 ```
 
+　　可以看到，这里都是以调用 register() 方法的方式来注册一个组件，register() 方法中传入的参数表示 Glide 支持使用那种参数类型来加载图片，以及如何去处理这种类型的图片加载。例如：
 
+```java
+register(GlideUrl.class, InputStream.class, new HttpUrlGlideUrlLoader.Factory());
+```
 
+　　这句代码就表示，可以使用 Glide.with(context).load(new GlideUrl(“url...”)).into(imageView) 的方式来加载图片，而 HttpUrlGlideLoader.Factory 则是要负责处理具体的网络通讯逻辑。如果想要将 Glide 的 HTTP 通讯组件替换成 OkHttp 的话，那么只需要再自定义模块当中重新注册一个 GlideUrl 类型的组件就行了。
 
+　　在平时使用 Glide 加载图片时，大多数情况下都是直接将图片的 URL 字符串传入到 load() 方法当中的，很少会将它封装成 GlideUrl 对象之后再传入到 load() 方法当中，那为什么只需要重新注册一个 GlideUrl 类型的组件，而不需要去重新注册一个 String 类型的组件呢？其实道理很简单，因为 load(String) 方法只是 Glide 提供的一种简易的 API 封装而已，它的底层仍然还是调用的 GlideUrl 组件，因此再替换组件的时候只需要直接替换最底层的，这样就一步到位了。
 
+#### 4.1.1. 查看 HttpUrlGlideUrlLoader 源码
 
+　　Glide 的网络通讯逻辑是由 HttpUrlGlideUrlLoader.Factory 来负责的，那么查看一下它的源码。
 
+```java
+/**
+ * An {@link com.bumptech.glide.load.model.ModelLoader} for translating {@link com.bumptech.glide.load.model.GlideUrl}
+ * (http/https URLS) into {@link java.io.InputStream} data.
+ */
+public class HttpUrlGlideUrlLoader implements ModelLoader<GlideUrl, InputStream> {
 
+    private final ModelCache<GlideUrl, GlideUrl> modelCache;
 
-4.1. 将 HTTP 通讯组件修改成 OkHttp
+    /**
+     * The default factory for {@link com.bumptech.glide.load.model.stream.HttpUrlGlideUrlLoader}s.
+     */
+    public static class Factory implements ModelLoaderFactory<GlideUrl, InputStream> {
+        private final ModelCache<GlideUrl, GlideUrl> modelCache = new ModelCache<GlideUrl, GlideUrl>(500);
+
+        @Override
+        public ModelLoader<GlideUrl, InputStream> build(Context context, GenericLoaderFactory factories) {
+            return new HttpUrlGlideUrlLoader(modelCache);
+        }
+
+        @Override
+        public void teardown() {
+            // Do nothing.
+        }
+    }
+
+    public HttpUrlGlideUrlLoader() {
+        this(null);
+    }
+
+    public HttpUrlGlideUrlLoader(ModelCache<GlideUrl, GlideUrl> modelCache) {
+        this.modelCache = modelCache;
+    }
+
+    @Override
+    public DataFetcher<InputStream> getResourceFetcher(GlideUrl model, int width, int height) {
+        // GlideUrls memoize parsed URLs so caching them saves a few object instantiations and time spent parsing urls.
+        GlideUrl url = model;
+        if (modelCache != null) {
+            url = modelCache.get(model, 0, 0);
+            if (url == null) {
+                modelCache.put(model, 0, 0, model);
+                url = model;
+            }
+        }
+        return new HttpUrlFetcher(url);
+    }
+}
+```
+
+　　可以看到，HttpUrlGlideUrlLoader.Factory 是一个内部类，外层的 HttpUrlGlideUrlLoader 类实现了 ModelLoader < GlideUrl,InputStream > ，并重写了 getResourceFetcher() 方法。而在 getResourceFetcher() 方法中，又创建了一个 HttpUrlFectcher 的实例，在这里才是真正处理具体网络通讯逻辑的地方。
+
+#### 4.2.1. HttpUrlFetcher 类
+
+```java
+/**
+ * A DataFetcher that retrieves an {@link java.io.InputStream} for a Url.
+ */
+public class HttpUrlFetcher implements DataFetcher<InputStream> {
+    private static final String TAG = "HttpUrlFetcher";
+    private static final int MAXIMUM_REDIRECTS = 5;
+    private static final HttpUrlConnectionFactory DEFAULT_CONNECTION_FACTORY = new DefaultHttpUrlConnectionFactory();
+
+    private final GlideUrl glideUrl;
+    private final HttpUrlConnectionFactory connectionFactory;
+
+    private HttpURLConnection urlConnection;
+    private InputStream stream;
+    private volatile boolean isCancelled;
+
+    public HttpUrlFetcher(GlideUrl glideUrl) {
+        this(glideUrl, DEFAULT_CONNECTION_FACTORY);
+    }
+
+    // Visible for testing.
+    HttpUrlFetcher(GlideUrl glideUrl, HttpUrlConnectionFactory connectionFactory) {
+        this.glideUrl = glideUrl;
+        this.connectionFactory = connectionFactory;
+    }
+
+    @Override
+    public InputStream loadData(Priority priority) throws Exception {
+        return loadDataWithRedirects(glideUrl.toURL(), 0 /*redirects*/, null /*lastUrl*/, glideUrl.getHeaders());
+    }
+
+    private InputStream loadDataWithRedirects(URL url, int redirects, URL lastUrl, Map<String, String> headers)
+            throws IOException {
+        if (redirects >= MAXIMUM_REDIRECTS) {
+            throw new IOException("Too many (> " + MAXIMUM_REDIRECTS + ") redirects!");
+        } else {
+            // Comparing the URLs using .equals performs additional network I/O and is generally broken.
+            // See http://michaelscharf.blogspot.com/2006/11/javaneturlequals-and-hashcode-make.html.
+            try {
+                if (lastUrl != null && url.toURI().equals(lastUrl.toURI())) {
+                    throw new IOException("In re-direct loop");
+                }
+            } catch (URISyntaxException e) {
+                // Do nothing, this is best effort.
+            }
+        }
+        urlConnection = connectionFactory.build(url);
+        for (Map.Entry<String, String> headerEntry : headers.entrySet()) {
+          urlConnection.addRequestProperty(headerEntry.getKey(), headerEntry.getValue());
+        }
+        urlConnection.setConnectTimeout(2500);
+        urlConnection.setReadTimeout(2500);
+        urlConnection.setUseCaches(false);
+        urlConnection.setDoInput(true);
+
+        // Connect explicitly to avoid errors in decoders if connection fails.
+        urlConnection.connect();
+        if (isCancelled) {
+            return null;
+        }
+        final int statusCode = urlConnection.getResponseCode();
+        if (statusCode / 100 == 2) {
+            return getStreamForSuccessfulRequest(urlConnection);
+        } else if (statusCode / 100 == 3) {
+            String redirectUrlString = urlConnection.getHeaderField("Location");
+            if (TextUtils.isEmpty(redirectUrlString)) {
+                throw new IOException("Received empty or null redirect url");
+            }
+            URL redirectUrl = new URL(url, redirectUrlString);
+            return loadDataWithRedirects(redirectUrl, redirects + 1, url, headers);
+        } else {
+            if (statusCode == -1) {
+                throw new IOException("Unable to retrieve response code from HttpUrlConnection.");
+            }
+            throw new IOException("Request failed " + statusCode + ": " + urlConnection.getResponseMessage());
+        }
+    }
+
+    private InputStream getStreamForSuccessfulRequest(HttpURLConnection urlConnection)
+            throws IOException {
+        if (TextUtils.isEmpty(urlConnection.getContentEncoding())) {
+            int contentLength = urlConnection.getContentLength();
+            stream = ContentLengthInputStream.obtain(urlConnection.getInputStream(), contentLength);
+        } else {
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "Got non empty content encoding: " + urlConnection.getContentEncoding());
+            }
+            stream = urlConnection.getInputStream();
+        }
+        return stream;
+    }
+
+    @Override
+    public void cleanup() {
+        if (stream != null) {
+            try {
+                stream.close();
+            } catch (IOException e) {
+                // Ignore
+            }
+        }
+        if (urlConnection != null) {
+            urlConnection.disconnect();
+        }
+    }
+
+    @Override
+    public String getId() {
+        return glideUrl.getCacheKey();
+    }
+
+    @Override
+    public void cancel() {
+        // TODO: we should consider disconnecting the url connection here, but we can't do so directly because cancel is
+        // often called on the main thread.
+        isCancelled = true;
+    }
+
+    interface HttpUrlConnectionFactory {
+        HttpURLConnection build(URL url) throws IOException;
+    }
+
+    private static class DefaultHttpUrlConnectionFactory implements HttpUrlConnectionFactory {
+        @Override
+        public HttpURLConnection build(URL url) throws IOException {
+            return (HttpURLConnection) url.openConnection();
+        }
+    }
+}
+
+```
+
+　　其实就是一些 HttpURLConnection 的用法而已。
+
+### 4.2. 将 HTTP 通讯组件修改成 OkHttp
+
+　　首先第一步，是先将 OkHttp 的库引入到当前项目中，如下所示：
+
+```groovy
+dependencies {
+    compile 'com.squareup.okhttp3:okhttp:3.9.0'
+}
+```
+
+　　接着仿照着 HttpUrlFetcher 的代码来写，并且把 HTTP 的通讯组件替换成 OkHttp 就可以了。
+
+　　现在新建一个 OkHttpFetcher 类，并且同样实现 DataFetcher< InputStream > 接口，代码如下所示：
+
+```java
+public class OkHttpFetcher implements DataFetcher<InputStream> {
+
+    private final OkHttpClient client;
+    private final GlideUrl url;
+    private InputStream stream;
+    private ResponseBody responseBody;
+    private volatile boolean isCancelled;
+
+    public OkHttpFetcher(OkHttpClient client, GlideUrl url) {
+        this.client = client;
+        this.url = url;
+    }
+
+    @Override
+    public InputStream loadData(Priority priority) throws Exception {
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(url.toStringUrl());
+        for (Map.Entry<String, String> headerEntry : url.getHeaders().entrySet()) {
+            String key = headerEntry.getKey();
+            requestBuilder.addHeader(key, headerEntry.getValue());
+        }
+        requestBuilder.addHeader("httplib", "OkHttp");
+        Request request = requestBuilder.build();
+        if (isCancelled) {
+            return null;
+        }
+        Response response = client.newCall(request).execute();
+        responseBody = response.body();
+        if (!response.isSuccessful() || responseBody == null) {
+            throw new IOException("Request failed with code: " + response.code());
+        }
+        stream = ContentLengthInputStream.obtain(responseBody.byteStream(),
+                responseBody.contentLength());
+        return stream;
+    }
+
+    @Override
+    public void cleanup() {
+        try {
+            if (stream != null) {
+                stream.close();
+            }
+            if (responseBody != null) {
+                responseBody.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public String getId() {
+        return url.getCacheKey();
+    }
+
+    @Override
+    public void cancel() {
+        isCancelled = true;
+    }
+}
+```
+
+　　上面的代码就是按照 HttpUrlFetcher 写出来的，用的也都是一些 OkHttp 的基本用法。可以看到，使用 OkHttp 来编写网络通讯的代码要比使用 HttpURLConnetcion 简单很多，代码行数也少了很多。而且添加了一个 httplib:OkHttp 的请求头。
+
+　　接着仿照 HttpUrlGlideUrlLoader 再写一个 OkHttpGlideUrlLoader ，新建一个  OkHttpGlideLoader 类，并且实现 ModelLoader< GlideUrl，InputStram > 接口，代码如下：
+
+```java
+public class OkHttpGlideUrlLoader implements ModelLoader<GlideUrl, InputStream> {
+
+    private OkHttpClient okHttpClient;
+
+    public static class Factory implements ModelLoaderFactory<GlideUrl, InputStream> {
+
+        private OkHttpClient client;
+
+        public Factory() {
+        }
+
+        public Factory(OkHttpClient client) {
+            this.client = client;
+        }
+
+        private synchronized OkHttpClient getOkHttpClient() {
+            if (client == null) {
+                client = new OkHttpClient();
+            }
+            return client;
+        }
+
+        @Override
+        public ModelLoader<GlideUrl, InputStream> build(Context context, GenericLoaderFactory factories) {
+            return new OkHttpGlideUrlLoader(getOkHttpClient());
+        }
+
+        @Override
+        public void teardown() {
+        }
+    }
+
+    public OkHttpGlideUrlLoader(OkHttpClient client) {
+        this.okHttpClient = client;
+    }
+
+    @Override
+    public DataFetcher<InputStream> getResourceFetcher(GlideUrl model, int width, int height) {
+        return new OkHttpFetcher(okHttpClient, model);
+    }
+}
+```
+
+　　注意这里的 Factory 提供了两个构造方法，一个是不带任何参数的，一个是带 OkHttpClient 参数的。如果对 OkHttp 不需要进行任何自定义的配置，那么就调用无参的 Factory 构造函数即可，这样会在内部自动创建一个 OkHttpClient 实例。但如果需要添加拦截器，或者修改 OkHttp 的默认超时等等配置，那么就自己创建一个 OkHttpClient 的实例，然后传入到 Factory 的构造方法当中就行了。
+
+　　最后将创建的 OkHttpGlideUrlLoader 和 OkHttpFetcher 注册到 Glide 当中，将原来的 HTTP 通讯组件给替换掉，如下所示：
+
+```java
+public class MyGlideModule implements GlideModule {
+
+    ...
+
+    @Override
+    public void registerComponents(Context context, Glide glide) {
+        glide.register(GlideUrl.class, InputStream.class, new OkHttpGlideUrlLoader.Factory());
+    }
+
+}
+```
+
+　　可以看到，这里也是调用了 Glide 的 register() 方法来注册组件的。register() 方法中使用的 Map 类型来存储已注册的组件，因此这里重新注册了一遍 GlideUrl.class 类型的组件，就把原来的组件给替换掉了。
+
+　　然后再修改一下 Glide 加载图片的代码，如下所示：
+
+```java
+String url = "http://guolin.tech/book.png";
+Glide.with(this)
+     .load(url)
+     .skipMemoryCache(true)
+     .diskCacheStrategy(DiskCacheStrategy.NONE)
+     .into(imageView);
+```
 
 ## 5. 更简单的组件替换
 
+　　Glide 官方提供了非常简便的 HTTP 组件替换方式，并且除了支持 OkHttp3 之外，还支持 OkHttp2 和 Volley。
+
+　　只需要在 gradle 当中添加几行库的配置就行了。
+
+### 5.1. 使用 OkHttp3
+
+　　使用 OkHttp3 来作为 HTTP 通讯组件的配置如下：
+
+```groovy
+dependencies {
+    compile 'com.squareup.okhttp3:okhttp:3.9.0'
+    compile 'com.github.bumptech.glide:okhttp3-integration:1.5.0@aar'
+}
+```
+
+### 5.2. 使用 OkHttp2
+
+　　使用 OkHttp2 来作为 HTTP 通讯组件的配置如下：
+
+```groovy
+dependencies {
+    compile 'com.github.bumptech.glide:okhttp-integration:1.5.0@aar'
+    compile 'com.squareup.okhttp:okhttp:2.7.5'
+}
+```
+
+### 5.3. 使用 Volley
+
+　　使用 Volley 来作为 HTTP 通讯组件的配置如下：
+
+```groovy
+dependencies {
+    compile 'com.github.bumptech.glide:volley-integration:1.5.0@aar'  
+    compile 'com.mcxiaoke.volley:library:1.0.19'  
+}
+```
+
+　　当然了，这些库背后的工作原理和自己手动实现替换 HTTP 组件的原理是一摸一样的。而学会了手动替换组件的原理就能更加轻松地扩展更多丰富地功能，因此掌握这一技能还是非常重要的。
 
 
-
-
-
-## 参考文章
-[Android图片加载框架最全解析（六），探究Glide的自定义模块功能](https://blog.csdn.net/guolin_blog/article/details/78179422)
-
-[Android图片加载框架最全解析（七），实现带进度的Glide图片加载功能](https://blog.csdn.net/guolin_blog/article/details/78357251)
-
-[Android图片加载框架最全解析（八），带你全面了解Glide 4的用法](https://blog.csdn.net/guolin_blog/article/details/78582548)
+## 6. 参考文章
+1. [Android图片加载框架最全解析（六），探究Glide的自定义模块功能](https://blog.csdn.net/guolin_blog/article/details/78179422)
 
 
 
