@@ -27,7 +27,7 @@
 layoutInflater.inflate();
 ```
 
-　　inflate() 方法一般接收两个参数，似一个参数就是要加载的布局 id，第二个参数是指给该布局的外部再嵌套一层复布局，如果不需要就直接传 null。这样就成功创建了一个布局的实例，之后再将它添加到指定的位置就可以显示了。
+　　inflate() 方法一般接收两个参数，第一个参数就是要加载的布局 id，第二个参数是指给该布局的外部再嵌套一层父布局，如果不需要就直接传 null。这样就成功创建了一个布局的实例，之后再将它添加到指定的位置就可以显示了。
 
 ## 3. 源码分析
 
@@ -155,7 +155,7 @@ public abstract class LayoutInflater {
                         throw new InflateException("<merge /> can be used only with a valid "
                                 + "ViewGroup root and attachToRoot=true");
                     }
-
+										// 调用 rInflate 方法
                     rInflate(parser, root, inflaterContext, attrs, false);
                 } else {
                     // Temp is the root view that was found in the xml
@@ -183,7 +183,7 @@ public abstract class LayoutInflater {
                     }
 
                     // Inflate all children under temp against its context.
-										//加载根视图的所有子视图
+										// 加载根视图的所有子视图
                     rInflateChildren(parser, temp, attrs, true);
 
                     if (DEBUG) {
@@ -192,7 +192,7 @@ public abstract class LayoutInflater {
 
                     // We are supposed to attach all the views we found (int temp)
                     // to root. Do that now.
-										//将找到的所有子图添加到根视图上去
+										// 将找到的所有子图添加到根视图上去
                     if (root != null && attachToRoot) {
                         root.addView(temp, params);
                     }
@@ -288,41 +288,11 @@ public abstract class LayoutInflater {
 
 　　这样的话，把整个布局文件都解析完成后就形成了一个完整的 DOM 结构，最终会把最顶层的根布局返回，至此 inflate() 过程全部结束。
 
-　　setContentView() 的方法在 onCreate() 方法中调用完成之后，随后会进入 resume 状态，接下来继续去 ActivityThread 查看 resume 的处理。
+　　setContentView() 的方法在 onCreate() 方法中调用完成之后，随后会进入 resume 状态，接着会调用 ActivityThread 的 handleResumeActivity() 方法处理 resume。
 
-### 3.2. inflate 方法
-
-　　inflate() 方法还有个接收三个参数的方法重载，如下：
+#### 3.1.4. ActivityThread#handleResumeActivity
 
 ```java
-public View inflate(@LayoutRes int resource, @Nullable ViewGroup root, boolean attachToRoot)
-```
-
-　　关于第三个参数 attachToRoot 的一些结论：
-
-1. 如果 root 为 null，attachToRoot 将失去作用，设置任何值都没有意义。
-2. 如果 root 不为 null，attachToRoot 设为 true，则会给加载的布局文件指定一个父布局，即 root。
-3. 如果 root 不为 null，attachToRoot 设为 false，则会将布局文件最外层的所有 layout 属性进行设置，当该 view 被添加到父 view 当中时，这些 layout 属性会自动生效。
-4. 在不设置 attachToRoot 参数的情况下，如果 root 不为 null，attachToRoot 参数默认为 true。
-
-## 关于 layout_width 和 layout_height
-
-　　layout_width 和 layout_height 是用于设置 View 在布局中的大小的，也就是说，首先 View 必须存在于一个布局中，之后如果将 layout_width 设置成 match_parent 表示让 View 的宽度填充满布局，如果设置成 wrap_content 表示让 View 的宽度刚好可以包含其内容，如果设置成具体的数值则 View 的宽度会变成相应的数值。这也是为什么这两个属性叫做 layout_width 和 layout_height，而不是 width 和 height。
-
-　　平时在 Activity 中指定布局文件的时候，最外层的那个布局是可以指定大小的，layout_width 和 layout_height 都是有作用的，这是因为，在 setContentView() 方法中，Android 会自动在布局文件的最外层再嵌套一个 FrameLayout，所以 layout_width 和 layout_height 属性才会有效果。
-
-　　任何一个 Activity 中显示的界面其实主要都由两部分组成，标题栏和内容栏布局。标题栏就是很多界面顶部显示的那部分内容，可以在代码中控制让它是否显示。而内容栏内容就是一个 FrameLayout，这个布局的 id 叫做 content，调用 setContentView() 方法时所传入的布局其实就是放到这个 Fragment 中的，这也是为什么这个方法叫做 setContentView() ，而不是 setView()。
-
-　　Activity 窗口的组成图：
-
-![](image/Activity窗口的组成图.png)
-
-
-
-
-
-## 从 ActivityThread 的 resume 处理开始
-```
 public final class ActivityThread {
     final void handleResumeActivity(IBinder token,
             boolean clearHide, boolean isForward, boolean reallyResume, int seq, String reason) {
@@ -359,6 +329,7 @@ public final class ActivityThread {
             }
             if (r.window == null && !a.mFinished && willBeVisible) {
                 r.window = r.activity.getWindow();
+              	// 获取布局
                 View decor = r.window.getDecorView();
                 decor.setVisibility(View.INVISIBLE);
                 ViewManager wm = a.getWindowManager();
@@ -380,7 +351,7 @@ public final class ActivityThread {
                 }
                 if (a.mVisibleFromClient && !a.mWindowAdded) {
                     a.mWindowAdded = true;
-					//将视图添加上去
+										// 将视图添加上去
                     wm.addView(decor, l);
                 }
             ...
@@ -391,26 +362,35 @@ public final class ActivityThread {
 }
 
 ```
-　　handleResumeActivity() 方法中调用 ViewMananger 的 addView() 添加视图，而 ViewManager 是一个接口，WindowManangerImpl 是实现它的类，所以查看 WindowManagerImpl 的 addView() 方法：
-```
+
+　　handleResumeActivity() 方法中调用 ViewMananger 的 addView() 添加视图，而 ViewManager 是一个接口，WindowManangerImpl 是实现它的类，所以查看 WindowManagerImpl 的 addView() 方法。
+
+#### 3.1.5. WindowManagerImpl#addView
+
+```java
 public final class WindowManagerImpl implements WindowManager {
     @Override
     public void addView(@NonNull View view, @NonNull ViewGroup.LayoutParams params) {
         applyDefaultToken(params);
+      	// 调用 WindowManagerGlobal 的 addView 方法
         mGlobal.addView(view, params, mContext.getDisplay(), mParentWindow);
     }
 }
 ```
-　　WindowManagerImpl 的 addView() 接着调用了 WindowManagerGlobal 的 addView() 方法：
-```
+
+　　WindowManagerImpl 的 addView() 接着调用了 WindowManagerGlobal 的 addView() 方法。
+
+#### 3.1.6. WindowManagerGlobal#addView
+
+```java
 public final class WindowManagerGlobal {
     public void addView(View view, ViewGroup.LayoutParams params,
             Display display, Window parentWindow) {
-        //只贴出了关键的代码
-		...
+        // 只贴出了关键的代码
+				...
 
         // do this last because it fires off messages to start doing things
-		//设置 ViewRoot 的视图
+				// 设置 ViewRoot 的视图
         try {
             root.setView(view, wparams, panelParentView);
         } catch (RuntimeException e) {
@@ -419,8 +399,12 @@ public final class WindowManagerGlobal {
     }
 }
 ```
-　　WindowMnanagerGolder 的 addView() 方法向 ViewRoot 添加视图：
-```
+
+　　WindowMnanagerGolder 的 addView() 方法向 ViewRoot 添加视图。
+
+#### 3.1.7. ViewRootImpl#setView
+
+```java
 public final class ViewRootImpl implements ViewParent,
         View.AttachInfo.Callbacks, ThreadedRenderer.HardwareDrawCallbacks {
     /**
@@ -503,6 +487,7 @@ public final class ViewRootImpl implements ViewParent,
                 // Schedule the first layout -before- adding to the window
                 // manager, to make sure we do the relayout before receiving
                 // any other events from the system.
+              	// 调用 requestLayout 方法
                 requestLayout();
                 if ((mWindowAttributes.inputFeatures
                         & WindowManager.LayoutParams.INPUT_FEATURE_NO_INPUT_CHANNEL) == 0) {
@@ -592,14 +577,18 @@ public final class ViewRootImpl implements ViewParent,
 }
 ```
 
-　　ViewRootImpl 的 setView() 方法代码这么多，其实对于我们来说只需要看到它里面调用了 requestLayout() 方法即可。requestLayout() 用来重绘页面，视图的 measure、layout、draw 都会重新调用:
-```
+　　ViewRootImpl 的 setView() 方法代码这么多，其实只需要看到它里面调用了 requestLayout() 方法即可。requestLayout() 用来重绘页面，视图的 measure、layout、draw 都会重新调用。
+
+#### 3.1.8. ViewRootImpl#requestLayout
+
+```java
 public final class ViewRootImpl implements ViewParent,
         View.AttachInfo.Callbacks, ThreadedRenderer.HardwareDrawCallbacks {
 
     final class TraversalRunnable implements Runnable {
         @Override
         public void run() {
+          	// 调用 doTraversal 方法
             doTraversal();
         }
     }
@@ -610,6 +599,7 @@ public final class ViewRootImpl implements ViewParent,
         if (!mHandlingLayoutInLayoutRequest) {
             checkThread();
             mLayoutRequested = true;
+          	// 调用 scheduleTraversals 方法
             scheduleTraversals();
         }
     }
@@ -618,6 +608,7 @@ public final class ViewRootImpl implements ViewParent,
         if (!mTraversalScheduled) {
             mTraversalScheduled = true;
             mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBarrier();
+          	// 发出 Choreographer.CALLBACK_TRAVERSAL 消息，接收到消息后执行 mTraversalRunnable 的 run 方法
             mChoreographer.postCallback(
                     Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
             if (!mUnbufferedInputDispatch) {
@@ -637,6 +628,7 @@ public final class ViewRootImpl implements ViewParent,
                 Debug.startMethodTracing("ViewAncestor");
             }
 
+          	// 调用 performTraversals 方法
             performTraversals();
 
             if (mProfile) {
@@ -648,11 +640,39 @@ public final class ViewRootImpl implements ViewParent,
 
 }
 ```
+
 　　ViewRootImpl 的 requestLayout() 最终会调用到 performTraversals() 方法，requestLayout() 方法会先调用 scheduleTraversals() 方法，scheduleTraversals() 方法调用 Choreographer 的 postCallBack() 方法向主线程（UI 线程）发送重绘页面的消息，等到主线程处理处理该消息时会调用 mTraversalRunnable 的 run() 方法，调用到 doTraversal() 方法，在 doTraversal() 方法中调用了 performTraversals() 方法，在 performTraversals() 方法中会依次调用 View 的 measure、layout、draw 方法将视图显示到屏幕上。
 
-　　**总结：**setContentView 会将整个布局文件都解析完成并行程一个完整的 Dom 结构，并设置最顶部的根布局。在 resume 的时候才会进行视图的绘制操作，通过调用 requestLayout() 最终调用到 performTraversales() 方法，performTraversales() 方法会一次调用 View 的 measure、layout、draw 步骤将视图显示在屏幕上。
+　　**总结：**setContentView 会将整个布局文件都解析完成并行程一个完整的 Dom 结构，并设置最顶部的根布局。在 resume 的时候才会进行视图的绘制操作，通过调用 requestLayout() 最终调用到 performTraversales() 方法，performTraversales() 方法会依次调用 View 的 measure、layout、draw 步骤将视图显示在屏幕上。
+
+### 3.2. inflate 方法
+
+　　inflate() 方法还有个接收三个参数的方法重载，如下：
+
+```java
+public View inflate(@LayoutRes int resource, @Nullable ViewGroup root, boolean attachToRoot)
+```
+
+　　关于第三个参数 attachToRoot 的一些结论：
+
+1. 如果 root 为 null，attachToRoot 将失去作用，设置任何值都没有意义。
+2. 如果 root 不为 null，attachToRoot 设为 true，则会给加载的布局文件指定一个父布局，即 root。
+3. 如果 root 不为 null，attachToRoot 设为 false，则会将布局文件最外层的所有 layout 属性进行设置，当该 view 被添加到父 view 当中时，这些 layout 属性会自动生效。
+4. 在不设置 attachToRoot 参数的情况下，如果 root 不为 null，attachToRoot 参数默认为 true。
+
+## 4. 关于 layout_width 和 layout_height
+
+　　layout_width 和 layout_height 是用于设置 View 在布局中的大小的，也就是说，首先 View 必须存在于一个布局中，之后如果将 layout_width 设置成 match_parent 表示让 View 的宽度填充满布局，如果设置成 wrap_content 表示让 View 的宽度刚好可以包含其内容，如果设置成具体的数值则 View 的宽度会变成相应的数值。这也是为什么这两个属性叫做 layout_width 和 layout_height，而不是 width 和 height。
+
+　　平时在 Activity 中指定布局文件的时候，最外层的那个布局是可以指定大小的，layout_width 和 layout_height 都是有作用的，这是因为，在 setContentView() 方法中，Android 会自动在布局文件的最外层再嵌套一个 FrameLayout，所以 layout_width 和 layout_height 属性才会有效果。
+
+　　任何一个 Activity 中显示的界面其实主要都由两部分组成，标题栏和内容栏布局。标题栏就是很多界面顶部显示的那部分内容，可以在代码中控制让它是否显示。而内容栏内容就是一个 FrameLayout，这个布局的 id 叫做 content，调用 setContentView() 方法时所传入的布局其实就是放到这个 Fragment 中的，这也是为什么这个方法叫做 setContentView() ，而不是 setView()。
+
+　　Activity 窗口的组成图：
+
+![](image/Activity窗口的组成图.png)
 
 
-## 参考文章
-[Android LayoutInflater原理分析，带你一步步深入了解View(一)](https://blog.csdn.net/guolin_blog/article/details/12921889)
+## 5. 参考文章
+1. [Android LayoutInflater原理分析，带你一步步深入了解View(一)](https://blog.csdn.net/guolin_blog/article/details/12921889)
 

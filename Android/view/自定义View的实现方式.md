@@ -8,7 +8,7 @@
 
 　　绘制的代码是写在 onDraw() 方法中的。
 
-### 1.1. 实现
+### 1.1. 自定义计数器 View
 
 　　自定义一个计数器 View，这个 View 可以响应用户的点击事件，并自动记录一共点击了多少次。
 
@@ -54,13 +54,13 @@ public class CounterView extends View implements OnClickListener {
 }
 ```
 
-　　可以看到，首先在 CounterView 的构造函数中初始化了一些数据，并给这个 View 的本身注册了点击事件，这样当 CounterView 被点击的时候。onClick() 方法就会得到调用。而 onClick() 方法中的逻辑只是对 mCount 这个计数器加 1，然后调用 invalidate() 方法。调用 invalidate() 方法会导致视图进行重绘，因此 onDraw() 方法将会得到调用。
+　　可以看到，首先在 CounterView 的构造函数中初始化了一些数据，并给这个 View 的本身注册了点击事件，这样当 CounterView 被点击的时候，onClick() 方法就会得到调用。而 onClick() 方法中的逻辑只是对 mCount 这个计数器加 1，然后调用 invalidate() 方法。调用 invalidate() 方法会导致视图进行重绘，因此 onDraw() 方法将会得到调用。
 
-　　既然 CounterView 是一个自绘视图，那么最主要的逻辑就是在 onDraw() 方法里了。这里首先是将 Paint 画笔设置为蓝色，然后调用 Canvas 的 drawRect() 方法绘制一个矩形，这个矩形就是 ConterView 的背景图。接着将画笔设置为黄色，准备在背景上面绘制当前的技术，注意这里先是调用了 getTextBounds() 方法来获取到文字的宽度和高度，然后调用了 drawText() 方法去进行绘制就可以了。
+　　既然 CounterView 是一个自绘视图，那么最主要的逻辑就是在 onDraw() 方法里了。这里首先是将 Paint 画笔设置为蓝色，然后调用 Canvas 的 drawRect() 方法绘制一个矩形，这个矩形就是 ConterView 的背景图。接着将画笔设置为黄色，准备在背景上面绘制当前的计数，注意这里先是调用了 getTextBounds() 方法来获取到文字的宽度和高度，然后调用了 drawText() 方法去进行绘制就可以了。
 
 　　这样，一个自定义的 View 就已经完成了，并且这个 CounterView 是具备自动计数功能的。使用 CounterView 和使用普通的控件一样。比如在布局文件中加入如下代码：
 
-```java
+```xml
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
@@ -73,19 +73,21 @@ public class CounterView extends View implements OnClickListener {
 </RelativeLayout>
 ```
 
-　　可以看到，这里将 CounterView 放入到了一个 RelativeLayout 中，然后可以像使用普通控件来给 CounterView 指定各种属性，比如通过 layout_width 和 layout_height 来指定 CounterView 的宽高，通过 android:layout_centerInParent 来指定它在布局里居中显示。只不过需要注意，自定义的 View 在使用的时候一定要写出完整的包名，不然系统将无法找到这个 View。
+　　可以看到，这里将 CounterView 放入到了一个 RelativeLayout 中，然后可以像使用普通控件来给 CounterView 指定各种属性，比如通过 layout_width 和 layout_height 来指定 CounterView 的宽高，通过 android:layout_centerInParent 来指定它在布局里居中显示。
+
+　　只不过需要注意，自定义的 View 在使用的时候一定要写出完整的包名，不然系统将无法找到这个 View。
 
 ## 2. 组合控件
 
 　　组合控件的意思就是，并不需要自己去绘制视图上显示的内容，而只是用系统原生的控件就好了，但可以将几个系统原生的控件组合在一起，这样创建出的控件就被称为组合控件。
 
-### 2.1. 实现
+### 2.1. 标题栏
 
 　　标题栏是一个很常见的控件，很多界面的头部都会放置一个标题栏，标题栏上会有一个返回按钮和标题，点击按钮后就可以返回到上一个界面。
 
 　　新建一个 title.xml 布局文件，代码如下：
 
-```java
+```xml
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -153,7 +155,7 @@ public class TitleView extends FrameLayout {
 }
 ```
 
-　　TitleView 中的代码非常简单，在 TtileView 的构建方法中，调用了 LayoutInflater 的 inflate() 方法来加载刚刚定义的 title.xml 布局。
+　　TitleView 中的代码非常简单，在 TitleView 的构建方法中，调用了 LayoutInflater 的 inflate() 方法来加载刚刚定义的 title.xml 布局。
 
 　　接下来调用 findViewById() 方法获取到了返回按钮的实例，然后在它的 onClick 事件中调用 finish() 方法来关闭当前的 Activity，也就相当于实现返回功能了。
 
@@ -161,7 +163,7 @@ public class TitleView extends FrameLayout {
 
 　　一个自定义的标题栏就完成了，引用这个自定义 View 的方法和基本方法是相同的，在布局文件中添加如下代码：
 
-```java
+```xml
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -186,7 +188,7 @@ public class TitleView extends FrameLayout {
 
 　　这种自定义控件的特点就是不仅能够按照需求加入相应的功能，还可以保留原生控件的所有功能。
 
-### 3.1. 实现
+### 3.1. 有删除按钮的 ListView
 
 　　对 ListView 进行扩展，加入在 ListView 上滑动就可以显示出一个删除按钮，点击按钮就会删除相应数据的功能。
 
@@ -315,7 +317,7 @@ public class MyListView extends ListView implements OnTouchListener,
 
 　　自定义 View 的功能到此就完成了，接下来就是使用这个自定义 View。首先需要创建一个 ListView 子项的布局文件，新建 my_list_view_item.xml，代码如下所示：
 
-```java
+```xml
 
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -422,7 +424,7 @@ public class MainActivity extends Activity {
 }
 ```
 
-　　这样就把整个例自的代码就完成了。MyListView 可以像 ListView 一样，正常显示所有的数据，但是当用手机在 MyListView 的某一行上快速滑动时，就会有一个删除按钮显示出来。点击一下删除按钮就可以将这一行的数据删除。此时的 MyListView 不仅保留了 ListView 原生的所有功能，还增加了一个滑动进行删除的功能，确实是一个不折不扣的继承控件。
+　　这样就把整个例子的代码就完成了。MyListView 可以像 ListView 一样，正常显示所有的数据，但是当用手机在 MyListView 的某一行上快速滑动时，就会有一个删除按钮显示出来。点击一下删除按钮就可以将这一行的数据删除。此时的 MyListView 不仅保留了 ListView 原生的所有功能，还增加了一个滑动进行删除的功能，确实是一个继承控件。
 
 
 ## 4. 参考文章
