@@ -198,23 +198,125 @@ DiskCacheStrategy.AUTOMATIC：表示让 Glide 根据图片资源智能地选择�
 
 ## 7. 指定加载格式
 
+　　Glide 其中一个非常亮眼的功能就是可以加载 GIF 图片，而同样作为非常出色的图片加载框架的 Picasso 是不支持这个功能的。
 
+　　而使用 Glide 加载 GIF 图并不需要编写什么额外的代码，Glide 内部会自动判断图片格式。
+
+　　也就是说，不管传入的是一张普通图片，还是一张 GIF 图片，Glide 都会自动进行判断，并且可以正确地把它解析并展示出来。
+
+　　如果想要制定加载格式，只需要再串接一个新的方法就可以了，如下所示：
+
+```java
+Glide.with(this)
+     .asBitmap()
+     .load("http://test.image/test.gif")
+     .into(imageView);
+```
+
+　　可以看到，这里在 with() 方法的后面加入了一个 asBitmap() 方法，这个方法的意思就是说这里只允许加载静态图片，不需要 Glide 去自动进行图片格式的判断了。如果传入的还是一张 GIF 图的话，Glide 会展示这张 GIF 图的第一帧，而不会去播放它。
+
+　　在 Glide 3 中的语法是先 load() 再 asBitmap() 的，而在 Glide 4 中是先 asBitmap() 再 load() 的。
+
+　　那么类似地，能强制制定加载静态图片，那也能强制指定加载动态图片，对应的方法是 asGif()。而 Glide 4 中又新增了 asFile() 方法和 asDrawable() 方法，分别用于强制指定文件格式的加载和 Drawable 格式的加载，用法都比较简单。
 
 ## 8. 回调与监听
 
-
-
 ### 8.1. into() 方法
 
+　　Glide 的 into() 方法中是可以传入 ImageView 的。那么 into() 方法还可以传入别的参数，也可以让 Glide 加载出来的图片不显示到 ImageView 上，这是需要用到自定义 Target 功能。
 
+　　下面是一种 SimpleTarget 的用法，代码如下：
+
+```java
+SimpleTarget<Drawable> simpleTarget = new SimpleTarget<Drawable>() {
+    @Override
+    public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
+        imageView.setImageDrawable(resource);
+    }
+};
+
+public void loadImage(View view) {
+    Glide.with(this)
+         .load("http://test.image/test.png")
+         .into(simpleTarget);
+}
+```
+
+　　在这里创建了一个 SimpleTarget 的实例，并且指定它的泛型是 Drawable，然后重写了 onResourceReady() 方法。在 onResourceReady() 方法中，就可以获取到 Glide 加载出来的图片对象了，也就是方法参数中传过来的 Drawable 对象。有了这个对象之后就可以使用它进行任意的逻辑操作，这里只是简单把它显示到了 ImageView 上。
+
+　　SimpleTarget 的实现创建好了，那么只需要在加载图片的时候将它传入到 into() 方法中就可以了。
 
 ### 8.2. preload() 方法
 
+　　Glide 加载图片虽说非常智能，它会自动判断该图片是否已经有缓存了，如果有的话就直接从缓存中读取，没有的话再从网络去下载。但是如果希望提前对图片进行一个预加载，等真正需要加载图片的时候就直接从缓存中读取，不用再等待漫长的网络加载时间了。
 
+　　Glide 专门提供了预加载的接口，也就是 preload() 方法，只需要直接使用就可以了。
+
+　　preload() 方法有两个方法重载，一个不带参数，表示将会加载图片的原始尺寸，另一个可以通过参数指定加载图片的宽和高。
+
+　　preload() 方法的用法也非常简单，直接使用它来替换 into() 方法即可，如下所示：
+
+```java
+Glide.with(this)
+     .load("http://test.image/test.png")
+     .preload();
+```
+
+　　调用了预加载之后，之后想再去加载这张图片就会非常快了，因为 Glide 会直接从缓存当中去读取图片并显示出来，代码如下所示：
+
+```java
+Glide.with(this)
+     .load("http://test.image/test.png")
+     .into(imageView);
+```
 
 ### 8.3. submit() 方法
 
+　　Glide 将图片加载接口设计成这样也是希望使用起来更加的方便，不用过多去考虑底层的实现细节。但如果就是想要去访问图片的缓存文件就需要用到 submit() 方法了。
 
+　　submit() 方法其实就是对应的 Glide 3 中的 downloadOnly() 方法，和 preload() 方法类似，submit() 方法也是可以替换 into() 方法的，不过 submit() 方法的用法明显要比 preload() 方法复杂不少。这个方法只会下载图片，而不会丢图片进行加载。当图片下载完成之后，就可以得到图片的存储路径，以便后续进行操作。
+
+　　submit() 方法有两个方法重载：
+
+```java
+submit()
+submit(int width, int height)
+```
+
+　　其中 submit() 方法是用于下载原始尺寸的图片，而 submit(int width, int height) 则可以指定下载图片的尺寸。
+
+　　以 submit() 方法来举例。当调用了 submit() 方法后会立即返回一个 FutureTarget 对象，然后 Glide 会在后台开始下载图片文件。接下来调用 FutureTarget 的 get() 方法就可以获取下载好的图片文件了，如果此时图片还没有下载完，那么 get() 方法就会阻塞住，一直等到图片下载完成才会有值返回。
+
+　　代码如下：
+
+```java
+public void downloadImage() {
+    new Thread(new Runnable() {
+        @Override
+        public void run() {
+            try {
+                String url = "http://www.test.image/test.png";
+                final Context context = getApplicationContext();
+                FutureTarget<File> target = Glide.with(context)
+                        .asFile()
+                        .load(url)
+                        .submit();
+                final File imageFile = target.get();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(context, imageFile.getPath(), Toast.LENGTH_LONG).show();
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }).start();
+}
+```
+
+　　首先，submit() 方法必须要用在子线程当中，因为 FutureTarget 的 get() 方法是会阻塞线程的，因此
 
 ### 8.4. listener() 方法
 
