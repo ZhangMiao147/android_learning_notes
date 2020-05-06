@@ -316,32 +316,211 @@ public void downloadImage() {
 }
 ```
 
-　　首先，submit() 方法必须要用在子线程当中，因为 FutureTarget 的 get() 方法是会阻塞线程的，因此
+　　首先，submit() 方法必须要用在子线程当中，因为 FutureTarget 的 get() 方法是会阻塞线程的，因此这里的第一步就是 new 了一个 Thread。在子线程当中，先获取了一个 Application Context，这个时候不能再用 Activity 作为 Context 了，因为会有 Actiivty 销毁了但子线程还没执行完这种可能出现。
+
+　　接下来就是 Glide 的基本用法，只不过将 into() 方法替换成了 submit() 方法，并且还使用了一个 asFile() 方法来指定加载格式。submit() 方法会返回一个 FutureTarget 对象，这个时候其实 Glide 已经开始在后台下载图片了，随时都可以调用 FutureTarget 的 get() 方法来获取下载的图片文件，只不过如果图片还没下载好线程会暂时阻塞住，等下载完成了才会把图片的 File 对象返回。
+
+　　最后，使用 runOnUiThread() 切回到主线程，然后使用 Toast 将下载好的图片文件路径显示出来。
+
+　　这样就能清晰地看出来图片完整地缓存路径是什么了。
 
 ### 8.4. listener() 方法
 
+　　其实 listener() 方法的作用非常普遍，它可以用来监听 Glide 加载图片的状态。
 
+　　举个例子，比如说刚才使用了 preload() 方法来对图片进行预加载，但是怎样确定预加载有没有完成呢？还有如果 Glide 加载图片失败了，该怎么样调试错误的原因呢？答案都在 listener() 方法当中。
+
+　　不同于刚才几个方法都是要替换 into() 方法的，listener() 是结合 into() 方法一起使用的，当然也可以结合 preload() 方法一起使用。最基本的用法如下所示：
+
+```java
+Glide.with(this)
+     .load("http://www.guolin.tech/book.png")
+     .listener(new RequestListener<Drawable>() {
+         @Override
+         public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+             return false;
+         }
+
+         @Override
+         public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+             return false;
+         }
+     })
+     .into(imageView);
+```
+
+　　这里在 into() 方法之前串接了一个 listener() 方法，然后实现了一个 RequestListener 的实例。其中 RequestListener 需要实现两个方法，一个 onResourceReady() 方法，而当图片加载失败的时候就会回调 onLoadFailed() 方法，onLoadFailed() 方法中会将失败的 GlideException 参数传进来，这样就可以定位具体失败的原因了。
+
+　　listener() 方法就是这么简单。不过还有一点需要处理，onResourceReady() 方法和 onLoadFailed() 方法都有一个布尔值的返回值，返回 false 就表示这个事件没有被处理，还会继续向下传递，返回 true 就表示这个事件已经被处理掉了，从而不会再继续向下传递。举个简单点的例子，如果在 RequestListener 的 onResourceReady() 方法中返回了 true，那么就不会再回调 Target 的 onResourceReady() 方法了。
 
 ## 9. 图片变换
 
+　　图片变换的意思就是说，Glide 从加载了原始图片到最终展示给用户之前，又进行了一些变换处理，从而能够实现一些更加丰富的图片效果，如图片圆角化、圆形化、模糊化等等。
 
+　　添加图片变换的用法非常简单，只需要在 RequestOptions 中串接 transforms() 方法，并将想要执行的图片变换操作作为参数传入 transforms() 方法即可，如下所示：
+
+```java
+RequestOptions options = new RequestOptions()
+        .transforms(...);
+Glide.with(this)
+     .load(url)
+     .apply(options)
+     .into(imageView);
+```
+
+　　至于具体要进行什么样的图片变换操作，这个通常都是需要自己来写的。不过 Glide 已经内置了几种图片变换操作，可以直接拿来使用，比如 CenterCrop、FitCenter、CircleCrop 等。
+
+　　但所有的内置图片变换操作其实都不需要使用 transform() 方法，Glide 为了方便使用直接提供了线程的 API：
+
+```java
+RequestOptions options = new RequestOptions()
+        .centerCrop();
+
+RequestOptions options = new RequestOptions()
+        .fitCenter();
+
+RequestOptions options = new RequestOptions()
+        .circleCrop();
+```
+
+　　当然，这些内置的图片变换 API 其实也只是对 transform() 方法进行了一层封装而已，它们背后的源码仍然还是借助 transform() 方法来实现的。
+
+　　以图形化为例，circleCrop() 方法是用来对图片进行圆形化裁剪的，代码如下所示：
+
+```java
+String url = "http://test.image/test.png";
+RequestOptions options = new RequestOptions()
+        .circleCrop();
+Glide.with(this)
+     .load(url)
+     .apply(options)
+     .into(imageView);
+```
+
+　　当然，除了使用内置的图片变换操作之外，完全可以自定义自己的图片变换操作。理论上，在对图片进行变换这个步骤中可以进行任何的操作，相对图片怎么样都可以。包括圆角化、图形化、黑白化、模糊化等等，甚至将原图片完全替换成另外一张图都是可以的。
+
+　　关于图片变换，还有一个非常优秀的开源库，glide-transformations。它实现了很多通用的图片变换效果，如裁剪变换、颜色变换、模糊变换等等，使得可以非常轻松地进行各种各样的图片变换。
+
+　　glide-transformations 的项目主页地址是  https://github.com/wasabeef/glide-transformations。
+
+　　首先需要将这个库引入到项目当中，在 app/build.gradle 文件当中添加如下依赖：
+
+```groovy
+dependencies {
+    implementation 'jp.wasabeef:glide-transformations:3.0.1'
+}
+```
+
+　　可以对图片进行单个变换处理，也可以将多种图片变换叠加在一起使用。比如像同时对图片进行模糊化和黑白化处理，就可以这么写：
+
+```java
+String url = "http://test.image/test.png";
+RequestOptions options = new RequestOptions()
+        .transforms(new BlurTransformation(), new GrayscaleTransformation());
+Glide.with(this)
+     .load(url)
+     .apply(options)
+     .into(imageView);
+```
+
+　　可以看到，同时执行多种图片变换的时候，只需要将它们都传入到 transforms() 方法中即可。
 
 ## 10. 自定义模块
 
+　　自定义模块属于 Glide 中的高级功能，同样也是难度比较高的一部分内容。
 
+　　自定义模块功能可以将更改 Glide 配置，替换 Glide 组件等操作独立出来，使得能轻松地对 Glide 的各种配置进行自定义，并且又和 Glide 的图片加载逻辑没有任何交集，这也是一种低耦合编程方式的体现。
+
+### 10.1. 实现自定义模块
+
+　　首先定义一个自己的模块类，并让它继承自 AppGlideModule，如下所示：
+
+```java
+@GlideModule
+public class MyAppGlideModule extends AppGlideModule {
+
+    @Override
+    public void applyOptions(Context context, GlideBuilder builder) {
+
+    }
+
+    @Override
+    public void registerComponents(Context context, Glide glide, Registry registry) {
+
+    }
+
+}
+```
+
+　　可以看到，在 MyAppGlideModule 类当中，重写了 applyOptions() 和 registerComponents() 方法，这两个方法分别就是用来更改 Glide 配置以及替换 Glide 组件的。
+
+　　注意在 MyAppGlideModule 类的上面，加入了一个 @GlideModule 的注解，这是 Glide 4 和 Glide 3 最大的不同之处。在 Glide 3 中，定义了自定义模块之后，还必须在 AndroidManifest.xml 文件中去注册它才能生效，而在 Glide 4 中是不需要的，因为 GlideModule 这个注解已经能够让 Glide 识别到这个自定义模块了。
+
+　　这样的话，就将 Glide 自定义模块的功能完成了。后面只需要在 applyOptions() 和 registerComponents() 这两个方法中加入具体的逻辑，就能实现更改 Glide 配置或者替换 Glide 组件的功能了。
 
 ## 11. 使用 Generated API
 
+　　Generated API 是 Glide 4 中全新引入的一个功能，它的工作原理是使用注解处理器（Annotation Processor）来生成出一个 API，在 Application 模块中可使用该流式 API 一次性调用到 RequestBuilder，RequestOptions 和集成库中所有的选项。
+
+　　简单来说，就是 Glide 4 仍然提供了一套和 Glide 3 一模一样的接口。Generated API 基本上就是和 Glide 3 一模一样的用法，只不过需要把 Glide 关键字替换成 GlideApp 关键字，如下所示：
+
+```java
+GlideApp.with(this)
+        .load(url)
+        .placeholder(R.drawable.loading)
+        .error(R.drawable.error)
+        .skipMemoryCache(true)
+        .diskCacheStrategy(DiskCacheStrategy.NONE)
+        .override(Target.SIZE_ORIGINAL)
+        .circleCrop()
+        .into(imageView);
+```
+
+　　不过，有可能 IDE 中会提示找不到 GlideApp 这个类。这个类是通过编译时注解自动生成的，首先确保代码中有一个自定义的模块，并且给它加上了 @GlideModule 注解，然后在 Android Studio 中点击菜单栏 Build -> Rebuild Project，GlideApp 这个类就会自动生成了。
+
+　　当然，Generated API 所能做的并不只是这些而已，它还可以对现有的 API 进行扩展，定制出任何属于自己的 API。
+
+### 11.1 定制自己的 API
+
+　　来举一个具体的例子，比如说要求项目中所有图片的缓存策略全部都要缓存原始图片，那么每次在使用 Glide 加载图片的时候，都去指定 diskCacheStrategy(DiskCacheStrategy.DATA) 这么长长的一串代码，确实是让人比较心烦。这种情况就可以去定制一个自己的 API 了。
+
+　　定制自己的 API 需要借助 @GlideExtension 和 @GlideOption 这两个注解。创建一个自定义的扩展类，代码如下所示：
+
+```java
+@GlideExtension
+public class MyGlideExtension {
+
+    private MyGlideExtension() {
+
+    }
+
+    @GlideOption
+    public static void cacheSource(RequestOptions options) {
+        options.diskCacheStrategy(DiskCacheStrategy.DATA);
+    }
+
+}
+```
+
+　　这里定义了一个 MyGlideExtension 类，并且给加上了一个 @GlideExtension 注解，然后要将这个类的构造函数声明成 private，这都是必须要求的写法。
+
+　　接下来就可以开始自定义 API 了，这里定义了一个 cacheSource() 方法，表示只缓存原始图片，并给这个方法加上了 @GlideOption 注解。注意自定义 API 的方法都必须是静态方法，而且第一个参数必须是 RequestOptions，后面可以加入任意多个像自定义的参数。
+
+　　在 cacheSource() 方法中，仍然还是调用的 diskCacheStrategy(DiskCacheStrategy.DATA) 方法，所以说 cacheSource() 就是一层简化 API 的封装而已。
+
+　　然后在 Android Studio 中点击菜单栏 Build -> Rebuild Project，就可以使用这样的语句来加载图片了：
+
+```java
+GlideApp.with(this)
+        .load(url)
+        .cacheSource()
+        .into(imageView);
+```
+
+　　有了这个强大的功能之后，使用 Glide 就能变得更加灵活了。
 
 
-
-
-
-
-
-
-
-## 参考文章
+## 12. 参考文章
 [Android图片加载框架最全解析（八），带你全面了解Glide 4的用法](https://blog.csdn.net/guolin_blog/article/details/78582548)
 
 
