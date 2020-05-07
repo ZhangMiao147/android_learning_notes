@@ -107,19 +107,129 @@ public static final void main(String[] args) {
 
 ### 3.1. put() 方法
 
+```java
+public final V put(K key, V value) {
+         //不可为空，否则抛出异常
+        if (key == null || value == null) {
+            throw new NullPointerException("key == null || value == null");
+        }
+        V previous;
+        synchronized (this) {
+            //插入的缓存对象值加1
+            putCount++;
+            //增加已有缓存的大小
+            size += safeSizeOf(key, value);
+           //向map中加入缓存对象
+            previous = map.put(key, value);
+            //如果已有缓存对象，则缓存大小恢复到之前
+            if (previous != null) {
+                size -= safeSizeOf(key, previous);
+            }
+        }
+        //entryRemoved()是个空方法，可以自行实现
+        if (previous != null) {
+            entryRemoved(false, key, previous, value);
+        }
+        //调整缓存大小(关键方法)
+        trimToSize(maxSize);
+        return previous;
+    }
+```
 
+　　可以看到 put() 方法并没有什么难点，重要的就是在添加过缓存对象后，调用 trimToSize() 方法，来判断缓存是否已满，如果满了就要删除近期最少使用的算法。
 
 ### 3.2. trimToSize() 方法
 
+```java
+ public void trimToSize(int maxSize) {
+        //死循环
+        while (true) {
+            K key;
+            V value;
+            synchronized (this) {
+                //如果map为空并且缓存size不等于0或者缓存size小于0，抛出异常
+                if (size < 0 || (map.isEmpty() && size != 0)) {
+                    throw new IllegalStateException(getClass().getName()
+                            + ".sizeOf() is reporting inconsistent results!");
+                }
+                //如果缓存大小size小于最大缓存，或者map为空，不需要再删除缓存对象，跳出循环
+                if (size <= maxSize || map.isEmpty()) {
+                    break;
+                }
+                //迭代器获取第一个对象，即队尾的元素，近期最少访问的元素
+                Map.Entry<K, V> toEvict = map.entrySet().iterator().next();
+                key = toEvict.getKey();
+                value = toEvict.getValue();
+                //删除该对象，并更新缓存大小
+                map.remove(key);
+                size -= safeSizeOf(key, value);
+                evictionCount++;
+            }
+            entryRemoved(true, key, value, null);
+        }
+    }
+```
 
+　　trimToSize() 方法不断的删除 LInkedHashMap 中队尾的元素，即近期最少访问的，直到缓存大小小于最大值。
+
+　　当调用 LruCache 的 get() 方法获取集合中的缓存对象时，就代表访问了一次该元素，将会更新队列，保持整个队列是按照访问顺序排序。这个更新过程就是在 LinkedHashMap 中的 get() 方法中完成的。
 
 ### 3.3. get() 方法
 
+```java
+public final V get(K key) {
+        //key为空抛出异常
+        if (key == null) {
+            throw new NullPointerException("key == null");
+        }
 
+        V mapValue;
+        synchronized (this) {
+            //获取对应的缓存对象
+            //get()方法会实现将访问的元素更新到队列头部的功能
+            mapValue = map.get(key);
+            if (mapValue != null) {
+                hitCount++;
+                return mapValue;
+            }
+            missCount++;
+        }
+        ...
+}
+```
 
+　　其中 LinkedHashMap 的 get() 方法如下：
 
+```java
+public V get(Object key) {
+        LinkedHashMapEntry<K,V> e = (LinkedHashMapEntry<K,V>)getEntry(key);
+        if (e == null)
+            return null;
+        //实现排序的关键方法
+        e.recordAccess(this);
+        return e.value;
+    }
+```
 
- 
+　　调用 recordAccess() 方法如下：
+
+```java
+ void recordAccess(HashMap<K,V> m) {
+            LinkedHashMap<K,V> lm = (LinkedHashMap<K,V>)m;
+            //判断是否是访问排序
+            if (lm.accessOrder) {
+                lm.modCount++;
+                //删除此元素
+                remove();
+                //将此元素移动到队列的头部
+                addBefore(lm.header);
+            }
+        }
+```
+
+　　由此可见 LruCache 中维护了一个集合 LinkedHashMap，该 LinkedHashMap 是以访问顺序排序的。当调用 put() 方法时，就会在结合中添加元素，并调用 trimToSize() 判断缓存是否已满，如果满了就用 LinkedHashMap 的迭代器删除队尾元素，即近期最少访问的元素。当调用 get() 方法访问缓存对象时，就会调用 LInkedHashMap 的 get() 方法获得对应集合元素，同时会更新该元素到队头。
+
+　　以上便是 LruCache 实现的原理，理解了 LinkedHashMap 的数据结构就能理解整个原理。
 
 ## 参考文章
 
