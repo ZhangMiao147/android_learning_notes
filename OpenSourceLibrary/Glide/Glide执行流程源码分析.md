@@ -1738,7 +1738,7 @@ class DecodeJob<A, T, Z> {
         Resource<T> decoded = null;
         try {
             long startTime = LogTime.getLogTime();
-          	// 调用 fetcher.loadData() 方法
+          	// 调用 fetcher.loadData() 方法，如果是请求网络，最终会返回请求结果 InputStream 对象
             final A data = fetcher.loadData(priority);
             if (Log.isLoggable(TAG, Log.VERBOSE)) {
                 logWithTimeAndKey("Fetched data", startTime);
@@ -1909,7 +1909,7 @@ public class HttpUrlFetcher implements DataFetcher<InputStream> {
             decoded = cacheAndDecodeSourceData(data);
         } else {
             long startTime = LogTime.getLogTime();
-          	// 调用 loadProvider.getResourceDescoder() 方法得到 GifBitmapWrapperResourceDecoder 对象
+          	// 调用 loadProvider.getSourceDecoder() 方法得到 GifBitmapWrapperResourceDecoder 对象
           	// 调用 GifBitmapWrapperResourceDecoder 的 decode() 方法
             decoded = loadProvider.getSourceDecoder().decode(data, width, height);
             if (Log.isLoggable(TAG, Log.VERBOSE)) {
@@ -1967,14 +1967,18 @@ public class GifBitmapWrapperResourceDecoder implements ResourceDecoder<ImageVid
         bis.reset();
 
         GifBitmapWrapper result = null;
+      	// 如果是 gif 格式
         if (type == ImageHeaderParser.ImageType.GIF) {
+          	// 调用 decodeGifWrapper 方法解析结果
             result = decodeGifWrapper(bis, width, height);
         }
         // Decoding the gif may fail even if the type matches.
         if (result == null) {
             // We can only reset the buffered InputStream, so to start from the beginning of the stream, we need to
             // pass in a new source containing the buffered stream rather than the original stream.
+          	// 创建 ImageVideowrapper 对象 forBitmapDecoder
             ImageVideoWrapper forBitmapDecoder = new ImageVideoWrapper(bis, source.getFileDescriptor());
+          	// 调用 decodeBitmapWrapper 按照图片格式解析结果
             result = decodeBitmapWrapper(forBitmapDecoder, width, height);
         }
         return result;
@@ -1983,6 +1987,7 @@ public class GifBitmapWrapperResourceDecoder implements ResourceDecoder<ImageVid
     private GifBitmapWrapper decodeBitmapWrapper(ImageVideoWrapper toDecode, int width, int height) throws IOException {
         GifBitmapWrapper result = null;
 
+      	// 调用 bitmapDecoder 的 decode 方法解析
         Resource<Bitmap> bitmapResource = bitmapDecoder.decode(toDecode, width, height);
         if (bitmapResource != null) {
             result = new GifBitmapWrapper(bitmapResource, null);
@@ -1998,7 +2003,7 @@ public class GifBitmapWrapperResourceDecoder implements ResourceDecoder<ImageVid
 
 　　而 decodeBitmapWrapper() 方法调用了 bitmapDecoder.decode() 方法。这个 bitmapDecoder 是一个 ImageVideoBitmapDecoder 对象。
 
-##### 3.7.4.11. ImageVideoBitmapDecoder#decode
+#### 3.2.3. ImageVideoBitmapDecoder#decode
 
 ```java
 /**
@@ -2023,9 +2028,11 @@ public class ImageVideoBitmapDecoder implements ResourceDecoder<ImageVideoWrappe
     @Override
     public Resource<Bitmap> decode(ImageVideoWrapper source, int width, int height) throws IOException {
         Resource<Bitmap> result = null;
+      	// 取出数据内容
         InputStream is = source.getStream();
         if (is != null) {
             try {
+              	// 调用 streamDecoder 的 decode 方法解析数据
                 result = streamDecoder.decode(is, width, height);
             } catch (IOException e) {
                 if (Log.isLoggable(TAG, Log.VERBOSE)) {
@@ -2052,7 +2059,7 @@ public class ImageVideoBitmapDecoder implements ResourceDecoder<ImageVideoWrappe
 
 　　stramDecode 是一个 StreamBitmapDecoder 对象。
 
-##### 3.7.4.12. StreamBitmapDecoder#decode
+#### 3.2.4. StreamBitmapDecoder#decode
 
 ```java
 /**
@@ -2077,6 +2084,7 @@ public class StreamBitmapDecoder implements ResourceDecoder<InputStream, Bitmap>
 
     @Override
     public Resource<Bitmap> decode(InputStream source, int width, int height) {
+      	// 调用 downsampler 的 decode 方法将数据转换为 Bitmap 数据
         Bitmap bitmap = downsampler.decode(source, bitmapPool, width, height, decodeFormat);
         return BitmapResource.obtain(bitmap, bitmapPool);
     }
@@ -2087,7 +2095,7 @@ public class StreamBitmapDecoder implements ResourceDecoder<InputStream, Bitmap>
 
 　　decode() 方法又去调用了 Downsampler 的 decode() 方法。
 
-##### 3.7.4.13. DownSampler#decode
+#### 3.2.5. DownSampler#decode
 
 ```java
 /**
@@ -2161,6 +2169,7 @@ public abstract class Downsampler implements BitmapDecoder<InputStream> {
             final int degreesToRotate = TransformationUtils.getExifOrientationDegrees(orientation);
             final int sampleSize = getRoundedSampleSize(degreesToRotate, inWidth, inHeight, outWidth, outHeight);
 
+          	// 对图片进行压缩，将数据转换成 Bitmap 
             final Bitmap downsampled =
                     downsampleWithSize(invalidatingStream, bufferedStream, options, pool, inWidth, inHeight, sampleSize,
                             decodeFormat);
@@ -2206,6 +2215,7 @@ public abstract class Downsampler implements BitmapDecoder<InputStream> {
             // BitmapFactory will clear out the Bitmap before writing to it, so getDirty is safe.
             setInBitmap(options, pool.getDirty(targetWidth, targetHeight, config));
         }
+      	// 调用 decodeStream 方法
         return decodeStream(is, bufferedStream, options);
     }
 
@@ -2222,6 +2232,7 @@ public abstract class Downsampler implements BitmapDecoder<InputStream> {
      */
     public int[] getDimensions(MarkEnforcingInputStream is, RecyclableBufferedInputStream bufferedStream,
             BitmapFactory.Options options) {
+      	// 拿到图片的宽高
         options.inJustDecodeBounds = true;
         decodeStream(is, bufferedStream, options);
         options.inJustDecodeBounds = false;
@@ -2244,6 +2255,7 @@ public abstract class Downsampler implements BitmapDecoder<InputStream> {
              bufferedStream.fixMarkLimit();
          }
 
+      	// 调用 BitmapFactory.decodeStream 将 steam 转换为 Bitmap
         final Bitmap result = BitmapFactory.decodeStream(is, null, options);
 
         try {
@@ -2256,7 +2268,7 @@ public abstract class Downsampler implements BitmapDecoder<InputStream> {
                         + " sample=" + options.inSampleSize, e);
             }
         }
-
+				// 返回 result
         return result;
     }
 
