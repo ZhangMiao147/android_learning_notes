@@ -1,21 +1,6 @@
-# 数据结构
-
-* 线性表
-* 栈
-* 哈希表
-* 树
-* 图
-* 
-* 
-* 
-* 
-* 数组
-* 链表
-* 队列
-* 散列表
-* 堆
-
 # 算法
+
+* 递归
 
 * 查找算法
 
@@ -24,6 +9,10 @@
 * 回溯算法
 
 * 分治算法
+
+* 分支定界法
+
+* 贪心算法
 
 * [动态规划（Dynamic Programming）]( [https://github.com/ZhangMiao147/android_learning_notes/blob/master/Algorithm/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92.md](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Algorithm/动态规划.md) )
 
