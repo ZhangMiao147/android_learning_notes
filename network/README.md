@@ -1,14 +1,8 @@
 # 网络知识
 
 * 计算机网络基础知识
-
-* [HTTP](https://github.com/ZhangMiao147/android_learning_notes/blob/master/network/HTTP/HTTP.md)
-
-* HTTPS
-
+* TCP 与 UDP
 * SOCKET
-
-* TCP
-
-* UDP
+* [HTTP](https://github.com/ZhangMiao147/android_learning_notes/blob/master/network/HTTP/HTTP.md)
+* HTTPS
 

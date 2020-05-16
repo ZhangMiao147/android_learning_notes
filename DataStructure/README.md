@@ -35,3 +35,5 @@
 
 [数据结构与算法面试知识点汇总（超全）](https://blog.csdn.net/CSDN_dzh/article/details/86724458)
 
+[手把手撕LeetCode题目，扒各种算法套路的裤子。](https://github.com/labuladong/fucking-algorithm)
+
