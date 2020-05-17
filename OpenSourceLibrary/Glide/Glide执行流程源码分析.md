@@ -2281,7 +2281,7 @@ public abstract class Downsampler implements BitmapDecoder<InputStream> {
 
 ### 3.3. 第三步：将图片显示在界面上
 
-　　回到 StreamBitmapDecoder 当中，decode() 方法返回的是一个 Resource< Bitmap > 对象。而从 Downsampler 中得到的是一个 Bitmap。因此在 StreamBitmapDecoder 的 decode 方法中又调用了 BitmapResource.obtain() 方法，将 Bitmap 对象包装成了 Resource< Bitmap > 对象。
+　　回到 StreamBitmapDecoder 当中，decode() 方法返回的是一个 Resource< Bitmap > 对象。而从 DownSampler 中得到的是一个 Bitmap。因此在 StreamBitmapDecoder 的 decode 方法中又调用了 BitmapResource.obtain() 方法，将 Bitmap 对象包装成了 Resource< Bitmap > 对象。
 
 #### 3.3.1. BitmapResource 类
 
@@ -2449,6 +2449,7 @@ public class GifBitmapWrapperResource implements Resource<GifBitmapWrapper> {
 ```java
     private Resource<Z> transformEncodeAndTranscode(Resource<T> decoded) {
         long startTime = LogTime.getLogTime();
+      	// 将 decode 转换为 Resource<T> 类型对象 transformed
         Resource<T> transformed = transform(decoded);
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
             logWithTimeAndKey("Transformed resource from source", startTime);
@@ -2458,6 +2459,7 @@ public class GifBitmapWrapperResource implements Resource<GifBitmapWrapper> {
         writeTransformedToCache(transformed);
 
         startTime = LogTime.getLogTime();
+      	// 将 Resource<T> transformed 转换为 Resource<Z> result
         Resource<Z> result = transcode(transformed);
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
             logWithTimeAndKey("Transcoded transformed from source", startTime);
@@ -2503,11 +2505,14 @@ public class GifBitmapWrapperDrawableTranscoder implements ResourceTranscoder<Gi
 
         final Resource<? extends GlideDrawable> result;
         if (bitmapResource != null) {
+          	// 是 bitmap 格式
             result = bitmapDrawableResourceTranscoder.transcode(bitmapResource);
         } else {
+          	// 是 gif 格式
             result = gifBitmap.getGifResource();
         }
         // This is unchecked but always safe, anything that extends a Drawable can be safely cast to a Drawable.
+      	// 返回的是 Resource<GlideDrawable> 类型对象
         return (Resource<GlideDrawable>) result;
     }
 
@@ -2563,7 +2568,7 @@ public class GlideBitmapDrawableTranscoder implements ResourceTranscoder<Bitmap,
 
 　　再回到 DecodeJob 当中，它的 decodeFromSource() 方法得到了 Resource< Z > 对象，当然也就是 Resource< GlideDrawable > 对象。然后继续向上返回会回到 EngineRunnable 的 decodeFromSource() 方法，再回到 decode() 方法，再回到 run() 方法当中。
 
-　　在 EngineRunnable 的 run 方法中 decode() 放啊执行之后最终得到了 Resource< GlideDrawable > 对象，那么接下来就是如何将它显示出来了。
+　　在 EngineRunnable 的 run 方法中 decode() 方法执行之后最终得到了 Resource< GlideDrawable > 对象，那么接下来就是如何将它显示出来了。
 
 　　在 EngineRunnable 的 run 方法中调用了 onLoadComplete() 方法，表示图片加载已经完成了。
 
@@ -2603,32 +2608,8 @@ class EngineJob implements EngineRunnable.EngineRunnableManager {
     @Override
     public void onResourceReady(final Resource<?> resource) {
         this.resource = resource;
+      	// 向主线程发送 MSG_COMPLETE 消息，主线程接收到消息后，会回调到这里的 MainThreadCallback 的 handleMessage 方法
         MAIN_THREAD_HANDLER.obtainMessage(MSG_COMPLETE, this).sendToTarget();
-    }
-
-    private void handleResultOnMainThread() {
-        if (isCancelled) {
-            resource.recycle();
-            return;
-        } else if (cbs.isEmpty()) {
-            throw new IllegalStateException("Received a resource without any callbacks to notify");
-        }
-        engineResource = engineResourceFactory.build(resource, isCacheable);
-        hasResource = true;
-
-        // Hold on to resource for duration of request so we don't recycle it in the middle of notifying if it
-        // synchronously released by one of the callbacks.
-        engineResource.acquire();
-        listener.onEngineJobComplete(key, engineResource);
-
-        for (ResourceCallback cb : cbs) {
-            if (!isInIgnoredCallbacks(cb)) {
-                engineResource.acquire();
-                cb.onResourceReady(engineResource);
-            }
-        }
-        // Our request is complete, so we can release the resource.
-        engineResource.release();
     }
 
     @Override
@@ -2668,8 +2649,10 @@ class EngineJob implements EngineRunnable.EngineRunnableManager {
             if (MSG_COMPLETE == message.what || MSG_EXCEPTION == message.what) {
                 EngineJob job = (EngineJob) message.obj;
                 if (MSG_COMPLETE == message.what) {
+                  	// 成功，调用 EngineJob 的 handleResultOnMainThread
                     job.handleResultOnMainThread();
                 } else {
+                  	// 异常，调用 EngineJob 的 handleExceptionOnMainThread
                     job.handleExceptionOnMainThread();
                 }
                 return true;
@@ -2707,6 +2690,7 @@ class EngineJob implements EngineRunnable.EngineRunnableManager {
         for (ResourceCallback cb : cbs) {
             if (!isInIgnoredCallbacks(cb)) {
                 engineResource.acquire();
+              	// 调用回调的 onResourceReady 方法
                 cb.onResourceReady(engineResource);
             }
         }
@@ -2717,7 +2701,7 @@ class EngineJob implements EngineRunnable.EngineRunnableManager {
 
 　　在 handleResultOnMainThread() 方法通过一个循环调用了所有 ResourceCallback 的 onResourceReady() 方法，而 ResourceCallback 是通过 addCallback() 方法向 cbs 集合中去添加的 ResourceCallback 。
 
-　　而 addCallback() 方法是在 Engine 的 load() 方法中调用的。在 Engine 的 load9) 方法里调用了 EngineJob 的 addCallback() 方法来注册的一个 ResourceCallback。而 Engine.load() 方法的 ResourceCallback 参数是在 GenericRequest 的 onSizeReady() 方法中调用 engine.load() 方法的时候传入的 GenericRequest 本身对象。GenericRequest 本身就实现了 ResourceCallback 的接口，所以 handleResultOnMainThread() 方法中调用的 ResourceCallback 的 onResourceReady 就是 GenericRequest  的 onResourceReady 方法。
+　　而 addCallback() 方法是在 Engine 的 load() 方法中调用的。在 Engine 的 load() 方法里调用了 EngineJob 的 addCallback() 方法来注册的一个 ResourceCallback。而 Engine.load() 方法的 ResourceCallback 参数是在 GenericRequest 的 onSizeReady() 方法中调用 engine.load() 方法的时候传入的 GenericRequest 本身对象。GenericRequest 本身就实现了 ResourceCallback 的接口，所以 handleResultOnMainThread() 方法中调用的 ResourceCallback 的 onResourceReady 就是 GenericRequest  的 onResourceReady 方法。
 
 #### 3.3.10. GenericRequest#onResourceReady
 
@@ -2753,7 +2737,7 @@ class EngineJob implements EngineRunnable.EngineRunnableManager {
             status = Status.COMPLETE;
             return;
         }
-
+				// 调用 onResourceReady 方法
         onResourceReady(resource, (R) received);
     }
 
@@ -2772,6 +2756,7 @@ class EngineJob implements EngineRunnable.EngineRunnableManager {
         if (requestListener == null || !requestListener.onResourceReady(result, model, target, loadedFromMemoryCache,
                 isFirstResource)) {
             GlideAnimation<R> animation = animationFactory.build(loadedFromMemoryCache, isFirstResource);
+          	// 调用 target 的 onResourceReady 方法
             target.onResourceReady(result, animation);
         }
 
@@ -2849,6 +2834,7 @@ public class GlideDrawableImageViewTarget extends ImageViewTarget<GlideDrawable>
                 resource = new SquaringDrawable(resource, view.getWidth());
             }
         }
+      	// 调用父类的 onResourceReady 方法
         super.onResourceReady(resource, animation);
         this.resource = resource;
         resource.setLoopCount(maxLoopCount);
@@ -2892,6 +2878,7 @@ public abstract class ImageViewTarget<Z> extends ViewTarget<ImageView, Z> implem
     @Override
     public void onResourceReady(Z resource, GlideAnimation<? super Z> glideAnimation) {
         if (glideAnimation == null || !glideAnimation.animate(resource, this)) {
+          	// 调用抽象方法 setResource
             setResource(resource);
         }
     }
@@ -2914,6 +2901,7 @@ public abstract class ImageViewTarget<Z> extends ViewTarget<ImageView, Z> implem
      */
     @Override
     protected void setResource(GlideDrawable resource) {
+      	// 	设置 view 显示获取的资源
         view.setImageDrawable(resource);
     }
 ```
@@ -2921,8 +2909,6 @@ public abstract class ImageViewTarget<Z> extends ViewTarget<ImageView, Z> implem
 　　调用了 view.setImageDrawable() 方法，而这个 view 就是使用 Glide 时传递进来的 ImageView。这样图片就显示出来了。
 
 　　到这里，Glide 执行流程的源码分析就结束了。
-
-
 
 
 ## 4. 参考文章

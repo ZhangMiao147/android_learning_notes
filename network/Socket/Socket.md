@@ -12,6 +12,10 @@
 
 　　Sokcet() 函数返回一个整型的 Socket 描述符，随后的连接建立、数据传输等操作都是通过该 Sokcet 实现的。
 
+　　Socket 是应用层与 TCP/IP 协议族通信的中间软件抽象层，它是一组接口。在设计模式中，Socket 其实就一个门面模式，它把复杂的 TCP/IP 协议族隐藏在 Socket 接口后面，对用户来说，一组简单的接口就是全部，让 Socket 取阻止数据，以符合指定的协议。
+
+![](image/socket在协议的位置.jpg)
+
 ### 网络中进程如何通信
 
 　　既然 Sokcet 主要是用来解决网络通信的，那么就来理解网络中进程是如何通信的。
@@ -37,6 +41,8 @@
 
 ### Socket 怎么通信
 
+　　网络层的 “ ip 地址 ” 可以唯一表示网络中的主机，而传输层的 “ 协议+端口 ” 可以唯一标识主机中的应用程序（进程）。这样利用三元组（ip 地址、协议、端口）就可以标识网络的进程了，网络中的进程通信就可以利用这个标志与其他进程进行交互。
+
 　　利用三元组【ip 地址，协议，端口】可以进行网络通信了，而 Socket 就是利用三元组解决网络通信的一个中间件工具，就目前而言，几乎所有的应用程序都是采用 socket，如 UNIX BSD 的套接字（socket）和 UNIX System V 的 TLI（已经被淘汰了）。
 
 　　Socket 通信的数据传输方式，常用的有两种：
@@ -54,19 +60,33 @@
 
 ![](image/socket函数2.png)
 
+
+
+![](image/socket连接.jpg)
+
+　　先从服务器端说起。服务器先初始化 Socket，然后与端口绑定（bind），对端口进行监听（listen），调用 accept 阻塞，等待客户端连接。在这时如果有个客户初始化一个 Socket，然后连接服务器（connect），如果连接成功，这是客户端与服务器端的连接就建立了。客户端发送数据请求，服务器端接收请求并处理请求，然后把回应数据发送给胡端端，客户端读取数据，最后关闭连接，一次交互结束。
+
 #### 使用 socket() 函数创建套接字
 
 ```c++
 int socket(int af, int type, int protocol);
 ```
 
-1. af 为地址族（Address Family），也就是 IP 地址类型，常用的有 AF_INET 和 AF_INET6。AF 是 “Address Family” 的简写，INET 是 “Inetnet” 的简写。AF_INET 表示 IPv4 地址，例如 127.0.0.1；AF_INET6 表示 IPv6 地址，例如 1030:C9B4:FF12:48AA:1A2B。
+　　socket 函数对应于普通文件的打开操作。普通文件的打开操作返回一个文件描述字，而 socket() 用于创建一个 socket 描述符（socket descriptor），它唯一标识一个 socket。这个 socket 描述符跟文件描述符一样，后续的操作都有用到它，把它作为参数，通过它来进行一些读写操作。
+
+　　正如可以给 fopen 的传入不同参数值，以打开不同的文件。创建 socket 的时候，也可以指定不同的参数创建不同的 socket 描述符，socket 函数的三个参数分别为：
+
+1. af 即协议域，又称为协议族（Family），也就是 IP 地址类型，常用的有 AF_INET 、AF_INET6、AF_LOCAL（或称 AF_UNIX、Unix 或 socket）、AF_ROUTE 等等。协议族决定了 socket 的地址类型，在通信中必须采用对应的地址，如 AF_INET 决定了要用 ipv4 地址（32 位的）与端口号（16 位的）的组合、AF_UNIX 决定了要用一个绝对路径名作为地址。AF 是 “Address Family” 的简写，INET 是 “Inetnet” 的简写。AF_INET 表示 IPv4 地址，例如 127.0.0.1；AF_INET6 表示 IPv6 地址，例如 1030:C9B4:FF12:48AA:1A2B。
 
    127.0.0.1 是一个特殊 IP 地址，表示本机地址。
 
-2. type 为数据传输方式，常用的是 SOCK_STREAM 和 SOCK_DGRAM。
+2. type ：指定 socket 类型。为数据传输方式，常用的是 SOCK_STREAM 、 SOCK_DGRAM、SOCK_RAW、SOCK_PACKET、SOCK_SEQPACKET 等等。
 
-3. protocol 表示传输协议，常用的有 IPPROTO_TCP 和 IPPROTO_UDP，分别表示 TCP 传输协议和 UDP 传输协议。
+3. protocol 表示传输协议，常用的有 IPPROTO_TCP 、 IPPROTO_UDP、IPPROTO_SCTP、IPPROTO_TIPC 等，分别表示 TCP 传输协议、UDP 传输协议、STCP 传输协议、TIPC 传输协议。
+
+　　注意，并不是上面的 type 和 protocol 可以随意组合的，如 SOCK_STREAM 不可以跟 IPPROTO_UDP 组合。当 protocol 为 0 时，会自动选择 type 类型对应的默认协议。
+
+　　当调用 socket 创建一个 sock 时，返回的 socket 描述字它存在于协议族（address family，AF_XXX）空间中，但没有一个具体的地址。如果想要给它赋值一个地址，就必须调用 bind() 函数，否则就当调用 connect()、listen() 时系统会自动随机分配一个端口。
 
 #### 使用 bind() 和 connect() 函数
 
