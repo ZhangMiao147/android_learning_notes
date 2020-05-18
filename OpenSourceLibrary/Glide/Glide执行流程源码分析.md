@@ -388,7 +388,9 @@ public class RequestManager implements LifecycleListener {
     ...
     
     private <T> DrawableTypeRequest<T> loadGeneric(Class<T> modelClass) {
+      	// 创建 ModelLoader streamModelLoader 对象
         ModelLoader<T, InputStream> streamModelLoader = Glide.buildStreamModelLoader(modelClass, context);
+      	// 创建 ModelLoader fileDescriptorModelLoader 对象
         ModelLoader<T, ParcelFileDescriptor> fileDescriptorModelLoader =
                 Glide.buildFileDescriptorModelLoader(modelClass, context);
         if (modelClass != null && streamModelLoader == null && fileDescriptorModelLoader == null) {
@@ -398,6 +400,8 @@ public class RequestManager implements LifecycleListener {
         }
 
         return optionsApplier.apply(
+          			// 创建了一个 DrawableTypeRequest 对象，
+          			// 传递给 DrawableTypeRequest 创建的 streamModelLoader 和 fileDescriptorModelLoader
                 new DrawableTypeRequest<T>(modelClass, streamModelLoader, fileDescriptorModelLoader, context,
                         glide, requestTracker, lifecycle, optionsApplier));
     }
@@ -444,8 +448,15 @@ public class DrawableTypeRequest<ModelType> extends DrawableRequestBuilder<Model
         }
         DataLoadProvider<ImageVideoWrapper, Z> dataLoadProvider = glide.buildDataProvider(ImageVideoWrapper.class,
                 resourceClass);
+      	// 创建 ImageVideoModelLoader 对象
+      	// 设置成员变量 streamLoader 为传递的 streamModelLoader
+        // 设置成员变量 fileDescriptorLoader 为传递的 fileDescriptorModelLoader
         ImageVideoModelLoader<A> modelLoader = new ImageVideoModelLoader<A>(streamModelLoader,
                 fileDescriptorModelLoader);
+      	// 创建 FixedLoadProvider 对象
+      	// 设置成员变量 modelLoader 为传递的 modelLoader，这就是 ImageVideoModelLoader 对象
+      	// 设置成员变量 transcoder 为传递的 transcoder
+      	// 设置成员变量 dataLoadProvider 为传递的 dataLoadProvider，也就是 DataLoadProvider 对象
         return new FixedLoadProvider<A, ImageVideoWrapper, Z, R>(modelLoader, transcoder, dataLoadProvider);
     }
 
@@ -454,6 +465,8 @@ public class DrawableTypeRequest<ModelType> extends DrawableRequestBuilder<Model
             ModelLoader<ModelType, ParcelFileDescriptor> fileDescriptorModelLoader, Context context, Glide glide,
             RequestTracker requestTracker, Lifecycle lifecycle, RequestManager.OptionsApplier optionsApplier) {
         super(context, modelClass,
+              	// 调用 buildProvider 方法，返回一个 FixedLoadProvider 对象
+              	// 设置给父类的父类 GenericRequestBuilder 的成员变量 loadProvider 
                 buildProvider(glide, streamModelLoader, fileDescriptorModelLoader, GifBitmapWrapper.class,
                         GlideDrawable.class, null),
                 glide, requestTracker, lifecycle);
@@ -510,7 +523,7 @@ public class DrawableTypeRequest<ModelType> extends DrawableRequestBuilder<Model
 
 ```
 
-　　DrawTypeRequest 类提供了 asBitmap() 和 asGif() 这两个方法，这两个方法分别是用于强制指定加载静态图片和动态图片的。从源码中可以看出，它们分别又创建了一个 BitmapTypeReqyest 和 GifTypeRequest，如果没有进行强制指定的话，那默认就是使用 DrawableTypeRequest。
+　　DrawTypeRequest 类提供了 asBitmap() 和 asGif() 这两个方法，这两个方法分别是用于强制指定加载静态图片和动态图片的。从源码中可以看出，它们分别又创建了一个 BitmapTypeRequest 和 GifTypeRequest，如果没有进行强制指定的话，那默认就是使用 DrawableTypeRequest。
 
 　　在 load() 方法中，fromString() 方法会返回一个 DrawableTypeRequest 对象，接下来会调用这个对象的 load() 方法，把图片的 URL 地址传进去，DrawableTypeRequest 中并没有 load() 方法，那么很容易就能猜想到，load() 方法是在父类当中的。
 
@@ -910,9 +923,11 @@ public class DrawableRequestBuilder<ModelType>
         super.signature(signature);
         return this;
     }
-
+		
+  	// load 方法，返回本对象
     @Override
     public DrawableRequestBuilder<ModelType> load(ModelType model) {
+      	// 调用父类 load 方法，设置成员变量 model 为参数 model
         super.load(model);
         return this;
     }
@@ -953,7 +968,7 @@ public class DrawableRequestBuilder<ModelType>
 
 　　DrawableRequestBuilder 中有很多个方法，这些方法其实就是 Glide 绝大多数的 API 了。里面很多方法都是经常使用的，比如说 placeholder() 方法、error() 方法、diskCacheSrategy() 方法、override() 方法等。
 
-　　load() 方法到这里就分析完了，DrawableRequestBuilder 类中有一个 into() 方法，也就是说，最终 load() 方法返回的其实就是一个 DrawableTypeRequest 对象。
+　　load() 方法会先调用其 父类 GenericRequestBuilder 的 load() 方法，然后将自己返回到这里就分析完了，也就是说，最终 load() 方法返回的其实就是一个 DrawableRequestBuilder 对象，并且 DrawableRequestBuilder 类中有一个 into() 方法。
 
 ## 3. into()
 
@@ -1147,6 +1162,7 @@ public class ImageViewTargetFactory {
     private Request obtainRequest(Target<TranscodeType> target, float sizeMultiplier, Priority priority,
             RequestCoordinator requestCoordinator) {
         return GenericRequest.obtain(
+          			// 这个 loadProvider 就是在 load()方法中设置的 FixedLoadProvider
                 loadProvider,
                 model,
                 signature,
@@ -1209,6 +1225,7 @@ public class ImageViewTargetFactory {
         if (request == null) {
             request = new GenericRequest<A, T, Z, R>();
         }
+   			// 设置 GenericRequest 的 loadProvider 成员变量为 FixedLoadProvider
         request.init(loadProvider,
                 model,
                 signature,
@@ -1374,8 +1391,10 @@ public abstract class ImageViewTarget<Z> extends ViewTarget<ImageView, Z> implem
 
         width = Math.round(sizeMultiplier * width);
         height = Math.round(sizeMultiplier * height);
-
+				// 这个 loadProvider 就是传递进来的 FixedLoadProvider 对象
+      	// 而 loadProvider.getModelLoader() 返回的是在 DrawableTypeRequest 类的 buildProvider 方法中创建的 ImageVideoModelLoader
         ModelLoader<A, T> modelLoader = loadProvider.getModelLoader();
+      	// 而 modelLoader.getResourceFetcher 返回的 ImageVideoFetcher 对象
         final DataFetcher<T> dataFetcher = modelLoader.getResourceFetcher(model, width, height);
 
         if (dataFetcher == null) {
@@ -1387,8 +1406,13 @@ public abstract class ImageViewTarget<Z> extends ViewTarget<ImageView, Z> implem
             logV("finished setup for calling load in " + LogTime.getElapsedMillis(startTime));
         }
         loadedFromMemoryCache = true;
-        loadStatus = engine.load(signature, width, height, dataFetcher, loadProvider, transformation, transcoder,
-                priority, isMemoryCacheable, diskCacheStrategy, this);
+        loadStatus = engine.load(signature, width, height,dataFetcher, 
+                                 // 这个 loadProvider 就是传递进来的 FixedLoadProvider 对象
+                                 loadProvider, 
+                                 transformation, transcoder,
+                priority, isMemoryCacheable, diskCacheStrategy, 
+                                 // 自己就是回调
+                                 this);
         loadedFromMemoryCache = resource != null;
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
             logV("finished onSizeReady in " + LogTime.getElapsedMillis(startTime));
@@ -1579,8 +1603,12 @@ public class Engine implements EngineJobListener,
      * @param <R> The type of the resource that will be transcoded from the decoded resource.
      */
     public <T, Z, R> LoadStatus load(Key signature, int width, int height, DataFetcher<T> fetcher,
-            DataLoadProvider<T, Z> loadProvider, Transformation<Z> transformation, ResourceTranscoder<Z, R> transcoder,
-            Priority priority, boolean isMemoryCacheable, DiskCacheStrategy diskCacheStrategy, ResourceCallback cb) {
+                                     // loadProvider 就是传递进来的 FixedLoadProvider
+            DataLoadProvider<T, Z> loadProvider, 
+                                     Transformation<Z> transformation, ResourceTranscoder<Z, R> transcoder,
+            Priority priority, boolean isMemoryCacheable, DiskCacheStrategy diskCacheStrategy, 
+                                     // 这个 ResourceCallback 就是 GenericRequest 类型对象
+                                     ResourceCallback cb) {
         Util.assertMainThread();
         long startTime = LogTime.getLogTime();
 
@@ -1622,7 +1650,11 @@ public class Engine implements EngineJobListener,
         // 构建了一个 EngineJob
         EngineJob engineJob = engineJobFactory.build(key, isMemoryCacheable);
       	// 创建 DecodeJob 对象
-        DecodeJob<T, Z, R> decodeJob = new DecodeJob<T, Z, R>(key, width, height, fetcher, loadProvider, transformation,
+        DecodeJob<T, Z, R> decodeJob = new DecodeJob<T, Z, R>(key, width, height, fetcher, 
+                                                              // 这个 loadProvider 就是传递进来的 FixedLoadProvider 对象
+                                                              // 将 DeocodeJob 的 loadProvider 成员变量设置为 FixedLoadProvider 对象
+                                                              loadProvider, 
+                                                              transformation,
                 transcoder, diskCacheProvider, diskCacheStrategy, priority);
       	// 创建 EngineRunnable 对象
         EngineRunnable runnable = new EngineRunnable(engineJob, decodeJob, priority);
