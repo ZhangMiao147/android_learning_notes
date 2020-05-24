@@ -16,7 +16,7 @@
 
 　　而 StringBuilder 和 StringBuffer 的对象是变量，对变量进行操作就是直接对该对象进行更改，而不进行创建和回收操作，不会创建新的未使用对象，所以速度比 String 快很多。
 
-　　而 StringBuilder 比 StringBuffer 快的原因是，StringBuffer 是需要同步的，需要执行速度慢。
+　　而 StringBuilder 比 StringBuffer 快的原因是，StringBuffer 是需要同步的，所以执行速度慢。
 
 #### 线程安全
 
