@@ -403,8 +403,6 @@ https://www.cnblogs.com/dubo-/p/5565677.html
 
 ### 6.2. 如何实现线程
 
-https://blog.csdn.net/tongxuexie/article/details/80142638
-
 #### 6.2.1. 继承 Thread 类创建线程
 
 　　使用继承 Thread 类创建线程时，受限需要创建一个类继承 Thread 类并覆写 Thread 类的 run() 方法，在 run() 方法中，要写线程要执行的任务。
@@ -549,13 +547,67 @@ Callable接口创建线程
 
 ### 6.3. start 与 run 的区别
 
-https://www.cnblogs.com/whyalwaysme/p/4495959.html
+**start()**：
+
+　　使该线程开始执行，Java 虚拟机调用该线程的 run 方法。
+
+　　结果是两个线程并发的运行；当前线程（从调用返回给 start 方法）和另一个线程（执行其 run 方法）。
+
+　　多次启动一个线程是非法的。特别是当线程已经结束执行后，不能再重新启动。
+
+　　用 start 方法来启动线程，真正实现了多线程运行，这是无需等待 run 方法体代码执行完毕，而是直接继续执行下面的代码。
+
+　　通过调用 Thread 类的 start() 方法来启动一个线程，这时此线程处于就绪（可运行）状态，并没有运行，一旦得到 cpu 时间片，就开始执行 run() 方法，这里方法 run() 称为线程体，它包含了要执行的这个线程的内容，Run 方法运行结束，Run 方法运行结束，此线程随即终止。
+
+**run()**
+
+　　如果该线程是使用独立的 Runnable 运行对象构造的，则调用该 Runnable 对象的 run 方法；否则，该方法不执行任何操作并返回。
+
+　　Thread 的子类应该重写该方法。
+
+　　run() 方法只是类的一个普通方法而已，如果直接调用 run 方法，程序中依然只有主线程这一个线程，其程序执行路径还是只有一条，还是要顺序执行，还是要等待 run 方法体执行完毕后才可继续执行下面的代码，这样就没有达到写线程的目的。
+
+**总结**
+
+　　调用 start() 方法方可启动线程，而 run() 方法只是 thread 的一个普通方法调用，还是在主线程里执行。
 
 ### 6.4. 线程与进程的区别
 
-https://www.jianshu.com/p/de5599da33b1
-
 https://segmentfault.com/a/1190000018608380?utm_source=tag-newest
+
+　　进程独占内存空间，保持各自运行状态，相互间不干扰且可以互相切换，为并发处理任务提供了可能。
+
+　　线程共享进程的内存资源，相互间切换更快堵，支持更细粒度的任务控制，使进程内的子任务得以并发执行。
+
+　　线程是操作系统中可调度的最小单元，它的资源首先，不可能无限制产生，存在资源消耗，线程的创建和销毁都会有相应的开销。操作系统会通过时间片轮转的方式调度每个线程，因此线程不适绝对的并行，而是因为轮转速度太快，看起来像并行。若频繁创建和销毁线程，会造成大量资源开销，可以通过使用线程池来解决，线程池中会缓存一定数量的线程，当需要使用线程时直接复用而不需要重新创建，这样就避免因频繁创建和销毁线程所带来的资源开销。
+
+　　进程是资源分配的最小单位，线程是程序执行（CPU 调度）的最小单位。所有与进程相关的资源，都被记录在 PCB 中，进程是抢占处理机的调度单元，线程属于某个进程，共享其资源。
+
+![](image/PCB.png)
+
+1. 进程有自己的独立地址空间，每启动一个进程，系统就会为它分配地址空间，建立数据表来维护代码段、堆栈段和数据段，这种操作非常昂贵。
+
+   线程是共享进程中的数据的，使用相同的地址空间，因此 CPU 切换一个线程的花费远比进程要小芬多，同时创建一个线程的开销也比进程要小很多。
+
+2. 线程之间的通信更方便，同一进程下的线程共享全局变量、静态变量等数据，而进程之间的通信要以通信的方式（IPC）进行。不过如何处理好同步与互斥是编写多线程程序的难点。
+3. 但是多进程程序更健壮，多线程程序只要有一个线程死掉，整个进程也死掉了，而一个进程死掉并不会对另外一个进程造成影响，因为进程有自己独立的地址空间。
+
+![](image/进程与线程.png)
+
+**总结**
+
+1. 线程不能看做独立应用，而进程可看做独立应用。
+2. 进程有独立的地址空间，互相不影响，线程只是进程的不同执行路径。
+3. 线程没有独立的地址空间，多进程的程序比多线程程序健壮。
+4. 进程的切换比线程的切换开销大。
+
+**Java 进程和线程的关系**
+
+1. Java 对操作系统提供的功能进程封装，包括进程和线程。
+2. 运行一个程序会产生一个进程，进程包含至少一个线程。
+3. 每个进程对应一个 JVM 实例，多个线程共享 JVM 里的堆。
+4. Java 采用单线程编程模型，程序会自动创建主线程。
+5. 主线程可以创建子线程，原则上要后于子线程完成执行。
 
 ### 6.5. 进程间通信
 
@@ -594,7 +646,7 @@ https://blog.csdn.net/tongxuexie/article/details/80145663
 1. 线程数无限制（没有核心线程，全部都是非核心线程）
 2. 有空闲线程则复用空闲线程，若无空闲线程则新建线程。
 3. 终止并从缓存中移除那些已有 60 秒钟未被使用的线程。
-4. 一定程序减少频繁创建/销毁线程，减少系统开销。
+4. 一定程序上减少频繁创建/销毁线程，减少系统开销。
 
 　　适用场景：适用于耗时少，任务量大的情况。
 
@@ -638,7 +690,7 @@ ExecutorService fixedThreadPool = Executors.newFixedThreadPool(int nThreads, Thr
 ExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(int corePoolSize);
 ```
 
-#### 6.9.4. SingleThreadExecutor：单线程化的线程池
+#### 6.9.4. SingleThreadPool：单线程化的线程池
 
 1. 有且仅有一个工作线程执行任务。
 2. 所有任务按照指定顺序执行，即遵循队列的入队出队规则。
@@ -655,17 +707,15 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 ## 7. 对象的引用类型有哪些？
 
-https://www.jianshu.com/p/c571fa1c5554
-
 　　从 JDK 1.2 开始，Java 中的引用类型分为四种，分别是：1. 强引用（StrongReference）、2. 软引用（SoftReference）、3. 弱引用（WeakReference）、4. 虚引用（PhantomReference）
 
 ### 7.1. 强引用 StrongReference
 
-　　这种引用是平时开发中最常用的，例如 String strong = new String ("Strong Reference")，当一个实例对象具有强引用时，垃圾回收器不会回收该对象，当内存不足时，宁愿抛出 OutOfMemoryError 异常也不会回收强引用，因为 JVM 认为强引用的对象是用户正在使用的对象，它无法分辨出到底该挥手哪个，强行挥手有可能导致系统严重错误。
+　　这种引用是平时开发中最常用的，例如 String strong = new String ("Strong Reference")，当一个实例对象具有强引用时，垃圾回收器不会回收该对象，当内存不足时，宁愿抛出 OutOfMemoryError 异常也不会回收强引用，因为 JVM 认为强引用的对象是用户正在使用的对象，它无法分辨出到底该回收哪个，强行回收有可能导致系统严重错误。
 
 ### 7.2. 软引用 SoftReference
 
-　　如果一个对啊ing只有软引用，那么只有当内存不足时，JVM 才会去回收该对象，其他情况不会回收。
+　　如果一个对象只有软引用，那么只有当内存不足时，JVM 才会去回收该对象，其他情况不会回收。
 
 　　软引用可以结合 ReferenceQueue 来使用，当由于系统内存不足，导致软引用的对象被回收了，JVM 把这个软引用加入到与之相关的联的 ReferenceQueue 中。
 
@@ -689,9 +739,15 @@ Book book = softReference.get();
 Reference reference = referenceQueue.poll();
 ```
 
-
-
 ### 7.4. 虚引用 PhantomReference
+
+　　如果一个对象只有虚引用在引用它，垃圾回收器是可以在任意时候对其进行回收的，虚引用主要用来跟踪对象对垃圾回收器回收的活动，当被回收时，JVM 会把这个弱引用加入到与之相关联的 ReferenceQueue 中。与软引用和弱引用不同的是，虚引用必须有一个与之关联的 ReferenceQueue，通过 phantomReference.get() 得到的值为 null，如果没有 ReferenceQueue 与之关联就没有什么存在的价值了。
+
+```java
+PhantomReference<Book> phantomReference = new PhantomReference<>(new Book(), referenceQueue);
+Book book = phantomReference.get(); // 此值为 null
+Reference reference = referenceQueue.poll();
+```
 
 
 
