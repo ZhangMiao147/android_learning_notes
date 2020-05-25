@@ -49,7 +49,7 @@ public class Person {
 
 　　子类就是父类。
 
-　　好处：子嘞拥有父类的所有属性和方法（除 private 修饰的属性不能拥有）从而实现了代码的复用。
+　　好处：子类拥有父类的所有属性和方法（除 private 修饰的属性不能拥有）从而实现了代码的复用。
 
 **继承的方式**：
 
@@ -105,7 +105,7 @@ public class Person {
 
 　　不同子类的相同属性的值不同、相同方法的实现不同（通过方法的重写）。
 
-　　好处：避免子嘞的发展被多态限制。
+　　好处：避免子类的发展被多态限制。
 
 ```java
 public interface Cry {
@@ -173,7 +173,7 @@ public class Dog extends Animal {
 
 ```java
 // 相当于 String S1 = “abc”; 运行最快
-// 除了结果 S1，没有创建任何新 String
+// 除了结果 S1，没有创建任何新 String 对象
 String S1 = “a” + “b” + “c”; 
 
 // 运行最慢
@@ -210,9 +210,9 @@ public String concat(String str) {
 }
 ```
 
-　　String 的 concat 使用 copyOf 和 getChars 方法来拼接数组的，然后创建新的 String 对象。而 StringBuffer 只会创建一块内存空间，使用 append 添加或 delete 删除其内容时，也是在这一块内存空间中并不会生成多余的空间。
+　　String 的 concat 使用 copyOf() 和 getChars() 方法来拼接数组的，然后创建新的 String 对象。而 StringBuffer 只会创建一块内存空间，使用 append 添加或 delete 删除其内容时，也是在这一块内存空间中并不会生成多余的空间。
 
-　　所以 StringBuffer 速度是比较快的，而 String 每次生成对象都会对系统性能产生影响，特别当内村中无引用对象多了以后，JVM 的 GC 就会开始工作，对速度的影响一定是相当大的。
+　　所以 StringBuffer 速度是比较快的，而 String 每次生成对象都会对系统性能产生影响，特别当内存中无引用对象多了以后，JVM 的 GC 就会开始工作，对速度的影响一定是相当大的。
 
 ## 4. 异常
 
