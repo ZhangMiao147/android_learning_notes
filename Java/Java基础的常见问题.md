@@ -387,6 +387,118 @@ https://www.cnblogs.com/1130136248wlxk/articles/5105524.html
 
 https://www.cnblogs.com/dubo-/p/5565677.html
 
+　　变量就是申请内存来存储值。也就是说，当创建变量的时候，需要在内存中申请空间。
+
+　　内存管理系统更具变量的类型为变量分配存储空间，分配的空间只能用来存储该类型数据。
+
+　　因此，通过定义不同类型的变量，可以在内存中存储整数、小数或者字符。
+
+　　Java 的两大数据类型：
+
+1. 内置数据类型
+2. 引用数据类型
+
+### 5.1. 内置数据类型
+
+　　Java 语言提供了八种基本类型。六种数字类型（四个整数型（默认是 int 型），两个浮点型（默认是 double 型）），一个字符类型，还有一个布尔型。
+
+#### 5.1.1. byte
+
+1. byte 数据类型是 8 位、有符号的，以二进制补码表示的整数；256 个数字，占 1 个字节。
+2. 范围为 -128(-2^7)-127(2^7-1)；
+3. 默认值是 0；
+4. byte 类型用在大型数组中节约空间，主要代替整数，因为 byte 变量占用得空间只有 int 类型的四分之一。
+5. 例子：byte a = 100，byte b = -50。
+
+#### 5.1.2. short
+
+　　short 数据类型是 16 位、有符号的以二进制补码表示的整数，占 2 字节。
+
+　　范围为：-32768(-2^15） - 32767(2^15-1)。
+
+　　short 数据类型也可以像 byte 那样节省空间。一个 short 变量是 int 型变量所占空间的二分之一。
+
+　　默认值是 0。
+
+　　例子：short s = 1000，short r = -20000。
+
+#### 5.1.3. int
+
+1. int 数据类型是 32 位、有符号的以二进制补码表示的整数，占 3 字节。
+2. 范围为：-2,147,483,648（-2^31） -  2,147,485,647（2^31 - 1）。
+3. 一般的整数变量默认为 int 类型。
+4. 默认值为 0。
+5. 例子：int a = 100000，int b = -200000。
+
+#### 5.1.4. long
+
+1. long 数组类型是 64 位、有符号的以二进制补码表示的整数，占 4 字节。
+2. 范围为：-9,223,372,036,854,775,808（-2^63） - 9,223,372,036,854,775,807（2^63 -1）。
+3. 这种类型主要使用在需要比较大整数的系统上。
+4. 默认值是 0L。
+5. 例子：long a = 100000L，b = -200000L。
+
+　　long a = 111111111111111（错误，整数型变量默认是 int 型）。
+
+　　long a = 111111111111111L（正确，强制转换）。
+
+#### 5.1.5. float
+
+1. float 数据类型是单精度、32 位、符合 IEEE 754 标准的浮点数，占 4 字节，-3.4*E38 - 3.4*E38，浮点数是由舍入误差的。
+2. float 在储存大型复现数组的时候可节省内存空间。
+3. 默认值是 0.0f。
+4. 浮点数不能用来表示精确的值，如货币。
+5. 例子：float f1 = 234.5f。
+
+　　float f = 6.25（错误，浮点数默认类型是 double 类型）。
+
+　　float f = 6.26F（正确，强制）。
+
+　　double d = 4.55（正确）。
+
+#### 5.1.6. double
+
+1. double 数据类型是双精度、64 位、符合 IEEE 754 标准的浮点数。
+2. 浮点数的默认类型是 double 类型。
+3. double 类型同样不能表示精确的值，如货币。
+4. 默认值是 0.0d；
+5. 例子：double d1 = 123.4。
+
+#### 5.1.7. boolean
+
+1. boolean 数据类型表示一位的信息。
+2. 只有两个取值：true 和 false。
+3. 这种类型只作为一种标志来记录 true/false 情况。
+4. 默认值是 false。
+5. 例子：boolean one = true。
+
+#### 5.1.8. char
+
+1. char 类型是一个单一的 16 位 Unicode 字符，用 ' ' 表示一个字符。java 内部使用 Unicode 字符集，也有一些转义字符，2 字节。
+2. 范围为：‘\u0000’（即为0） - '\uffff'（即为65,535），可以当整数用，它的每一个字符都对应一个整数。
+3. char 数据类型可以存储任何字符。
+4. 例子：char letter = 'A'。
+
+　　对于数值类型的基本类型的取值范围，都已经以常量的形式定义在对应的包装类中了。例如，int 的最大值就是 Integer.MAX_VALUE。
+
+　　实际上，JAVA 中还存在另外一种基本类型 void，它也有对应的包装类 java.lang.void，不过无法直接对它们进行操作。
+
+### 5.2. 引用数据类型
+
+1. 引用类型变量由类的构造函数创建，可以使用它们访问所引用的对象。这些变量在声明时被指定为一个特定的类型，比如 Employee、Pubby 等。变量一旦声明，类型就不能被改变了。
+2. 对象、数组都是引用数据类型。
+3. 所有引用类型的默认值都是 null。
+4. 一个引用变量可以用来引用与任何与之兼容的类型。
+5. 例子：Animal animal = new Animal(”giraffe“)；
+
+### 5.3. Java 中的常量
+
+
+
+### 5.4. 数据类型之间的转换
+
+
+
 ## 6. 进程与线程
 
 ### 6.1. 线程的状态有哪些？
@@ -573,9 +685,53 @@ Callable接口创建线程
 
 ### 6.4. 线程与进程的区别
 
-https://segmentfault.com/a/1190000018608380?utm_source=tag-newest
+#### 6.4.1. 进程（线程+内存+文件/网络句柄）
+
+　　**进程（Process）**是计算机中的程序关于某数据集合上的一次运行活动，是系统进行资源分配和调度的基本单位，是操作系统结构的基础。在当代面向线程设计的计算机结构中，进程是线程的容器。程序是指令、数据及其组织形式的描述，进程是程序的实体。是计算机中的程序关于某数据集合上的一次运行活动，是系统进行资源分配和调度的基本单位，是操作系统结构的基础。程序是指令、数据及其组织形式的描述，进程是程序的实体。
+
+![](image/进程.png)
+
+##### 6.4.1.1. 内存
+
+　　这里的内存是逻辑内存，指的是内存的寻址空间。每个进程的内存都是相互独立的。
+
+##### 5.4.1.2. 文件/网络句柄
+
+　　它们是所有线程所共有的，例如打开同一个文件、去抢同一个网络的端口这样的操作是被允许的。
+
+
+
+　　进程：指在系统中正在运行的一个应用程序；程序一旦运行就是进程；进程是资源分配的最小单位。
 
 　　进程独占内存空间，保持各自运行状态，相互间不干扰且可以互相切换，为并发处理任务提供了可能。
+
+#### 6.4.2. 线程（栈+PC+TLS）
+
+　　**线程（Thread）**：是操作系统能耐进行运算调度的最小单位。它被包含在进程之中，是进程中的实际运作单位。一条线程指的是进程中一个单一顺序的控制流，一个进程中可以并发多个线程，每条线程并发执行不同的任务。
+
+![](image/线程.png)
+
+##### 6.4.2.1. 栈
+
+　　从主线程的入口 main 函数，会不断的进行函数调用，每次调用的时候，会把所有的参数和返回地址压入到栈中。
+
+##### 6.4.2.2. PC
+
+　　Program Counter 程序计数器，操作系统真正运行的是一个个的线程，而进程只是它的一容器。PC 就是指向当前的指令，而这个指令是放在内存中的。
+
+　　每一个线程都有一串自己的指针，去指向自己当前所在内存的指针。
+
+　　计算机绝大部分是存储程序性的，说的就是数据和程序是存储在同一片内存里的。这个内存中既有数据变量又有程序，所以 PC 指针就是指向内存的。
+
+##### 6.4.1.3. TLS
+
+　　全称：thread local storage
+
+　　线程的独立内存就是 TLS，用来存储线程所独有的数据。
+
+　　线程才是操作系统所真正去运行的，而进程则是像容器一样把需要的一些东西放在了一起，而把不需要的东西做了一层隔离，进行隔离开来。
+
+　　线程：系统分配处理器时间资源的基本单元，或者说进程之内独立执行的一个单元执行流。线程是程序执行的最小单元。
 
 　　线程共享进程的内存资源，相互间切换更快堵，支持更细粒度的任务控制，使进程内的子任务得以并发执行。
 
@@ -600,6 +756,10 @@ https://segmentfault.com/a/1190000018608380?utm_source=tag-newest
 2. 进程有独立的地址空间，互相不影响，线程只是进程的不同执行路径。
 3. 线程没有独立的地址空间，多进程的程序比多线程程序健壮。
 4. 进程的切换比线程的切换开销大。
+5. 进程要分配一大部分的内存，而线程只需要分配一部分栈就可以了。
+6. 一个程序至少有一个进程，一个进程至少有一个线程。
+7. 进程是资源分配的最小单位，线程是程序执行的最小单位。
+8. 一个线程可以创建和销毁另一个线程，同一个进程中的多个线程之间可以并发执行。
 
 **Java 进程和线程的关系**
 
@@ -611,23 +771,398 @@ https://segmentfault.com/a/1190000018608380?utm_source=tag-newest
 
 ### 6.5. 进程间通信
 
-https://www.cnblogs.com/fnlingnzb-learner/p/11664000.html
+　　进程间通信的主要方法有：
 
-https://blog.csdn.net/truong/article/details/39228249/
+1. 管道（Pipe）：管道可用于具有亲缘关系进程间的通信，允许一个进程和另一个与它有共同祖先的进程之间进行通信。
+
+2. 命名管道（named pipe）：命名管道克服了管道没有名字的限制，因此，除具有管道所具有的功能外，它还允许无亲缘关系进程间的通信。命名管道在文件系统中有对应的文件名。命名管道通过命令 mkfifo 或者系统调用 mkfifo 来创建。
+
+3. 信号（Signal）：信号是比较复杂的通信方式，用于通知接受进程有某种事件发生，除了用于进程间通信外，进程还可以发送信号给进程本身；linux 除了支持 Unix 早期信号语义函数 signal 外，还支持语义符合 Posix.1 标准的信号函数 sigaction（实际上，该函数是基于 BSD 的，BSD 为了实现可靠信号机制，又能够统一对外接口，用 sigaction 函数重新实现了 signal 函数）。Linux 中可以使用 kill -12 进程号，向当前进程发送信号，但前提是发送信号的进程要注册该信号。
+
+   ```java
+   OperateSignal operateSignalHandler = new OperateSignal();
+   Signal sig = new Signal("USR2");
+   Signal.handle(sig, operateSignalHandler);
+   ```
+
+4. 消息（Message）队列：消息队列是消息的链接表，包括 Posix 消息队列 system V 消息队列。有足够权限的进程可以向队列中添加消息，被赋予读权限的进程则可以读走队列中的消息。消息队列克服了信号承载信息量少，管道只能承载无格式字节流以及缓冲区大小受限等缺陷。
+
+5. 共享内存：使用多个进程可以访问同一块内存空间，是最快的可用 IPC 形式。是针对其他通信机制运行效率较低而设计的。往往与其他通信机制，如信号量结合使用，来达到进程间的同步及互斥。
+
+6. 内存映射（mapped memory）：内存映射允许任何多个进程间通信，每一个使用该机制的进程通过把一个共享的文件映射到自己的进程地址空间来实现它。
+
+7. 信号量（semaphore）：主要作为进程间以及同一进程不同线程之间的同步手段。
+
+8. 套接口（Socket）：更为一般的进程间通信机制，可用于不同机器之间的进程间通信。起初是由 Unix 系统的 BSD 分支开发出来的，但现在一般可以移植到其他 Unix 系统上：Linux 和 System V 的变种都支持套接字。
+
+
 
 ### 6.6. 线程间通信
 
-https://www.jianshu.com/p/8d40ef55e301
+　　在 java 中数显多线程间通信则主要采用 “共享变量” 和 “管道流”这三种方法。
 
-https://blog.csdn.net/wlddhj/article/details/83793709
+#### 6.6.1. 使用同一个共享变量控制
 
-https://blog.csdn.net/Hadwin1991/article/details/73527835
+1. Synchronized、wait、notify
+
+   wait 和 notify 是 Object 类的两个方法。每个对象都有一把锁（monitor），在进入同步方法或代码块之前，当前线程需要先获取对象锁，然后才能执行同步块的代码，完成后释放对象锁。锁可以理解为唯一的凭证，有了它就能入场，而且独占所有的资源，离场就得交出来。
+
+   wait 方法的作用是使当前线程释放对象锁，并进入等待状态，不再往下执行。当其他线程调用对象的 notify/notifyAll 时，会唤醒等待的线程，等到其他线程释放锁后，被唤醒的线程将继续往下执行。notify 随机唤醒一个等待的线程，notifyAll 唤醒所有等待的线程。
+
+   注意：wait 和 notify 都需要拿到对象锁的情况下调用。
+
+   每个锁对象都有两个队列：就绪队列和阻塞队列。就绪队列存储了已经就绪（将要竞争锁）的线程，阻塞队列存储了被阻塞的线程。当阻塞线程被唤醒后，才会进入就绪队列，然后等待 CPU 的调度；反之，当一个线程被阻塞后，就会进入阻塞队列，等待被唤醒。
+
+2. Lock、Condition
+
+   Condition 可以看作 Object 的 wait/notify 的替换方案，同样用来实现线程间的协作。与使用 wait/notify 相比，Condition 的 await/signal 更加灵活、安全和高效。Condition 是一个接口，基本的方法就是 await() 和 singal()。Condition 的 await()/signal() 使用都必须在 lock.lock() 和 lock.unlock() 之间才可以，Condition 和 Object 的 wait/notify 有着天然的对应关系：
+
+   * Condition 中的 await() 对应 Object 的 wait()；
+   * Condition 中的 signal() 对应 Object 的 notify();
+   * Condition 中的 signalAll() 对应 Object 的 notifyAll()。
+
+   相比 Object 的 wait/notify，Condition 有许多优点：
+
+   * Condition 可以支持多个等待队列，因为一个 Lock 实例可以绑定多个 Condition。
+   * Condition 支持等待状态下不响应中断。
+   * Condition 支持当前线程进入等待状态，直到将来的某个时间。
+
+   最后，建议使用 Lock/Condition 代替 Object 的 wait/notify，因为前者是 java.util.concurrent 包下的接口，对于同步更简洁高效，多线程操作优先选用 JUC 包的类。
+
+3. 利用 volatile
+
+   volatile 修饰的变量值直接存在主内存里面，子线程对该变量的读写直接从内存中读取或者直接写入内存，而不是像其他变量一样在 local thread 里面产生一份 copy。volatile 能保证所修饰的变量对于多个线程可见性，即只要被修改，其他线程读到的一定是最新的值。
+
+4. 利用 AtomicInteger
+
+   和 volatile 类似。
+
+#### 6.6.2. 使用管道流
+
+　　管道流主要用来实现两个线程之间的二进制数据的传播，主要使用 PipedInputStream、PipedOutputStream 来实现。
+
+#### 6.6.3. 利用 BlockingQueue
+
+　　BolckingQueue 定义的常用方法如下：
+
+1. add( Object )：把 Object 加到 BlockingQueue 里，如果 BlockingQueue 可以容纳，则返回 true，否则抛出异常。
+2. offer(Object)：表示如果可能的话，将 Object 加到 BlockingQueue 里，即如果 BlockingQueue 可以容纳，则返回 true，否则返回 false。
+3. put(Object)：把 Object 加到 BlockingQueue 里，如果 BlockingQueue 没有空间，则调用此方法的线程被阻断直到 BlockingQueue 里有空间再继续。
+4. poll(Object)：把 Object 加到 BlockingQueue 里，如果 BlockingQueue 没有空间，则调用此方法的线程被阻断直到 BlockingQueue 里有空间再继续。
+5. peek()：立即获取 BlockingQueue 里排在首位的对象，但不从队列里删除，如果队列为空，则返回 null。
+6. take()：获取并删除 BlockingQueue 里排在首位的对象，若 BlockingQueue 为空，阻断进入等待状态直到 BlockingQueue 有新的对象被加入为止。
+
+　　BlockingQueue 有四个具体的实现类：
+
+1. ArrayBlockingQueue：数组阻塞队列，规定大小，其构造函数必须带一个 int 参数来指明其大小，其所含的对象是以 FIFO（先入先出）顺序排序的。
+2. LinkedBlockingQueue：链阻塞队列，大小不定，若其构造函数带一个规定大小的参数，生成的 BlockingQueue 有大小限制，若不带大小参数，所生成的 BlockingQueue 的大小由 Integer.MAX_VALUE 来决定。其所含的对象是以 FIFO 顺序排序的。
+3. PriorityBlockingQueue：类似于 LinkedBlockingQueue，但其所含对象的排序不是 FIFO，而是依据对象的自然排序顺序或者是构造函数所带的 Comparator 决定的顺序。
+4. SynchronousQueue：特殊的 BlockingQueue，它的内部同时只能够容纳单个元素，对其的操作必须是放和取交替完成的。
+5. DelayQueue：延迟队列，注入其中的元素必须实现 java.util.concurrent.Delayed 接口。
 
 ### 6.7. 线程的常用方法
 
-#### 6.7.1. sleep：线程休眠
+#### 6.7.1. 设置或获取多线程的线程名称的方法
 
-https://blog.csdn.net/tongxuexie/article/details/80145663
+　　由于在一个进程中可能有多个线程，而多线程的状态运行又是不确定的，即不知道在多线程中当前执行的线程是哪个线程，所以在多线程操作中需要有一个明确的标识符标识出当前线程对象的信息，这个信息往往通过线程的名称来描述。在 Thread 类中提供了一些设置或获取线程名称的方法：
+
+1. 创建线程时设置线程名称：
+
+   ```java
+   public Thread(Runnable target,String name)
+   ```
+
+2. 设置线程名称的普通方法：
+
+   ```java
+   public final synchronized void setName(String name)
+   ```
+
+3. 取得线程名称的普通方法：
+
+   ```java
+   public final String getName()
+   ```
+
+　1. 如果没有手动设置线程名称时，会自动分配一个线程的名称，如线程对象 thread 自动分配线程名称 Thread - 0。
+ 　2. 多线程的运行状态是不确定的，不知道下一个要执行的是哪个线程，这是因为 CPU 以不确定方式或以随机的时间调用线程中的 run() 方法。
+ 　3. 需要注意的是，由于设置线程名称是为了区分当前正在执行的线程是哪一个线程，所以在设置线程名称时应避免重复。
+
+#### 6.7.2. sleep：线程休眠
+
+　　线程休眠指的是让线程暂缓执行，等到预计时间之后再恢复执行。
+
+1. 线程休眠会交出 CPU，让 CPU 去执行其他的任务。
+2. 调用 sleep() 方法让线程进入休眠状态后，sleep() 方法并不会释放锁，即当前线程持有某个对象锁时，即使调用 sleep() 方法其他线程也无法访问这个对象。
+3. 调用 sleep() 方法让线程从运行状态转换为阻塞状态，sleep() 方法调用结束后，线程从阻塞状态转换为可执行状态。
+
+```java
+public static native void sleep(long millis) throws InterruptedException;
+```
+
+　　sleep() 方法的休眠时间是以毫秒为单位。
+
+　　sleep() 方法让原本处于运行状态的线程进入了休眠，从而线程的状态从运行状态转换为阻塞状态。
+
+#### 6.7.3. yield() ：线程让步
+
+　　线程让步：暂停当前正在执行的线程对象，并执行其他线程。
+
+1. 调用 yield() 方法让当前线程交出 CPU 权限，让 CPU 去执行其他线程。
+2. yield() 方法和 sleep() 方法类似，不会释放锁，但 yield() 方法不能控制具体交出 CPU 的时间。
+3. yield() 方法只能让拥有相同优先级的线程获取 CPU 执行的机会。
+4. 使用 yield() 方法不会让线程进入阻塞状态，而且让线程从运行状态转换为就绪状态，只需要等待重新获取 CPU 执行的机会。
+
+```java
+public static native void yield();
+```
+
+#### 6.7.4. join()：等待线程终止
+
+　　等待线程终止指的是如果在主线程中调用改方法时就会让主线程休眠，让调用 join() 方法的线程先执行完毕后再开始执行主线程。
+
+```java
+public final void join() throws InterruptedException {
+        join(0);
+    }
+```
+
+　　join() 除了不带参数的，还有带参数的。
+
+#### 6.7.5. 线程停止
+
+　　多线程中停止线程有三种方式：
+
+1. 设置标记位，让线程正常停止。
+
+   ```java
+   class MyThread implements Runnable{
+   	//设置标记位
+   	private boolean flag=true;
+   	public void setFlag(boolean flag) {
+   		this.flag = flag;
+   	}
+   	@Override
+   	public void run() {
+   		int i=0;
+   		while(flag)
+   		{
+   			System.out.println("第"+(i++)+"次执行-----"+"线程名称:"+Thread.currentThread().getName());
+   		}
+   	}
+   }
+   ```
+
+2. 使用 stop() 方法强制使线程退出，但是使用该方法不安全，已经被废弃了。
+
+   ```java
+   thread1.stop();
+   ```
+
+   为什么说 stop() 方法不安全：因为 stop() 方法会解除由线程获得的所有锁，当在一个线程对象上调用 stop() 方法时，这个线程对象所运行的线程会立即停止。加如一个线程正在执行同步方法：
+
+   ```java
+   public synchronized void fun(){
+   	x=3;
+   	y=4;
+   }
+   ```
+
+   由于方法时同步的，多线程访问时总能保证 x,y 被同时赋值，而如果一个线程正在执行到 x=3; 时，被调用的 stop() 方法使得线程即使在同步方法中也要停止，这就造成了数据的不完整性。故，stop() 方法不安全，已经被废弃了，不建议使用。
+
+3. 使用 Thread 类的 interrupt() 方法中断线程
+
+   ```java
+   class MyThread implements Runnable{
+   	@Override
+   	public void run() {
+   		int i=0;
+   		while(true)
+   		{
+   			//使用sleep()方法，使得线程由运行状态转换为阻塞状态
+   			try {
+   				Thread.sleep(1000);
+   				//调用isInterrupted()方法，用于判断当前线程是否被中断
+   				boolean bool=Thread.currentThread().isInterrupted();
+   				if(bool) {
+   					System.out.println("非阻塞状态下执行该操作，当前线程被中断!");
+   					break;
+   				}
+   				System.out.println("第"+(i++)+"次执行"+" 线程名称："+Thread.currentThread().getName());
+   			} catch (InterruptedException e) {
+   				System.out.println("退出了！");
+   				//这里退出了阻塞状态，且中断标志bool被系统自动清除设置为false，所以此处的bool为false
+   				boolean bool=Thread.currentThread().isInterrupted();
+   				System.out.println(bool);
+   				//退出run()方法，中断进程
+   				return;
+   			}
+   		}
+   	}
+   }
+   ————————————————
+   版权声明：本文为CSDN博主「guangtaoxie」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+   原文链接：https://blog.csdn.net/tongxuexie/java/article/details/80145663
+   thread1.interrupt();
+   ```
+
+   * interrupt() 方法只是改变中断状态而已，它不会中断一个正在运行的线程。具体来说就是，调用 interrupt() 方法只会给线程设置一个 true 的中断标志，而设置之后，则根据线程当前状态进行不同的后续操作。
+   * 如果线程的当前状态处于非阻塞状态，那么仅仅将线程的中断状态设置为 true 而已。
+   * 如果线程的当前状态处于阻塞状态，那么将在中断标志设置为 true 后，还会出现 wait()、sleep()、join() 方法之一引起的阻塞，那么会将线程的中断标志位重新设置为 false，并抛出一个 InterruptedException 异常。
+   * 如果在中断时，线程正处于非阻塞状态，则将中断标志修改为 true，而在此基础上，一旦进入阻塞状态，则按照阻塞状态的情况来进行处理。例如，一个线程在运行状态时，其中断标志设置为 true 之后，一旦线程调用了 wait()、sleep()、join() 方法中的一种，立马抛出 InterruptedException 异常，且中断标志被程序自动清除，重新设置为 false。
+
+   总结：调用 Thread 类的 interrupted() 方法，其本质只是设置该线程的中断标志，将中断标志设置为 true，并根据线程状态决定是否抛出异常。因此，通过 interrupted() 方法真正实现线程的中断原理是：开发人员根据中断标志的具体值来决定如何退出线程。
+
+#### 6.7.6. wait()：线程等待
+
+　　首先，wait() 方法是 Object 类的方法，下面是无参的 wait() 方法：
+
+```java
+public final void wait() throws InterruptedException {
+        wait(0);
+}
+```
+
+1. wait() 方法的作用是让当前正在执行的线程进入线程阻塞状态的等待状态，该方法是用来将当前线程置为 “ 预执行队列 ” 中，并且调用 wait() 方法后，该线程在 wait() 方法所在的代码处停止执行，直到接到一些通知或被中断为止。
+2. wait() 方法只能在同步代码块或者同步方法中调用，故如果调用 wait() 方法时没有持有适当的锁，就会抛出异常。
+3. wait() 方法执行后，当前线程时长锁并且与其他线程相互竞争重新得到锁。
+
+```java
+public class Test1 {
+	public static void main(String[] args) {
+		Object object=new Object();
+		synchronized (object) {
+			System.out.println("调用wait()前");
+			//调用Object类的wait()方法
+			try {
+				object.wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			System.out.println("调用wait()后");
+		}
+	} 
+}
+```
+
+　　调用了 Object 类的 wait() 方法，会使得程序在执行 wait() 方法之后一直等待下去，可以调用 notify() 方法唤醒调用 wait() 方法的处于等待状态的线程，让等待线程继续执行下去。
+
+#### 6.7.7. notify()：线程唤醒
+
+　　首先，notify() 方法也是 Object 类的方法：
+
+```java
+public final native void notify();
+```
+
+1. notify() 方法要在同步代码块或同步方法中调用。
+2. notify() 方法用来通知那些等待该对象的对象锁的线程，对其调用 wait() 方法的对象发出通知让这些线程不再等待，继续执行。
+3. 如果有多个线程都在等待，则由线程规划器随机挑选出一个呈 wait 状态的线程将其线程唤醒，继续执行该线程。
+4. 调用 notify() 方法后，当前线程并不会马上释放该对象锁，要等到执行 notify() 方法的线程执行完才会释放对象锁。
+
+```java
+class MyThread implements Runnable{
+	private boolean flag;
+	private Object object;
+	//定义一个构造方法
+	public MyThread(boolean flag,Object object) {
+		this.flag=flag;
+		this.object=object;
+	}
+	//定义一个普通方法,其中调用了wait()方法
+	public void waitThread() {
+		synchronized (this.object) {
+			try {
+				System.out.println("调用wait()前------"+Thread.currentThread().getName());
+				//调用wait()方法
+				this.object.wait();
+				System.out.println("调用wait()后------"+Thread.currentThread().getName());
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	//定义一个普通方法,其中调用了notify()方法
+	public void notifyThread() {
+		synchronized (this.object) {
+			try {
+				System.out.println("调用notify前------"+Thread.currentThread().getName());
+				//调用notify()方法
+				this.object.notify();
+				System.out.println("调用notify()后------"+Thread.currentThread().getName());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	@Override
+	public void run() {
+		if(this.flag) {
+			this.waitThread();
+		}else {
+			this.notifyThread();
+		}
+	}	
+}
+```
+
+　　要注意的是，当有多个线程处于等待时，调用 notify() 方法唤醒线程时，就会依然有线程处于等待状态。notify() 只是随机将某一个等待线程唤醒，并没有唤醒所有等待的线程，如果有多个线程处于等待状态时，可以使用 notifyAll() 方法将所有等待线程都唤醒。
+
+#### 6.7.8. notifyAll() ：唤醒所有线程
+
+```java
+public final native void notifyAll();
+```
+
+　　notifyAll() 方法将同一对象锁的所有等待线程全部唤醒。
+
+```java
+class MyThread implements Runnable{
+	private boolean flag;
+	private Object object;
+	//定义一个构造方法
+	public MyThread(boolean flag,Object object) {
+		this.flag=flag;
+		this.object=object;
+	}
+	//定义一个普通方法,其中调用了wait()方法
+	public void waitThread() {
+		synchronized (this.object) {
+			try {
+				System.out.println("调用wait()前------"+Thread.currentThread().getName());
+				//调用wait()方法
+				this.object.wait();
+				System.out.println("调用wait()后------"+Thread.currentThread().getName());
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	//定义一个普通方法,其中调用了notifyAll()方法
+	public void notifyThread() {
+		synchronized (this.object) {
+			try {
+				System.out.println("调用notify前------"+Thread.currentThread().getName());
+				//调用notifyAll()方法
+				this.object.notifyAll();
+				System.out.println("调用notify()后------"+Thread.currentThread().getName());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	@Override
+	public void run() {
+		if(this.flag) {
+			this.waitThread();
+		}else {
+			this.notifyThread();
+		}
+	}	
+}
+```
+
+　　所有等待线程都被调用 notifyAll() 方法的具有同一个对象锁的线程唤醒，故每一个等待线程都会在调用 wait() 后继续执行直到该线程结束。
 
 ### 6.8. 线程池是什么？
 
