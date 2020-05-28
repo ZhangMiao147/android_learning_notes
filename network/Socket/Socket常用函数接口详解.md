@@ -240,7 +240,7 @@ ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
 
 　　两台计算机之间的通信相当于两个套接字之间的通信，在服务器端用 write() 向套接字写入数据，客户端就能收到，然后再使用 read() 从套接字中读取出来，就完成了一次通信。
 
-## 7. close() 函数
+## 7. close() ：关闭
 
 　　在服务器与客户端建立连接之后，会进行一些读写操作，完成了读写操作就要关闭相应的 socket 描述字，好比操作完打开的文件要调用 fclose 关闭打开的文件。
 
@@ -251,6 +251,18 @@ int close(int fd);
 　　close 一个 TCP socket 的其实就是把该 socket 标记关闭，然后立即返回到调用进程。该描述字不能再由调用过程使用，也就是说不能再作为 read 或 write 的第一个参数。
 
 　　注意：close 操作只是使相应 socket 描述字的引用计数 -1，只有当引用计数为 0 的时候，才会触发 TCP 客户端向服务器发送终止连接请求。
+
+## 8. shutdown()：关闭
+
+　　close()、closesocket() 和 shutdown() 的区别：
+
+　　确切地说，close()、closesocket() 用来关闭套接字，将套接字描述符（或句柄）从内存清除，之后再也不能使用该套接字，与 C 语言中的 fclose() 类似。应用程序关闭套接字后，与该套接字相关的连接和缓存也失去了意义，TCP 协议会自动触发关闭连接的操作。
+
+　　shutdown() 用来关闭连接，而不是套接字，不管调用多少次 shutdown() 方法，套接字依然存在，直到调用 close()、closesocket() 将套接字从内存清除。
+
+　　调用 close()、closesocket() 关闭套接字时，或调用 shutdown() 关闭输出流时，都会向对方发送 FIN 包，FIN 包表示数据传输完毕，计算机收到 FIN 包就知道不会再有数据传送过来了。
+
+　　默认情况下，close()、closesocket() 会立即向网络中发送 FIN 包，不管输出缓冲区中是否还有数据，而 shutdown() 会等输出缓冲区中的数据传输完毕再发送 FIN 包。这就意味着，调用 close()、closesocket() 将丢失输出缓冲区中的数据，而调用 shutdown() 不会。
 
 ## 8. socket 缓冲区以及阻塞模式
 
