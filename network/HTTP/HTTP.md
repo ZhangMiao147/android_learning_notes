@@ -1,6 +1,6 @@
 # HTTP
 
-## HTTP 简介
+## 1. HTTP 简介
 　　HTTP 协议是 Hyper Text Transfer Protocol ( 超文本传输协议 ) 的缩写。基于 TCP/IP 通信协议来传输数据（HTML 文件，图片文件，查询结果等）。HTTP 不仅能传送文本跳转所必须的信息，而且也能传输任何能在互联网上得到的信息。
 
 　　HTTP 是面向事务的应用层协议。所谓面向事务就是指一系列的信息交换，这些交换的信息是一个整体，要么这些信息全部交换，要么就不交换。
@@ -9,7 +9,7 @@
 
 　　HTTP 协议用于从万维网（WWW:World Wide Web）服务器传输超文本到本地浏览器的传送协议。每个万维网网点都有一个服务器进程，用来监视 TCP 的端口 80，以便发现是否有浏览器向它发出建立连接请求，一旦监听到需要建立 TCP 连接，浏览器就会向万维网发出浏览某个页面的请求，而万维网对这个请求的页面做出响应，最后，TCP 连接释放。在浏览器和服务器之间的请求与响应的交互，必须按照一定的格式和规则，这些格式和规则就是超文本传输协议 HTTP。
 
-### HTTP 工作原理
+### 1.1. HTTP 工作原理
 
 　　HTTP 协议工作于客户端 - 服务端架构上。浏览器作为 HTTP 客户端通过 URL 向 HTTP 服务端发送所有请求。
 
@@ -19,20 +19,22 @@
 
 　　HTTP 默认端口号为 80，也可以改为 8080 或者其他端口。
 
-### 一次网络请求的过程
+### 1.2. 一次网络请求的过程
 
 1. 浏览器向 DNS 服务器请求解析该 URL 中的域名所对应的 IP 地址。
 2. 解析出 IP 地址后，根据该 IP 地址和默认端口 80，和服务器建立 TCP 连接。
 3. 浏览器发出读取文件（URL 中域名后面部分对应的文件）的 HTTP 请求，该请求报文作为 TCP 三次握手的第三个报文的数据发送给服务器。
 4. 服务器对浏览器请求作出响应，并把对应的 html 文本发送给浏览器。
-5. 释放 TCP 连接
-6. 浏览器将该 html 文本显示内容
+5. 释放 TCP 连接。
+6. 浏览器将该 html 文本显示内容。
 
-### HTTP 三点注意事项
+### 1.3. HTTP 三点注意事项
 
-* HTTP 是无连接：无连接的含义是限制每次连接只处理一个请求。服务端处理完客户的请求，并收到客户的应答后，即断开连接。采用这种方式可以节省传输时间。虽然 HTTP 需要用到 TCP 作为传输层协议，但是在通信双方交换 HTTP 报文之前不需要建立 HTTP 连接。
-* HTTP 是媒体独立的：这意味着，只要客户端和服务端知道如何处理的数据内容，任何类型的数据都可以通过 HTTP 发送。客户端以及服务端指定使用合适的 MIME-type 内容类型。
-* HTTP 是无状态：HTTP 协议是无状态协议。无状态是指协议对于事务处理没有记忆能力。缺少状态意味着如果后续处理需要前面的信息，则它必须重传，这样可能导致每次连接传送的数据量增大。另一方面，在服务器不需要先前信息时它的应答就较快。
+1. **HTTP 是无连接**：无连接的含义是限制每次连接只处理一个请求。服务端处理完客户的请求，并收到客户的应答后，即断开连接。采用这种方式可以节省传输时间。虽然 HTTP 需要用到 TCP 作为传输层协议，但是在通信双方交换 HTTP 报文之前不需要建立 HTTP 连接。
+
+2. **HTTP 是媒体独立的**：这意味着，只要客户端和服务端知道如何处理的数据内容，任何类型的数据都可以通过 HTTP 发送。客户端以及服务端指定使用合适的 MIME-type 内容类型。
+
+3. **HTTP 是无状态**：HTTP 协议是无状态协议。无状态是指协议对于事务处理没有记忆能力。缺少状态意味着如果后续处理需要前面的信息，则它必须重传，这样可能导致每次连接传送的数据量增大。另一方面，在服务器不需要先前信息时它的应答就较快。
 
 　　下图是 HTTP 协议通信流程：
 
@@ -46,7 +48,7 @@
 
 　　如果是某个客户端自己定义的格式，MIME Type 一点只能以 application/x- 开头。
 
-### HTTP 的版本
+### 1.4. HTTP 的版本
 
 　　HTTP/1.0 的主要缺点：每当请求一个文档，就需要两倍的 RTT （ Round-Trip Time，往返时延，是指数据从网络一端传到另一端所需的时间) 的开销（一个 RTT 时用来 TCP 的连接，另一个 RTT 用来请求和接收万维网文档），如果有很多个对象需要建立连接，那么每一次连接都需要 2* RTT 的时间开销。另一方面，每一次请求都需要建立 TCP 连接，并且万维网通常都服务于大量的请求，所以这种非持续性的连接会导致万维网的负荷过大。HTTP/1.0 中浏览器与服务器只保持短暂的连接，连接无法复用。也就说每个 TCP 连接只能发送一个请求。发送数据完毕，连接就关闭，如果还要请求其他资源，就必须再新建一个连接。
 
@@ -61,10 +63,10 @@
 　　流水线：客户在收到 HTTP 的响应报文之前，就能够接着发送新的请求。
 
 
-## HTTP 消息结构
+## 2. HTTP 消息结构
 　　HTTP 是基于客户端/服务端（C/S）的架构模型，通过一个可靠的链接来交换信息，是一个无状态的请求 / 响应协议。
 
-　　一个 HTTP " 客户端 "是一个应用程序（ Web 浏览器或其他任何客户端 ），通过链接服务器达到发送一个或多个 HTTP 的请求的目的。
+　　一个 HTTP " 客户端 "是一个应用程序（ Web 浏览器或其他任何客户端 ），通过连接服务器达到发送一个或多个 HTTP 的请求的目的。
 
 　　一个 HTTP “ 服务器 ” 同样也是一个应用程序（通常是一个 Web 服务，如 Apache Web 服务器或 IIS 服务器等），通过接收客户端的请求并向客户端发送 HTTP 响应数据。
 
@@ -72,7 +74,7 @@
 
 　　一旦建立连接后，数据消息就通过类似 Internet 邮件所适用的格式和多用途 Internet 邮件扩展（MIME）来传送。
 
-### 客户端请求消息
+### 2.1. 客户端请求消息
 
 　　客户端发送一个 HTTP 请求到服务器的请求消息包括以下格式：**请求行**（request line）（ 方法 + URL + 版本 ）、**请求头部**（ header ）、**空行**和**请求数据**四个部分组成，下图给出了请求报文的一般格式：
 ![](./image/请求报文的一般格式.png)
@@ -85,7 +87,7 @@
 
 　　**请求数据**：也称为请求主体，可以添加任意的其他数据。
 
-　　请求头部的首部字段名和含义：
+#### 2.1.1. 请求头部的首部字段名和含义
 
 | 字段名 | 含义 |
 | -------- | -------- |
@@ -106,7 +108,7 @@
 | Range | Range 头域可以请求实体的一个或者多个子范围，例如，表示头 500 个字节：bytes=0-499,表示第二个 500 字节：bytes=500-999,表示最后 500 个字节：bytes=-500，表示 500 字节以后的范围：bytes=500-，第一个和最后一个字节：bytes=0-0,-1，同时指定几个范围：bytes=500-600,601-999，但是服务器可以忽略此请求头，如果无条件 GET 包含 Range 请求头，响应会以状态吗 206（PartialContent）返回而不是以 200（OK）。 |
 | UA-Pixels,UA-Color,UA-OS,UA-CPU | 由某些版本的 IE 浏览器所发送的非标准的请求头，表示屏幕大小、屏幕深度、操作系统和 CPU 类型。 |
 
-### 服务器响应消息
+### 2.2. 服务器响应消息
 
 　　HTTP 响应也由四个部分组成，分别是：**状态行**（版本+状态+短语）、**消息报头**、**空行**和**响应正文**。
 
@@ -120,7 +122,7 @@
 
 　　**响应正文**：服务器返回给客户端的文本信息。
 
-### 实例
+### 2.3. 实例
 
 　　下面实例是一些典型的使用 GET 来传递数据的实例：
 
@@ -150,7 +152,7 @@ Content-Type: text/plain
 Hello World! My payload includes a trailing CRLF.
 ```
 
-## HTTP 请求方法
+## 3. HTTP 请求方法
 　　根据 HTTP 标准，HTTP 请求可以使用多种请求方法。
 
 　　HTTP 1.0 定义了三种请求方法：**GET**、**POST** 和 **HEAD** 方法。
@@ -186,7 +188,7 @@ Hello World! My payload includes a trailing CRLF.
 2. 查看响应中的状态码，看对象是否存在（响应：请求执行成功了，但是无数据返回）；
 3. 测试资源是否被修改过。
 
-## HTTP 响应头信息
+## 4. HTTP 响应头信息
 　　HTTP 响应头提供了关于请求、响应或者其他的发送实体的信息。
 
 | 应答头 | 说明 |
@@ -194,17 +196,17 @@ Hello World! My payload includes a trailing CRLF.
 | Allow | 服务器支持哪些请求方法（如 GET、POST 等） |
 | Content-Encoding | 文档的编码（Encode）方法。只有在解码之后才可以得到 Content-Type 头指定的内容类型。利用 gzip 压缩文档能够显著地减少 HTML 文档的下载时间。Java 的 GZIPOutputStream 可以很方便地进行 gzip 压缩，但只有 Unix 上的 Netscape 和 Windows 上的 IE 4、IE 5 才支持它。因此，Servlet 应该通过查看 Accept-Encoding 头（即 request.getHeader("Accept-Encoding")）检查浏览器是否支持 gzip，为支持 gzip 的浏览器返回经 gzip 压缩的 HTML 页面，为其他浏览器返回普通页面。 |
 | Content-Length | 表示内容长度。只有当浏览器使用持久 HTTP 连接时才需要这个数据。 如果你想要利用持久连接的优势，可以把输出文档写入 ByteArrayOutputStream，完成后查看其大小，然后把该值放入 Content-Length 头，最后通过 byteArrayStream.write(response.getOutputStream))发送内容。|
-| Content-Type | 表示后面的文档属于什么 MIME 类型。Servlet 默认为 text/plain，但通常需要显式地指定为 text/html。由于经常要设置 Content-Type，因此 HttpServletResponse 提供了一个专用的方法 setContentType。 |
+| **Content-Type** | 表示后面的文档属于什么 MIME 类型。Servlet 默认为 text/plain，但通常需要显式地指定为 text/html。由于经常要设置 Content-Type，因此 HttpServletResponse 提供了一个专用的方法 setContentType。 |
 | Date | 当前的 GMT 时间。你可以用 setDateHeader 来设置这个头以避免转换时间格式的麻烦。 |
 | Expires | 应该在什么时候认为文档已经过期，从而不再缓存它。 |
 | Last-Modified | 文档的最后改动时间。客户可以通过 If - Modified - Since 请求头提供一个日期，该请求将被视为一个条件 GET，只有改动时间迟于指定时间的文档才会返回，否则返回一个 304（Not Modified）状态。Last - Modified 也可用 setDateHeader 方法来设置。 |
 | Location | 表示客户应当到哪里去提取文档。Location 通常不是直接设置的，而是通过 HttpServletResponse 的 sendRedirect 方法，该方法同时设置状态代码为 302。 |
 | Refresh | 表示浏览器应该在多少时间之后刷新文档，以秒计。除了刷新当前文档之外，你还可以通过 setHeader("Refresh","5;URL = http://host/path") 让浏览器读取指定的页面。注意这种功能通常是通过设置 HTML 页面 HEAD 区的 < META HTTP-EQUIV="Refresh" CONTENT="5;URL = http://host/path">  实现，这是因为，自动刷新或重定向对于那些不能使用 CGI 或 Servlet 的 HTML 编写者十分重要。但是，对于 Servlet 来说，直接设置 Refresh 头更加方便。注意 Refresh 的意义是 “N 秒之后刷新本页面或访问指定页面”，而不是“每隔 N 秒刷新本页面或访问指定页面”。因此，连续刷新要求每次都发送一个 Refresh 头，而发送 204 状态代码则可以阻止浏览器继续刷新，不管是使用 Refresh 头还是 < META HTTP-EQUIV="Refrsh"... > 。注意 Refrsh 头不属于 HTTP 1.1 正式规范的一部分，而是一个扩展，但 Netscape 和 IE 都支持它。 |
 | Server | 服务器名字。Servlet 一般不设置这个值，而是由 Web 服务器自己设置。 |
-| Set-Cookie | 设置和页面关联的 Cookie。Servlet 不应使用 response.setHeader("Set-Cookie",...)，而是应使用 HttpServletResponse 提供的专用方法 addCookie。|
+| **Set-Cookie** | 设置和页面关联的 Cookie。Servlet 不应使用 response.setHeader("Set-Cookie",...)，而是应使用 HttpServletResponse 提供的专用方法 addCookie。|
 | WWW-Authenticate | 客户应该在 Authorization 头中提供什么类型的授权信息？在包含 401 （Unauthorized） 状态行的应答中这个头是必须的。例如，response.setHeader("WWW-Authenticate","BASIC realm="executives")。注意 Servlet 一般不进行这方面的处理，而是让 Web 服务器的专门机制来控制受密码保护页面的访问（例如 htaccess）。 |
 
-## HTTP 状态码
+## 5. HTTP 状态码
 　　当浏览器访问一个网页时，浏览者的浏览器会向网页所在服务器发出请求。当浏览器接收并显示网页前，此网页所在的服务器会返回一个包含 HTTP 状态码的信息头（server header）用以响应浏览器的请求。
 
 　　下面是常见的 HTTP 状态码：
@@ -213,7 +215,7 @@ Hello World! My payload includes a trailing CRLF.
 * 404 - 请求的资源（网页等）不存在
 * 500 - 内部服务器错误
 
-### HTTP 状态码分类
+### 5.1. HTTP 状态码分类
 
 　　HTTP 状态码由三个十进制数字组成，第一个十进制数字定义了状态码的类型，后两个数字没有分类的作用。HTTP 状态码共分为 5 种类型：
 
@@ -256,7 +258,7 @@ Hello World! My payload includes a trailing CRLF.
 | 405 | Method Not Allowed | 客户端请求中的方法被禁止 |
 | 406 | Not Acceptable | 服务器无法根据客户端请求的内容特性完成请求 |
 | 407 | Proxy Authentication required | 请求要求代理的身份认证，与 401 类似，但请求者应当使用代理进行授权 |
-| 408 | Request Timeout | 服务端等待客户端发送的请求时间过长，超时 |
+| **408** | Request Timeout | 服务端等待客户端发送的请求时间过长，超时 |
 | 409 | Conflict | 服务器完成客户端的 PUT 请求时可能返回此代码，服务器处理请求时发生了冲突 |
 | 410 | Gone | 客户端请求的资源已经不存在。410 不同于 404，如果资源以前有现在被永久删除了可使用 404 代码，网站设计人员可通过 301 代码指定资源的位置 |
 | 411 | Length Required | 服务器无法处理客户端发送的不带 Content-Length 的请求信息 |
@@ -273,7 +275,7 @@ Hello World! My payload includes a trailing CRLF.
 | 504 | Gateway Timeout | 充当网关或代理的服务器，未及时从远程服务器获取请求 |
 | 505 | HTTP Version not supported | 服务器不支持请求的 HTTP 协议的版本，无法完成处理 |
 
-## HTTP content-type
+## 6. HTTP content-type
 　　Content-Type (内容类型)，一般是指网页中存在的 Content-Type，用来定义网络文件的类型和网页的编码，决定浏览器将以什么形式、什么编码读取这个文件，这就是经常看到一些 PHP 网页点击的结果却是下载一个文件或一张图片的原因。
 
 　　Content-Type 标头告诉客户端实际返回的内容的内容类型。
@@ -308,7 +310,7 @@ Content-Type: multipart/form-data; boundary=something
 　　另外一种常见的媒体格式是上传文件之时使用的：
 * multipart/form-data：需要在表单中进行文件上传时，就需要使用该格式。
 
-### HTTP content-type 对照表
+### 6.1. HTTP content-type 对照表
 
 | 文件扩展名 |	Content-Type(Mime-Type)	 |文件扩展名 |	Content-Type(Mime-Type) |
 | ------ | ------ | ------ | ------ |
@@ -486,25 +488,25 @@ Content-Type: multipart/form-data; boundary=something
 | .apk | application/vnd.android.package-archive | .xap | application/x-silverlight-app |
 
 
-## Session 与 Cookie
+## 7. Session 与 Cookie
 
-### cookie 是什么
+### 7.1. cookie 是什么
 
 　　在网站中，http 请求是无状态的。也就是说即使第一次和服务器连接后并且登陆成功后，第二次请求服务器依然不能知道当前请求是哪个用户。cookie 的出现就是为了解决这个问题，第一次登陆后服务器返回一个数据（cookie）给浏览器，然后浏览器保存在本地，当该用户发送第二次请求的时候，就会自动的把上次请求存储的 cookie 数据自动的携带给服务器，服务器通过浏览器携带的数据就能判断当前用户是哪个了。cookie 存储的数据量有限，不同的浏览器有不同的存储大小，但一般不超过 4KB。因此使用 cookie 只能存储一些小量的数据。
 
-### session 是什么
+### 7.2. session 是什么
 
 　　session 和 cookie 的作用有点类似，都是为了存储用户相关的信息。不同的是，cookie 是存储在本地浏览器，而 session 存储在服务器。存储在服务器的数据会更加的安全，不容易被窃取。但存储在服务器也有一定的弊端，就是会占用服务器的资源。
 
 　　**session 的目的**：弥补 HTTP 无状态特性，服务器可以利用 session 存储客户端在同一个会话期间的一些操作记录。
 
-### cookie 和 session 结合使用
+### 7.3. cookie 和 session 结合使用
 
 　　在如今的市场或者企业里，一般有两种存储方式：
 1. 存储在服务端：通过 cookie 存储一个 session_id，然后具体的数据则是保存在 session 中。如果用户已经登陆，则服务器会在 cookie 中保存一个 session_id，下次再次请求的时候，会把该 session_id 携带上来，服务器根据 session_id 在 session 库中获取用户的 session 数据，就能知道该用户到底是谁，以及之前保存的一些状态信息。这种专业术语叫做 server side session。
 2. 将 session 数据加密，然后存储在 cookie 中。这种专业术语叫做 client side session。
 
-### session 的实现机制
+### 7.4. session 的实现机制
 
 1. 服务器如何判断客户端发送过来的请求术语同一个会话？
 
@@ -514,13 +516,13 @@ Content-Type: multipart/form-data; boundary=something
 
 2. 服务器、客户端如何获取 sessionID ? SessionID 在期间是如何传输的？
 
-　　服务器第一次接收到请求时，开辟了一块 Session 空间（创建了 Session 对象），同时生成一个 Session id，并通过响应头的 Set-Cookie：“JSESSIONID=XXXXXXX”命令，向客户端发送要求设置 cookie 的响应；客户端收到响应后，在本机客户端设置了一个 JSESSIONID=XXXXXXX 的 cookie 信息，该 cookie 的过期时间为浏览器会话结束。
+　　服务器第一次接收到请求时，开辟了一块 Session 空间（创建了 Session 对象），同时生成一个 Session id，并通过响应头的 Set-Cookie：“JSESSIONID=XXXXXXX” 命令，向客户端发送要求设置 cookie 的响应；客户端收到响应后，在本机客户端设置了一个 JSESSIONID=XXXXXXX 的 cookie 信息，该 cookie 的过期时间为浏览器会话结束。
 
 　　接下来客户端每次向同一个网站发送请求时，请求头都会带上该 cookie 信息（包含 Session id）；然后，服务器通过读取请求头中的 Cookie 信息，获取名称为 JSESSIONID 的值，得到此次请求的 Session id。
 
 　　注意：服务器只会在客户端第一次请求响应的时候，在响应头上添加 Set-Cookie : " JSESSIONID=XXXXXXX " 信息，接下来在同一个会话的第二第三次响应头里，是不会添加 Set-Cookie : " JSESSIONID=XXXXXXX " 信息的；而客户端是会在每次请求头的 cookie 中带上 JSESSION 信息。
 
-### cookie 与 session 的区别
+### 7.5. cookie 与 session 的区别
 
 1. cookie 以文本文件格式存储在浏览器中，而 session 存储在服务端。
 2. cookie 的存储限制了数据量，只允许 4kb，而 session 是无限量的。
@@ -529,7 +531,7 @@ Content-Type: multipart/form-data; boundary=something
 
 　　如果需要经常登陆一个站点，最好用 cookie 来保存信息，不然每次登陆会特别麻烦，但是对于需要安全性高的站点以及控制数据的能力时需要用 session 效果更佳。
 
-## 参考文章
+## 8. 参考文章
 1. [HTTP 教程](https://www.runoob.com/http/http-tutorial.html) - 详细内容
 2. [网络：HTTP](https://blog.csdn.net/oldwang1999/article/details/98526414) - 介绍
 3. [网络之 HTTP 协议](https://blog.csdn.net/qq_42725815/article/details/87892480) - 介绍

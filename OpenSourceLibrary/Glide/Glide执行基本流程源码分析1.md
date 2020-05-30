@@ -358,7 +358,9 @@ public class RequestManager implements LifecycleListener {
     }
 ```
 
-　　loadGeneric() 方法分别调用了 Glide.buildStreamModelLoader() 方法和 Glide.buildFileDescriptorModelLoader() 方法来获得 ModelLoader 对象。ModelLoader 对象是用于加载图片的，而给 load() 方法传入不同类型的参数，这里也会得到不同的 ModelLoader 对象。由于传入的参数是 String.class，因此最终得到的是 StreamStringLoader 对象，它是实现了 ModelLoader 接口的。 
+　　loadGeneric() 方法分别调用了 Glide.buildStreamModelLoader() 方法和 Glide.buildFileDescriptorModelLoader() 方法来获得 ModelLoader 对象。ModelLoader 对象是用于加载图片的，而给 load() 方法传入不同类型的参数，这里也会得到不同的 ModelLoader 对象。由于传入的参数是 String.class，因此最终得到的是 StreamStringLoader 对象，它是实现了 ModelLoader 接口的。
+
+　　最后，loadGeneric() 方法是要返回一个 DrawableTypeRequest 对象的，因此在 loadGeneric() 方法的最后又去 new 了一个 DrawableTypeRequest 对象，然后把刚才获得的 ModelLoader 对象，还有一些数据都传了进去。 
 
 ### 2.3. Glide.buildStreamModelLoader
 
@@ -920,17 +922,169 @@ public interface ModelLoader<T, Y> {
 }
 ```
 
-　　ModelLoader 是一个工厂接口，只有一个 getResourceFetcher() 方法。
+　　ModelLoader 是一个工厂接口，只有一个 getResourceFetcher() 方法。而 getResourceFacher() 方法用于获取 DataFetcher 对象，DaraFetcher 对象可以获取解码资源的数据。
+
+### 2.5. DataFetcher
+
+```java
+/**
+ * 用于延迟检索加载资源的数据的接口。
+ * ModelLoader 味每次资源加载创建一个新实例。
+ * load() 方法可以调用也可以不调用任务给定的加载，这取决于是否缓存了相应的资源。
+ * cancel() 也可以调用，也可以不调用。
+ * 如果调用 loadData() 方法，那么也要调用 cleanup() 方法。
+ */
+public interface DataFetcher<T> {
+
+    /**
+     * 异步从解码资源种获取数据。浙江始终在后台线程上调用，因此在这里执行长时间运行的任务是安全的。
+     * 调用的任何第三方库都必须是线程安全的，因为此方法将从多个后台线程的 ExecutorService 中的一个线程调用。
+     * 只有当相应的资源不在缓存中时，才会调用此方法。
+     * 注意：此方法将在后台线程上运行，因此阻塞 I/O 是安全的。
+     * priority：请求完成的优先级。
+     * cleanup() 重新调整将被清除的位置。
+     */
+    T loadData(Priority priority) throws Exception;
+
+    /**
+     * 清除或祸首此数据获取程序使用的任何资源。在 loadData() 返回的数据被 ResourceDecoder 解码后，将在 finnally 块中调用此方法。
+     * 注意：此方法将在后台线程中运行，因此阻塞 I/O 是安全的。
+     */
+    void cleanup();
+
+    /**
+     * 返回一个字符串，该字符串唯一标识此获取程序将获取的数据，包括特定大小。
+     * 将要获取的数据字节的散列是理想的 id，但由于在许多情况下这是不实际的，因为 url、文件路径和 uri 通常就足够了。
+     * 注意：此方法将在主线程上运行，因此它不应执行阻塞操作，并且应快速完成。
+     */
+    String getId();
+
+    /**
+     * 当加载不再进行并且已经关闭将调用的方法。这种方法不需要确保任何正在进行的加载任何进程中没有完成的加载，它也可以在加载开始之前或加载完成之后调用。
+     * 使用此方法的最佳方法是取消尚未启动的任何加载，但允许正在进行的加载完成，因为通常希望在不久的将来再不同的视图中显示相同的资源。
+     * 注意：此方法将在主线程上运行，因此它不应执行阻塞操作，并且应快速完成。
+     */
+    void cancel();
+}
+```
 
 
 
-### 2.4. Glide.buildFileDescriptorModelLoader
 
 
+### 2.6. Glide.buildFileDescriptorModelLoader
 
+```java
+    public static <T> ModelLoader<T, ParcelFileDescriptor> buildFileDescriptorModelLoader(Class<T> modelClass,
+            Context context) {
+        return buildModelLoader(modelClass, ParcelFileDescriptor.class, context);
+    }
 
+```
 
-　　最后，loadGeneric() 方法是要返回一个 DrawableTypeRequest 对象的，因此在 loadGeneric() 方法的最后又去 new 了一个 DrawableTypeRequest 对象，然后把刚才获得的 ModelLoader 对象，还有一些数据都传了进去。
+　　Glide 的 buildFileDescriptorModelLoader() 方法直接调用了 buildModelLoader() 方法，返回值的类型是 ModelLoader 对象。
+
+　　而 buildModelLoader() 方法在之前分析 Glide 的 buildStreamModelLoader() 方法是就分析过了，所以直接看 Glide 构造方法中 String.class 和 ParcelFileDescriptor.class 对应的 ModelLoader 对应的是什么吧。
+
+```java
+register(String.class, ParcelFileDescriptor.class, new FileDescriptorStringLoader.Factory());
+```
+
+　　接着看 FileDescriptorStringLoader.Factory。
+
+#### 2.6.1. FileDescriptorStringLoader
+
+```java
+public class FileDescriptorStringLoader extends StringLoader<ParcelFileDescriptor>
+        implements FileDescriptorModelLoader<String> {
+
+    /**
+     * The default factory for {@link com.bumptech.glide.load.model.file_descriptor.FileDescriptorStringLoader}s.
+     */
+    public static class Factory implements ModelLoaderFactory<String, ParcelFileDescriptor> {
+        @Override
+        public ModelLoader<String, ParcelFileDescriptor> build(Context context, GenericLoaderFactory factories) {
+            return new FileDescriptorStringLoader(factories.buildModelLoader(Uri.class, ParcelFileDescriptor.class));
+        }
+
+        @Override
+        public void teardown() {
+            // Do nothing.
+        }
+    }
+
+    public FileDescriptorStringLoader(Context context) {
+        this(Glide.buildFileDescriptorModelLoader(Uri.class, context));
+    }
+
+    public FileDescriptorStringLoader(ModelLoader<Uri, ParcelFileDescriptor> uriLoader) {
+        super(uriLoader);
+    }
+}
+```
+
+　　FileDescriptorStringLoader 的 Factory 的 build 方法返回的是一个 FileDescriptorStringLoader 对象，传入的是 factories.buildModelLoader(Uri.class, ParcelFileDescriptor.class) 参数。
+
+　　直接在 Glide 的构造函数中查找 Uri.class 和  ParcelFileDescriptor.class 对应的 ModelLoader：
+
+```java
+   register(Uri.class, ParcelFileDescriptor.class, new FileDescriptorUriLoader.Factory());
+```
+
+　　接着看 FileDescriptorUriLoader.Factory。
+
+#### 2.6.2. FileDescriptorUriLoader
+
+```java
+public class FileDescriptorUriLoader extends UriLoader<ParcelFileDescriptor> implements FileDescriptorModelLoader<Uri> {
+
+    /**
+     * The default factory for {@link com.bumptech.glide.load.model.file_descriptor.FileDescriptorUriLoader}s.
+     */
+    public static class Factory implements ModelLoaderFactory<Uri, ParcelFileDescriptor> {
+        @Override
+        public ModelLoader<Uri, ParcelFileDescriptor> build(Context context, GenericLoaderFactory factories) {
+            return new FileDescriptorUriLoader(context, factories.buildModelLoader(GlideUrl.class,
+                    ParcelFileDescriptor.class));
+        }
+
+        @Override
+        public void teardown() {
+            // Do nothing.
+        }
+    }
+
+    public FileDescriptorUriLoader(Context context) {
+        this(context, Glide.buildFileDescriptorModelLoader(GlideUrl.class, context));
+    }
+
+    public FileDescriptorUriLoader(Context context, ModelLoader<GlideUrl, ParcelFileDescriptor> urlLoader) {
+        super(context, urlLoader);
+    }
+
+    @Override
+    protected DataFetcher<ParcelFileDescriptor> getLocalUriFetcher(Context context, Uri uri) {
+        return new FileDescriptorLocalUriFetcher(context, uri);
+    }
+
+    @Override
+    protected DataFetcher<ParcelFileDescriptor> getAssetPathFetcher(Context context, String assetPath) {
+        return new FileDescriptorAssetPathFetcher(context.getApplicationContext().getAssets(), assetPath);
+    }
+}
+
+```
+
+　　FileDescriptorUriLoader 的 Factory 的 build 方法返回的一个 FileDescritporUriLoader 对象，其中传入了 factories.buildModelLoader（GlideUrl.class,
+        ParcelFileDescriptor.class）对象，而 Glide 的构造方法中是没有注册这个的，所以将会在 Glide 的 buildModelLoader() 方法中返回 null。
+
+​        所以在 FileDescriptorUriLoader 的 Factory 的 build() 方法中创建 FileDescritorUriLoader 的时候传入的 urlLoader 为 null，而 FileDescritorUriLoader 的构造方法直接调用了父类 UriLoader 的构造方法。而 UriLoader 的构造方法是将参数 urlLoader 设置给成员变量 urlLoader。
+
+​        接着回到 FileDescriptorStringLoader 的 构造函数中，这里传入的 ModelLoader 就是 FileDescriptorUriLoader 对象，而 FileDescriptorStringLoader 直接调用了父类 UriLoader 的构造函数，而 UriLoader 的构造方法是将参数 urlLoader 设置给成员变量 urlLoader。
+
+**总结一下**
+
+​        到这里，RequestManager 的 loadGeneric() 方法中创建的 streamModelLoader 是 StreamStringLoader 对象，StreamStringLoader 对象的成员变量 uriLoader 是 StreamUrlLoader，而 StreamUrlLoader 对象的成员变量 uriLoader 是 HttpUrlGlideLoader；fileDescriptorModelLoader 是 FileDescriptorStringLoader 对象，FileDescriptorStringLoader 对象的成员变量 uriLoader 是 FileDescriptorUriLoader 对象，而 FileDescriptorUriLoader 对象的成员变量 uriLoader 是 null。
 
 ### 2.5. DrawableTypeRequest类
 
@@ -1046,16 +1200,7 @@ public class DrawableTypeRequest<ModelType> extends DrawableRequestBuilder<Model
 ### 2.2. DrawableRequestBuilder
 
 ```java
-/**
- * A class for creating a request to load a {@link GlideDrawable}.
- *
- * <p>
- *     Warning - It is <em>not</em> safe to use this builder after calling <code>into()</code>, it may be pooled and
- *     reused.
- * </p>
- *
- * @param <ModelType> The type of model that will be loaded into the target.
- */
+
 public class DrawableRequestBuilder<ModelType>
         extends GenericRequestBuilder<ModelType, ImageVideoWrapper, GifBitmapWrapper, GlideDrawable>
         implements BitmapOptions, DrawableOptions {
@@ -1068,29 +1213,6 @@ public class DrawableRequestBuilder<ModelType>
         crossFade();
     }
 
-    /**
-     * Loads and displays the {@link GlideDrawable} retrieved by the given thumbnail request if it finishes before this
-     * request. Best used for loading thumbnail {@link GlideDrawable}s that are smaller and will be loaded more quickly
-     * than the fullsize {@link GlideDrawable}. There are no guarantees about the order in which the requests will
-     * actually finish. However, if the thumb request completes after the full request, the thumb {@link GlideDrawable}
-     * will never replace the full image.
-     *
-     * @see #thumbnail(float)
-     *
-     * <p>
-     *     Note - Any options on the main request will not be passed on to the thumbnail request. For example, if
-     *     you want an animation to occur when either the full {@link GlideDrawable} loads or the thumbnail loads,
-     *     you need to call {@link #animate(int)} on both the thumb and the full request. For a simpler thumbnail
-     *     option where these options are applied to the humbnail as well, see {@link #thumbnail(float)}.
-     * </p>
-     *
-     * <p>
-     *     Only the thumbnail call on the main request will be obeyed, recursive calls to this method are ignored.
-     * </p>
-     *
-     * @param thumbnailRequest The request to use to load the thumbnail.
-     * @return This builder object.
-     */
     public DrawableRequestBuilder<ModelType> thumbnail(
             DrawableRequestBuilder<?> thumbnailRequest) {
         super.thumbnail(thumbnailRequest);
@@ -1107,122 +1229,56 @@ public class DrawableRequestBuilder<ModelType>
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> thumbnail(float sizeMultiplier) {
         super.thumbnail(sizeMultiplier);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> sizeMultiplier(float sizeMultiplier) {
         super.sizeMultiplier(sizeMultiplier);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> decoder(ResourceDecoder<ImageVideoWrapper, GifBitmapWrapper> decoder) {
         super.decoder(decoder);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> cacheDecoder(ResourceDecoder<File, GifBitmapWrapper> cacheDecoder) {
         super.cacheDecoder(cacheDecoder);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> encoder(ResourceEncoder<GifBitmapWrapper> encoder) {
         super.encoder(encoder);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> priority(Priority priority) {
         super.priority(priority);
         return this;
     }
 
-    /**
-     * Transform {@link GlideDrawable}s using the given
-     * {@link com.bumptech.glide.load.resource.bitmap.BitmapTransformation}s.
-     *
-     * <p>
-     *     Note - Bitmap transformations will apply individually to each frame of animated GIF images and also to
-     *     individual {@link Bitmap}s.
-     * </p>
-     *
-     * @see #centerCrop()
-     * @see #fitCenter()
-     * @see #bitmapTransform(com.bumptech.glide.load.Transformation[])
-     * @see #transform(com.bumptech.glide.load.Transformation[])
-     *
-     * @param transformations The transformations to apply in order.
-     * @return This request builder.
-     */
     public DrawableRequestBuilder<ModelType> transform(BitmapTransformation... transformations) {
         return bitmapTransform(transformations);
     }
 
-    /**
-     * Transform {@link GlideDrawable}s using {@link com.bumptech.glide.load.resource.bitmap.CenterCrop}.
-     *
-     * @see #fitCenter()
-     * @see #transform(com.bumptech.glide.load.resource.bitmap.BitmapTransformation...)
-     * @see #bitmapTransform(com.bumptech.glide.load.Transformation[])
-     * @see #transform(com.bumptech.glide.load.Transformation[])
-     *
-     * @return This request builder.
-     */
     @SuppressWarnings("unchecked")
     public DrawableRequestBuilder<ModelType> centerCrop() {
         return transform(glide.getDrawableCenterCrop());
     }
 
-    /**
-     * Transform {@link GlideDrawable}s using {@link com.bumptech.glide.load.resource.bitmap.FitCenter}.
-     *
-     * @see #centerCrop()
-     * @see #transform(com.bumptech.glide.load.resource.bitmap.BitmapTransformation...)
-     * @see #bitmapTransform(com.bumptech.glide.load.Transformation[])
-     * @see #transform(com.bumptech.glide.load.Transformation[])
-     *
-     * @return This request builder.
-     */
     @SuppressWarnings("unchecked")
     public DrawableRequestBuilder<ModelType> fitCenter() {
         return transform(glide.getDrawableFitCenter());
     }
 
-    /**
-     * Transform {@link GlideDrawable}s using the given {@link android.graphics.Bitmap} transformations. Replaces any
-     * previous transformations.
-     *
-     * @see #fitCenter()
-     * @see #centerCrop()
-     * @see #transform(com.bumptech.glide.load.resource.bitmap.BitmapTransformation...)
-     * @see #transform(com.bumptech.glide.load.Transformation[])
-     *
-     * @return This request builder.
-     */
     public DrawableRequestBuilder<ModelType> bitmapTransform(Transformation<Bitmap>... bitmapTransformations) {
         GifBitmapWrapperTransformation[] transformations =
                 new GifBitmapWrapperTransformation[bitmapTransformations.length];
@@ -1232,24 +1288,12 @@ public class DrawableRequestBuilder<ModelType>
         return transform(transformations);
     }
 
-
-
-    /**
-     * {@inheritDoc}
-     *
-     * @see #bitmapTransform(com.bumptech.glide.load.Transformation[])
-     * @see #centerCrop()
-     * @see #fitCenter()
-     */
     @Override
     public DrawableRequestBuilder<ModelType> transform(Transformation<GifBitmapWrapper>... transformation) {
         super.transform(transformation);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> transcoder(
             ResourceTranscoder<GifBitmapWrapper, GlideDrawable> transcoder) {
@@ -1257,70 +1301,46 @@ public class DrawableRequestBuilder<ModelType>
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public final DrawableRequestBuilder<ModelType> crossFade() {
         super.animate(new DrawableCrossFadeFactory<GlideDrawable>());
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public DrawableRequestBuilder<ModelType> crossFade(int duration) {
         super.animate(new DrawableCrossFadeFactory<GlideDrawable>(duration));
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Deprecated
     public DrawableRequestBuilder<ModelType> crossFade(Animation animation, int duration) {
         super.animate(new DrawableCrossFadeFactory<GlideDrawable>(animation, duration));
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public DrawableRequestBuilder<ModelType> crossFade(int animationId, int duration) {
         super.animate(new DrawableCrossFadeFactory<GlideDrawable>(context, animationId,
                 duration));
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> dontAnimate() {
         super.dontAnimate();
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> animate(ViewPropertyAnimation.Animator animator) {
         super.animate(animator);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> animate(int animationId) {
         super.animate(animationId);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Deprecated
     @SuppressWarnings("deprecation")
     @Override
@@ -1329,18 +1349,12 @@ public class DrawableRequestBuilder<ModelType>
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> placeholder(int resourceId) {
         super.placeholder(resourceId);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> placeholder(Drawable drawable) {
         super.placeholder(drawable);
@@ -1359,27 +1373,18 @@ public class DrawableRequestBuilder<ModelType>
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> error(int resourceId) {
         super.error(resourceId);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> error(Drawable drawable) {
         super.error(drawable);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> listener(
             RequestListener<? super ModelType, GlideDrawable> requestListener) {
@@ -1387,45 +1392,30 @@ public class DrawableRequestBuilder<ModelType>
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> diskCacheStrategy(DiskCacheStrategy strategy) {
         super.diskCacheStrategy(strategy);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> skipMemoryCache(boolean skip) {
         super.skipMemoryCache(skip);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> override(int width, int height) {
         super.override(width, height);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> sourceEncoder(Encoder<ImageVideoWrapper> sourceEncoder) {
         super.sourceEncoder(sourceEncoder);
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DrawableRequestBuilder<ModelType> dontTransform() {
         super.dontTransform();
@@ -1451,18 +1441,6 @@ public class DrawableRequestBuilder<ModelType>
         return (DrawableRequestBuilder<ModelType>) super.clone();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>
-     *     Note - If no transformation is set for this load, a default transformation will be applied based on the
-     *     value returned from {@link android.widget.ImageView#getScaleType()}. To avoid this default transformation,
-     *     use {@link #dontTransform()}.
-     * </p>
-     *
-     * @param view {@inheritDoc}
-     * @return {@inheritDoc}
-     */
     @Override
     public Target<GlideDrawable> into(ImageView view) {
         return super.into(view);
