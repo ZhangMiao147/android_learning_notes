@@ -197,6 +197,8 @@ public class FruitGenerator<T> implements Generator<T> {
 
 ### 3.3. 泛型方法
 
+　　泛型类，是在实例化类的时候指明泛型的具体类型；泛型方法，是在调用方法的时候指明泛型的具体类型。
+
 ```java
 public class ArrayAlg {
 
@@ -211,6 +213,37 @@ public class ArrayAlg {
 ```
 
 　　这个方法是在普通类中定义的，而不是在泛型类中定义的。然而，这是一个泛型方法，可以从尖括号和类型变量看出这一点。注意，类型变量放在修饰符（public static）的后面，返回类型的前面。
+
+```java
+int middile = getMiddle(1,2,3);
+```
+
+#### 3.3.1. 静态方法与泛型
+
+　　静态方法有一种清康需要注意一下，那就是在类中的静态方法使用泛型：静态方法无法访问类上定义的泛型；如果静态方法操作的引用数据类型不确定的时候，必须要将泛型定义在方法上。即：如果静态方法要使用泛型的话，必须将静态方法也定义成泛型方法。
+
+```java
+public class StaticGenerator<T> {
+    ....
+    ....
+    /**
+     * 如果在类中定义使用泛型的静态方法，需要添加额外的泛型声明（将这个方法定义成泛型方法）
+     * 即使静态方法要使用泛型类中已经声明过的泛型也不可以。
+     * 如：public static void show(T t){..},此时编译器会提示错误信息：
+          "StaticGenerator cannot be refrenced from static context"
+     */
+    public static <T> void show(T t){
+
+    }
+}
+```
+
+#### 3.3.2, 泛型方法总结
+
+　　泛型方法能使方法独立于类而产生变化，以下是一个基本的指导原则：
+
+1. 无论何时，如果能做到，就该尽量使用泛型方法。也就是说，如果使用泛型方法将整个类泛型化，那么就应该使用泛型方法。
+2. 另外对于一个 static 的方法而已，无法访问泛型类型的参数，所以如果 static 方法要使用泛型能力，就必须使其成为泛型方法。
 
 ### 3.4. 泛型通配符
 
@@ -231,7 +264,97 @@ public void showKeyValue1(Generic<Number> obj){
 // showKeyValue(gInteger);
 ```
 
-　　通过提示
+　　通过提示信息可以看到 Generic< Integer > 不能被看作为 Generic< Number > 的子类。由此可以看出：同一种泛型可以对应多个版本（因为参数类型是不确定的），不同版本的泛型类实例是不兼容的。
+
+　　解决上面的问题，需要一个在逻辑上可以标识同时是 Generic< Integer > 和 Generic< Number > 父类的引用类型，而这个引用类型就是使用类型通配符来作用。
+
+```java
+public void showKeyValue1(Generic<?> obj){
+    Log.d("泛型测试","key value is " + obj.getKey());
+}
+```
+
+　　类型通配符一般是使用 ? 代替具体的类型实参，注意了，此处 “？” 是类型实参，而不是类型形参。此处的 ？ 和 Number、String、Integer 一样都是一种实际的类型，可以把 ？ 看成所有类型的父类，是一种真实的类型。
+
+　　可以解决当具体类型不确定的时候，这个通配符就是 ?；当操作类型时，不需要使用类型的具体功能时，只使用 Object 类中的功能，那么可以用 ？ 通配符来表示未知类型。
+
+### 3.5. 泛型上下边界
+
+　　在使用泛型的时候，还可以为传入的泛型类型实参进行上下边界的限制，如：类型实参只准传入某种类型的父类或某种类型的子类。
+
+　　为泛型添加上便捷，即传入的类型实参必须是指定类型的子类型。
+
+```java
+Generic<String> generic1 = new Generic<String>("11111");
+Generic<Integer> generic2 = new Generic<Integer>(2222);
+Generic<Float> generic3 = new Generic<Float>(2.4f);
+Generic<Double> generic4 = new Generic<Double>(2.56);
+
+//这一行代码编译器会提示错误，因为String类型并不是Number类型的子类
+//showKeyValue1(generic1);
+
+showKeyValue1(generic2);
+showKeyValue1(generic3);
+showKeyValue1(generic4);
+
+public void showKeyValue1(Generic<? extends Number> obj){
+    Log.d("泛型测试","key value is " + obj.getKey());
+}
+```
+
+　　泛型方法的例子：
+
+```java
+//在泛型方法中添加上下边界限制的时候，必须在权限声明与返回值之间的<T>上添加上下边界，即在泛型声明的时候添加
+//public <T> T showKeyName(Generic<T extends Number> container)，编译器会报错："Unexpected bound"
+public <T extends Number> T showKeyName(Generic<T> container){
+    System.out.println("container key :" + container.getKey());
+    T test = container.getKey();
+    return test;
+}
+```
+
+　　泛型的上下界添加，必须与泛型的声明在一起。
+
+### 3.6. 泛型数组
+
+　　在 java 中是 “ 不能创建一个确切的泛型类型的数组 ” 的。但是使用通配符创建数组是可以的。
+
+```java
+List<String>[] ls = new ArrayList<String>[10];  // 不可以
+List<?>[] ls = new ArrayList<?>[10];  // 可以
+List<String>[] ls = new ArrayList[10]; //可以
+```
+
+　　举个例子：
+
+```java
+List<String>[] lsa = new List<String>[10]; // Not really allowed.    
+Object o = lsa;    
+Object[] oa = (Object[]) o;    
+List<Integer> li = new ArrayList<Integer>();    
+li.add(new Integer(3));    
+oa[1] = li; // Unsound, but passes run time store check    
+String s = lsa[1].get(0); // Run-time error: ClassCastException.
+```
+
+　　这种情况下，由于 JVM 泛型的擦除机制，在运行时 jvm 是不知道泛型信息的，所以可以给 oa[1] 赋上一个 ArrayList 而不会出现异常。
+
+　　但是在取出数据的时候却要做一次类型转换，所以就会出现 ClassCastException。
+
+　　如果可以进行泛型数组的声明，上面说的这样情况在编译器将不会出现任何的警告和错误，只有在运行时才会出错。而对泛型数组的声明进行限制，对于这样的情况，可以在编译器提示代码有类型安全问题，比没有任何提示要强得多。
+
+　　下面采用通配符的方式是被允许的：数组的类型不可以是类型变量，除非是采用通配符的方式，最后取出数据是要做显示的类型转换的。
+
+```java
+List<?>[] lsa = new List<?>[10]; // OK, array of unbounded wildcard type.    
+Object o = lsa;    
+Object[] oa = (Object[]) o;    
+List<Integer> li = new ArrayList<Integer>();    
+li.add(new Integer(3));    
+oa[1] = li; // Correct.    
+Integer i = (Integer) lsa[1].get(0); // OK
+```
 
 
 ## 参考文章
