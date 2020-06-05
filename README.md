@@ -88,6 +88,7 @@
 * [Socket 常用函数接口详解](https://github.com/ZhangMiao147/android_learning_notes/blob/master/network/Socket/Socket常用函数接口详解.md)
 * [HTTP](https://github.com/ZhangMiao147/android_learning_notes/blob/master/network/HTTP/HTTP.md)
 * [HTTPS](https://github.com/ZhangMiao147/android_learning_notes/blob/master/network/HTTPS/HTTPS.md)
+* [IP 协议](https://github.com/ZhangMiao147/android_learning_notes/blob/master/network/IP/IP协议.md)
 
 
 ## 数据结构
@@ -271,6 +272,8 @@
   * 第 1 章 [了解 Web 及网络基础](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第1章-了解Web及网络基础.md)
   * 第 2 章 [简单的 HTTP 协议](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第2章-简单的HTTP协议.md)
   * 第 3 章 [HTTP 报文内的 HTTP 信息](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/图解HTTP)
+  * 第 4 章 [返回结果的 HTTP 状态码](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第4章-返回结果的HTTP状态码.md)
+  * 第 5 章 [与 HTTP 协作的 Web 服务器](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第5章-与HTTP协作的Web服务器.md)
 * **Android 开发艺术探索**
   * 第 1 章 [Activity 的生命周期和启动模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android开发艺术探索/第1章-Activity%20的声明周期和启动模式.md)
   * 第 2 章 [IPC 机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android开发艺术探索/第2章-IPC机制.md)
