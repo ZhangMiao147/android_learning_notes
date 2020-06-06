@@ -341,9 +341,62 @@ public Object invoke(Object obj,Object…args) // 1.5
 public Object invoke(Object obj,Object[] args) // 1.4
 ```
 
+　　由于 JDK 1.4 和 JDK 1.5 对 invoke 方法的处理有区别，所以在反射类似于 main（String[] args）这种参数是数组的方法时需要特殊处理。
 
+　　启动 Java 程序的 main 方法的参数是一个字符串数组，即 public static void main(String[] args)，通过反射方法时来调用这个 main 方法时，如何为 invoke 方法传递参数呢？按 jdk 1.5 的语法，整个数组是一个参数，而按 jdk 1.4 的语法，数组中的每个元素对应一个参数，当把一个字符串数组作为参数传递给 invoke 方法时，javac 到底会按照哪种语法进行处理呢？jdk 1.5 肯定要兼容 jdk 1.4 的语法，会按 jdk 1.4 的语法进行处理，即把数组打散称为若干个单独的参数。所以，在给 main 方法传毒参数时，不能使用代码 mainMethod.invoke(null,new String[]{})，javac 只把它当作 jdk 1.4 的语法进行理解，而不把它当作 jdk 1.5 的语法解释，因此会出现参数个数不对的问题。
+
+　　上述问题的解决方法：
+
+1. mainMethod.invoke(null,new Object[ ] ( new String[]{"xxx"}));
+
+   这种方式，由于传的是一个数组的参数，所以为了向下兼容 1.4 的语法，javac 遇到数组会给拆开成多个参数，但是由于这个 Object[] 数组里只有一个元素值，所以就算它拆也没关系。
+
+2. mainMethod.invoke(null,(Object)new String[]{"xxx"};
+
+   这种方式相当于传的参数是一个对象，而不是数组，所以就算是按照 1.4 的语法它也不会拆，所以问题搞定。
+
+　　编译器会作特殊处理，编译时不把参数当作数组看待，也就不会数组打散成若干个参数了。
+
+　　对上边的描述进行一下总结：在反射方法时，如果方法的参数是一个数组，考虑到向下兼容问题，会按照 JDK 1.4 的压法来对待（JVM 会把传递的数组参数拆开，拆开就会报参数的个数不匹配的错误）。
+
+　　解决方法：防止 JVM 拆开数组。
+
+　　方法一：把数组看作是一个 Object 对象。
+
+　　方法二：重新构建一个 Object 数组，那个参数数组作为唯一的元素存在。
 
 ## 5. 总结
+
+　　在阅读 Class 类文档时发现一个特点，以通过反射获得 Method 为例，一般会提供四种方法：getMethod(parameterTypes)、getMethods()、getDeclaredMethod(parameterTypes) 和 getDeclared,ethods()。getMethod(parameterTypes) 用来获取某个公有地方法地对象，getMethods() 获得该类所有公有的方法，getDeclaredMethod(parameterTypes) 获得该来某个方法，getDeclaredMethod(parameterTypes) 获得该类某个方法，getDeclaredMethods() 获得该类所有方法。带有 Declared 修饰的方法可以反射到私有的方法，没有 Declared 修饰的只能用来反射公有的方法。其他的 Annotation、Field、Constructor 也是如此。
+
+　　在 ReflactClass 类中还提供了两种反射 PowerManager.shutdown() 的方法，在调用的时候会输出如下 log，提示没有相关权限。
+
+```java
+ W/System.err: java.lang.reflect.InvocationTargetException
+ W/System.err:     at java.lang.reflect.Method.invoke(Native Method)
+ W/System.err:     at .ReflectClass.shutDown(ReflectClass.java:104)
+ W/System.err:     at .MainActivity$1.onClick(MainActivity.java:25)
+ W/System.err:     at android.view.View.performClick(View.java:6259)
+ W/System.err:     at android.view.View$PerformClick.run(View.java:24732)
+ W/System.err:     at android.os.Handler.handleCallback(Handler.java:789)
+ W/System.err:     at android.os.Handler.dispatchMessage(Handler.java:98)
+ W/System.err:     at android.os.Looper.loop(Looper.java:164)
+ W/System.err:     at android.app.ActivityThread.main(ActivityThread.java:6592)
+ W/System.err:     at java.lang.reflect.Method.invoke(Native Method)
+ W/System.err:     at com.android.internal.os.Zygote$MethodAndArgsCaller.run(Zygote.java:240)
+ W/System.err:     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:769)
+ W/System.err: Caused by: java.lang.SecurityException: Neither user 10224 nor current process has android.permission.REBOOT.
+ W/System.err:     at android.os.Parcel.readException(Parcel.java:1942)
+ W/System.err:     at android.os.Parcel.readException(Parcel.java:1888)
+ W/System.err:     at android.os.IPowerManager$Stub$Proxy.shutdown(IPowerManager.java:787)
+ W/System.err:  ... 12 more
+```
+
+　　如果源码中明确进行了权限验证，而应用又无法获得这个权限的话，是无法成功反射的。
+
+　　常用的框架里又很多地方否用到了反射，反射是框架的灵魂，具备反射知识和思想，是看懂框架的基础。
+
+　　平时用到的框架，除了配置文件的形式，现在很多都使用了注解的形式，其实注解也和反射息息相关，使用反射也能轻而易举的拿到类、字段、方法上的注解，然后编写注解解析器对这些注解进行解析，做一些相关的处理，所以说不管是配置文件还是注解的形式，它们都和反射有关。
 
 
 ## 6. 参考文章
