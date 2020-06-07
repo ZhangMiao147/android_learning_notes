@@ -100,6 +100,10 @@
 
 ## Java
 
+* 基础
+  * [Java 泛型](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/基础/Java泛型.md)
+  * [Java 代理](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/基础/Java代理.md)
+
 * 数据结构
   * [Collection 与 Collections](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Colletion%E4%B8%8EColletions.md)
   * [ArrayList 与 LinkedList](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/ArrayList%E4%B8%8ELinkedList.md)
