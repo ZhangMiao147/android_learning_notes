@@ -68,7 +68,7 @@
 | 方法                                              | 用途                                   |
 | ------------------------------------------------- | -------------------------------------- |
 | getAnnotation(Class < A > annotationClass)        | 返回该类中与参数类型匹配的公有注解对象 |
-| getAnnotation()                                   | 返回该类所有的公有注解对象             |
+| getAnnotations()                                  | 返回该类所有的公有注解对象             |
 | getDeclaredAnnotation(Class< A > annotationClass) | 返回该类中与参数类型匹配的所有注解对象 |
 | getDeclaredAnnatations()                          | 返回该类所有的注解对象                 |
 
@@ -76,7 +76,7 @@
 
 | 方法                                                  | 用途                                   |
 | ----------------------------------------------------- | -------------------------------------- |
-| getConstructor< Class... < ? > parameterTypes>        | 获得该类中与参数类型匹配的公有构造方法 |
+| getConstructor(Class... < ? > parameterTypes)         | 获得该类中与参数类型匹配的公有构造方法 |
 | getConstructors()                                     | 获得该类的所有公共构造方法             |
 | getDeclaredConstructor(Class... < ? > parameterTypes) | 获得该类中与参数类型匹配的构造方法     |
 | getDeclaredConstructors()                             | 获得该类所有的构造方法                 |

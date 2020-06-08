@@ -46,19 +46,61 @@
 
 #### 2.1.2. 获得类中属性相关的方法
 
+| 方法                          | 用途                   |
+| ----------------------------- | ---------------------- |
+| getField(String name)         | 获得某个共有的属性对象 |
+| getFields()                   | 获得所有共有属性对象   |
+| getDeclaredField(String name) | 获得某个属性对象       |
+| getDeclaredFields()           | 获得所有属性对象       |
+
+
+
 #### 2.1.3. 获得类中注解相关的方法
+
+| 方法                                              | 用途                                   |
+| ------------------------------------------------- | -------------------------------------- |
+| getAnnotation(Class< A > annotationClass)         | 返回该类中与参数类型匹配的公有注解对象 |
+| getAnnotations()                                  | 返回该类所有的公有注解对象             |
+| getDeclaredAnnotation(Class< A > annotationClass) | 返回该类中与参数类型匹配的所有主机对象 |
+| getDeclaredAnnotations()                          | 返回该类所有的注解对象                 |
 
 
 
 #### 2.1.4. 获得类中构造器相关的方法
 
+| 方法                                                 | 用途                                   |
+| ---------------------------------------------------- | -------------------------------------- |
+| getConstructor(Class... < ? > parameterTypes)        | 获得该类中与参数类型匹配的公有构造方法 |
+| getConstructors()                                    | 获得该类的所有公共构造方法             |
+| getDeclaredConstructor(Class...< ? > parameterTypes) | 获得该类中与参数类型匹配的构造方法     |
+| getDeclaredConstructors()                            | 获得该类所有的构造方法                 |
+
 
 
 #### 2.1.5. 获得类中方法相关的方法
 
+| 方法                                                         | 用途                   |
+| ------------------------------------------------------------ | ---------------------- |
+| getMethod(String name,Class... < ? > parameterTypes)         | 获得该类某个公有的方法 |
+| getMethods()                                                 | 获得该类所有公有的方法 |
+| getDeclaredMethod(String name,Class... < ? > parameterTypes) | 获得该类某个方法       |
+| getDeclaredMethods()                                         | 获得该类所有方法       |
+
 
 
 #### 2.1.6. 类中其他重要的方法
+
+| 方法                                                         | 用途                          |
+| ------------------------------------------------------------ | ----------------------------- |
+| isAnnotation()                                               | 如果是注解类则返回 true       |
+| isAnnotationPresent(Class< ? extends Annotation > annotationClass) | 如果是指定注解类型则返回 true |
+| isA                                                          |                               |
+|                                                              |                               |
+|                                                              |                               |
+|                                                              |                               |
+|                                                              |                               |
+|                                                              |                               |
+|                                                              |                               |
 
 
 
