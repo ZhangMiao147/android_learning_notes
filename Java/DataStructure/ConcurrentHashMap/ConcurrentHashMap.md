@@ -1,4 +1,4 @@
-# CurrentHashMap
+# ConcurrentHashMap
 
 　　ConcurrentHashMap（简称 chm）是 java 1.5 新引入的 java.util.concurrent 包的成员，作为 hashtable 的替代。为什么呢，hashtable 采用了同步整个方法的结构。虽然实现了线程安全但是性能也就大大降低了，而 HashMap 在并发情况下会很容易出错。所以也促进了安全并且在多线程中使用的 ConcurrentHashMap。
 
@@ -20,11 +20,11 @@
 
 ### 应用场景
 
-　　缓存技术（比如 redis、memcached）的核心其实就是在内存中维护一张巨大的哈希表，还有 HashMap、CurrentHashMap 等应用。
+　　缓存技术（比如 redis、memcached）的核心其实就是在内存中维护一张巨大的哈希表，还有 HashMap、ConcurrentHashMap 等应用。
 
 ## CurrentHashMap 的结构
 
-　　CurrentHashMap 是由 Segment 和 HashEntry 组成的。Segment 是一种可重入的锁（Reentranlock），Segment 在其中扮演锁的角色，HashEntry 用于存储数据。一个 CurrentHashMap 包括一个 Segment 数组。一个 Segment 元素包括一个 HashEntry 数组，HashEntry 是一种链表式的结构，每一个 Segment 维护着 HashEntry 数组中的元素，当要对 HashEntry 中的数据进行修改的时候，必须先要活的与它对应的 Segment。
+　　ConcurrentHashMap 是由 Segment 和 HashEntry 组成的。Segment 是一种可重入的锁（Reentranlock），Segment 在其中扮演锁的角色，HashEntry 用于存储数据。一个 CurrentHashMap 包括一个 Segment 数组。一个 Segment 元素包括一个 HashEntry 数组，HashEntry 是一种链表式的结构，每一个 Segment 维护着 HashEntry 数组中的元素，当要对 HashEntry 中的数据进行修改的时候，必须先要活的与它对应的 Segment。
 
 ![](image/currentHashMap的体系结构.png)
 
@@ -74,7 +74,7 @@ public ConcurrentHashMap(int initialCapacity,
     }
 ```
 
-　　和 HashMap 对比来分析，HashMap 是 entry< K,V >[]，而 chm 就是 segments< K,V >。可以说每一个 segment 都是一个 HashMap，想逃进入 Segment 还需要获取对应的锁。默认 ConCurrentHashMap 的 Segment 数是 16。每个 segment 内的 hashEntry 数组大小也是 16 个。threadshord 是 16*0.8。
+　　和 HashMap 对比来分析，HashMap 是 entry< K,V >[]，而 chm 就是 segments< K,V >。可以说每一个 segment 都是一个 HashMap，想逃进入 Segment 还需要获取对应的锁。默认 ConcurrentHashMap 的 Segment 数是 16。每个 segment 内的 hashEntry 数组大小也是 16 个。threadshord 是 16*0.8。
 
 ### chm 如何定位
 
@@ -366,7 +366,7 @@ final V remove(Object key, int hash, Object value) {
 
 　　所以，通过这一种结构，ConcurrentHashMap 的并发能力可以大大的提高。
 
-### JDK 1.8 版本的 CurrentHashMap 的实现原理
+### JDK 1.8 版本的 ConcurrentHashMap 的实现原理
 
 　　JDK 8 中 ConcurrentHashMap 参考了 JDK 8 HashMap 的实现，采用了数组 + 链表 + 红黑树的实现方式来设计，内部大量采用 CAS 操作。
 
@@ -412,7 +412,7 @@ class Node<K,V> implements Map.Entry<K,V> {
 
 ## 总结
 
-　　可以看出 JDK 1.8 版本的 CorrentHashMap 的数据结构已经接近 HashMap，相对而言，ConcurrentHashMap 只是增加了同步的操作来控制并发，从 JDK 1.7 版本的 ReentrantLock + Segment + HashEntry，到 JDK 1.8 版本中 synchronized + CAS + HashEntry + 红黑树。
+　　可以看出 JDK 1.8 版本的 ConcurrentHashMap 的数据结构已经接近 HashMap，相对而言，ConcurrentHashMap 只是增加了同步的操作来控制并发，从 JDK 1.7 版本的 ReentrantLock + Segment + HashEntry，到 JDK 1.8 版本中 synchronized + CAS + HashEntry + 红黑树。
 
 1. 数据结构：取消了 Segment 分段锁的数据结构，取而代之的是数组 + 链表 + 红黑树的结构。
 2. 保证线程安全机制：JDK 1.7 采用 segment 的分段锁机制实现线程安全，其中 segment 继承自 ReentrantLock。JDK 1.8 采用 CAS + Synchronized 保证线程安全。
