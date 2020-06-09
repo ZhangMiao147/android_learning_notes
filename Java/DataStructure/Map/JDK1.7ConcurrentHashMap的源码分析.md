@@ -77,6 +77,10 @@ public ConcurrentHashMap(int initialCapacity,
 
 　　和 HashMap 对比来分析，HashMap 是 entry< K,V >[]，而 chm 就是 segments< K,V >。可以说每一个 segment 都是一个 HashMap，想要进入 Segment 还需要获取对应的锁。默认 ConcurrentHashMap 的 Segment 数是 16。每个 segment 内的 hashEntry 数组大小也是 16 个。threadshord 是 16*0.8。
 
+　　ConcurrentHashMap 如何发生 ReHash？
+
+　　ConcurrentLevel 一旦设定的话，就不会改变。ConcurrentHashMap 当元素个数大于临界值的时候，就会发生扩容。但是 ConcurrentHashMap 与其他的 HashMap 不同的是，它不会对 Segment 数量增大，只会增加 Segment 后面的链表容量的大小。即对每个 Segment 的元素进行的 ReHash 操作。
+
 ### 2.1. Segment
 
 ```java
@@ -162,7 +166,7 @@ public V put(K key, V value) {
 1. 定位 segment 并确保 Segment 已初始化。
 2. 调用 Segment 的 put 方法。
 
-　　关于 segmentShift 和 segmentMask：
+### 关于 segmentShift 和 segmentMask
 
 　　SgmentMask：段掩码，加如 segment 数组长度为 16，则段掩码为 16-1 = 15；segments 长度为 32，段掩码为 32-1 = 31。这样得到的所有 bit 位都为1，可以更好地保证散列地均匀性。
 
@@ -176,6 +180,7 @@ public V put(K key, V value) {
         final V put(K key, int hash, V value, boolean onlyIfAbsent) {
             HashEntry<K,V> node = tryLock() ? null :
                 scanAndLockForPut(key, hash, value);
+            // tryLock() 是 ReentrantLock 获取锁一个方法。如果当前线程获取锁成功，返回 true，如果别的线程获取了锁返回 false，不成功时会遍历定位到 HashEntry 位置的链表（遍历主要是为了使 CPU 缓存链表），若找不到，则创建 HashEntry。
             // tryLock 不成功时会遍历定位到的 HashEntry 位置的链表（遍历主要是为了使 CPU 缓存链表），若找不到，则创建 HashEntry。
             // tryLock 一定次数后（MAX_SCAN_RETRIES 变量决定），则 lock。若遍历过程中，由于其他线程的操作导致链表头结点变化，则需要重新遍历。
             V oldValue;
@@ -227,6 +232,9 @@ public V put(K key, V value) {
             return oldValue;
         }
 ```
+
+1. Put 时候，通过 Hash 函数将即将要 put 的元素均匀的放到所需要的 Segment 段中，调用 Segment 的 put 方法进行数据。
+2. Segment 的 put 是加锁中完成的。如果当前元素数大于最大临界值的话将会产生 rehash。先通过 getFirst 找到链表的表头部分，然后遍历链表，调用 equals 比配是否存在相同的 key，如果找到的话，则将最新的 key 对应 value 值。如果没有找到，新增一个 HashEntry 它加到整个 Segment 的头部。
 
 ### 3.2. Segment#rehash() - 扩容
 

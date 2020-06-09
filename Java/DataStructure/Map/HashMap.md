@@ -167,7 +167,7 @@
     }
 ```
 
-##### #### 1.1.1. roundUpToPowerOf2(int number)方法
+##### 1.1.1. roundUpToPowerOf2(int number)方法
 
 ```java
     private static int roundUpToPowerOf2(int number) {
@@ -185,9 +185,7 @@
 
 　　所以 capacity 一定是 2 的倍数。
 
-
-
-##### 1.2. putAllForCreate(Map<? extends K, ? extends V> m) 方法
+#### 1.2. putAllForCreate(Map<? extends K, ? extends V> m) 方法
 
 ```java
     private void putAllForCreate(Map<? extends K, ? extends V> m) {
@@ -198,7 +196,7 @@
 
 ```
 
-##### #### 1.2.1. putForCreate(K key,V value) 方法
+##### 1.2.1. putForCreate(K key,V value) 方法
 
 ```java
     //向映射表中添加关键字为 key，映射值为 value 
@@ -227,7 +225,7 @@
 
 
 
-##### #### 1.2.1.1. createEntry(int hash, K key, V value, int bucketIndex) 方法
+##### 1.2.1.1. createEntry(int hash, K key, V value, int bucketIndex) 方法
 
 ```java
     void createEntry(int hash, K key, V value, int bucketIndex) {

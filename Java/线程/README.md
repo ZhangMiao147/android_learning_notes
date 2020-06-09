@@ -7,4 +7,6 @@
 * [synchronized 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/Synchronized知识.md)
 * ThreadPoolExecutor 知识
 * ArrayBlockingQueue 阻塞队列
+* 锁
+* 死锁
 

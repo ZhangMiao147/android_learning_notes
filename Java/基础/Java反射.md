@@ -20,6 +20,69 @@
 
 　　一般来说反射是用来做框架的，或者说可以做一些抽象度比较高的底层代码，反射在日常的开发中用到的不多，但是搞懂了反射以后，可以帮助理解框架的一些原理，反射是框架设计的灵魂。
 
+## 反射原理
+
+　　要想通过反射获取一个类的信息，首先要获取该类对应的 Class 类实例，Class 类的实例代表了正在运行中的 Java 应用的类和接口。Class 类没有公共的构造方法，Class 类对象是在二进制字节流（一般是 .class 文件，也可通过网络或 zip 包等路径获取）被 JVM 加载时，通过调用类加载器的 defineClass() 方法来构建的。
+
+　　《 深入理解 Java 虚拟机 》一文中介绍，类从被加载到虚拟机内存中开始，到卸载出内存位置，它的整个生命周期包括：加载、连接、初始化、使用、卸载。而 JVM 在加载阶段要完成的 3 件事情中正好有 Class 对象的生成：
+
+1. 通过一个类的全限定名来获取定义此类的二进制字节流。
+2. 将这个字节流所代表的静态存储结构转换为方法区的运行时数据结构。
+3. 在内存中生成一个代表这个类的 java.lang.Class 对象，作为方法去这个类的各种数据的访问入口。
+
+### 创建类实例的三种方式
+
+1. Book.class
+2. Object#getClass()
+3. Class.forName()
+
+#### 代码
+
+```java
+    public static void main(String[] args) {
+        // Book 的实例对象如何表示
+        Book book1 = new Book();
+        //任何类都是 Class 的实例对象，这个实例对象有三种表示方式
+        // 第一种表示方式 - 》 实际在告诉任何一个类都有一个隐含的静态成员变量 class
+        Class class1 = Book.class;
+
+        // 第二种表示方式，已经知道该类的对象通过 getClass 方法
+        Class class2 = book1.getClass();
+
+        /**
+         * 类也是对象，是 Class 类的实例对象，这个对象称为该类的类类型
+         */
+        // 不管 class1 还是 class2 都代表了 Book 类的类类型，一个类只可能是 Class 类的一个实例对象
+        System.out.println("class1 == class2:" + (class1 == class2)); // true
+
+        // 第三种表达方式
+        Class class3 = null;
+        try {
+            class3 = Class.forName("Book");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("class2 == class3:" + (class2 == class3)); // true
+
+        // 通过类的类类型创建该类的对象实例
+        // 创建 Book 的实例对象
+        try {
+            // 需要有无参数的构造方法
+            Book book = (Book) class1.newInstance(); // 需要强转
+            System.out.println("book:" + book);
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+```
+
+　　不管哪种方式获取 Book 的 Class 实例，这些都代表了 Book 类的类类型，一个类只可能是 Class 类的一个实例对象，所以不管哪种方式获取的类实例都是同一个。
+
+
+
 ## 3. 反射机制的相关类
 
 　　与 Java 反射相关的类如下：
@@ -406,6 +469,7 @@ public Object invoke(Object obj,Object[] args) // 1.4
 ## 6. 参考文章
 
 1. [Java 高级特性-反射](https://www.jianshu.com/p/9be58ee20dee)
-
 2. [Java 中反射机制介绍](https://blog.csdn.net/ju_362204801/article/details/90578678)
+3. [反射的原理，反射创建类实例的三种方式是什么？](https://blog.csdn.net/LianXu3344/article/details/82906201)
+4. [Java反射的原理及反射创建类实例的三种方式](http://www.luyixian.cn/news_show_351132.aspx)
 
