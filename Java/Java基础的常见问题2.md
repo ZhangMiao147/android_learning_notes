@@ -90,19 +90,17 @@
 
 #### 2.1.6. 类中其他重要的方法
 
-| 方法                                                         | 用途                          |
-| ------------------------------------------------------------ | ----------------------------- |
-| isAnnotation()                                               | 如果是注解类则返回 true       |
-| isAnnotationPresent(Class< ? extends Annotation > annotationClass) | 如果是指定注解类型则返回 true |
-| isA                                                          |                               |
-|                                                              |                               |
-|                                                              |                               |
-|                                                              |                               |
-|                                                              |                               |
-|                                                              |                               |
-|                                                              |                               |
-
-
+| 方法                                                         | 用途                             |
+| ------------------------------------------------------------ | -------------------------------- |
+| isAnnotation()                                               | 如果是注解类则返回 true          |
+| isAnnotationPresent(Class< ? extends Annotation > annotationClass) | 如果是指定注解类型则返回 true    |
+| isAnonymousClass()                                           | 如果是匿名类则返回 true          |
+| isArray()                                                    | 如果是一个数组类则返回 true      |
+| isEnum()                                                     | 如果是枚举类则返回 true          |
+| isInstance(Object obj)                                       | 如果 obj 是该类的实例则返回 true |
+| isInterface()                                                | 如果是接口类则返回 true          |
+| isLocalClass()                                               | 如果是局部类则返回 true          |
+| isMemberClass()                                              | 如果是内部类则返回 true          |
 
 ### 2.2. Field 类
 
@@ -138,7 +136,29 @@
 
 ### 2.1. 反射的原理，反射创建类实例的三种方式是什么？
 
+```java
+        // Book 的实例对象如何表示
+        Book book1 = new Book();
+        //任何类都是 Class 的实例对象，这个实例对象有三种表示方式
+        // 第一种表示方式 - 》 实际在告诉任何一个类都有一个隐含的静态成员变量 class
+        Class class1 = Book.class;
 
+/*********************************************/
+        // 第二种表示方式，已经知道该类的对象通过 getClass 方法
+        Class class2 = book1.getClass();
+
+/*********************************************/
+				// 方法三：Class.forName
+				Class class3 = null;
+        try {
+            class3 = Class.forName("Book");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+```
+
+　　不管哪种方式获取 Book 的 Class 实例，这些都是代表了 Book 类的类类型，一个类只可能是 Class 类的一个实例对象，所以不管哪种方式获取的类实例都是同一个。意思就是说 class1、class2、class3 是同一个，是相等的。
 
 ### 2.2. 反射中，Class.forName 和 ClassLoader 区别。
 

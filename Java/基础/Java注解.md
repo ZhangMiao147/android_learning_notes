@@ -1,16 +1,14 @@
 # Java 注解
 
-　　Java 注解用于为 Java 代码提供元数据。作为元数据，注解不直接影响你的代码执行，但也有一些类型的注解实际上可以用于这一目的。
+## 1. 注解的定义
 
 　　Java 注解是从 Java5 开始添加到 Java 的。
 
 　　Junit 会在运行时检查方法上是否存在此注解，如果存在，就通过反射来运行方法。
 
-　　注解其实就是代码里的特殊标记，它可以用来替代配置文件，也就是说，传统方式通过配置文件告诉类如何运行，有了注解技术后，开发人员可以通过注解告诉类如何润型。有了注解以后，可以减少项目的配置文件，使代码看起来更优雅。在 Java 技术里注解的典型应用时：可以通过反射技术去得到类里面的注解，以决定怎么去运行类。
+　　注解其实就是代码里的特殊标记，它可以用来替代配置文件，也就是说，传统方式通过配置文件告诉类如何运行，有了注解技术后，开发人员可以通过注解告诉类如何运行，可以减少项目的配置文件，使代码看起来更优雅。在 Java 技术里注解的典型应用是：可以通过反射技术去得到类里面的注解，以决定怎么去运行类。
 
 　　注解可以提供便捷性、易于维护修改，但耦合度高。
-
-## 1. 注解的定义
 
 　　日常开发中新建 Java 类，使用 class、interface 比较多，而注解和它们一样，也是一种类的类型，它是用的修饰符为 @interface。
 
@@ -32,7 +30,7 @@
 2. @Retention(RetentionPolicy.CLASS)，默认的保留策略，注解会在 class 字节码文件中存在，但运行时无法获得，注解只被保留到编译进行的时候，它并不会被加载到 JVM 中 。
 3. @Rentention(RetentionPolity.RUNTIME)，注解会在 class 字节码文件中存在，在运行时可以通过反射获得到。注解可以保留到程序运行的时候，它会被加载进入到 JVM 中，所以在程序运行时可以获取到它们。
 
-　　如果是自定义注解，则通过前面分析，自定义注解如果只存着源码中或者字节码文件中就无法发挥作用，而在运行期间能获取到注解次啊能实现目的，所以自定义注解中肯定是使用 @Retention(RetentionPolicy.RUNNTIME)。
+　　如果是自定义注解，则通过前面分析，自定义注解如果只存着源码中或者字节码文件中就无法发挥作用，而在运行期间能获取到注解才能实现目的，所以自定义注解中肯定是使用 @Retention(RetentionPolicy.RUNNTIME)。
 
 ```java
 @Retention(RetentionPolicy.RUNTIME)
@@ -95,9 +93,9 @@ public class Son extends Father {
 public class test {
    public static void main(String[] args){
 
-      //获取Son的class对象
+      // 获取 Son 的 class 对象
        Class<Son> sonClass = Son.class;
-      // 获取Son类上的注解MyTestAnnotation可以执行成功
+      // 获取 Son 类上的注解 MyTestAnnotation  可以执行成功
       MyTestAnnotation annotation = sonClass.getAnnotation(MyTestAnnotation.class);
    }
 }
@@ -108,7 +106,7 @@ public class test {
 　　Repeatable 的英文意思是可重复的。@Repeatable 是 Java 1.8 才加进来的，所以算是一个新的特性。顾名思义说明被这个元注解修饰的注解可以同时作用一个对象多次，但是每次作用注解又可以代表不同的含义。
 
 ```java
-/**一个人喜欢玩游戏，他喜欢玩英雄联盟，绝地求生，极品飞车，尘埃4等，则我们需要定义一个人的注解，他属性代表喜欢玩游戏集合，一个游戏注解，游戏属性代表游戏名称*/
+/**一个人喜欢玩游戏，他喜欢玩英雄联盟，绝地求生，极品飞车，尘埃 4 等，则需要定义一个人的注解，他属性代表喜欢玩游戏集合，一个游戏注解，游戏属性代表游戏名称*/
 /**玩家注解*/
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -134,7 +132,7 @@ public class PlayGame {
 
 ## 3. 注解的属性
 
-　　注解的属性其实和类中定义的变量有异曲同工之处，只是注解中的变量都是成员变量（属性），并且注解中是没有方法的，只有成员变量，变量名就是使用注解括号中对应的参数名，变量返回值注解括号中对应参数类型。而 @Repeateable 注解中的变量的类型则是对应 Annotation（接口）的泛型 Class。
+　　注解的属性其实和类中定义的变量有异曲同工之处，只是注解中的变量都是成员变量（属性），并且注解中是没有方法的，只有成员变量，变量名就是使用注解括号中对应的参数名，变量类型是注解括号中对应参数类型。而 @Repeateable 注解中的变量的类型则是对应 Annotation（接口）的泛型 Class。
 
 ```java
 /**注解Repeatable源码*/
@@ -150,8 +148,6 @@ public @interface Repeatable {
     Class<? extends Annotation> value();
 }
 ```
-
-
 
 ### 3.1. 注解的本质
 
@@ -169,7 +165,7 @@ public interface Annotation {
 }
 ```
 
-　　通过以上源码，知道注解本身就是 Annotation 接口的子接口，也就是说注解中其实是可以有属性和方法，但是接口中的属性都是 static final 的，对于注解来说没什么意义，而定义接口的方法就相当于注解的属性，也就对应了前面说的为什么注解只有属性成员变量，其实他就是接口的方法，这就是为什么成员变量会有括号，不同于接口可以在注解的括号中给成员变量赋值。
+　　通过以上源码，知道注解本身就是 Annotation 接口的子接口，也就是说注解中其实是可以有属性和方法，但是接口中的属性都是 static final 的，对于注解来说没什么意义，而定义接口的方法就相当于注解的属性，也就对应了前面说的为什么注解只有属性成员变量，其实它就是接口的方法，这就是为什么成员变量会有括号，不同于接口可以在注解的括号中给成员变量赋值。
 
 　　解析一个类或者方法的注解往往有两种形式，一种是编译器直接的扫描，一种是运行期反射。编译器的扫描指的是编译器在对 java 代码编译字节码的过程中会检测到某个类或者方法被一些注解修饰，这时它就会对于这些注解进行某些处理。
 
@@ -180,8 +176,6 @@ public interface Annotation {
 3. RuntimeVisibleParametrAnnotations：运行时可见的方法参数注解
 4. RuntimeInVisibleParameterAnnotations：运行时不可见的方法参数注解
 5. AnnotationDefault：注解类元素的默认值。
-
-
 
 ### 3.2. 注解属性类型
 
@@ -237,30 +231,31 @@ public @interface Perform {}
 public void testMethod(){}
 ```
 
-
-
 ### 3.4. 获取注解属性
 
 　　如果获取注解属性，当然是反射了，主要有三个基本的方法。
 
 ```java
- /** 是否存在对应 Annotation 对象 */
+ /** 是否存在对应的公有 Annotation 对象 */
   public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-        return GenericDeclaration.super.isAnnotationPresent(annotationClass);
-    }
+     return GenericDeclaration.super.isAnnotationPresent(annotationClass);
+  }
 
- /** 获取 Annotation 对象 */
-    public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
-        Objects.requireNonNull(annotationClass);
+ /** 获取公有 Annotation 对象 */
+ public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
+     Objects.requireNonNull(annotationClass);
 
-        return (A) annotationData().annotations.get(annotationClass);
-    }
+     return (A) annotationData().annotations.get(annotationClass);
+ }
  /** 获取所有 Annotation 对象数组 */   
  public Annotation[] getAnnotations() {
-        return AnnotationParser.toArray(annotationData().annotations);
-    }   
-getDeclaredAnnotation：返回本元素的指定注解
-getDeclaredAnnotations：返回本元素的所有注解，不包含父类继承而来的
+     return AnnotationParser.toArray(annotationData().annotations);
+ }   
+getDeclaredAnnotation：
+ /** 返回本元素的指定的所有注解 */
+ public native <T extends Annotation> T getDeclaredAnnotation(Class<T> annotationClass);
+ /** 返回本元素的所有注解，不包含父类继承而来的 */
+ public native Annotation[] getDeclaredAnnotations();
 ```
 
 　　举例，来获取以下注解属性，在获取之前自定义的注解必须使用元注解 @Rerention(RetentionPolicy.RUNTIME)
@@ -381,7 +376,7 @@ class AnnotationInvocationHandler implements InvocationHandler, Serializable {
             case 2:
                 return this.type;
             default:
-               	// 说明当前的方法调用的事自定义注解字节声明的方法
+               	// 说明当前的方法调用的是自定义注解字节声明的方法
                 // 这种情况下，将从注解 map 中获取这个注解属性对应的值
                 Object var6 = this.memberValues.get(var4);
                 if (var6 == null) {
@@ -409,19 +404,15 @@ class AnnotationInvocationHandler implements InvocationHandler, Serializable {
 
 　　这样，一个注解的实例就创建出来了，它本质上就是一个代理类。
 
-
-
 ## 4. JDK 提供的注解
 
 | 注解                 | 作用                                                         | 注意事项                                                     |
 | -------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| @Override            | 它是用来描述当前方法是一个重写的方法，在编译阶段对方法进行检查 | jdk 1.5 中它只能描述继承中的重写，jdk 1.6 中它可以描述接口实现的重写，也能描述类的继承的重写 |
-| @Deprecated          | 它是用来描述当前方法是一个过时的方法                         | 无                                                           |
+| @Override            | 它是用来描述当前方法是一个重写的方法，在编译阶段对方法进行检查。 | jdk 1.5 中它只能描述继承中的重写，jdk 1.6 中它可以描述接口实现的重写，也能描述类的继承的重写 |
+| @Deprecated          | 它是用来描述当前方法是一个过时的方法。                       | 无                                                           |
 | @SuppressWarning     | 对程序中的警告去除。                                         | 无                                                           |
 | @SafeVarargs         | 参数安全类型注解。目的是提醒开发者不要用参数做一些不安全的操作，它的存在会组织编译器产生 unchecked 这样的警告。它是在 Java 1.7 的版本中加入的。 |                                                              |
 | @FunctionalInterface | 函数式接口注解，这个是 Java 1.8 版本引入的新特性。函数式编程很火，所以 Java 8 也即是添加了这个特性。函数式接口（Function Interface）就是一个具有一个方法的普通接口。 |                                                              |
-
-
 
 ## 5. 注解作用与应用
 
@@ -431,7 +422,7 @@ class AnnotationInvocationHandler implements InvocationHandler, Serializable {
 
 ### 5.1. 使用注解进行参数配置
 
-　　以银行转装为例，假设银行有个转账业务，转账的限额可能会根据汇率的变化而变化，可以利用注解灵活配置转账的限额，而不用每次都去修改业务代码。
+　　以银行转账为例，假设银行有个转账业务，转账的限额可能会根据汇率的变化而变化，可以利用注解灵活配置转账的限额，而不用每次都去修改业务代码。
 
 ```java
 /**定义限额注解*/
@@ -492,9 +483,13 @@ public class BankService {
 1. 提供信息给编译器：编译器可以利用注解来检查出错误或者警告信息，打印出日志。
 2. 编译阶段时的处理：软件工具可以用来利用注解信息来自动生成代码、文档或做其他相应的自动处理。
 3. 运行时处理：某些注解可以在程序运行的时候接受代码的提取，自动做相应的操作。
-4. 注解能够提供原数据，转账例子中处理获取注解值得过程是开发者直接写的注解提取逻辑，处理提取和处理 Annotation 的代码统称为 APT（Annotation Processing Tool）。上面转账例子中的 processAnnotationMoney 方法就可以理解为 APT 工具类。
+4. 注解能够提供原数据，转账例子中处理获取注解值的过程是开发者直接写的注解提取逻辑，处理提取和处理 Annotation 的代码统称为 APT（Annotation Processing Tool）。
 
-　　当开发者使用了 Annotation 修饰了类、方法、Field 等成员之后，这些 Annotation 不会自己生效，必须由开发者提供相应的代码来提取并处理 Annotation 信息。这些处理提取和处理 Annotation 的代码统称为 ART（Annotation Processing Tool）。
+　　当开发者使用了 Annotation 修饰了类、方法、Field 等成员之后，这些 Annotation 不会自己生效，必须由开发者提供相应的代码来提取并处理 Annotation 信息。这些处理提取和处理 Annotation 的代码统称为 ART（Annotation Processing Tool）。上面转账例子中的 processAnnotationMoney 方法就可以理解为 APT 工具类。
+
+## 6. 自定义注解
+
+
 
 
 
