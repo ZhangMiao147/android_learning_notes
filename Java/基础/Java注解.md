@@ -41,7 +41,7 @@ public @interface MyTestAnnotation {
 
 ### 2.2. @Target
 
-　　Target 的英文意思是目标，这也很容易理解，使用 @Target 元注解标识注解作用的范围就比较具体了，可以是类、方法、方法参数变量等，同样也是通过枚举类 ElementType 表达作用类型，指定了注解运用的地方。
+　　Target 的英文意思是目标，这也很容易理解，使用 @Target 元注解标识注解作用的范围，可以是类、方法、方法参数变量等，同样也是通过枚举类 ElementType 表达作用类型，指定了注解运用的地方。
 
 　　Target 的取值：
 
@@ -233,7 +233,7 @@ public void testMethod(){}
 
 ### 3.4. 获取注解属性
 
-　　如果获取注解属性，当然是反射了，主要有三个基本的方法。
+　　如果获取注解属性，当然是反射了，主要有五个基本的方法。
 
 ```java
  /** 是否存在对应的公有 Annotation 对象 */
@@ -489,12 +489,72 @@ public class BankService {
 
 ## 6. 自定义注解
 
+　　下面是一个简单的自定义注解。
+
+　　自定义注解类：
+
+```java
+@Retention(RetentionPolicy.RUNTIME) // 注解存在于运行时
+@Target(ElementType.METHOD) // 说明 MyTest 注解只能用在方法上
+public @interface MyTest {
+}
+
+```
+
+　　使用自定义注解：
+
+```java
+public class DemoTest{
+
+    @MyTest
+    public void test1(){
+        System.out.println("test1 执行了");
+    }
+
+    public void test2(){
+        System.out.println("test2 执行了");
+    }
+}
+```
+
+　　测试：
+
+```java
+    public static void main(String[] args) throws IllegalAccessException, InstantiationException, InvocationTargetException {
+        // 取得类的字节码
+        Class clazz = DemoTest.class;
+        // 反射其中的成员，此处就是方法成员
+        Method methods[] = clazz.getMethods(); // 得到 DemoTest1 中的所有
+        // 看哪个方法有 MyTest 注解
+        for (Method m : methods) {
+            boolean b = m.isAnnotationPresent(MyTest.class);
+            System.out.println(b + "===" + m.getName());
+            if (b){
+                m.invoke(clazz.newInstance(),null);
+            }
+        }
+    }
+```
+
+　　输出结果：
+
+```java
+true===test1
+test1 执行了
+false===test2
+false===wait
+false===wait
+false===wait
+false===equals
+false===toString
+false===hashCode
+false===getClass
+false===notify
+false===notifyAll
+```
 
 
-
-
-
-## 参考文章
+## 7. 参考文章
 
 1. [Java 注解完全解析](https://www.jianshu.com/p/9471d6bcf4cf)
 3. [Java 注解的基本原理](https://www.cnblogs.com/yangming1996/p/9295168.html)

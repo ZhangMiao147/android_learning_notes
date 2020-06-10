@@ -162,7 +162,8 @@
 
 ### 2.2. 反射中，Class.forName 和 ClassLoader 区别。
 
-
+1. Class.forName 加载类时将类进行了初始化。
+2. ClassLoader 的 loadClass 方法并没有对类进行初始化，只是把类加载到了虚拟机中。
 
 ## 3. 代理
 
@@ -223,6 +224,53 @@ static Object newProxyInstance(
 　　在 Spring 的 AOP 编程中：如果加入容器的目标对象有实现接口，用 JDK 代理，如果目标对象没有实现接口，用 Cglib 代理。
 
 ## 4. 注解
+
+　　注解的本质就是一个继承了 Annotation 接口的接口。接口的属性都是 static final 的，而定义接口的方法就相当于注解的属性。
+
+　　解析一个类或者方法的注解往往有两种形式，一种是编译器直接的扫描，一种是运行期反射。编译器的扫描指的是编译器在对 jaba 代码编译字节码的过程中会检测到某个类或者方法被一些注解修饰，这时它就会对这些注解进行某些处理。
+
+　　注解属性类型可以有以下列出的类型：
+
+1. 基本数据类型。
+2. String
+3. 枚举类型
+4. 注解类型
+5. Class 类型
+6. 以上类型的一维数组类型
+
+### 4.1. 元注解
+
+　　元注解作用在注解的定义上，一般用于指定某个注解生命周期以及作用目标等信息。
+
+#### 4.1.1. @Retension
+
+　　@Retension：表示注解存在阶段是保留在源码（编译器，@Retention(RetentionPolicy.SOURCE)）、字节码（类加载，@Retention(RetentionPolicy.CLASS)）或者是运行期（JVM 中运行，Rentention(RetentionPolicy.RUNTIME)），即这个注解的存活时间。
+
+　　如果是自定义注解，自定义注解如果只存在源码中或者字节码文件中就无法发挥作用，而在运行期间能获取到注解才能实现目的，所以自定义注解中肯定是使用 @Retention(Retention.RUNNTIME)。
+
+#### 4.1.2. @Target
+
+　　@Target 元注解标识注解作用的范围，可以是类、方法、方法参数变量等。
+
+　　@Target 的取值：
+
+1. @Target(ElementType.TYPE) 作用一个类型，比如接口、类、枚举、注解。
+
+
+
+
+
+#### 4.1.3. @Documented
+
+
+
+#### 4.1.4. @Inherited
+
+
+
+#### 4.1.5. @Repeatable
+
+
 
 
 

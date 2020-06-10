@@ -1,24 +1,22 @@
 # 在 Java 反射中 Class.forName 和 ClassLoader 的区别
 
-## Java 类加载过程
+## 1. Java 类加载过程
 
 ![](image/类加载过程.jpg)
 
-装载：通过类的全限定名获取二进制字节流，将二进制字节流转换成方法区中的运行时数据结构，在内存中生成 Java.lang.class 对象。
+1. 装载：通过类的全限定名获取二进制字节流，将二进制字节流转换成方法区中的运行时数据结构，在内存中生成 Java.lang.class 对象。
 
-链接：执行下面的校验、准备和解析步骤，其中解析步骤是可以选择的。
+2. 链接：执行下面的校验、准备和解析步骤，其中解析步骤是可以选择的。
 
 * 校验：检查导入类或接口的二进制数据的正确性（文件格式验证、元数据验证、字节码验证、符号引用验证）。
 * 准备：给类的静态变量分配并初始化存储空间；
 * 解析：将常量池中的符号引用转成直接引用。
 
-初始化：激活类的静态变量的初始化 Java 代码和静态 Java 代码，并初始化程序员设置的变量值。
+3. 初始化：激活类的静态变量的初始化 Java 代码和静态 Java 代码块，并初始化程序员设置的变量值。
 
-## 分析 Class.forName() 和 ClassLoader.loadClass
+## 2. 分析 Class.forName() 和 ClassLoader
 
-
-
-　　在 java 中 Class.forName() 和 ClassLoader 都可以对类进行加载。ClassLoader 就是遵循双亲委派模型最终调用启动类加载器的类加载器，实现的功能是 “ 通过一个类的全限定名来获取此类的二进制字节流 ”，获取到二进制流后放到 JVM 中。
+　　在 java 中 Class.forName() 和 ClassLoader.loadClass() 都可以对类进行加载。ClassLoader 就是遵循双亲委派模型最终调用启动类加载器的类加载器，实现的功能是 “ 通过一个类的全限定名来获取此类的二进制字节流 ”，获取到二进制流后放到 JVM 中。
 
 　　Class.forName() 方法实际上也是调用的 ClassLoader 来实现的。
 
@@ -39,7 +37,7 @@
 
 ```java
     /*
-    * initialize ：如果额日 true，则加载的类会被初始化
+    * initialize ：如果设置 true，则加载的类会被初始化
     */
 	@CallerSensitive
     public static Class<?> forName(String name, boolean initialize,
@@ -72,9 +70,9 @@
     }
 ```
 
-　　第二个 boolean 参数，表示目标对象是否进行链接，false 表示不进行链接。不进行链接意味着不进行包括初始化等一系列操作，那么静态块和静态对象就不会得到执行。
+　　第二个 boolean 参数，表示目标对象是否进行链接，false 表示不进行链接，不进行链接意味着不进行包括初始化等一系列操作，那么静态块和静态对象就不会得到执行。
 
-## 代码实践
+## 3. 代码实践
 
 　　一个含有静态代码块、静态变量、赋值给静态变量的静态方法的类。
 
@@ -142,7 +140,7 @@ ClassLoader.loadClass结束
 
 　　根据运行结果得出 Class.forName 加载类时将类进行了初始化，而 ClassLoader 的 loadClass 并没有对类进行初始化，只是把类加载到了虚拟机中。
 
- ## 应用场景
+ ## 4. 应用场景
 
 　　在 Spring 框架中的 IOC 的实现就是使用的 ClassLoader。
 
@@ -183,8 +181,13 @@ public class Driver extends NonRegisteringDriver implements java.sql.Driver {
 
 　　看到 Driver 注册到 DriverManager 中的操作写在了静态代码块中，这就是为什么在写 JDBC 时使用 Class.forName() 的原因了，Class.forName(className) 才能在反射回去类的时候执行 static 块。
 
+## 5. 总结 Class.forName 和  ClassLoader 的区别
 
-## 参考文章
+1. Class.forName 加载类时将类进行了初始化。
+2. ClassLoader 的 loadClass 并没有对类进行初始化，只是把类加载到了虚拟机中。
+
+
+## 6. 参考文章
 
 1. [在Java的反射中，Class.forName和ClassLoader的区别](https://www.cnblogs.com/jimoer/p/9185662.html)
 
