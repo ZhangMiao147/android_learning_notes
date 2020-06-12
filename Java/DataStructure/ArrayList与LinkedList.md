@@ -186,6 +186,22 @@ public class LinkedList<E>
 ```
 　　可以看出 LinkedList 的添加元素到末尾效率是非常高的，直接插入数据，remove 也是相同的，效率很高。在插入数据到指定位置，需要先找到插入的位置，然后再插入，效率也不是很高，并且 LinkedList 的访问数据 get 是非常慢的，它需要先找到 index 的位置上的数据，然后才能取出数据。
 
+
+
+## 大致区别：
+
+1. ArrayList 是实现了基于动态数据的数据结构，LinkedList 基于链表的数据结构。（LinkedList 是双向链表，有 next 也有 previous）。
+2. 对于随机访问 get 和 set，ArrayList 要优于 LinkedList，因为 LinkedList 要移动指针。
+3. 对于新增和删除操作 add 和 remove，LinkedList 比较占优势，因为 ArrayList 要移动数据。
+
+　　时间复杂度比较：
+
+　　首先一点关键的是，ArrayList 的内部实现是基于基础的对象数组的，因此，它使用 get 方法访问列表中的任意一个元素时（random access），它的速度要比 LinkedList 快（O(1)）。LinkedList 中的 get 方法是按照顺序从列表的一端开始查找，直到另外一端（O(n)）。对 LinkedList 而言，访问列表中的某个指定元素没有更快的方法了。
+
+　　但在某些情况下 LinkedList 的表现要优于 ArrayList，有些算法在 LinkedList 中实现时效率更高。比如说，利用 Collections.reverse 方法对列表进行反转时，其性能就要好些。当要对 list 进行大量的插入和删除操作时，LinkedList 也是一个较好的选择。
+
+
+
 ## 总结
 1. 对于随机访问 get 和 set ，ArrayList 优于 LinkedList，因为 LinkedList 要移动指针。对于新增和删除操作 add 和 remove，LinkedList 比较占优势，因为 ArrayList 要移动数据。
 2. 各自的效率问题：
@@ -194,9 +210,20 @@ get() 直接读取第几个下标，复杂度 O(1)
 add(E) 添加元素，直接在后面添加，复杂度 O(1)
 add(index,E) 添加元素，在第几个元素后面插入，后面的元素需要向后移动，复杂度 O(n)
 remove() 删除元素，后面的元素需要逐个移动，复杂度 O(n)
-
 * LinkedList 是链表的操作
 get() 获取第几个元素，依次遍历，复杂度O(n)
 add(E) 添加到末尾，复杂度0(1)
 add(index,E) 添加第几个元素后，需要先查找到第几个元素，直接指针指向操作，复杂度 O(n)
-remove() 删除元素，直接指针指向操作，复杂度 O(1)
+remove() 删除元素，直接指针指向操作，复杂度 O(1)。
+
+　　ArrayList 和 LinkedList 在性能上各有优缺点，都有各自所适用的地方，总的说来可以描述如下：
+
+1. 对 ArrayList 和 LinkedList 而言，在列表末尾增加一个元素所花的开销都是固定的。对 ArrayList 而言，主要是在内部数组中增加一项，指向所添加的元素，偶尔可能会导致对数组重新进行分配；而对 LinkedList 而言，这个开销是统一的，分配一个内部 Entry 对象。
+2. 
+
+## 参考文章
+
+1. [ArrayList和LinkedList的区别](https://www.cnblogs.com/one-apple-pie/p/11033048.html)
+
+
+
