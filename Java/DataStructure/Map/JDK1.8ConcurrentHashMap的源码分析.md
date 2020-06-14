@@ -1,6 +1,6 @@
 # JDK 1.8 ConcurrentHashMap的源码分析
 
-## 1. 结构
+## 1. 概述
 
 　　ConcurrentHashMap 相比 HashMap 而言，其底层数据与 HashMap 的数据结构相同，数据结构如下：
 
@@ -587,6 +587,13 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 　　说明：此函数主要完成 binCount 的值加 1 的操作。
 
+
+
+　　put 方法：
+
+1. 根据 key.hashCode() 计算出 hash 值。
+2. 通过 key 定位出 node，如果为空表示当前位置可以写入数据，利用循环 CAS 写入，如果不为空，则利用 synchronized 锁写入数据，如果数量大于 TREEIFY_HRESHOLD 则要转换为红黑树。
+
 ## get - 获取
 
 ```java
@@ -620,6 +627,10 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 ```
 
 　　说明：get 函数根据 key 的 hash 值来计算在哪个桶中，再遍历桶，查找元素，若找到则返回该结点，否则，返回 null。
+
+　　get 方法：
+
+1. 利用 key.hashCode() 计算出对应的 hash 值，通过计算下标函数寻址，如果就在桶上那么直接返回值。如果是红黑树那就按照树的方式获取值，如果是链表则按照链表方式取值。
 
 ## remove - 移除
 

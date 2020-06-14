@@ -225,6 +225,8 @@ static Object newProxyInstance(
 
 ## 4. 注解
 
+　　注解是没有方法的，只有成员变量，变量名就是注解括号中对应的参数名，变量类型是注解括号中对应的参数类型。
+
 　　注解的本质就是一个继承了 Annotation 接口的接口。接口的属性都是 static final 的，而定义接口的方法就相当于注解的属性。
 
 　　解析一个类或者方法的注解往往有两种形式，一种是编译器直接的扫描，一种是运行期反射。编译器的扫描指的是编译器在对 jaba 代码编译字节码的过程中会检测到某个类或者方法被一些注解修饰，这时它就会对这些注解进行某些处理。
@@ -255,28 +257,69 @@ static Object newProxyInstance(
 　　@Target 的取值：
 
 1. @Target(ElementType.TYPE) 作用一个类型，比如接口、类、枚举、注解。
-
-
-
-
+2. @Target(ElementType.FIELD) 作用属性字段、枚举的常量。
+3. @Target(ElementType.METHOD) 作用方法
+4. @Target(ElementType.PARAMETER) 作用方法参数
+5. @Target(ElementType.CONSTRUCTOR) 作用构造函数
+6. @Target(ElementType.LOCAL_VARIABLE) 作用局部变量
+7. @Target(ElementType.ANNOTATION_TYPE) 作用于注解（@Retention 注解中就使用该属性）
+8. @Target(ElementType.PACKAGE) 作用于包
+9. @Target(ElementType.TYPE_PARAMETER) 作用于类型泛型，即泛型方法、泛型类、泛型接口（jdk 1.8 加入）
+10. @Target(ElementType.TYPE_USE) 类型使用，可以用于标注任意类型除了 class（jdk 1.8 加入）
 
 #### 4.1.3. @Documented
 
-
+　　@Documented 的作用是能够将注解中的元素包含到 Javadoc 中去。
 
 #### 4.1.4. @Inherited
 
-
+　　一个被 @Ingerited 注解了的注解修饰了一个父类，如果它的子类没有被其他注解修饰，则它的子类也继承了父类的注解。 
 
 #### 4.1.5. @Repeatable
 
+　　@Repeatable 是 Java 1.8 才加进来的，所以算是一个新的特性。被这个元注解修饰的注解可以同时作用一个对象多次，但是每次作用注解又可以代表不同的含义。
 
+### 4.2. 获注解解属性
 
+　　有几个基本方法：
 
+1. isAnnotationPresent()： 是否存在对应的公有 Annotation 对象。
+2. getAnnotation()：获取公有 Annotation 对象。
+3. getAnnotations()：获得所有公有 Annotation 对象数组。
+4. getDeclaredAnnotation()：返回本元素指定的所有注解。
+5. getDeclaredAnnotations()：返回本元素的所有注解，不包含父类继承而来的。
 
+### 4.3. 反射注解的工作原理
 
+　　AnnotationInvovationHandler 是 JAVA 中专门用来处理注解的 Handler。
 
+　　整个反射注解的工作原理：
 
+1. 首先，通过键值对的形式可以为注解属性赋值，香这样 @Hello（value = "hello"）。
+2. 接着，用注解修饰某个元素，编译器将扫描每个类或者方法上的注解，会做一个基本的检查，比如这个注解是否允许作用在当前位置，最后将注解信息写入元素的属性表。
+3. 然后，当进行反射的时候，虚拟机将所有生命周期在 RUNTIME 的注解取出来放到一个 map 中，并创建一个 AnnotationInvocationHandler 实例，把这个 map 传递给它。
+4. 最后，虚拟机将采用 JDK 动态代理机制生成一个目标注解的代理类，并初始化号处理器。
+
+　　这样，一个注解的实例就创建出来了，它的本质上就是一个代理类。
+
+### 4.4. JDK 提供的注解
+
+1. @Override：用来描述当前方法是一个重写的方法，在编译阶段对方法进行检查。
+2. @Deprecated：它是用来描述当前方法是一个过时的方法。
+3. @SuppressWarning：对程序中的警告去除。
+4. @SafeVarargs：参数安全类型注解。目的是提醒开发者不要用参数做一些不安全的操作，它存在会组织编译器产生 unchecked 这样的警告。
+5. @FunctionalInterface：函数式接口注解。
+
+### 4.5. 注解的作用
+
+　　注解是一系列元数据，它提供数据用来解释程序代码，但是注解并非是所解释的代码本身的一部分。注解对于代码的运行效果没有直接影响。
+
+1. 提供信息给编译器：编译器可以利用注解来检查出错误或者警告信息，打印出日志。
+2. 编译阶段时的处理：软件工具可以用来利用注解信息来自动生成代码、文档或其他相应的自动处理。
+3. 运行时处理：某些注解可以在程序运行的时候接受代码的提取，自动做相应的操作。
+4. 注解能够提供原数据。
+
+　　处理提取和处理 Annotation 的嗲吗统称为 ART（Annotation Processing Tool）。
 
 ## 5. 文件 IO 操作
 

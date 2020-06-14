@@ -72,7 +72,7 @@ public @interface MyTestAnnotation {
 
 ### 2.4. @Inherited
 
-　　Inherited 的英文意思是继承，但是这个继承和平时理解的继承大同小异，一个被 @Inherited 注解了的注解修饰了一个父类，如果他的子类没有被其他注解修饰，则它的子类也继承了父类的注解。
+　　Inherited 的英文意思是继承，但是这个继承和平时理解的继承大同小异，一个被 @Inherited 注解了的注解修饰了一个父类，如果它的子类没有被其他注解修饰，则它的子类也继承了父类的注解。
 
 ```java
 /**自定义注解*/
@@ -247,7 +247,7 @@ public void testMethod(){}
 
      return (A) annotationData().annotations.get(annotationClass);
  }
- /** 获取所有 Annotation 对象数组 */   
+ /** 获取所有公有 Annotation 对象数组 */   
  public Annotation[] getAnnotations() {
      return AnnotationParser.toArray(annotationData().annotations);
  }   
@@ -398,7 +398,7 @@ class AnnotationInvocationHandler implements InvocationHandler, Serializable {
 　　总结整个反射注解的工作原理：
 
 1. 首先，通过键值对的形式可以为注解属性赋值，像这样：@Hello（value = "hello"）
-2. 接着，用注解修饰某个元素，编译器将在编译器扫描每个类或者方法上的注解，会做一个基本的检查，这个注解是否允许作用在当前位置，最后会将注解信息写入元素的属性表。
+2. 接着，用注解修饰某个元素，编译器将扫描每个类或者方法上的注解，会做一个基本的检查，比如这个注解是否允许作用在当前位置，最后会将注解信息写入元素的属性表。
 3. 然后，当进行反射的时候，虚拟机将所有生命周期在 RUNTIME 的注解取出来放到一个 map 中，并创建一个 AnnotationInvocationHandler 实例，把这个 map 传递给它。
 4. 最后，虚拟机将采用 JDK 动态代理机制生成一个目标注解的代理类，并初始化好处理器。
 

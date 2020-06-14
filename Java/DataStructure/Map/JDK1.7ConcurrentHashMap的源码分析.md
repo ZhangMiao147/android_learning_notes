@@ -1,8 +1,14 @@
 # JDK 1.7 ConcurrentHashMap的源码分析
 
-　　ConcurrentHashMap 是由 Segment 和 HashEntry 组成的。Segment 是一种可重入的锁（Reentranlock），Segment 在其中扮演锁的角色，HashEntry 用于存储数据。一个 CurrentHashMap 包括一个 Segment 数组。一个 Segment 元素包括一个 HashEntry 数组，HashEntry 是一种链表式的结构，每一个 Segment 维护着 HashEntry 数组中的元素，当要对 HashEntry 中的数据进行修改的时候，必须先要活的与它对应的 Segment。
+## 1. 概述
 
-　　这样的话，当修改该容器的不同的段时，将不会存在并发的问题，如图可知，得到一个元素需要进行两次 hash 操作，第一次得到 Segment，第二次得到 HashEntry 中的链表头部，这样做会使得 Hash 的过程比普通的 HashMap 要长。
+　　ConcurrentHashMap 是由 Segment 和 HashEntry 组成的。
+
+　　Segment 是一种可重入的锁（Reentranlock），Segment 在其中扮演锁的角色，HashEntry 用于存储数据。
+
+　　一个 ConcurrentHashMap 包括一个 Segment 数组。一个 Segment 元素包括一个 HashEntry 数组，HashEntry 是一种链表式的结构，每一个 Segment 维护着 HashEntry 数组中的元素，当要对 HashEntry 中的数据进行修改的时候，必须先要获得与它对应的 Segment。这样的话，当修改该容器的不同的段时，将不会存在并发的问题。
+
+　　得到一个元素需要进行两次 hash 操作，第一次得到 Segment，第二次得到 HashEntry 中的链表头部，这样做会使得 Hash 的过程比普通的 HashMap 要长。
 
 　　写操作的时候可以只对元素所在的 Segment 进行加锁即可，不会影响到其他的 Segment，这样，在最理想的情况下，ConcurrentHashMap 可以最高同时支持 Segment 数量大小的写操作（刚好这些写操作都非常平均的分布在所有的 Segment 上）。
 
@@ -16,7 +22,7 @@ final Segment<K,V>[] segments;
 
 　　所以，对于同一个 Segment 的操作才需考虑线程同步，不同的 Segment 则无需考虑。
 
-　　HashEntry 是目标题到的最小的逻辑处理单元了。一个 ConcurrentHashMap 维护一个 Segment 数组，一个 Segment 维护一个 HashEntry 数组。
+　　HashEntry 是目标提到的最小的逻辑处理单元了。一个 ConcurrentHashMap 维护一个 Segment 数组，一个 Segment 维护一个 HashEntry 数组。
 
 ```java
 static final class HashEntry<K,V> {
