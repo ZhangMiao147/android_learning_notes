@@ -41,19 +41,19 @@ public ConcurrentHashMap(int initialCapacity,
                              float loadFactor, int concurrencyLevel) {
         if (!(loadFactor > 0) || initialCapacity < 0 || concurrencyLevel <= 0)
             throw new IllegalArgumentException();
-    // MAX_SEGMENTS 为 1<< 16= 65535，也就是最大并发数为 65535
+    		// MAX_SEGMENTS 为 1<< 16= 65535，也就是最大并发数为 65535
         if (concurrencyLevel > MAX_SEGMENTS)
             concurrencyLevel = MAX_SEGMENTS;
         // Find power-of-two sizes best matching arguments
-    	// 2 的 sshift 次方等于 ssize
+    		// 2 的 sshift 次方等于 ssize
         int sshift = 0;
-    	// ssize 为 segments 数组长度，根据 concurrentLevel 计算得出
+    		// ssize 为 segments 数组长度，根据 concurrentLevel 计算得出
         int ssize = 1;
         while (ssize < concurrencyLevel) {
-            ++sshift;//代表ssize转换的次数
+            ++sshift;//代表 ssize 转换的次数
             ssize <<= 1;
         }
-    	// segmentShift 和 segmentMask 这两个变量在定位 segment 时会用到
+    		// segmentShift 和 segmentMask 这两个变量在定位 segment 时会用到
         this.segmentShift = 32 - sshift;
         this.segmentMask = ssize - 1;
         if (initialCapacity > MAXIMUM_CAPACITY)
@@ -75,17 +75,17 @@ public ConcurrentHashMap(int initialCapacity,
     }
 ```
 
-　　初始化方法有三个参数，如果用户不指定则会使用默认值，initialCapacity 为 16，loadFactor 为 0.75（负载因子，扩容时需要参考），concurrentLovel 为 16。
+　　初始化方法有三个参数，如果用户不指定则会使用默认值，initialCapacity 为 16，loadFactor 为 0.75（负载因子，扩容时需要参考），concurrencyLevel 为 16。
 
-　　从上面的代码可以看出来，Segment 数组的大小 ssize 是由 concurrentLovel 来决定的，但是却不一定等于 concurrentLevel，ssize 一定是大于或等于 concurrentLovel 的最小的 2 的次幂。比如：默认情况下 concurrentLevel 是 16，则 sszie 为 16，若 concurrentLevel 为 14，ssize 为 16，若 concurrentLevel 为 17，则 ssize 为 32。
+　　从上面的代码可以看出来，Segment 数组的大小 ssize 是由 concurrencyLevel 来决定的，但是却不一定等于 concurrencyLevel，ssize 一定是大于或等于 concurrencyLevel 的最小的 2 的次幂。比如：默认情况下 concurrencyLevel 是 16，则 sszie 为 16，若 concurrencyLevel 为 14，ssize 为 16，若 concurrencyLevel 为 17，则 ssize 为 32。
 
 　　为什么 Segment 的数组大小一定是 2 的次幂？其实主要是便于通过按位与的散列算法来定位 Segment 的 index。
 
-　　和 HashMap 对比来分析，HashMap 是 entry< K,V >[]，而 chm 就是 segments< K,V >。可以说每一个 segment 都是一个 HashMap，想要进入 Segment 还需要获取对应的锁。默认 ConcurrentHashMap 的 Segment 数是 16。每个 segment 内的 hashEntry 数组大小也是 16 个。threadshord 是 16*0.8。
+　　和 HashMap 对比来分析，HashMap 是 entry< K,V >[]，而 chm 就是 segments< K,V >。可以说每一个 segment 都是一个 HashMap，想要进入 Segment 还需要获取对应的锁。默认 ConcurrentHashMap 的 Segment 数是 16。每个 segment 内的 HashEntry 数组大小也是 16 个。threshold 是 16*0.75。
 
 　　ConcurrentHashMap 如何发生 ReHash？
 
-　　ConcurrentLevel 一旦设定的话，就不会改变。ConcurrentHashMap 当元素个数大于临界值的时候，就会发生扩容。但是 ConcurrentHashMap 与其他的 HashMap 不同的是，它不会对 Segment 数量增大，只会增加 Segment 后面的链表容量的大小。即对每个 Segment 的元素进行的 ReHash 操作。
+　　concurrencyLevel 一旦设定的话，就不会改变。ConcurrentHashMap 当元素个数大于临界值的时候，就会发生扩容。但是 ConcurrentHashMap 与其他的 HashMap 不同的是，它不会对 Segment 数量增大，只会增加 Segment 后面的链表容量的大小。即对每个 Segment 的元素进行的 ReHash 操作。
 
 ### 2.1. Segment
 
