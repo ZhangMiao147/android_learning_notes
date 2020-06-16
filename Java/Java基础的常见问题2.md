@@ -331,7 +331,7 @@ static Object newProxyInstance(
 
 ## 7. 锁
 
-### 7.1. 死锁？造成死锁的四个条件？
+### 7.1. 死锁？造成死锁的四个条件？解决死锁的方法？
 
 
 
@@ -392,6 +392,14 @@ static Object newProxyInstance(
  
 
 
+
+## 11. 在多线程的情况下，在JAVA 中如何保证一个方法只被一个对象调用？
+
+1. synchronized
+2. volitle
+3. Lock/unlock
+4. 信号量
+5. reentrantlock/synchronized 区别？如何实现上锁
 
 
 
