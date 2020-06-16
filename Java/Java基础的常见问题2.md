@@ -337,29 +337,57 @@ static Object newProxyInstance(
 
 ## 8. ArrayList 和 LinkedList 的区别
 
-数组查改方便，增删不方便，链表查改不方便，增删方便
-
-扩容机制不同：数组是扩大两倍，链表是根据数量增加减少。
+1. ArrayList 是基于动态数组的数据结构，LinkedList 是基于链表的数据结构。
+2. 对于随机访问 get 和 set，ArrayList 要优于 LinkedList，因为 LinkedList 要移动指针；对于新增和删除操作 add 和 remove，LinkedList 比较占优势，因为 ArrayList 要移动数据。
+3. ArrayList 的空间浪费主要体现在在 List 列表的结尾预留一定的容量空间，而 LinkedList 的空间浪费体现在它的每一个元素都需要消耗相当的空间（指向前后的指针）。
 
 ## 9. List 和 Set 的区别
 
-list：集合，可重读，可存null
+### 9.1. 区别
 
-set：几个，不可重复，set不行（编译不过）
+1. List 和 Set 是存储单列数据的集合，两个接口都是继承自 Collection。
+2. List 中存储的数据是有顺序的，并且值允许重复；Set 中存储的数据是无顺序的，并且不允许重复，子类 TreeSet 可以按照默认顺序或者自定义排序。
+3. 
 
-list 如何去重 -》 用 Set。
+### 9.2. Set 源码
 
-Set 源码？
+　　Set 的有三个实现类：TreeSet、HashSet、LinkedHashSet。
+
+1. HashSet  的底层是用 HashMap 来构建的。
+2. LinkedHashSet 的底层是用 LinkedHashMap 构建的。
+3. TreeSet 的底是用 TreeSet 来构建的。
+
+　　所以，Set 的实体类主要就是以 Map 为基础，将 set 构建的对象放入 map 的 key 中，相对应的使用环境也和对应的 map 相同。
+
+疑问：list：可存null？**set不行（编译不过）
 
 
 
-## 10. HashMap 和 HashTable 的区别
+## 10 . HashMap
 
-HashMap 的源码，不同版本（1.7 和 1.8 ）代码区别？线程不安全的体现？
+### 10.1. HashMap 的源码
 
-为什么有了 hashmap 还有有 hashtable。
 
-Concurrenthashmap 源码，线程安全，如何体现线程安全？
+
+### 10.2. HashMap 不同版本代码的区别
+
+
+
+### 10.3. HashMap 线程不安全的体现
+
+
+
+### 10.4. HashMap 和 HashTable 的区别
+
+
+
+### 10.5. 为什么有了 hashmap 还有有 hashtable。
+
+
+
+### 10.6. ConcurrentHashmap 源码
+
+#### 10.6.1. ConcurrentHashmap如何体现线程安全？
 
  
 
