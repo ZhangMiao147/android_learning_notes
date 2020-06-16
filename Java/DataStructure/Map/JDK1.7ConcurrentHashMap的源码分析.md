@@ -172,23 +172,48 @@ public V put(K key, V value) {
 1. 定位 segment 并确保 Segment 已初始化。
 2. 调用 Segment 的 put 方法。
 
-### 关于 segmentShift 和 segmentMask
+### 3.1. 关于 segmentShift 和 segmentMask
 
-　　SgmentMask：段掩码，加如 segment 数组长度为 16，则段掩码为 16-1 = 15；segments 长度为 32，段掩码为 32-1 = 31。这样得到的所有 bit 位都为1，可以更好地保证散列地均匀性。
+　　segmentMask：段掩码，加如 segment 数组长度为 16，则段掩码为 16-1 = 15；segments 长度为 32，段掩码为 32-1 = 31。这样得到的所有 bit 位都为1，可以更好地保证散列地均匀性。
 
 　　segmentShift：2 的 sshift 次方等于 ssize，segmentShift = 32 -sshift。若 segments 长度为 16。segmentShift  = 32- 4 = 28，若 segments 长度为 32，segmentShift = 32-5 = 27。而计算得出的 hash 值最大为 32，无符号右移 segmentShift，则意味着只保留高几位（其余位是没用的），然后与段掩码 segmentMask 位运算来定位 Segment。
 
-### 3.1. Segment#put
+### 3.2. ConcurrentHashMap#hash()
 
-　　put() 方法最后调用的是 Segment 的 put 方法，Segment 中的 out 方法是要加锁的，只不过是锁粒度细了而已。
+```java
+private int hash(Object k) {
+        int h = hashSeed;
+
+        if ((0 != h) && (k instanceof String)) {
+            return sun.misc.Hashing.stringHash32((String) k);
+        }
+
+        h ^= k.hashCode();
+
+        // Spread bits to regularize both segment and index locations,
+        // using variant of single-word Wang/Jenkins hash.
+        h += (h <<  15) ^ 0xffffcd7d;
+        h ^= (h >>> 10);
+        h += (h <<   3);
+        h ^= (h >>>  6);
+        h += (h <<   2) + (h << 14);
+        return h ^ (h >>> 16);
+    }
+```
+
+　　这里对 key 的 hash 值再哈希了一次。使用的方法是 wang/jenking 的哈希算法，这里再 hash 是为了减少 hash 冲突。如果不这样做的话，会出现大多数值都在一个 segment 上，这样就失去了分段锁的意义。
+
+### 3.3. Segment#put
+
+　　put() 方法最后调用的是 Segment 的 put 方法，Segment 中的 put 方法是要加锁的，只不过是锁粒度细了而已。
 
 ```java
         final V put(K key, int hash, V value, boolean onlyIfAbsent) {
-            HashEntry<K,V> node = tryLock() ? null :
-                scanAndLockForPut(key, hash, value);
-            // tryLock() 是 ReentrantLock 获取锁一个方法。如果当前线程获取锁成功，返回 true，如果别的线程获取了锁返回 false，不成功时会遍历定位到 HashEntry 位置的链表（遍历主要是为了使 CPU 缓存链表），若找不到，则创建 HashEntry。
+            // tryLock() 是 ReentrantLock 获取锁一个方法。如果当前线程获取锁成功，返回 true，如果别的线程获取了锁返回 false，
             // tryLock 不成功时会遍历定位到的 HashEntry 位置的链表（遍历主要是为了使 CPU 缓存链表），若找不到，则创建 HashEntry。
             // tryLock 一定次数后（MAX_SCAN_RETRIES 变量决定），则 lock。若遍历过程中，由于其他线程的操作导致链表头结点变化，则需要重新遍历。
+            HashEntry<K,V> node = tryLock() ? null :
+                scanAndLockForPut(key, hash, value);
             V oldValue;
             try {
                 HashEntry<K,V>[] tab = table;
@@ -239,10 +264,14 @@ public V put(K key, V value) {
         }
 ```
 
-1. Put 时候，通过 Hash 函数将即将要 put 的元素均匀的放到所需要的 Segment 段中，调用 Segment 的 put 方法进行数据。
-2. Segment 的 put 是加锁中完成的。如果当前元素数大于最大临界值的话将会产生 rehash。先通过 getFirst 找到链表的表头部分，然后遍历链表，调用 equals 比配是否存在相同的 key，如果找到的话，则将最新的 key 对应 value 值。如果没有找到，新增一个 HashEntry 它加到整个 Segment 的头部。
+　　Segment 的 put 是加锁中完成的。
 
-### 3.2. Segment#rehash() - 扩容
+1. 先调用 tryLock() 方法加锁。
+2. 通过 `int index = (tab.length - 1) & hash;` 定位 HashEntry 在 HashEntry<K,V>[] tab 中位置，然后调用 `entryAt(tab, index)` 方法来找到链表。
+3. 然后遍历 HashEntry ，通过 ` if ((k = e.key) == key ||(e.hash == hash && key.equals(k)))` 判断是否存在相同的 key。如果存在，则更新 key 所对应的 value 值；如果没有，如果链表不为空，则加到链表的尾部，否则，新建链表存储数据。如果插入数据后，元素数大于最大临界值，则会调用 rehash() 方法重新散列，如果没有大于临界值，则调用 setEntryAt() 方法将数据插入到 HashEntry[] tab 的指定位置。
+4. 最后调用 unlock() 方法解锁。
+
+### 3.4. Segment#rehash() - 扩容
 
 ```java
         private void rehash(HashEntry<K,V> node) {
@@ -296,36 +325,13 @@ public V put(K key, V value) {
         }
 ```
 
-## 4. ConcurrentHashMap#hash
+### 3.3. put 方法总结
 
-```java
-private int hash(Object k) {
-        int h = hashSeed;
+　　ConcurrentHashMap 的 hash() 方法只是算出了 key 的新 hash 值，但是如何用这个 hash 值定位：如果要取得一个值，首先肯定需要先知道哪个 segment，然后再知道 hashentry 的 index，最后一次循环遍历该 index 下的元素。
 
-        if ((0 != h) && (k instanceof String)) {
-            return sun.misc.Hashing.stringHash32((String) k);
-        }
+* sement 定位：(h >>> segmentShift ) & segmentMask。默认使用 h 的前 4 位，segmentMask 为 15。
 
-        h ^= k.hashCode();
-
-        // Spread bits to regularize both segment and index locations,
-        // using variant of single-word Wang/Jenkins hash.
-        h += (h <<  15) ^ 0xffffcd7d;
-        h ^= (h >>> 10);
-        h += (h <<   3);
-        h ^= (h >>>  6);
-        h += (h <<   2) + (h << 14);
-        return h ^ (h >>> 16);
-    }
-```
-
-　　这里对 key 的 hash 值再哈希了一次。使用的方法是 wang/jenking 的哈希算法，这里再 hash 是为了减少 hash 冲突。如果不这样做的话，会出现大多数值都在一个 segment 上，这样就失去了分段锁的意义。
-
-　　以上代码只是算出了 key 的新 hash 值，但是如何用这个 hash 值定位：如果要取得一个值，首先肯定需要先知道哪个 segment，然后再知道 hashentry 的 index，最后一次循环遍历该 index 下的元素。
-
-* 确定 sement：(h >>> segmentShift ) & segmentMask。默认使用 h 的前 4 位，segmentMask 为 15。
-
-* 确定 index：（tab.length -1）& h，hashentry 的长度减 1，用之前确定了segment 的新 h 计算。
+* 确定HashEntry 的 index：（tab.length -1）& h，HashEntry 的长度减 1，用之前确定了segment 的新 h 计算。
 
 * 循环：
 
@@ -338,6 +344,11 @@ private int hash(Object k) {
   ```java
   if((k = e.key) == key || (e.hash == h && key.equals(k))) return e.value;
   ```
+
+### 
+
+1. put 时候，通过 Hash 函数将即将要 put 的元素均匀的放到所需要的 Segment 段中，调用 Segment 的 put 方法进行数据。
+2. Segment 的 put 是加锁中完成的。如果当前元素数大于最大临界值的话将会产生 rehash。先通过 getFirst 找到链表的表头部分，然后遍历链表，调用 equals 比配是否存在相同的 key，如果找到的话，则将最新的 key 对应 value 值。如果没有找到，新增一个 HashEntry 它加到整个 Segment 的头部。
 
 ## 5. get 方法 - 获取数据
 
