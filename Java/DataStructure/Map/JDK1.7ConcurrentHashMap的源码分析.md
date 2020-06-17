@@ -271,7 +271,7 @@ private int hash(Object k) {
 3. 然后遍历 HashEntry ，通过 ` if ((k = e.key) == key ||(e.hash == hash && key.equals(k)))` 判断是否存在相同的 key。如果存在，则更新 key 所对应的 value 值；如果没有，如果链表不为空，则加到链表的尾部，否则，新建链表存储数据。如果插入数据后，元素数大于最大临界值，则会调用 rehash() 方法重新散列，如果没有大于临界值，则调用 setEntryAt() 方法将数据插入到 HashEntry[] tab 的指定位置。
 4. 最后调用 unlock() 方法解锁。
 
-### 3.4. Segment#rehash() - 扩容
+### 3.4 . Segment#rehash() - 扩容
 
 ```java
         private void rehash(HashEntry<K,V> node) {
@@ -325,9 +325,11 @@ private int hash(Object k) {
         }
 ```
 
-### 3.3. put 方法总结
+　　rehash() 方法会将数组扩容到原来的 2 倍，然后将旧数组 HashEntry<K,V>[] oldTable 的值重新散列到新的数组中。
 
-　　ConcurrentHashMap 的 hash() 方法只是算出了 key 的新 hash 值，但是如何用这个 hash 值定位：如果要取得一个值，首先肯定需要先知道哪个 segment，然后再知道 hashentry 的 index，最后一次循环遍历该 index 下的元素。
+### 3.5. put 方法总结
+
+　　ConcurrentHashMap 的 hash() 方法只是算出了 key 的新 hash 值，但是如何用这个 hash 值定位：如果要取得一个值，首先肯定需要先知道哪个 segment，然后再知道 Segment 中  HashEntry 的 index，最后一次循环遍历该 index 下的元素。
 
 * sement 定位：(h >>> segmentShift ) & segmentMask。默认使用 h 的前 4 位，segmentMask 为 15。
 
@@ -345,12 +347,10 @@ private int hash(Object k) {
   if((k = e.key) == key || (e.hash == h && key.equals(k))) return e.value;
   ```
 
-### 
+1. put 时候，通过 hash 函数将即将要 put 的元素均匀的放到所需要的 Segment 段中，调用 Segment 的 put 方法进行数据。
+2. Segment 的 put 是加锁中完成的。先定位 HashEntry 在 HashEntry<K,V>[] tab 中位置并拿到 HashEntry，然后遍历 HashEntry，调用 equals 比配是否存在相同的 key，如果找到的话，则将最新的 key 对应 value 值。如果存在，则更新 key 所对应的 value 值；如果没有，如果链表不为空，则加到链表的尾部，否则，新建链表存储数据。如果插入数据后，元素数大于最大临界值，则会调用 rehash() 方法扩容并重新散列，如果没有大于临界值，则调用 setEntryAt() 方法将数据插入到 HashEntry[] tab 的指定位置。
 
-1. put 时候，通过 Hash 函数将即将要 put 的元素均匀的放到所需要的 Segment 段中，调用 Segment 的 put 方法进行数据。
-2. Segment 的 put 是加锁中完成的。如果当前元素数大于最大临界值的话将会产生 rehash。先通过 getFirst 找到链表的表头部分，然后遍历链表，调用 equals 比配是否存在相同的 key，如果找到的话，则将最新的 key 对应 value 值。如果没有找到，新增一个 HashEntry 它加到整个 Segment 的头部。
-
-## 5. get 方法 - 获取数据
+## 4. get 方法 - 获取数据
 
 ```java
 public V get(Object key) {
@@ -358,7 +358,7 @@ public V get(Object key) {
         HashEntry<K,V>[] tab;
         int h = hash(key);
         long u = (((h >>> segmentShift) & segmentMask) << SSHIFT) + SBASE;
-    	// 先定位 Segment，再定位 HashEntry
+    		// 先定位 Segment，再定位 HashEntry
         if ((s = (Segment<K,V>)UNSAFE.getObjectVolatile(segments, u)) != null &&
             (tab = s.table) != null) {
             for (HashEntry<K,V> e = (HashEntry<K,V>) UNSAFE.getObjectVolatile
@@ -375,28 +375,26 @@ public V get(Object key) {
 
 　　如果要取得一个值，首先肯定需要知道哪个 segment，然后再知道 hashEntry 的 index，最后循环遍历该 index 下的元素。
 
-* 确定 segment：（h >>> segmentShift）& segmentMask。默认使用 h 的前 4 位，segmentMask 为 15。
+1. 确定 segment：（h >>> segmentShift）& segmentMask。默认使用 h 的前 4 位，segmentMask 为 15。
 
-* 确定 index：（tab.length - 1）& h，hashEntry 的长度减 1，用之前确定了 segment 的新 h 计算。
+2. 确定 index：（tab.length - 1）& h，hashEntry 的长度减 1，用之前确定了 segment 的新 h 计算。
 
-* 循环：
+3. 循环：
 
-  ```java
-  for (HashEntry<K,V> e = (HashEntry<K,V> UNSAFE.getObjectVolatile(tab,((long)(((tab.length-1) & h)) << TSHIFT) + TABLE); e != null; e = e.next)
-  ```
+```java
+for (HashEntry<K,V> e = (HashEntry<K,V> UNSAFE.getObjectVolatile(tab,((long)(((tab.length-1) & h)) << TSHIFT) + TABLE); e != null; e = e.next)
+```
 
-* 比较
+4. 比较
 
-  ```java
-  if ((k = e.key) == key || (e.hash == h && key.equals(k)))
-  	return e.value;
-  ```
+```java
+if ((k = e.key) == key || (e.hash == h && key.equals(k)))
+	return e.value;
+```
 
-　　get 方法无需加锁，由于其中设计到的共享变量都使用 volatile 修饰，volatile 可以保证内存可见性，所以不会读取到过期数据。
+　　get 方法无需加锁，由于其中涉及到的共享变量都使用 volatile 修饰，volatile 可以保证内存可见性，所以不会读取到过期数据。
 
-
-
-## 6. ConcurrentHashMap#remove - 删除元素
+## 5. ConcurrentHashMap#remove - 删除元素
 
 ```java
     public V remove(Object key) {
@@ -418,7 +416,12 @@ public V get(Object key) {
     }
 ```
 
-### 6.1. Segment#remove
+　　remove 方法分为两个步骤：
+
+1. 调用 segmentForHash() 方法得到 hash 对应的 Segment 对象 s 。
+2. 调用 s 的 remove() 方法。
+
+### 5.1. Segment#remove
 
 ```java
 final V remove(Object key, int hash, Object value) {
@@ -460,7 +463,12 @@ final V remove(Object key, int hash, Object value) {
         
 ```
 
+　　Segment 的 remove 步骤分为以下几步：
 
+1. 调用 tryLock() 方法加锁。
+2. 定位 HashEntry：`int index = (tab.length - 1) & hash;`。
+3. 循环：while(e != null)，当找到 `if ((k = e.key) == key || (e.hash == hash && key.equals(k)))`的时候，将当前的值删除。
+4. 调用 unlock() 方法解锁。
 
 ## 7. ConcurrentHashMap#size()  - 容量判断
 
