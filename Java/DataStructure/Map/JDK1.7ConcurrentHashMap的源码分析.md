@@ -22,7 +22,7 @@ final Segment<K,V>[] segments;
 
 　　所以，对于同一个 Segment 的操作才需考虑线程同步，不同的 Segment 则无需考虑。
 
-　　HashEntry 是目标提到的最小的逻辑处理单元了。一个 ConcurrentHashMap 维护一个 Segment 数组，一个 Segment 维护一个 HashEntry 数组。
+　　HashEntry 是目前提到的最小的逻辑处理单元了。一个 ConcurrentHashMap 维护一个 Segment 数组，一个 Segment 维护一个 HashEntry 数组。
 
 ```java
 static final class HashEntry<K,V> {
@@ -470,7 +470,7 @@ final V remove(Object key, int hash, Object value) {
 3. 循环：while(e != null)，当找到 `if ((k = e.key) == key || (e.hash == hash && key.equals(k)))`的时候，将当前的值删除。
 4. 调用 unlock() 方法解锁。
 
-## 7. ConcurrentHashMap#size()  - 容量判断
+## 6. ConcurrentHashMap#size()  - 容量判断
 
 ```java
 public int size() {
@@ -514,7 +514,7 @@ public int size() {
 
 　　在统计 ConcurrentHashMap 的数量时，有多线程情况，但是并不是一开始就锁住修改结构的方法，比如 put、remove 等。先执行一次统计，然后再执行一次统计，如果两次统计结果都一样，则没问题。反之就锁修改结构的方法。这样做效率会高很多，在统计的时候查询依旧可以进行。
 
-## 8. ConcurrentHashMap#isEmpty() - chm 是否为空判断
+## 7. ConcurrentHashMap#isEmpty() - chm 是否为空判断
 
 ```java
 public boolean isEmpty() {
@@ -545,15 +545,41 @@ public boolean isEmpty() {
     }
 ```
 
-　　即是在空的情况下也不能仅仅只靠 segment 的计数器来判断，还是因为多线程，count 的值随时在变，所以追加判断 modcount 前后是否一致，如果一直，说明期间没有修改。
+　　即是在空的情况下也不能仅仅只靠 segment 的计数器来判断，还是因为多线程，count 的值随时在变，所以追加判断 modcount 前后是否一致，如果一致，说明期间没有修改。
 
+## 8 .总结
 
+　　ConcurrentHashMap 采用 “分段锁” 的策略来实现同步。
 
-## 9 .总结
+　　ConcurrentHashMap 是由 Segment 和 HashEntry 组成的。Segment 扮演锁，HashEntry 用于存储数据。
 
+　　一个 ConcurrentHashMap 包括一个 Segment 数组，一个 Segment 元素包括一个 HashEntry 数组，HashEntry 是一个链表式的结构，每一个 Segment 维护着 HashEntry 数组中的元素。 HashEntry 的成员变量 value（值） 和 next（下一个元素） 是 volatile 的，Segment 继承 ReentrantLock 是一个重入锁。
 
+1. put 添加数据操作
 
-## 10.参考文章 
+   先是定位 Segment，然后调用了 Segment 的 put 方法。
+
+   Segment 的 put 方法，会先获取锁，然后定位 HashEntry，接着添加数据，如果元素数目大于了临界值，则会将 Segment 中 HashEntry 数组扩容为 2 倍，并将原来的数据重新散列到扩容后的数组中，最后释放锁。
+
+2. Get 获取数据
+
+   先定位 Segment，再定位 HashEntry，然后拿到对应 key 的 value 值。get 方法不需要加锁，是因为 value 是一个 volatile 的值，拿到的就是最新的。
+
+3. Remove 删除数据
+
+   先是定位 Segment，然后调用了 Segment 的 remove 方法。
+
+   Segment 的 remove 方法，会先获取锁，然后定位 HashEntry，接着删除数据，最后释放锁。
+
+4. size 容量判断
+
+   会先执行两次容量的统计，如果统计结果一致，则返回统计结果，如果统计结果不一致，则加锁。
+
+5. isEmpty 判空
+
+   也是执行两次的容量统计，如果第一次统计不为空则直接返回 false，为空则进行第二次统计，如果统计也为空，则返回 true，否则返回 false。
+
+## 9.参考文章 
 
 1. [CurrentHashMap源码剖析](https://segmentfault.com/a/1190000015083593)
 
