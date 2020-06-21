@@ -8,11 +8,11 @@
 
 　　说明：ConcurrentHashMap 的数据结构（数组+链表+红黑树），桶中的结构可能是链表，也可能是红黑树，红黑树是为了提高查找效率。
 
-　　JDK 1.8 的实现已经抛弃了 Segment 分段锁机制，利用 CAS + Synchronized 来保证并发更新的安装。数据结构采用：数组 + 链表 + 红黑树。
+　　JDK 1.8 的实现已经抛弃了 Segment 分段锁机制，利用 CAS + Synchronized 来保证并发更新的安全。数据结构采用：数组 + 链表 + 红黑树。
 
-## ConcurrentHashMap 类
+## 2. ConcurrentHashMap 类
 
-### 类的继承关系
+### 2.1. 类的继承关系
 
 ```java
 public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
@@ -22,7 +22,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 　　说明：ConcurrentHashMap 继承了 AbstractMap 抽象类，该抽象类定义了一些基本操作，同时，也实现了 ConcurrentMap 接口，ConcurrentMap 接口也定义了一系列操作，实现了 Serializable 接口表示 ConcurrentHashMap 可以被序列化。
 
-### 类的内部类
+### 2.2. 类的内部类
 
 　　ConcurrentHashMap 包含了很多内部类，其中主要的内部类框架图如下图所示：
 
@@ -52,7 +52,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
   CounterCell 类主要用于对 baseCount 的计数。
 
-### 类的属性
+### 2.3. 类的属性
 
 ```java
 public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
@@ -76,7 +76,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     static final int MIN_TREEIFY_CAPACITY = 64;
     // 每次进行转移的最小值
     private static final int MIN_TRANSFER_STRIDE = 16;
-    // 生成sizeCtl所使用的bit位数
+    // 生成 sizeCtl 所使用的 bit 位数
     private static int RESIZE_STAMP_BITS = 16;
     // 进行扩容所允许的最大线程数
     private static final int MAX_RESIZERS = (1 << (32 - RESIZE_STAMP_BITS)) - 1;
@@ -89,7 +89,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     static final int HASH_BITS = 0x7fffffff; // usable bits of normal node hash
     // 
     /** Number of CPUS, to place bounds on some sizings */
-    // 获取可用的CPU个数
+    // 获取可用的 CPU 个数
     static final int NCPU = Runtime.getRuntime().availableProcessors();
     // 
     /** For serialization compatibility. */
@@ -169,7 +169,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 　　说明：ConcurrentHashMap 的属性很多，其中不少属性在 HashMap 中就已经介绍过了，而对于 ConcurrentHashMap 而言，添加了 Unsafe 实例，主要用于反射获取对象相应的字段。
 
-## 类的构造函数
+## 3. 类的构造函数
 
 ```java
     public ConcurrentHashMap() {
@@ -226,7 +226,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 　　对于构造函数而言，会根据输入的 initialCapacity 的大小来确定一个最小的且大于等于 initialCapacity 大小的 2 的 n 次幂，如 initialCapacity 为 15，则 sizeCtl 为 16，若 initialCapacity 为 16，则 sizeCtl 为 16。若 initialCapacity 大小超过了允许的最大值，则 sizeCtl 为最大值。值得注意的是，构造函数中的 concurrencyLevel 参数以及在 JDK 1.8 中的意义发生了很大的变化，其并不代表所允许的并发数，其只是用来确定 sizeCtl 大小，在 JDK 1.8 中的并发控制都是针对具体的桶而言，既有多少个桶就可以允许多少个并发数。
 
-## put  - 添加
+## 4. put  - 添加
 
 ```java
     public V put(K key, V value) {
@@ -332,7 +332,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     }
 ```
 
-　　说明：put 函数底层调用了 putVal 进行数据得插入，对于 putVal 函数得流程大体如下：
+　　说明：put 函数底层调用了 putVal 进行数据的插入，对于 putVal 函数得流程大体如下：
 
 1. 判断存储的 key、value 是否为空，若为空，则抛出异常，否则，进入步骤 2。
 2. 计算 key 的 hash 值，随后进入无限循环，该无限循环可以确保成功插入数据，若 table 表为空或者长度为 0，则初始化 table 表，否则，进入步骤 3。
@@ -341,9 +341,9 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 5. 对桶中的第一个结点（即 table 表中的结点）进行加锁，对该桶进行遍历，桶中的结点的 hash 值与 key 值与给定的 hash 值和 key 值相等，则根据标识选择是否进行更新操作（用给定的 value 值替换该结点的 value 值），若遍历完桶仍没有找到 hash 值与 key 值和指定的 hash 值与 key 值相等的结点，则直接新生一个结点并赋值为之前最后一个结点的下一个结点。进入步骤 6。
 6. 若 binCount 值达到红黑树转换的阈值，则将桶中的结构转换为红黑树存储，最后，增加 binCount 的值。
 
-　　在 putVal 函数中会设计到如下几个函数：initTable、tableAt、casTabAt、helpTransfer、putTreeVal、treeifyVal、treeifyBin、addCount 函数。下面对其中及设计的函数进行分析。
+　　在 putVal 函数中会涉及到如下几个函数：initTable、tableAt、casTabAt、helpTransfer、putTreeVal、treeifyVal、treeifyBin、addCount 函数。下面对其中涉及的函数进行分析。
 
-### ConcurrentHashMap#initTable
+### 4.1. ConcurrentHashMap#initTable
 
 ```java
     private final Node<K,V>[] initTable() {
@@ -382,7 +382,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 　　说明：对于 table 的大小，会根据 sizeCtl 的值进行设置，如果没有设置 sizeCtl 的值，那么默认生成的 table 大小为 16，否则，会根据 sizeCtl 的大小设置 table 大小。
 
-### ConcurrentHashMap#tabAt
+### 4.2. ConcurrentHashMap#tabAt
 
 ```java
     static final <K,V> Node<K,V> tabAt(Node<K,V>[] tab, int i) {
@@ -392,7 +392,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 　　说明：此函数返回 table 数组中下标为 i 的结点，可以看到是通过 Unsafe 对象通过反射获取的，getObjectVolatile 的第二项参数为小标为 i 的偏移地址。
 
-### ConcurrentHashMap#casTabAt
+### 4.3. ConcurrentHashMap#casTabAt
 
 ```java
     static final <K,V> boolean casTabAt(Node<K,V>[] tab, int i,
@@ -403,7 +403,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 　　说明：此函数用于比较 table 数组下标为 i 的结点是否为 c，若为 c，则用 v 交换操作。否则，不进行交换操作。
 
-### ConcurrentHashMap#helpTransfer
+### 4.4. ConcurrentHashMap#helpTransfer
 
 ```java
     final Node<K,V>[] helpTransfer(Node<K,V>[] tab, Node<K,V> f) {
@@ -433,7 +433,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 　　说明：此函数用于在扩容时将 table 表中的结点转移到 nextTable 中。
 
-### TreeBin#putTreeVal
+### 4.5. TreeBin#putTreeVal
 
 ```java
         final TreeNode<K,V> putTreeVal(int h, K k, V v) {
@@ -494,9 +494,9 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         }
 ```
 
-　　说明：此函数用于将指定的 hash、key、value 值添加到红黑树中，若已经添加了，则返回 null，否则返回该结点。
+　　说明：此函数用于将指定的 hash、key、value 值添加到红黑树中，若已经添加了，则返回 null，否则返回该节点。
 
-### ConcurrentHashMap#treeifyBin
+### 4.6. ConcurrentHashMap#treeifyBin
 
 ```java
     private final void treeifyBin(Node<K,V>[] tab, int index) {
@@ -541,7 +541,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 　　说明：此函数用于将桶中的数据结构转换为红黑树，其中，值得注意的时，当 table 的长度未达到阈值时，会进行一次扩容操作，该操作会使得触发 treeifyBin 操作的某个桶中的所有元素进行一次重新分配，这样可以避免某个桶中的结点数量太大。
 
-### ConcurrenHashMap#addCount
+### 4.7. ConcurrenHashMap#addCount
 
 ```java
     private final void addCount(long x, int check) {
@@ -587,14 +587,12 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 　　说明：此函数主要完成 binCount 的值加 1 的操作。
 
-
-
-　　put 方法：
+### 4.8. put 方法总结
 
 1. 根据 key.hashCode() 计算出 hash 值。
 2. 通过 key 定位出 node，如果为空表示当前位置可以写入数据，利用循环 CAS 写入，如果不为空，则利用 synchronized 锁写入数据，如果数量大于 TREEIFY_HRESHOLD 则要转换为红黑树。
 
-## get - 获取
+## 5. get - 获取
 
 ```java
     public V get(Object key) {
@@ -628,11 +626,11 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 　　说明：get 函数根据 key 的 hash 值来计算在哪个桶中，再遍历桶，查找元素，若找到则返回该结点，否则，返回 null。
 
-　　get 方法：
+### 5.1. get 方法总结
 
 1. 利用 key.hashCode() 计算出对应的 hash 值，通过计算下标函数寻址，如果就在桶上那么直接返回值。如果是红黑树那就按照树的方式获取值，如果是链表则按照链表方式取值。
 
-## remove - 移除
+## 6. remove - 移除
 
 ```java
     public V remove(Object key) {
@@ -744,14 +742,14 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 ```
 
-　　remove() 方法调用的时 replaceNode() 方法实现结点的删除。
+　　remove() 方法调用的是 replaceNode() 方法实现结点的删除。
 
-## ConcurrentHashMap 为什么高效？
+## 7. ConcurrentHashMap 为什么高效？
 
-　　Hashtable 低效主要时因为所有访问 HashTable 的线程都争夺一把锁。如果容器有很多把锁，每一把锁控制容器中的一部分数据，那么当多个线程访问容器里的不同部分的数据时，线程之前就不会存在锁的竞争，这样就可以有效的提高并发的访问效率。
+　　HashTable 低效主要是因为所有访问 HashTable 的线程都争夺一把锁。如果容器有很多把锁，每一把锁控制容器中的一部分数据，那么当多个线程访问容器里的不同部分的数据时，线程之前就不会存在锁的竞争，这样就可以有效的提高并发的访问效率。
 
 　　这也正是 ConcurrentHashMap 使用的分段锁技术。将 ConcurrentHashMap 容器的数据分段存储，每一段数据分配一个 Segment（锁），当线程占用其中一个 Segment 时，其他线程可正常访问其他段数据。
 
-## 参考文章 
+## 8. 参考文章 
 
-2. [ConcurrentHashMap底层实现原理(JDK1.8)源码分析](https://www.cnblogs.com/jing99/p/11330348.html)
+[1. ConcurrentHashMap底层实现原理(JDK1.8)源码分析](https://www.cnblogs.com/jing99/p/11330348.html)
