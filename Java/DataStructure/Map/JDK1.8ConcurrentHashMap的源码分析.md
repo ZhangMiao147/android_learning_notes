@@ -36,6 +36,15 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
   Node 类主要用于存储具体键值对，其子类有 ForwardingNode、ReservationNode、TreeNode 和 TreeBin 四个子类。
 
+```java
+    static class Node<K, V> implements Entry<K, V> {
+        final int hash;
+        final K key;
+        volatile V val; // volatile 关键字修饰
+        volatile ConcurrentHashMap.Node<K, V> next; // volatile 关键字修饰
+    }
+```
+
 * Traverser 类
 
   Traverser 类主要用于遍历操作，其子类有 BaseIterator、KeySpliterator、ValueSpliterator、EntrySpliterator 四个类，BaseIterator 用于遍历操作。KeySpliterator、ValueSpliterator、EntrySpliterator 则用于键、值、键值对的划分。
@@ -744,11 +753,9 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 　　remove() 方法调用的是 replaceNode() 方法实现结点的删除。
 
-## 7. ConcurrentHashMap 为什么高效？
+## 7. 总结
 
-　　HashTable 低效主要是因为所有访问 HashTable 的线程都争夺一把锁。如果容器有很多把锁，每一把锁控制容器中的一部分数据，那么当多个线程访问容器里的不同部分的数据时，线程之前就不会存在锁的竞争，这样就可以有效的提高并发的访问效率。
 
-　　这也正是 ConcurrentHashMap 使用的分段锁技术。将 ConcurrentHashMap 容器的数据分段存储，每一段数据分配一个 Segment（锁），当线程占用其中一个 Segment 时，其他线程可正常访问其他段数据。
 
 ## 8. 参考文章 
 

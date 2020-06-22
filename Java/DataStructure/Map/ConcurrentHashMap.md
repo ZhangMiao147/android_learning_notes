@@ -22,6 +22,12 @@
 
 　　缓存技术（比如 redis、memcached）的核心其实就是在内存中维护一张巨大的哈希表，还有 HashMap、ConcurrentHashMap 等应用。
 
+### 1.4. ConcurrentHashMap 为什么高效？
+
+　　HashTable 低效主要是因为所有访问 HashTable 的线程都争夺一把锁。如果容器有很多把锁，每一把锁控制容器中的一部分数据，那么当多个线程访问容器里的不同部分的数据时，线程之前就不会存在锁的竞争，这样就可以有效的提高并发的访问效率。
+
+　　这也正是 ConcurrentHashMap 使用的分段锁技术。将 ConcurrentHashMap 容器的数据分段存储，每一段数据存储亦有部分数据，当线程占用其中一段数据时，其他线程可正常访问其他段数据。
+
 ## 2. ConcurrentHashMap 与 HashMap 等区别
 
 ### 2.1. HashMap
