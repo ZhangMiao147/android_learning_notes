@@ -6,7 +6,14 @@
 * [volatile 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/volatile知识.md)
 * [synchronized 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/Synchronized知识.md)
 * ThreadPoolExecutor 知识
+* ReentrantLock 知识
+* Condition知识
 * ArrayBlockingQueue 阻塞队列
 * 锁
 * 死锁
+* 使用synchronzied、wait、notifyAll实现生产者-消费者模式
+* 使用信号量实现生产者-消费者模式
+* 使用管程实现生产者-消费者模式
+* 哲学家就餐问题
+* 读者写者问题
 
