@@ -111,16 +111,17 @@
   * [ArrayList 与 LinkedList](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/ArrayList%E4%B8%8ELinkedList.md)
   * [HashMap](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/HashMap.md)
   * [String、StringBuffer 与 StringBuilder 的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/String%E3%80%81StringBuilder%E4%B8%8EStringBuffer%E7%9A%84%E5%8C%BA%E5%88%AB.md)
-
-
+  * [ConcurrentHashMap](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/ConcurrentHashMap.md)
+  * [JDK1.7ConcurrentHashMap的源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/JDK1.7ConcurrentHashMap的源码分析.md)
+  * [JDK1.8ConcurrentHashMap的源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/JDK1.8ConcurrentHashMap的源码分析.md)
 
 * 线程
   * [AtomicBoolean](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/%E7%BA%BF%E7%A8%8B/AtomicBoolean.md)
   * [Executor、Executors、ExecutorService 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/%E7%BA%BF%E7%A8%8B/Executor%E3%80%81Executors%E3%80%81ExecrtorService%E7%9F%A5%E8%AF%86.md)
   * [同步的知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/同步的知识.md)
-  
   * [volatile 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/volatile知识.md)
   * [synchronized 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/Synchronized知识.md)
+  * [死锁](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/死锁.md)
   
   
   
@@ -281,6 +282,7 @@
   * 第 3 章 [HTTP 报文内的 HTTP 信息](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/图解HTTP)
   * 第 4 章 [返回结果的 HTTP 状态码](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第4章-返回结果的HTTP状态码.md)
   * 第 5 章 [与 HTTP 协作的 Web 服务器](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第5章-与HTTP协作的Web服务器.md)
+  * 第 6 章 [HTTP 首部](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第6章-HTTP首部.md)
 * **Android 开发艺术探索**
   * 第 1 章 [Activity 的生命周期和启动模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android开发艺术探索/第1章-Activity%20的声明周期和启动模式.md)
   * 第 2 章 [IPC 机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android开发艺术探索/第2章-IPC机制.md)

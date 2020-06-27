@@ -6,14 +6,14 @@
 
 **ReentrantLock**
 
-* ReentrantLock 是 JDK 方法，需要手动声明上锁和释放锁，因此语法相对复杂些；如果忘记释放锁容易导致死锁。
+* ReentrantLock 是 JDK 方法，需要手动声明加锁和释放锁，因此语法相对复杂些；如果忘记释放锁容易导致死锁。
 * ReentrantLock 具有更好的细粒度，可以在 ReentrantLock 里面设置内部 Condition 类，可以实现分组唤醒需要唤醒的线程。
 * ReentrantLock 能实现公平锁。
 
 **synchronized**
 
 * synchronized 语法上简洁方便。
-* synchronized 是 JVM 方法，由编辑器保证加锁和释放。
+* synchronized 是 JVM 方法，由编辑器保证加锁和释放锁。
 
 ### 1.2. ReentrantLock 特征介绍
 

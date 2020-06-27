@@ -8,7 +8,7 @@
 
 　　说明：ConcurrentHashMap 的数据结构（数组+链表+红黑树），桶中的结构可能是链表，也可能是红黑树，红黑树是为了提高查找效率。
 
-　　JDK 1.8 的实现已经抛弃了 Segment 分段锁机制，利用 CAS + Synchronized 来保证并发更新的安全。数据结构采用：数组 + 链表 + 红黑树。
+　　JDK 1.8 的实现依然使用分段锁机制，不过分段的不再是 Segment，而是 Node，所以锁采用的也不再是 ReentrantLock（Segment 继承 ReententLock），而是利用 CAS + Synchronized 来保证并发更新的安全。数据结构采用：数组 + 链表 + 红黑树。
 
 ## 2. ConcurrentHashMap 类
 
@@ -751,11 +751,16 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
 ```
 
-　　remove() 方法调用的是 replaceNode() 方法实现结点的删除。
+　　remove() 方法调用的是 replaceNode() 方法实现结点的删除。移除时对对应桶中的元素加锁，根据节点或者是树进行节点的删除。
 
 ## 7. 总结
 
-
+1. JDK 1.8 的实现依然采用分段锁机制，不过使用的是 Node ，并且利用的是 CAS + Synchronized 来保证并发更新的安全。
+2. 数据结构不再采用单一的 “ 数组 + 链表 ”，而是采用 “ 数组 + 链表 + 红黑树 ”。
+3. 使用 Node 数组来存储数据，在 put 和 remove （添加和删除）数据的时候，对数据所在的 Node 数组的位置 Node 进行加锁，进而修改数据，
+4. put 方法中，通过 key 定位出 node，如果为空表示当前位置可以写入数据，利用循环 CAS 写入，如果不为空，则利用 synchronized 锁写入数据。写入完成后如果数量大于 TREEIFY_HRESHOLD 则要转换为红黑树。
+5. 因为 Node 的 val（值） 和 next （下一个节点）成员是被 volatile 修饰的，所以 get 方法并不需要进行加锁操作，因为获取的就是最新的值。
+6. ConcurrentHashMap 的 key 和 value 不允许为 null，是因为在 put 方法中，如果 key 或者 value 为 null，就会直接抛出 NullPointerException 异常。
 
 ## 8. 参考文章 
 
