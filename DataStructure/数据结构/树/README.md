@@ -2,9 +2,9 @@
 
 * [树的基本知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/树的基本知识.md)
 
-* 二叉树 - 已整理
+* [二叉树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/二叉树.md)
 
-* 二叉搜索树 - 已整理
+* [二分搜索树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/二分搜索树.md)
 
 * 平衡二叉树
 

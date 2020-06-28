@@ -134,7 +134,7 @@ Map m = Collections.synchronizedMap(new HashMap(...));
 
 　　HashTable 线程安全很好理解，因为它每个方法中都加入了 synchronized。
 
-　　而关于 HashMap 不是线程安全的分析，可以查看 [HashMap 不i是线程安全的分析]()。
+　　而关于 HashMap 不是线程安全的分析，可以查看 [HashMap 不是线程安全的分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/HashMap不是线程安全的分析.md)。
 
 ### 4.3. 是否提供 contains 方法
 
@@ -248,37 +248,35 @@ public boolean containsValue(Object value) {
 
 　　HashTable、HashMap 都使用了 Iterator。而由于历史原因，HashTable 还使用了 Enumaration 的方式。
 
-　　HashMap 的迭代器（Interator）是 fail-fast 迭代器，而 HashTable 的 enumerator 迭代器不是 fail-fast 的。所以当有其他线程改变了 HashMap 的结构（增加或者移除元素），就会抛出 ConcurrentModificationException，但迭代器本身的 remove() 方法移除元素则不会抛出 ConcurrentModificationException 异常。但这并不是一个一定发生的行为，要看 JVM。这条同样也是 Enumeration 和 Iterator 的区别。
+　　HashMap 的迭代器（Interator）是 fail-fast 迭代器，而 HashTable 的 Enumeration 迭代器不是 fail-fast 的。所以当有其他线程改变了 HashMap 的结构（增加或者移除元素），就会抛出 ConcurrentModificationException，但迭代器本身的 remove() 方法移除元素则不会抛出 ConcurrentModificationException 异常，但这并不是一个一定发生的行为，要看 JVM。这条同样也是 Enumeration 和 Iterator 的区别。
 
-### 6. hash 值不同
+### 4.6. hash 值不同
 
 　　哈希值的使用不同，HashTable 直接使用对象的 hashCode，而 HashMap 重新计算 hash 值。
 
 　　hashCode 是 jdk 根据对象的地址或者字符串或者数字算出来的 int 类型的数值。
 
-　　HashTable 计算 hash 值，直接用 key 的 hashCode()，而 HashMap 重新计算了 key 的 hash 值，HashTable 在求 hash 值对应的位置索引时，用取模运算，而 HashMap 在求位置索引时，则用与运算，且这里一般先用 hash&0x7FFFFFFF 后，再对 length 取模，&0x7FFFFFFF 的目的时为了将负的 hash 值转化为正值，因为 hash 值有可能为负数，而 &0x7FFFFFFF 后，只有符号外改变，而后面的位都不变。
+　　HashTable 计算 hash 值，直接用 key 的 hashCode()，而 HashMap 重新计算了 key 的 hash 值，HashTable 在求 hash 值对应的位置索引时，用取模运算，而 HashMap 在求位置索引时，则用与运算，且这里一般先用 hash&0x7FFFFFFF 后，再对 length 取模，&0x7FFFFFFF 的目的是为了将负的 hash 值转化为正值，因为 hash 值有可能为负数，而 &0x7FFFFFFF 后，只有符号位改变，而后面的位都不变。
 
-### 7. 内部实现使用的数组初始化和扩容方式不同
+### 4.7. 内部实现使用的数组初始化和扩容方式不同
 
 　　HashTable 在不指定容量的情况下的默认容量为 11，而 HashMap 为 16，HashTable 不要求底层数组的容量一定要为 2 的整数次幂，而 HashMap 则要求一定为 2 的整数次幂。
 
 　　HashTable 扩容时，将容量变为原来的 2 倍加 1，而 HashMap 扩容时，将容量变为原来的 2 倍。
 
-　　HashTable 和 HashMap 它们两个内部实现方式的数组的初始大小和扩容的方式。HashTable 中 hash 数组默认大小是 11，增加的方式是 old*2+1。
+### 4.8. 其他
 
-### 8. 其他
-
-　　由于 HashTable 时线程安全的也是 synchronized，所以在单线程环境下它比 HashMap 要慢。如果不需要同步，只需要单一线程，那么使用 HashMap 性能要好过 HashTable。
+　　由于 HashTable 是线程安全的也是 synchronized，所以在单线程环境下它比 HashMap 要慢。如果不需要同步，只需要单一线程，那么使用 HashMap 性能要好过 HashTable。
 
 　　HashMap 不能保证随着时间的推移 Map 中的元素次序是不变的。
 
-## 其他
+## 5. 其他
 
 1. synchronized 意味着在一次仅有一个线程能够更改 HashTable。就是说任何线程要更新 HashTable 时要首先获得同步锁，其他线程要等到同步锁被释放之后才能再次获得同步锁更新 HashTable。
-2. Fail-safe 和 iterator 迭代器相关。如果某个集合对象创建了 Iterator 或者 ListIterator，然后其它的线程视图 “ 结构上 ” 更改集合对象，将会抛出 ConcurrentModificationException 异常。但其他线程可以通过 set() 方法更改集合对象是允许的，因为这并没有从 “ 结构上 ” 更改集合。但是假如已经从结构上进行了更改，再调用 set() 方法，将会抛出 IllegalArgumentException 异常。
+2. Fail-safe 和 iterator 迭代器相关。如果某个集合对象创建了 Iterator 或者 ListIterator，然后其它的线程试图在 “ 结构上 ” 更改集合对象，将会抛出 ConcurrentModificationException 异常。但其他线程可以通过 set() 方法更改集合对象是允许的，因为这并没有从 “ 结构上 ” 更改集合。但是假如已经从结构上进行了更改，再调用 set() 方法，将会抛出 IllegalArgumentException 异常。
 3. 结构上的更改指的是删除或者插入一个元素，这样会影响到 map 的结构。
 
-## 能否让 HashMap 同步？
+## 6. 能否让 HashMap 同步？
 
 　　HashMap 可以通过下面的语句进行同步：
 
@@ -286,13 +284,11 @@ public boolean containsValue(Object value) {
 Map m = Collections.synchronizeMap(hashMap);
 ```
 
-## 结论
+## 7. 结论
 
-　　HashTable 和 HashMap 有几个主要的不同：线程安全以及速度。仅在需要完全的线程安全的时候使用 HashTable，而如果使用 Java 5 或以上的话，请使用 ConcurrentHashMap 吧。
+　　HashTable 和 HashMap 有几个主要的不同：线程安全以及速度。仅在需要完全的线程安全的时候使用 HashTable，而如果使用 Java 5 或以上的话，使用 ConcurrentHashMap 吧。
 
-
-
-## 参考文章
+## 8. 参考文章
 
 1. [HashTable和HashMap的区别详解](https://www.cnblogs.com/williamjie/p/9099141.html)
 
