@@ -2,26 +2,14 @@
 
 ## 1. 什么是 ReentrantLock
 
-### 1.1. ReentrantLock 与 synchronized 区别
+### 1.1. ReentrantLock 特征介绍
 
-**ReentrantLock**
-
-* ReentrantLock 是 JDK 方法，需要手动声明加锁和释放锁，因此语法相对复杂些；如果忘记释放锁容易导致死锁。
-* ReentrantLock 具有更好的细粒度，可以在 ReentrantLock 里面设置内部 Condition 类，可以实现分组唤醒需要唤醒的线程。
-* ReentrantLock 能实现公平锁。
-
-**synchronized**
-
-* synchronized 语法上简洁方便。
-* synchronized 是 JVM 方法，由编辑器保证加锁和释放锁。
-
-### 1.2. ReentrantLock 特征介绍
-
-　　Java 的 java.util.concurrent 框架中提供了 ReentrantLock 类（于 JAVA SE 5.0 时引入），ReentrantLock 实现了 lock 接口，具体在 JDK 中的定义如下：
+　　Java 的 java.util.concurrent 框架中提供了 ReentrantLock 类（于 JAVA SE 5.0 时引入），ReentrantLock 实现了 Lock 接口，具体在 JDK 中的定义如下：
 
 ```java
 public class ReentrantLock implements Lock, java.io.Serializable {
     public ReentrantLock() {
+        // 默认是非公平锁
         sync = new NonfairSync();
     }
 
@@ -32,12 +20,13 @@ public class ReentrantLock implements Lock, java.io.Serializable {
      * @param fair {@code true} if this lock should use a fair ordering policy
      */
     public ReentrantLock(boolean fair) {
+        // 可以创建公平锁和非公平锁
         sync = fair ? new FairSync() : new NonfairSync();
     }
 }
 ```
 
-　　看到一个类首先就需要知道它的构造方法有哪些，ReentrantLock 有两个构造方法，一个是无参的 ReentrantLock()；另一个含有布尔参数 public ReentrantLock(boolean fair)。后面一个构造函数说明 ReentrantLock 可以新建公平锁；而 synchronized 只能建立非公平锁。
+　　看到一个类首先就需要知道它的构造方法有哪些，ReentrantLock 有两个构造方法，一个是无参的 ReentrantLock()，另一个含有布尔参数 public ReentrantLock(boolean fair)。后面一个构造函数说明 ReentrantLock 可以创建公平锁。
 
 　　那么 Lock 接口的方法：
 
@@ -62,6 +51,20 @@ public interface Lock {
 
 　　返回 Condition 类的一个实例。
 
+### 1.2. ReentrantLock 与 synchronized 区别
+
+**ReentrantLock**
+
+* ReentrantLock 是 JDK 方法，需要手动声明加锁和释放锁，因此语法相对复杂些，如果忘记释放锁容易导致死锁。
+* ReentrantLock 具有更好的细粒度，可以在 ReentrantLock 里面设置内部 Condition 类，可以实现分组唤醒需要唤醒的线程。
+* ReentrantLock 能实现非公平锁和公平锁。
+
+**synchronized**
+
+* synchronized 语法上简洁方便。
+* synchronized 是 JVM 方法，由编辑器保证加锁和释放锁。
+* sunchronized 只能实现非公平锁。
+
 ## 2. ReentrantLock 其它方法介绍
 
 　　在介绍它的其他方法前，要先明白它的使用方法，以下 JDK 中的建议：
@@ -69,20 +72,19 @@ public interface Lock {
 ```java
      private final ReentrantLock lock = new ReentrantLock();
       // ...
-  
       public void m() {
-       lock.lock();  // block until condition holds
-       try {
+       	lock.lock();  // block until condition holds
+       	try {
         // ... method body
         } finally {
-        lock.unlock()
-      }
+        	lock.unlock() // 在 finally 种释放锁
+      	}
     }
 ```
 
 　　建议用 try，在 finally 里面一定要释放锁，防止被中断时锁没释放，造成死锁。
 
-### lock()
+### 2.1. lock() - 加锁
 
 ```java
     public void lock() {
@@ -90,9 +92,9 @@ public interface Lock {
     }
 ```
 
-　　如果该锁没被其他线程获得，则立即返回；并且把 lock hold count 的值变为 1。
+　　如果该锁没被其他线程获得，则立即返回，并且把 lock hold count 的值变为 1。
 
-### unlock()
+### 2.2. unlock() - 释放锁
 
 ```java
     public void unlock() {
@@ -100,9 +102,9 @@ public interface Lock {
     }
 ```
 
-　　如果当前线程是该锁的持有者，则保持计数递减。如果保持计数现在为零，则锁定被释放。如果当前线程不是该锁的持有者，则派出 IllegalMonitorStateException。
+　　如果当前线程是该锁的持有者，则保持计数递减。如果保持计数现在为零，则锁被释放。如果当前线程不是该锁的持有者，则抛出 IllegalMonitorStateException。
 
-### isFair()
+### 2.3. isFair() - 是否是公平锁
 
 ```java
     public final boolean isFair() {
@@ -112,7 +114,7 @@ public interface Lock {
 
 　　判断该锁是不是公平锁。
 
-### newCondition()
+### 2.4. newCondition() - 创建一个新的 Condition 对象
 
 ```java
     public Condition newCondition() {
@@ -124,7 +126,7 @@ public interface Lock {
 
 ## 3. Condiation 接口中的方法
 
-* await()：
+### 3.1. await() - 阻塞等待
 
 ```java
     void await() throws InterruptedException;
@@ -132,10 +134,10 @@ public interface Lock {
 
 　　Condition 接口中的方法，导致当前线程等待发信号。
 
-* siginal()
+### 3.2. siginal() - 唤醒
 
 ```java
-// AbstractQueuedSynchronzier 的内部类 ConditionObject 
+	// AbstractQueuedSynchronzier 的内部类 ConditionObject 
     public class ConditionObject implements Condition, java.io.Serializable {
 public final void signal() {
             if (!isHeldExclusively())
@@ -149,9 +151,24 @@ public final void signal() {
 
 　　唤醒一个等待该条件的线程去获取锁（第一个）。
 
-* signalAll()：唤醒所有等待线程。
+### 3.3. signalAll() - 唤醒所有等待线程
 
-## ReentrantLock 实例
+```java
+	// AbstractQueuedSynchronzier 的内部类 ConditionObject 
+    public class ConditionObject implements Condition, java.io.Serializable {
+		public final void signalAll() {
+            if (!isHeldExclusively())
+                throw new IllegalMonitorStateException();
+            Node first = firstWaiter;
+            if (first != null)
+                doSignalAll(first);
+        }
+    }
+```
+
+　　唤醒所有等待该条件的线程去获取锁。
+
+## 4. ReentrantLock 使用示例
 
 　　使用 ReentrantLock 实现转账。
 
@@ -202,33 +219,38 @@ public class ReentrantLockUse {
         }
 
         /**
-         * 转装，把 from 账户里面的钱转到 to 里面，金额是 amount
+         * 转账，把 from 账户里面的钱转到 to 里面，金额是 amount
          *
          * @param from
          * @param to
          * @param amount
          */
         public void transfer(int from, int to, double amount) {
+            // 加锁
             bankLock.lock();
             try {
+                // from 账户中的金额不足转账，则等待
                 while (account[from] < amount) {
                     sufficientFunds.await();
                 }
                 System.out.println(Thread.currentThread());
+                // 开始转账
                 account[from] -= amount;
                 System.out.printf("%10.2f from %d to %d", amount, from, to);
                 account[to] += amount;
                 System.out.printf(",Total Balance:%10.2f%n", getTotalBalance());
+                // 转账结束，唤醒等待的其他线程
                 sufficientFunds.signalAll();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
+                // 解锁
                 bankLock.unlock();
             }
         }
 
         /**
-         * 做的所有账户总额
+         * 银行的所有账户总额
          *
          * @return
          */
@@ -275,8 +297,8 @@ Thread[Thread-20,5,main]
 
 　　结果分析：
 
-　　循环建立 100 个线程，每个线程都在不停转账，由于 ReentrantLock 的使用，任何时刻所有账户的总额都保持不变。另外，把钱 amount 从 A 账户转到 B 账户，要先判断 A 账户中是否有这么多钱，不过没有就调用条件对象 ConditionObject 的 await() 方法，放弃该线程，等待其他线程转钱进来；转钱完成后调用 siginalAll()。
+　　循环建立 100 个线程，每个线程都在不停转账，由于 ReentrantLock 的使用，任何时刻所有账户的总额都保持不变。另外，把钱 amount 从 A 账户转到 B 账户，要先判断 A 账户中是否有这么多钱，如果没有就调用条件对象 ConditionObject 的 await() 方法，放弃该线程，等待其他线程转钱进来；转钱完成后调用 siginalAll() 唤醒等待的线程。
 
 
-## 参考文章
+## 5. 参考文章
 1. [JAVA中ReentrantLock详解](https://www.cnblogs.com/java-learner/p/9651675.html)

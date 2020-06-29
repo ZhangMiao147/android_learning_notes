@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MyInputMethod</string>
+    <string name="keyboard_name">自定义键盘</string>
+</resources>
