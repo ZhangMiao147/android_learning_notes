@@ -19,7 +19,7 @@
 * [Java 中常见的锁](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/Java中常见的锁.md)
 * [死锁](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/死锁.md)
 * 使用synchronzied、wait、notifyAll实现生产者-消费者模式
-* 使用信号量实现生产者-消费者模式
+* 使用信号量实现生产者-消费者模式 - 已整理
 * 使用管程实现生产者-消费者模式
 * 哲学家就餐问题
 * 读者写者问题

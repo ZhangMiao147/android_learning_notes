@@ -6,9 +6,9 @@
 
 * [二分搜索树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/二分搜索树.md)
 
-* 平衡二叉树
+* 平衡二叉树 - 已整理
 
-* 线段树
+* 线段树 - 已整理
 
 * 字典树
 
