@@ -20,8 +20,6 @@
 | 唤醒等待队列中的一个线程                           | 支持                           | 支持                                                         |
 | 唤醒等待队列中的全部线程                           | 支持                           | 支持                                                         |
 
-## Condition 使用示例
-
 
 
 ## Condition 实现分析
@@ -265,6 +263,277 @@
 ### 总结
 
 　　调用 await 方法后，将当前线程加入 Condition 等待队列中。当前线程释放锁。否则别的线程就无法拿到锁而发生死锁。自旋（while）挂起，不断加测节点是否在同步队列中了，如果是则尝试获取锁，否则挂起。当线程被 signal 方法唤醒，被唤醒的线程将从 await() 方法中的 while 循环中退出来，然后调用 acquireQueued() 方法竞争同步状态。
+
+## Condition 使用示例
+
+### 1. 基本使用
+
+　　首先需要明白 Condition 对象是依赖于 Lock 对象的，意思就是说 condition 对象需要通过 Lock 对象进行创建出来（调用 Lock 对象的 newCondition() 方法）。Condition 的使用方式非常的简单。但是需要注意在调用方法前获取锁。
+
+```java
+public class ConditionUseCase {
+    private Lock lock = new ReentrantLock();
+    private Condition condition = lock.newCondition();
+
+    public static void main(String[] args) {
+        ConditionUseCase useCase = new ConditionUseCase();
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                useCase.conditionWait();
+            }
+        });
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                useCase.conditionSignal();
+            }
+        });
+    }
+
+    public void conditionWait() {
+        lock.lock();
+        try {
+            System.out.println(Thread.currentThread().getName() + " 拿到锁了 ");
+            System.out.println(Thread.currentThread().getName() + " 等待信号 ");
+            condition.await();
+            System.out.println(Thread.currentThread().getName() + " 拿到信号 ");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void conditionSignal() {
+        lock.lock();
+        try {
+            System.out.println(Thread.currentThread().getName() + " 拿到锁了 ");
+            Thread.sleep(5000);
+            condition.signal();
+            System.out.println(Thread.currentThread().getName() + " 发出信号 ");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+```
+
+　　输出结果：
+
+```java
+pool-1-thread-1 拿到锁了 
+pool-1-thread-1 等待信号 
+pool-1-thread-2 拿到锁了 
+pool-1-thread-2 发出信号 
+pool-1-thread-1 拿到信号 
+```
+
+　　如示例所示，一般都会将 Condition 对象作为成员变量。当调用 await() 方法后，当前程先会释放锁并在此等待，而其他线程调用 Condition 对象的 signal() 方法，通知当前线程后，当前线程才从 await() 方法返回，并且在返回前已经获取了锁。
+
+### 2. 模拟队列
+
+　　实现一个简单的有界队列，队列为空时，队列的删除操作将会阻塞直到队列中有新的元素，队列已满时，队列的插入操作将会阻塞直到队列出现空位。
+
+```java
+/**
+ * 模拟简单的有界队列，队列为空时队列的获取操作阻塞，知道队列中有新的元素，队列已满时，插入操作阻塞直到队列出现空位
+ *
+ * @param <T>
+ */
+public class Queue<T> {
+    // 队列元素列表
+    private Object[] elements;
+    private Lock lock = new ReentrantLock();
+    // 队列是否为空
+    private Condition notEmpty = lock.newCondition();
+    // 队列是否已满
+    private Condition notFull = lock.newCondition();
+    // 队列长度，插入元素下标，删除元素下标
+    private int length = 0, addIndex = 0, removeIndex = 0;
+
+    public Queue(int size) {
+        elements = new Object[size];
+    }
+
+    /**
+     * 插入元素，队列已满则等待
+     *
+     * @param object
+     * @throws InterruptedException
+     */
+    public void add(T object) throws InterruptedException {
+        lock.lock();
+        try {
+            while (length == elements.length) {
+                System.out.println("队列已满，等待~~~~~");
+                notFull.await();
+            }
+            elements[addIndex] = object;
+            if (++addIndex == elements.length) {
+                addIndex = 0;
+            }
+            length++;
+            System.out.println("add elements:" + Arrays.toString(elements));
+            notEmpty.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * 删除元素，队列为空则等待
+     *
+     * @return
+     * @throws InterruptedException
+     */
+    public T remove() throws InterruptedException {
+        lock.lock();
+        try {
+            while (length == 0) {
+                System.out.println("队列为空，等待~~~");
+                notEmpty.await();
+            }
+            Object element = elements[removeIndex];
+            elements[removeIndex] = null;
+            if (++removeIndex == elements.length) {
+                removeIndex = 0;
+            }
+            length--;
+            System.out.println("remove elements:" + Arrays.toString(elements));
+            notFull.signal();
+            return (T) element;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static void main(String[] args) {
+        Queue<Integer> queue = new Queue<Integer>(10);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        queue.add((int) (10 * Math.random()));
+                        Thread.sleep((int) (1000 * Math.random()));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        int remove = queue.remove();
+                        Thread.sleep((int) (1000 * Math.random()));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+    }
+}
+```
+
+　　不难看出，Condition 的使用方式是比较简单的，需要注意的是使用 Condition 的等待/通知需要提前获取到与 Condition 对象关联的锁，Condition 对象由 Lock 对象创建。
+
+　　以上述示例中的 add(T object) 为例，详细描述一下 Condition 等待/通知的整个过程：
+
+* 获取锁，确保对数据修改的安全性；
+* 数组元素的个数等于数组的长度时，调用 notFull.await()，插入线程释放锁进入等待。
+* 数组未满，添加元素到数组中，调用 notEmpty.signal() 通知等待在 notEmpty 上的线程，数组中由新的元素可以操作。
+
+　　总的来说，Condition 的等待/通知使用方式大体上跟经典的 Object 监视器上的等待/通知是非常类似的。
+
+### 3. 实现生产者-消费者模式
+
+```java
+public class BoundedQueue {
+
+    private LinkedList<Object> buffer; // 生产者同期
+    private int maxSize; // 容器最大值是多少
+    private Lock lock;
+    private Condition fullCondition;
+    private Condition notFullCondition;
+
+    BoundedQueue(int maxSize) {
+        this.maxSize = maxSize;
+        buffer = new LinkedList<Object>();
+        lock = new ReentrantLock();
+        fullCondition = lock.newCondition();
+        notFullCondition = lock.newCondition();
+    }
+
+    public void put(Object obj) throws InterruptedException {
+        lock.lock(); // 获取锁
+        try {
+            while (maxSize == buffer.size()) {
+                notFullCondition.await(); // 满了，添加的线程进入等待状态
+            }
+            buffer.add(obj);
+            System.out.println("put obj:" + obj + ",buffer.size:" + buffer.size());
+            fullCondition.signal(); // 通知
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public Object get() throws InterruptedException {
+        Object obj = null;
+        lock.lock();
+        try {
+            while (buffer.size() == 0) {
+                fullCondition.await(); // 队列中没有数据了，线程进入等待状态
+            }
+            obj = buffer.poll();
+            System.out.println("get obj:" + obj + ",buffer.size:" + buffer.size());
+            notFullCondition.signal(); // 通知
+        } finally {
+            lock.unlock();
+        }
+        return obj;
+    }
+
+    public static void main(String[] args) {
+        BoundedQueue boundedQueue = new BoundedQueue(10);
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        boundedQueue.put((int) (10 * Math.random()));
+                        Thread.sleep((int) (1000 * Math.random()));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        boundedQueue.get();
+                        Thread.sleep((int) (1000 * Math.random()));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
+}
+```
 
 
 
