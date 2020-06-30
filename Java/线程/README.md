@@ -7,8 +7,8 @@
 * [synchronized 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/Synchronized知识.md)
 * ThreadPoolExecutor 知识
 * ReentrantReadWriteLock 
-* ReentrantLock 知识 - 已整理
-* Condition 知识
+* [ReentrantLock 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/ReentrantLock知识.md)
+* [Condition 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/Condition知识.md)
 * ArrayBlockingQueue 阻塞队列
 * Semaphore
 * CountDownLatch
@@ -19,8 +19,8 @@
 * [Java 中常见的锁](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/Java中常见的锁.md)
 * [死锁](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/死锁.md)
 * 使用synchronzied、wait、notifyAll实现生产者-消费者模式
-* 使用信号量实现生产者-消费者模式 - 已整理
-* 使用管程实现生产者-消费者模式
+* [使用信号量实现生产者-消费者模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/使用信号量实现生产者-消费者模式.md)
+* [使用管程实现生产者-消费者模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/使用管程实现生产者-消费者模式.md)
 * 哲学家就餐问题
 * 读者写者问题
 

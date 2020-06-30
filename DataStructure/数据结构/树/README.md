@@ -6,11 +6,11 @@
 
 * [二分搜索树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/二分搜索树.md)
 
-* 平衡二叉树 - 已整理
+* [平衡二叉树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/平衡二叉树.md)
 
-* 线段树 - 已整理
+* [线段树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/线段树.md)
 
-* 字典树
+* [字典树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/字典树.md)
 
 * 红黑树
 
