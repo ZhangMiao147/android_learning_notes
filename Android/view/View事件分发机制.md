@@ -458,9 +458,550 @@ button.setOnTouchListener(new OnTouchListener() {
     }
 ```
 
-　　在 View 的 onTouchEvent() 方法中如果该控件是可以点击的就会进入到 switch 判断中去，而如果当前的时间是抬起手指，则会进入到 MotionEvent.ACTION_UP 这个 case 当中。在经过种种判断之后，会执行到 performClick() 方法。
 
-#### 1.3. View#performClick()
+
+　　如果当前 View 是 Disable 状态，(viewFlags & ENABLED_MASK) == DISABLED，并且是可点击则会消费掉事件，return false。
+
+　　如果设置了 onTouchDelegate，则会将事件交给代理者处理，直接 return true，如果希望自己的 View 增加它的 touch 范围，可以尝试使用 TouchDelegate。
+
+　　如果 clickable || (viewFlags & TOOLTIP) == TOOLTIP 为 true，clickable 表示 View 是可以点击或者可以长按，最终一定 return true。
+
+ 　　接下来就是 switch(event.getAction) 了，判断事件类型，DOWN、MOVE、UP 等
+
+#### 1.3. MotionEvent.ACTION_DOWN
+
+```java
+                    if (event.getSource() == InputDevice.SOURCE_TOUCHSCREEN) {
+                        mPrivateFlags3 |= PFLAG3_FINGER_DOWN;
+                    }
+                    mHasPerformedLongPress = false;
+
+                    if (!clickable) {
+                        checkForLongClick(
+                                ViewConfiguration.getLongPressTimeout(),
+                                x,
+                                y,
+                                TOUCH_GESTURE_CLASSIFIED__CLASSIFICATION__LONG_PRESS);
+                        break;
+                    }
+
+                    if (performButtonActionOnTouchDown(event)) {
+                        break;
+                    }
+
+                    // Walk up the hierarchy to determine if we're inside a scrolling container.
+                    boolean isInScrollingContainer = isInScrollingContainer();
+
+                    // For views inside a scrolling container, delay the pressed feedback for
+                    // a short period in case this is a scroll.
+                    if (isInScrollingContainer) {
+                        mPrivateFlags |= PFLAG_PREPRESSED;
+                        if (mPendingCheckForTap == null) {
+                            mPendingCheckForTap = new CheckForTap();
+                        }
+                        mPendingCheckForTap.x = event.getX();
+                        mPendingCheckForTap.y = event.getY();
+                        postDelayed(mPendingCheckForTap, ViewConfiguration.getTapTimeout());
+                    } else {
+                        // Not inside a scrolling container, so show the feedback right away
+                        setPressed(true, x, y);
+                        checkForLongClick(
+                                ViewConfiguration.getLongPressTimeout(),
+                                x,
+                                y,
+                                TOUCH_GESTURE_CLASSIFIED__CLASSIFICATION__LONG_PRESS);
+                    }
+                    break;
+```
+
+　　在代码中，显示判断是否父控件是可以滚动的，如果是将 mProvateFlags 设置为 PFLAG_PREPRESSED，然后调用 postDelayed() 方法延时处理点击，防止是滚动，延时时间为 TAP_TIMEOUT = 100，到了事件之后，会调用 CheckForTap 的 run 方法。
+
+##### CkeckForTap#run
+
+```java
+    private final class CheckForTap implements Runnable {
+        public float x;
+        public float y;
+
+        @Override
+        public void run() {
+            mPrivateFlags &= ~PFLAG_PREPRESSED;
+            setPressed(true, x, y);
+            final long delay =
+                    ViewConfiguration.getLongPressTimeout() - ViewConfiguration.getTapTimeout();
+            checkForLongClick(delay, x, y, TOUCH_GESTURE_CLASSIFIED__CLASSIFICATION__LONG_PRESS);
+        }
+    }
+```
+
+　　在 CheckForTap 的 run 方法里面取消了 mPrivateFlags 的 PREPRESSED，然后设置 PRESSED 标识，刷新背景，如果 View 支持长按事件，则再发一个延时消息，检测长按。这的逻辑和 onTouchEvent() 方法里面如果父类没有滑动的处理基本相同：
+
+```java
+setPressed(true, x, y);
+checkForLongClick(
+                                ViewConfiguration.getLongPressTimeout(),
+                                x,
+                                y,
+                                TOUCH_GESTURE_CLASSIFIED__CLASSIFICATION__LONG_PRESS);
+```
+
+　　检测长按的时长不同。
+
+##### setPressed
+
+　　不同参数的 setPressed() 方法最终都会调用到下面的方法： 
+
+```java
+    public void setPressed(boolean pressed) {
+        final boolean needsRefresh = pressed != ((mPrivateFlags & PFLAG_PRESSED) == PFLAG_PRESSED);
+
+        if (pressed) {
+            mPrivateFlags |= PFLAG_PRESSED;
+        } else {
+            mPrivateFlags &= ~PFLAG_PRESSED;
+        }
+
+        if (needsRefresh) {
+            refreshDrawableState();
+        }
+        dispatchSetPressed(pressed);
+    }
+```
+
+　　根据 mPrivateFlag 有没有 PFLAG_PRESSED，则判断出是否需要重新刷新，如果是按下，则取消 PFLAG_PRESSED，如果不是按下，则添加 非 PFLAG_PRESSED 状态。如果需要刷新，则调用 refreshDrawableState() 刷新背景。
+
+##### checkForLongClick
+
+```java
+    private CheckForLongPress mPendingCheckForLongPress;
+
+	private void checkForLongClick(long delay, float x, float y, int classification) {
+        if ((mViewFlags & LONG_CLICKABLE) == LONG_CLICKABLE || (mViewFlags & TOOLTIP) == TOOLTIP) {
+            mHasPerformedLongPress = false;
+
+            if (mPendingCheckForLongPress == null) {
+                mPendingCheckForLongPress = new CheckForLongPress();
+            }
+            mPendingCheckForLongPress.setAnchor(x, y);
+            mPendingCheckForLongPress.rememberWindowAttachCount();
+            mPendingCheckForLongPress.rememberPressedState();
+            mPendingCheckForLongPress.setClassification(classification);
+            postDelayed(mPendingCheckForLongPress, delay);
+        }
+    }
+```
+
+　　checkForLongClick() 方法就是设置  mPendingCheckForLongPress 的一些参数，然后发送延时消息出去。
+
+```java
+    private final class CheckForLongPress implements Runnable {
+        private int mOriginalWindowAttachCount;
+        private float mX;
+        private float mY;
+        private boolean mOriginalPressedState;
+        /**
+         * The classification of the long click being checked: one of the
+         * StatsLog.TOUCH_GESTURE_CLASSIFIED__CLASSIFICATION__* constants.
+         */
+        private int mClassification;
+
+        @Override
+        public void run() {
+            if ((mOriginalPressedState == isPressed()) && (mParent != null)
+                    && mOriginalWindowAttachCount == mWindowAttachCount) {
+                recordGestureClassification(mClassification);
+                if (performLongClick(mX, mY)) {
+                    mHasPerformedLongPress = true;
+                }
+            }
+        }
+
+        public void setAnchor(float x, float y) {
+            mX = x;
+            mY = y;
+        }
+
+        public void rememberWindowAttachCount() {
+            mOriginalWindowAttachCount = mWindowAttachCount;
+        }
+
+        public void rememberPressedState() {
+            mOriginalPressedState = isPressed();
+        }
+
+        public void setClassification(int classification) {
+            mClassification = classification;
+        }
+    }
+```
+
+　　长按的处理就是调用 performLongClick() 方法。
+
+##### performLongClick
+
+```java
+    public boolean performLongClick(float x, float y) {
+        mLongClickX = x;
+        mLongClickY = y;
+        final boolean handled = performLongClick();
+        mLongClickX = Float.NaN;
+        mLongClickY = Float.NaN;
+        return handled;
+    }
+
+    public boolean performLongClick() {
+        return performLongClickInternal(mLongClickX, mLongClickY);
+    }
+
+    private boolean performLongClickInternal(float x, float y) {
+        sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_LONG_CLICKED);
+
+        boolean handled = false;
+        final ListenerInfo li = mListenerInfo;
+        // li.mOnLongClickListener 就是 setOnLongClickListener() 方法设置的
+        if (li != null && li.mOnLongClickListener != null) {
+            handled = li.mOnLongClickListener.onLongClick(View.this);
+        }
+        if (!handled) {
+            final boolean isAnchored = !Float.isNaN(x) && !Float.isNaN(y);
+            handled = isAnchored ? showContextMenu(x, y) : showContextMenu();
+        }
+        if ((mViewFlags & TOOLTIP) == TOOLTIP) {
+            if (!handled) {
+                handled = showLongClickTooltip((int) x, (int) y);
+            }
+        }
+        if (handled) {
+            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        }
+        return handled;
+    }
+```
+
+　　如果调用 setOnLongClickListener 设置了长按的回调，则执行长按时的回调，且如果长按的回调返回 true，才把 mHasPerformedLongPress 置为 true。
+
+　　否则，如果没有设置长按回调或者长按回调返回的是 false，则 mHasPerformedLongPress  依然是 false。
+
+##### 总结
+
+　　可以看到，当用户按下，如果父类有滑动，首先会设置标识为 PFLAG_PREPRESSED，然后发送一个延时操作，到时间后，会取消 PFLAG_PREPRESSED 的标志，然后和父类没有滑动的处理一样。
+
+　　将 View 的标识设置为 PFLAG_PRESSED，没有需要刷新，则刷新背景，如果按下没有抬起，则会发出一个检测长按的延时任务，父类右滑动的延时时间为 ViewConfiguration.getLongPressTimeout() - ViewConfiguration.getTapTimeout()（500-100），ViewConfiguration.getTapTimeout() 就是父类有滑动，发送延时的时间 100，而父类没有滑动的延时时间为 ViewConfiguration.getLongPressTimeout()，也就是用户从 DOWN 触发开始算起，如果 500ms 内没有抬起则认为触发了长按事件。
+
+#### 1.4. MotionEvent.ACTION_MOVE
+
+```java
+                    if (clickable) {
+                        drawableHotspotChanged(x, y);
+                    }
+
+                    final int motionClassification = event.getClassification();
+                    final boolean ambiguousGesture =
+                            motionClassification == MotionEvent.CLASSIFICATION_AMBIGUOUS_GESTURE;
+                    int touchSlop = mTouchSlop;
+                    if (ambiguousGesture && hasPendingLongPressCallback()) {
+                        final float ambiguousMultiplier =
+                                ViewConfiguration.getAmbiguousGestureMultiplier();
+                        if (!pointInView(x, y, touchSlop)) {
+                            // The default action here is to cancel long press. But instead, we
+                            // just extend the timeout here, in case the classification
+                            // stays ambiguous.
+                            removeLongPressCallback();
+                            long delay = (long) (ViewConfiguration.getLongPressTimeout()
+                                    * ambiguousMultiplier);
+                            // Subtract the time already spent
+                            delay -= event.getEventTime() - event.getDownTime();
+                            checkForLongClick(
+                                    delay,
+                                    x,
+                                    y,
+                                    TOUCH_GESTURE_CLASSIFIED__CLASSIFICATION__LONG_PRESS);
+                        }
+                        touchSlop *= ambiguousMultiplier;
+                    }
+
+                    // Be lenient about moving outside of buttons
+                    if (!pointInView(x, y, touchSlop)) {
+                        // Outside button
+                        // Remove any future long press/tap checks
+                        removeTapCallback();
+                        removeLongPressCallback();
+                        if ((mPrivateFlags & PFLAG_PRESSED) != 0) {
+                            setPressed(false);
+                        }
+                        mPrivateFlags3 &= ~PFLAG3_FINGER_DOWN;
+                    }
+
+                    final boolean deepPress =
+                            motionClassification == MotionEvent.CLASSIFICATION_DEEP_PRESS;
+                    if (deepPress && hasPendingLongPressCallback()) {
+                        // process the long click action immediately
+                        removeLongPressCallback();
+                        checkForLongClick(
+                                0 /* send immediately */,
+                                x,
+                                y,
+                                TOUCH_GESTURE_CLASSIFIED__CLASSIFICATION__DEEP_PRESS);
+                    }
+```
+
+　　MotionEvent.ACTION_MOVE 主要是判断如果触摸的位置已经不在控件上了，则移除点击或者长按的回调。
+
+```
+
+```
+
+
+
+　　调用 hasPendingLongPressCallback() 方法判断是否是长按：
+
+```java
+    /**
+     * Return true if the long press callback is scheduled to run sometime in the future.
+     * Return false if there is no scheduled long press callback at the moment.
+     * 如果长按回调计划在将来某个时间运行，则返回 true。如果当前没有预定的长按回调，则返回 false。
+     */
+    private boolean hasPendingLongPressCallback() {
+        if (mPendingCheckForLongPress == null) {
+            return false;
+        }
+        final AttachInfo attachInfo = mAttachInfo;
+        if (attachInfo == null) {
+            return false;
+        }
+        return attachInfo.mHandler.hasCallbacks(mPendingCheckForLongPress);
+    }
+```
+
+　　调用 paintInView() 来检查当前触摸点有没有移出 View：
+
+```java
+    /**
+     * Utility method to determine whether the given point, in local coordinates,
+     * is inside the view, where the area of the view is expanded by the slop factor.
+     * This method is called while processing touch-move events to determine if the event
+     * is still within the view.
+     *
+     * @hide
+     */
+    @UnsupportedAppUsage
+    public boolean pointInView(float localX, float localY, float slop) {
+        return localX >= -slop && localY >= -slop && localX < ((mRight - mLeft) + slop) &&
+                localY < ((mBottom - mTop) + slop);
+    }
+```
+
+　　判断是长按，然后判断出触摸点不在 view 了，那么调用 removeLongPressCallback() 移除长按回调，并调用 checkForLongClick() 方法检查长按。
+
+　　如果不是长按，并且触摸点不在 View 了，则调用 removeTapCallback() 方法移除点击回调，调用 removeLongPressCallback() 移除长按回调，ru过 mRivateFlags 包含 PFLAG_PRESSED 标志，则调用 setPressed(false) 方法刷新，注意这里 setPressed(false)，这样 mPrivateFlags 会清除 PFLAG_PRESSED 标志。
+
+　　而移除长按回调和点击回调是：
+
+```java
+    /**
+     * Remove the tap detection timer.
+     */
+    private void removeTapCallback() {
+        if (mPendingCheckForTap != null) {
+            mPrivateFlags &= ~PFLAG_PREPRESSED;
+            removeCallbacks(mPendingCheckForTap);
+        }
+    }
+    /**
+     * Remove the longpress detection timer.
+     */
+    private void removeLongPressCallback() {
+        if (mPendingCheckForLongPress != null) {
+            removeCallbacks(mPendingCheckForLongPress);
+        }
+    }
+
+    public boolean removeCallbacks(Runnable action) {
+        if (action != null) {
+            final AttachInfo attachInfo = mAttachInfo;
+            if (attachInfo != null) {
+                attachInfo.mHandler.removeCallbacks(action);
+                attachInfo.mViewRootImpl.mChoreographer.removeCallbacks(
+                        Choreographer.CALLBACK_ANIMATION, action, null);
+            }
+            getRunQueue().removeCallbacks(action);
+        }
+        return true;
+    }
+```
+
+##### View#AttachInfo
+
+　　在 View 的布局绘制过程中，其中会调用到 ViewRootImpl 的 performTraversals() 方法，在 performTranversals() 方法中会调用：
+
+```java
+            mAttachInfo.mUse32BitDrawingCache = true;
+            mAttachInfo.mWindowVisibility = viewVisibility;
+            mAttachInfo.mRecomputeGlobalAttributes = false;
+            mLastConfigurationFromResources.setTo(config);
+            mLastSystemUiVisibility = mAttachInfo.mSystemUiVisibility;
+            // Set the layout direction if it has not been set before (inherit is the default)
+            if (mViewLayoutDirectionInitial == View.LAYOUT_DIRECTION_INHERIT) {
+                host.setLayoutDirection(config.getLayoutDirection());
+            }
+// 调用了 view 的 dispatchAttachedToWindow() 方法，设置了 View 的 mAttachInfo 变量
+            host.dispatchAttachedToWindow(mAttachInfo, 0);
+            mAttachInfo.mTreeObserver.dispatchOnWindowAttachedChange(true);
+            dispatchApplyInsets(host);
+```
+
+　　而 ViewRootImpl 的 mAttachInfo 变量是在 ViewRootImpl 的构造方法中初始化的：
+
+```java
+        mAttachInfo = new View.AttachInfo(mWindowSession, mWindow, display, this, mHandler, this,
+                context);
+```
+
+　　设置的 AttachInfo 的 mHandler 是：
+
+```java
+final ViewRootHandler mHandler = new ViewRootHandler();
+```
+
+##### 总结
+
+　　只要用户移出了控件，则将长按回调、点击回调移除，清除 mPrivateFlags 的 PFLAG_PRESSED 标识。
+
+#### 1.5. MotionEvent.ACTION_UP
+
+```java
+                    mPrivateFlags3 &= ~PFLAG3_FINGER_DOWN;
+                    if ((viewFlags & TOOLTIP) == TOOLTIP) {
+                        handleTooltipUp();
+                    }
+                    if (!clickable) {
+                        removeTapCallback();
+                        removeLongPressCallback();
+                        mInContextButtonPress = false;
+                        mHasPerformedLongPress = false;
+                        mIgnoreNextUpEvent = false;
+                        break;
+                    }
+                    boolean prepressed = (mPrivateFlags & PFLAG_PREPRESSED) != 0;
+                    if ((mPrivateFlags & PFLAG_PRESSED) != 0 || prepressed) {
+                        // take focus if we don't have it already and we should in
+                        // touch mode.
+                        boolean focusTaken = false;
+                        if (isFocusable() && isFocusableInTouchMode() && !isFocused()) {
+                            focusTaken = requestFocus();
+                        }
+
+                        if (prepressed) {
+                            // The button is being released before we actually
+                            // showed it as pressed.  Make it show the pressed
+                            // state now (before scheduling the click) to ensure
+                            // the user sees it.
+                            setPressed(true, x, y);
+                        }
+
+                        if (!mHasPerformedLongPress && !mIgnoreNextUpEvent) {
+                            // This is a tap, so remove the longpress check
+                            removeLongPressCallback();
+
+                            // Only perform take click actions if we were in the pressed state
+                            if (!focusTaken) {
+                                // Use a Runnable and post this rather than calling
+                                // performClick directly. This lets other visual state
+                                // of the view update before click actions start.
+                                if (mPerformClick == null) {
+                                    mPerformClick = new PerformClick();
+                                }
+                                if (!post(mPerformClick)) {
+                                    performClickInternal();
+                                }
+                            }
+                        }
+
+                        if (mUnsetPressedState == null) {
+                            mUnsetPressedState = new UnsetPressedState();
+                        }
+
+                        if (prepressed) {
+                            postDelayed(mUnsetPressedState,
+                                    ViewConfiguration.getPressedStateDuration());
+                        } else if (!post(mUnsetPressedState)) {
+                            // If the post failed, unpress right now
+                            mUnsetPressedState.run();
+                        }
+
+                        removeTapCallback();
+                    }
+                    mIgnoreNextUpEvent = false;
+                    break;
+
+```
+
+　　判断 mPrivateFlasg 是否包含 PFLAG_PREPRESSED，如果包含，则进入执行体，也就是无论是 100 ms 内或者之后抬起都会进入执行体。
+
+　　如果 prepressed 为 true，调用 setPressed() 方法，给 mPrivateFlags 设置 PFLAG_PRESSED 标志，并刷新背景。
+
+　　如果 mHasPerformedLongPress 为 false，则调用 removeLongPressCallback() 方法移除长按的检测。mHasPerformedLongPress  这个变量只有在 performLongClick() 方法返回 true 的时候才会设置为 true，而只有调用 setOnLongClickListener() 设置了长按回调，并且在 onLongClick 方法中返回了 true，才会设置为 true，也就是说，如果 onLongClick 方法返回了 true，那么就不会进入判断体，也就不会执行 performClickInternal() 方法，那么调用 setOnClickListener() 设置的点击回调就不会执行。
+
+　　如果 mPerformClick 为 null，则初始化 mPerformClick 实例，并通过 handler 将 mPerformClick 添加到消息队列尾部，如果添加失败则直接执行 performClickInternal()；添加成功，执行 mPerformClick 的 run() 方法。
+
+　　最后如果 prepressed 为 true，调用 postDelayed() 方法发送延时消息，64 秒后会调用 mUnsetPressedState 的 run 方法；如果 prepressed 为 false，会直接调用 mUnsetPressedState 的 run 方法，所以最后都会调用 mUnsetPressedState 的 run 方法。
+
+　　ACTION_UP 的最后是 removeTapCallback()，移除点击回调。
+
+##### View#UnsetPressedState
+
+```java
+    private final class UnsetPressedState implements Runnable {
+        @Override
+        public void run() {
+            setPressed(false);
+        }
+    }
+```
+
+　　就是清除 mPrivateFlags 的 PFLAG_PRESSED 标志，刷新背景，把 setPressed 转发下去。
+
+
+
+##### View#PerformClick
+
+```java
+    private PerformClick mPerformClick;
+	private final class PerformClick implements Runnable {
+        @Override
+        public void run() {
+            recordGestureClassification(TOUCH_GESTURE_CLASSIFIED__CLASSIFICATION__SINGLE_TAP);
+            performClickInternal();
+        }
+    }
+```
+
+　　mPerformClick 的 run 方法也是调用了 performClickInternal() 方法。
+
+##### View#performClickInternal
+
+```java
+    /**
+     * Entry point for {@link #performClick()} - other methods on View should call it instead of
+     * {@code performClick()} directly to make sure the autofill manager is notified when
+     * necessary (as subclasses could extend {@code performClick()} without calling the parent's
+     * method).
+     */
+    private boolean performClickInternal() {
+        // Must notify autofill manager before performing the click actions to avoid scenarios where
+        // the app has a click listener that changes the state of views the autofill service might
+        // be interested on.
+        notifyAutofillManagerOnClick();
+
+        return performClick();
+    }
+```
+
+　　performClickInternal() 方法调用了 performClick() 方法。
+
+#### 1.6. View#performClick()
+
+　　在 View 的 onTouchEvent() 方法中如果该控件是可以点击的就会进入到 switch 判断中去，而如果当前的时间是抬起手指，则会进入到 MotionEvent.ACTION_UP 这个 case 当中。在经过种种判断之后，会执行到 performClick() 方法。
 
 ```java
     public boolean performClick() {
@@ -534,6 +1075,48 @@ onTouch execute, action 0
 ## 为什么给 ListView 引入了一个滑动菜单的功能，ListView 就不能滚动了？
 
 　　滚动菜单的功能是通过给 ListView 注册了一个 touch 事件来实现的。如果在 onTouch 方法里处理完了滑动逻辑后返回 true，那么 ListView 本身的滚动事件就被屏蔽了，自然也就无法滑动（原理同前面例子中按钮不能点击），因此解决方法就是在 onTouch 方法里返回 false。
+
+## 总结
+
+#### 1. 整个 View 的事件转发流程是
+
+　　View.dispatchEvent -> View.setOnTouchListener -> View.onTouchEvent
+
+　　在 dispatchTouchEvent 中会进行 OnTouchListener 的判断，如果 onTouchEvent 不为 null 且返回 true，则表示事件被消费，onTouchEvent 不会被执行，否则执行 onTouchEvent。
+
+### 2. onTouchEvent 中的 DOWN、MOVE、UP
+
+#### DOWN
+
+　　如果父控件支持滑动，首先设置标志为 PREPRESSED，设置 mHasPerformedLongPress = false，然后发出了一个 100ms 后的 mPendingChecForTag。
+
+　　如果 100ms 内没有触发 UP，则将标志置为 PRESSED，清除PREPRESSED 标志，同时发出一个延时为 500-100 ms 的检查长按任务的消息。
+
+　　如果父控件不支持滑动，则是将标记置为 PRESSED，同时发出一个延时为 500ms 的检查长按任务的消息。
+
+　　如果在 500ms 内，则会触发 LongClickListener。
+
+　　此时如果 LongClickListener 不为 null，则会执行回调，溶蚀如果 LongClickListener.onClick 返回 true，才把 mHasPerformedLongPress 设置为 true，否则 mHasPerformedLongPress 依然为 false。
+
+#### MOVE
+
+　　主要就是检查用户是否滑出了控件，如果滑出了：
+
+　　100ms 内，直接移除 mPendingCheckForTag。
+
+　　100ms 后，将标志中的 PRESSED 取出，同时移除长按的检查：removeLongPressCallback()。
+
+#### UP
+
+　　如果 100ms 内，触发 UP，此时标志位 PREPRESSED ，则执行 UnSetPressedState，setPressed(false)，会把 setPress 转发下去，可以在 View 中复写 dispatchSetPressed 方法接收。
+
+　　如果是 100ms - 500ms 之间，即长按还未发生，则首先移除长按检测，执行 onClick 回调；
+
+　　如果是 500ms 以后，那么有两种情况：
+
+* 设置了 onLongClickListener，且 onLongClickListener.onClick 返回 false，则点击事件 onClick 无法触发。
+* 没有设置 onLongClickListener 或者 onLongClickListener.onClick 返回 false，则点击事件 onClick 事件触发。
+* 最后执行 mUnSetPressedState.run()，将 setPressed 传递下去，然后将 PRESSED 标识去除。
 
 
 ## 参考文章
