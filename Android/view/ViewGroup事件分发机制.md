@@ -293,6 +293,7 @@ public class MyLayout extends LinearLayout {
                     || mFirstTouchTarget != null) {
                 final boolean disallowIntercept = (mGroupFlags & FLAG_DISALLOW_INTERCEPT) != 0;
                 if (!disallowIntercept) {
+                  // 通过 onInterceptTouchEvent(ev) 对 intercepted 进行复制
                     intercepted = onInterceptTouchEvent(ev);
                     ev.setAction(action); // restore action in case it was changed
                 } else {
@@ -1433,6 +1434,10 @@ public class MyLayout extends LinearLayout {
 
 ## 总结
 
+　　ViewGroup事件分发示意图
+
+![](image/ViewGroup事件分发示意图.png)
+
 1. Android 事件分发是先传递给 ViewGroup，再由 ViewGroup 传递给 View 的。
 2. 在 ViewGroup 中可以通过 onInterceptTouchEvent 方法对事件传递进行拦截，onInterceptTouchEvent 方法返回 true 代表不允许事件继续向子 View 传递，返回 false 代表不对事件进行拦截，默认返回 false。
 3. 子 View 中如果将传递的事件消费掉，ViewGroup 中将无法接收到任何事件。
@@ -1447,7 +1452,9 @@ public class MyLayout extends LinearLayout {
 
 
 
+　　事件分发工作流程图：
 
+![](image/事件分发工作流程图.png)
 
 
 ## 参考文章

@@ -1,5 +1,91 @@
 # View 事件分发机制
 
+　　Android 的事件分发机制基本会遵从 Activity -> ViewGroup -> View 的顺序进行事件分发，然后通过调用 onTouchEvent() 方法进行时间的处理。
+
+　　一般情况下，事件列都是从用户按下（ACTION_DOWN）的那一刻产生的，不得不提到，三个非常重要的于事件相关的方法。
+
+* dispatchTouchEvent()
+* onTouchEvent()
+* onInterceptTouchEvent()
+
+## Activity 的事件分发机制
+
+　　dispatchTouchEvent() 是负责事件分发的。当点击事件产生后，事件首先会传递给当前的 Activity，这会调用 Activity 的 dispatchTouchEvent() 方法。
+
+```java
+    /**
+     * Called to process touch screen events.  You can override this to
+     * intercept all touch screen events before they are dispatched to the
+     * window.  Be sure to call this implementation for touch screen events
+     * that should be handled normally.
+     *
+     * @param ev The touch screen event.
+     *
+     * @return boolean Return true if this event was consumed.
+     */
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+          	// 由于事件开始一般都为 down 事件（按下）
+          	// 所以一般都会调用该方法
+            onUserInteraction();
+        }
+        if (getWindow().superDispatchTouchEvent(ev)) {
+          	// 若 getWIndow().superDispatchTouchEvent(ev) 返回 true
+          	// 则 Activity.dispatchTouchEvent() 也返回 true，停止事件传递
+            return true;
+        }
+      	// 否则直接调用 onTouchEvent(ev)
+        return onTouchEvent(ev);
+    }
+```
+
+　　一般开始产生点击事件都是 MotionEvent.ACTION_DOWN，所以一般都会调用到 onUserInteraction() 这个方法。
+
+　　下面的 if 判断，getWindow().superDispatchTouchEvent()，getWindow() 明显是获取 Window，由于 Window 是一个抽象类，所以能拿到的是其子类 PhoneWindow。
+
+### Activity#onUserInteraction
+
+```java
+    /**
+     * Called whenever a key, touch, or trackball event is dispatched to the
+     * activity.  Implement this method if you wish to know that the user has
+     * interacted with the device in some way while your activity is running.
+     * This callback and {@link #onUserLeaveHint} are intended to help
+     * activities manage status bar notifications intelligently; specifically,
+     * for helping activities determine the proper time to cancel a notfication.
+     *
+     * <p>All calls to your activity's {@link #onUserLeaveHint} callback will
+     * be accompanied by calls to {@link #onUserInteraction}.  This
+     * ensures that your activity will be told of relevant user activity such
+     * as pulling down the notification pane and touching an item there.
+     *
+     * <p>Note that this callback will be invoked for the touch down action
+     * that begins a touch gesture, but may not be invoked for the touch-moved
+     * and touch-up actions that follow.
+     *
+     * @see #onUserLeaveHint()
+     */
+    public void onUserInteraction() {
+    }
+```
+
+　　这个方法实现是空的，该方法主要的作用是实现屏保功能，并且当此 Activity 在栈顶的时候，触屏点击 Home、Back、Recent 键等都会触发这个方法。
+
+### PhoneWindow#superDispatchTouchEvent
+
+```java
+    @Override
+    public boolean superDispatchTouchEvent(MotionEvent event) {
+        return mDecor.superDispatchTouchEvent(event);
+    }
+```
+
+　　PhoneWindow 的 superDispatchTouchEvent() 方法直接调用了 DecorView 的 superDispatchTrackballEvent() 方法。DecorView 继承于 FrameLayour，作为顶层 View，是所有界面的父类。而 FrameLayout 作为 ViewGroup 的子类，所以直接调用了 ViewGroup 的 dispatchTouchEvent()。
+
+　　Activity的事件分发示意图：
+
+![](image/Activity的事件分发示意图.png)
+
 ## 案例
 
 　　为了研究 View 的事件分发，自定义了一个 MyButton 继承 Button，然后把跟事件传播有关的方法进行重写，然后添加日志：
@@ -220,6 +306,10 @@ button.setOnTouchListener(new OnTouchListener() {
             }
             //noinspection SimplifiableIfStatement
             ListenerInfo li = mListenerInfo;
+          	// 必须满足三个条件都为真，才会返回 true
+          	// 1. mOnTouchListener 不为 null，即调用了 setOnTouchListener()
+          	// 2. (mViewFlags & ENABLED_MASK) == ENABLED
+            // 3. li.mOnTouchListener.onTouch(this, event) 
             if (li != null && li.mOnTouchListener != null
                     && (mViewFlags & ENABLED_MASK) == ENABLED
                 	// 调用 li.mOnTouchListener.onTouch 方法
@@ -464,7 +554,7 @@ button.setOnTouchListener(new OnTouchListener() {
 
 　　如果设置了 onTouchDelegate，则会将事件交给代理者处理，直接 return true，如果希望自己的 View 增加它的 touch 范围，可以尝试使用 TouchDelegate。
 
-　　如果 clickable || (viewFlags & TOOLTIP) == TOOLTIP 为 true，clickable 表示 View 是可以点击或者可以长按，最终一定 return true。
+　　如果 clickable || (viewFlags & TOOLTIP) == TOOLTIP 为 true，clickable 表示 View 是可以点击或者可以长按，最终一定 return true，通常都会采用 setOnClickListener() 和 setOnLongClickListener() 做设置。
 
  　　接下来就是 switch(event.getAction) 了，判断事件类型，DOWN、MOVE、UP 等
 
@@ -1078,7 +1168,11 @@ onTouch execute, action 0
 
 ## 总结
 
-#### 1. 整个 View 的事件转发流程是
+　　View的事件分发示意图：
+
+![](image/View的事件分发示意图.png)
+
+### 1. 整个 View 的事件转发流程是
 
 　　View.dispatchEvent -> View.setOnTouchListener -> View.onTouchEvent
 
