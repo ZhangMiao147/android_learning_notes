@@ -180,6 +180,7 @@
 * [死锁](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/死锁.md)
 * [ReentrantLock 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/ReentrantLock知识.md)
 * [Condition 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/Condition知识.md)
+* [使用synchronzied、wait、notifyAll实现生产者-消费者模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/使用synchronzied-wait-notifyAll实现生产者-消费者模式.md)
 * [使用信号量实现生产者-消费者模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/使用信号量实现生产者-消费者模式.md)
 * [使用管程实现生产者-消费者模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/使用管程实现生产者-消费者模式.md)
 * [哲学家就餐问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/哲学家就餐问题.md)

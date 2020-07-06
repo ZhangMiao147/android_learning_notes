@@ -998,7 +998,7 @@ final ViewRootHandler mHandler = new ViewRootHandler();
                         if (isFocusable() && isFocusableInTouchMode() && !isFocused()) {
                             focusTaken = requestFocus();
                         }
-						// 如果还是 PFLAG_PREPRESSED 标志
+												// 如果还是 PFLAG_PREPRESSED 标志
                         if (prepressed) {
                             // The button is being released before we actually
                             // showed it as pressed.  Make it show the pressed
@@ -1072,7 +1072,7 @@ final ViewRootHandler mHandler = new ViewRootHandler();
 
 　　ACTION_UP 的最后是 removeTapCallback()，移除点击回调。
 
-##### View#UnsetPressedState
+#### 3.5.1. View#UnsetPressedState
 
 ```java
     private final class UnsetPressedState implements Runnable {
@@ -1085,9 +1085,7 @@ final ViewRootHandler mHandler = new ViewRootHandler();
 
 　　就是清除 mPrivateFlags 的 PFLAG_PRESSED 标志，刷新背景，把 setPressed 转发下去。
 
-
-
-##### View#PerformClick
+#### 3.5.2. View#PerformClick
 
 ```java
     private PerformClick mPerformClick;
@@ -1102,7 +1100,7 @@ final ViewRootHandler mHandler = new ViewRootHandler();
 
 　　mPerformClick 的 run 方法也是调用了 performClickInternal() 方法。
 
-##### View#performClickInternal
+#### 3.5.3. View#performClickInternal
 
 ```java
     /**
@@ -1123,9 +1121,9 @@ final ViewRootHandler mHandler = new ViewRootHandler();
 
 　　performClickInternal() 方法调用了 performClick() 方法。
 
-#### 1.6. View#performClick()
+#### 3.5.4. View#performClick()
 
-　　在 View 的 onTouchEvent() 方法中如果该控件是可以点击的就会进入到 switch 判断中去，而如果当前的时间是抬起手指，则会进入到 MotionEvent.ACTION_UP 这个 case 当中。在经过种种判断之后，会执行到 performClick() 方法。
+　　在 View 的 onTouchEvent() 方法中如果该控件是可以点击的就会进入到 switch 判断中去，而如果当前的事件是抬起手指，则会进入到 MotionEvent.ACTION_UP 这个 case 当中。在经过种种判断之后，会执行到 performClick() 方法。
 
 ```java
     public boolean performClick() {
@@ -1147,9 +1145,9 @@ final ViewRootHandler mHandler = new ViewRootHandler();
     }
 ```
 
-　　可以看到，只要 mOnClickListener 不是 null，就会去调用它的 onClick 方法，那 mOnClickListener 又是在哪里赋值的？查看 setOnClickListener 方法。
+　　可以看到，只要 mOnClickListener 不是 null，就会去调用它的 onClick 方法，而 mOnClickListener 就是di调用 setOnClickListener() 方法设置的点击回调。
 
-#### 1.4. View#setOnClickListener
+#### 3.5.5. View#setOnClickListener
 
 ```java
     public void setOnClickListener(@Nullable OnClickListener l) {
@@ -1160,11 +1158,11 @@ final ViewRootHandler mHandler = new ViewRootHandler();
     }
 ```
 
-　　当通过调用 setOnClickListener 方法来给控件注册一个点击事件时，就会给 mOnClickListener 赋值。然后每当空间被点击时，都会在 performClick() 方法里回调被点击控件的 onClick 方法。
+　　当通过调用 setOnClickListener 方法来给控件注册一个点击事件时，就会给 mOnClickListener 赋值。然后每当控件被点击时，就会在 performClick() 方法里回调被点击控件的 onClick 方法。
 
-### 3.6. touch 事件的层级传递
+### 3.6. touch 事件的层级传递(代码验证)
 
-　　如果给一个控件注册了 touch 事件，每次点击它的时候都会触发一系列的 ACTION_DOWN、ACTION_MOVE、ACTION_UP 等事件。这里需要注意，如果在执行 ACTION_DOWN 的时候返回了 false，后面一系列其他的 action 就不会再得到执行了。简单地说，就是当 dispatchTouchEvent 在进行事件分发的时候，只有前一个 action 返回 true，才会触发后一个 action。
+　　如果给一个控件注册了 touch 事件，每次点击它的时候都会触发一系列的 ACTION_DOWN、ACTION_MOVE、ACTION_UP 等事件。这里需要注意，如果在执行 ACTION_DOWN 的时候返回了 false，后面一系列其他的 action 就不会再得到执行了。简单地说，就是当 dispatchTouchEvent 在进行事件分发的时候，只有前一个 action 返回 false，才会触发后一个 action。
 
 　　前面的例子中，明明在 onTouch 事件里面返回了 false，ACTION_DOWN 和 ACTION_UP 也得到执行了？参考前面分析的源码，首先在 onTouchEvent 方法的细节。由于点击了按钮，就会进入到 `if (clickable || (viewFlags & TOOLTIP) == TOOLTIP)` 这个 if 判断中，然后不管当前的 action 是什么，最后都一定会走到最后返回一个 true。
 
@@ -1190,64 +1188,62 @@ onTouch execute, action 0
 
 　　在 ACTION_DOWN 执行完后，后面的一系列 action 都不会得到执行了。这又是为什么呢？因为 ImageView 和按钮不同，它是默认不可点击的，因此在 onTouchEvent 的  `if (clickable || (viewFlags & TOOLTIP) == TOOLTIP)` 这个 if 判断无法进入 if 的内部，直接跳过返回了 false，也就导致后面其他的 action 都无法执行了。
 
-## onTouch 和 onTouchEvent 有什么区别，又该如何使用？
+## 4. 常见问题
+
+### 4.1. onTouch 和 onTouchEvent 有什么区别，又该如何使用？
 
 　　从源码中可以看出，这两个方法都是在 View 的 dispatchTouchEvent 中调用的，onTouch 优先于 onTouchEvent 执行。如果在 onTouch 方法中通过返回 true 将事件消费掉，onTouchEvent 将不会再执行。
 
 　　另外需要注意的是，onTouch 能够得到执行需要两个前提条件，第一 mOnTouchListener 的值不能为空，第二当前点击的控件必须是 enable 的。因此如果有一个控件是非 enable 的，那么给它注册 onTouch 事件将永远得不到执行。对于这一类控件，如果想要监听它的 touch 事件，就必须通过在该控件中重写 onTouchEvent 方法来实现。
 
-## 为什么给 ListView 引入了一个滑动菜单的功能，ListView 就不能滚动了？
+### 4.2. 为什么给 ListView 引入了一个滑动菜单的功能，ListView 就不能滚动了？
 
 　　滚动菜单的功能是通过给 ListView 注册了一个 touch 事件来实现的。如果在 onTouch 方法里处理完了滑动逻辑后返回 true，那么 ListView 本身的滚动事件就被屏蔽了，自然也就无法滑动（原理同前面例子中按钮不能点击），因此解决方法就是在 onTouch 方法里返回 false。
 
-## 总结
+## 5. 总结
 
 　　View的事件分发示意图：
 
 ![](image/View的事件分发示意图.png)
 
-### 1. 整个 View 的事件转发流程是
+### 5.1. 整个 View 的事件转发流程是
 
-　　View.dispatchEvent -> View.setOnTouchListener -> View.onTouchEvent
+　　View.dispatchTouchEvent -> View.setOnTouchListener -> View.onTouchEvent
 
 　　在 dispatchTouchEvent 中会进行 OnTouchListener 的判断，如果 onTouchEvent 不为 null 且返回 true，则表示事件被消费，onTouchEvent 不会被执行，否则执行 onTouchEvent。
 
-### 2. onTouchEvent 中的 DOWN、MOVE、UP
+### 5.2. onTouchEvent 中的 DOWN、MOVE、UP
 
-#### DOWN
+#### 5.2.1. DOWN
 
-　　如果父控件支持滑动，首先设置标志为 PREPRESSED，设置 mHasPerformedLongPress = false，然后发出了一个 100ms 后的 mPendingChecForTag。
+　　如果父控件支持滑动，首先设置标志为 PFLAG_PREPRESSED，设置 mHasPerformedLongPress = false，然后发出了一个 100ms 后的 mPendingChecForTag。
 
-　　如果 100ms 内没有触发 UP，则将标志置为 PRESSED，清除PREPRESSED 标志，同时发出一个延时为 500-100 ms 的检查长按任务的消息。
+　　如果 100ms 内没有触发 UP，则将标志置为 PFLAG_PRESSED，清除 PREPRESSED 标志，同时发出一个延时为 500-100 ms 的检查长按任务的消息。
 
-　　如果父控件不支持滑动，则是将标记置为 PRESSED，同时发出一个延时为 500ms 的检查长按任务的消息。
+　　如果父控件不支持滑动，则是将标记置为 PFLAG_PRESSED，同时发出一个延时为 500ms 的检查长按任务的消息。
 
-　　如果在 500ms 内，则会触发 LongClickListener。
+　　检查长按任务的消息时间到了后，则会触发 LongClickListener。
 
-　　此时如果 LongClickListener 不为 null，则会执行回调，溶蚀如果 LongClickListener.onClick 返回 true，才把 mHasPerformedLongPress 设置为 true，否则 mHasPerformedLongPress 依然为 false。
+　　此时如果 LongClickListener 不为 null，则会执行回调，但是如果 LongClickListener.onClick 返回 true，才把 mHasPerformedLongPress 设置为 true，否则 mHasPerformedLongPress 依然为 false。
 
-#### MOVE
+#### 5.2.2. MOVE
 
-　　主要就是检查用户是否滑出了控件，如果滑出了：
+　　主要就是检查用户是否滑出了控件，如果触摸的位置已经不在当前 view 上了，则移除点击和长按的回调。
 
-　　100ms 内，直接移除 mPendingCheckForTag。
+#### 5.2.3. UP
 
-　　100ms 后，将标志中的 PRESSED 取出，同时移除长按的检查：removeLongPressCallback()。
-
-#### UP
-
-　　如果 100ms 内，触发 UP，此时标志位 PREPRESSED ，则执行 UnSetPressedState，setPressed(false)，会把 setPress 转发下去，可以在 View 中复写 dispatchSetPressed 方法接收。
+　　如果 100ms 内，触发 UP，此时标志为 PFLAG_PREPRESSED ，则执行 UnSetPressedState，setPressed(false)，会把 setPress 转发下去，可以在 View 中复写 dispatchSetPressed 方法接收。
 
 　　如果是 100ms - 500ms 之间，即长按还未发生，则首先移除长按检测，执行 onClick 回调；
 
 　　如果是 500ms 以后，那么有两种情况：
 
-* 设置了 onLongClickListener，且 onLongClickListener.onClick 返回 false，则点击事件 onClick 无法触发。
+* 设置了 onLongClickListener，且 onLongClickListener.onClick 返回 true，则点击事件 onClick 无法触发。
 * 没有设置 onLongClickListener 或者 onLongClickListener.onClick 返回 false，则点击事件 onClick 事件触发。
-* 最后执行 mUnSetPressedState.run()，将 setPressed 传递下去，然后将 PRESSED 标识去除。
+* 最后执行 mUnSetPressedState.run()，将 setPressed 传递下去，然后将 PFLAG_PRESSED 标识清除。
 
 
-## 参考文章
+## 6. 参考文章
 1. [Android事件分发机制完全解析，带你从源码的角度彻底理解(上)](https://blog.csdn.net/guolin_blog/article/details/9097463)
 3. [Android View 事件分发机制 源码解析 （上）](https://blog.csdn.net/lmj623565791/article/details/38960443)
 5. [面试：讲讲 Android 的事件分发机制](https://www.jianshu.com/p/d3758eef1f72)
