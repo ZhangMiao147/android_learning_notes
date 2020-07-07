@@ -114,7 +114,7 @@ public class MyLayout extends LinearLayout {
 </com.example.viewgroupdistribute.MyLayout>
 ```
 
-　　MyButton 就是 [View事件分发机制]() 里面的 MyButton。
+　　MyButton 就是 [View 事件分发机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/View事件分发机制.md) 里面的 MyButton。
 
 　　给 MyLayout 设置触摸监听：
 
