@@ -378,7 +378,7 @@ button.setOnTouchListener(new OnTouchListener() {
 
    li.mOnTouchListener.onTouch(this, event) 其实就是去回调控件注册 touch 事件的 onTouch 方法。
 
-　　也就是说如果控件注册了 onTouchListener 事件，并且在 onTouch 方法里返回 true，就会让这三个条件全部成立，从而整个方法直接返回 true。如果在 onTouch 方法里返回 false，就会去调用到下面的代码，从而执行 onTouchEvent(event) 方法。
+　　也就是说如果控件注册了 onTouchListener 事件，并且在 onTouch 方法里返回 true，就会让这三个条件全部成立，从而整个方法直接返回 true。如果控件是不可点击的或者OnTouchListener.OnTouch 存在并返回 false，就会去调用到下面的代码，从而执行 onTouchEvent(event) 方法。
 
 ### 3.2. View#onTouchEvent
 
@@ -1160,9 +1160,9 @@ final ViewRootHandler mHandler = new ViewRootHandler();
 
 　　当通过调用 setOnClickListener 方法来给控件注册一个点击事件时，就会给 mOnClickListener 赋值。然后每当控件被点击时，就会在 performClick() 方法里回调被点击控件的 onClick 方法。
 
-### 3.6. touch 事件的层级传递(代码验证)
+### 3.6. touch 事件的层级传递
 
-　　如果给一个控件注册了 touch 事件，每次点击它的时候都会触发一系列的 ACTION_DOWN、ACTION_MOVE、ACTION_UP 等事件。这里需要注意，如果在执行 ACTION_DOWN 的时候返回了 false，后面一系列其他的 action 就不会再得到执行了。简单地说，就是当 dispatchTouchEvent 在进行事件分发的时候，只有前一个 action 返回 false，才会触发后一个 action。
+　　如果给一个控件注册了 touch 事件，每次点击它的时候都会触发一系列的 ACTION_DOWN、ACTION_MOVE、ACTION_UP 等事件。这里需要注意，如果在执行 ACTION_DOWN 的时候返回了 false，后面一系列其他的 action 就不会再得到执行了。简单地说，就是当 dispatchTouchEvent 在进行事件分发的时候，只有前一个 action 返回 true，才会触发后一个 action。
 
 　　前面的例子中，明明在 onTouch 事件里面返回了 false，ACTION_DOWN 和 ACTION_UP 也得到执行了？参考前面分析的源码，首先在 onTouchEvent 方法的细节。由于点击了按钮，就会进入到 `if (clickable || (viewFlags & TOOLTIP) == TOOLTIP)` 这个 if 判断中，然后不管当前的 action 是什么，最后都一定会走到最后返回一个 true。
 
