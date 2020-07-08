@@ -74,25 +74,152 @@
 
 　　由于哈夫曼树中没有度为 1 的节点，则一棵中有 n 个叶子节点的哈夫曼树共有 2n-1 个节点，可以存储在一个大小为 2n-1 的一维数组中。
 
-```
-
-```
-
 　　哈夫曼的个节点存储由 HuffmanTree 定义的动态分配的数组中，为了实现方便数组的 0 号单元不适用，从 1 号单元开始使用，所以数组的大小为 2n。将叶子节点集中存储在前面部分的 1~n 个为止，而后 n-1 个为止存储其余非叶子节点。
 
 　　初始化：首先动态申请 2n 个单元，然后循环 2n-1 次，从 1 号单元开始，一次将 1 至 2n-1 所有单元中的双亲、左孩子、右孩子的下标初始化为 0，最后再循环 n 次，输入前 n 个单元中叶子的权值。
 
 　　创建树：循环 n-1 次，通过 n-1 次选择、删除与合并来创建哈夫曼树。选择是从当前森林中选择双亲为 0 且权值最小的两个根节点 s1 和 s2。删除是指节点 s1 和 s2 的双亲改为非 0。合并就是将 s1 和 s2 的权值和作为一个新节点的权值依次存入到数组中的第 n+1 之后的单元中，同时记录这个新节点左孩子的下标 s1，右孩子的下标 s2。
 
-```
+```java
+/**
+ * 哈夫曼树
+ *
+ * @param <T>
+ */
+public class HuffmanTree<T extends Comparable<T>> {
+
+    /**
+     * 使用数组存储哈夫曼树
+     */
+    private HTNode[] nodes;
+
+    public static class HTNode<T> {
+        T value; // 节点的值
+        int weight = -1; // 节点的权重
+        int parent = -1, leftChild = -1, rightChild = -1; // 节点的双亲、左孩子、右孩子的下标
+
+        @Override
+        public String toString() {
+            return "HTNode{" +
+                    "value=" + value +
+                    ", weight=" + weight +
+                    ", parent=" + parent +
+                    ", leftChild=" + leftChild +
+                    ", rightChild=" + rightChild +
+                    '}';
+        }
+    }
+
+    public void createHuffmanTree(T[] data, int[] weightArray) {
+        nodes = new HTNode[2 * data.length - 1];
+        int n;
+        // 前 data.length 存储叶子节点
+        for (n = 0; n < data.length; n++) {
+            HTNode node = new HTNode();
+            node.value = data[n];
+            node.weight = weightArray[n];
+            node.parent = -1;
+            node.leftChild = -1;
+            node.rightChild = -1;
+            nodes[n] = node;
+        }
+        // 构建哈夫曼树
+        for (; n < nodes.length; n++) {
+            int[] minArray = selectMin(nodes);
+            HTNode node = new HTNode();
+            if (minArray[0] == -1 || minArray[1] == -1) {
+                continue;
+            }
+            node.weight = nodes[minArray[0]].weight + nodes[minArray[1]].weight;
+            nodes[minArray[0]].parent = n;
+            nodes[minArray[1]].parent = n;
+            node.leftChild = minArray[0];
+            node.rightChild = minArray[1];
+            nodes[n] = node;
+        }
+        System.out.println("createHuffmanTree:" + Arrays.toString(nodes));
+    }
+
+    /**
+     * 从节点中选取两个最小权重的节点
+     *
+     * @param nodes
+     * @return
+     */
+    public int[] selectMin(HTNode[] nodes) {
+        int[] minArray = new int[]{-1, -1};
+        if (nodes.length < 2) {
+            return minArray;
+        }
+        for (int i = 0; i < nodes.length; i++) {
+            if (nodes[i] != null) {
+                if (nodes[i].parent == -1) {
+                    // minArray[0] 存储最小值
+                    // minArray[1] 存储第二最小值
+                    if (minArray[0] == -1 || minArray[1] == -1) {
+                        if (minArray[0] == -1) {
+                            minArray[0] = i;
+                        } else if (minArray[1] == -1) {
+                            if (nodes[minArray[0]].weight >= nodes[i].weight) {
+                                minArray[1] = minArray[0];
+                                minArray[0] = i;
+                            } else {
+                                minArray[1] = i;
+                            }
+                        }
+                    } else {
+                        if (nodes[i].weight <= nodes[minArray[1]].weight) {
+                            if (nodes[i].weight < nodes[minArray[0]].weight) {
+                                minArray[1] = minArray[0];
+                                minArray[0] = i;
+                            } else {
+                                minArray[1] = i;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return minArray;
+    }
+
+    /**
+     * 获取 WPL（带权路径长度）
+     *
+     * @return
+     */
+    public int getWPL() {
+        int wpl = 0;
+        for (int i = 0; i < nodes.length; i++) {
+            HTNode node = nodes[i];
+            // 叶子节点
+            if (node.leftChild == -1 && node.rightChild == -1) {
+                int height = 0;
+                int parent = node.parent;
+                while (parent != -1) {
+                    height++;
+                    parent = nodes[parent].parent;
+
+                }
+                wpl += node.weight * height;
+            }
+        }
+        return wpl;
+    }
+
+    /**
+     * 输出哈夫曼树个节点的状态
+     */
+    public void print() {
+        for (int i = 0; i < nodes.length; i++) {
+            HTNode node = nodes[i];
+            System.out.print("i:" + i + ",value:" + node.value + ",weight:" + node.weight + ",parent:" + node.parent + ",leftChild:" + node.leftChild + ",rightChild:" + node.rightChild + "\n");
+        }
+    }
+    
+}
 
 ```
-
-
-
-
-
-
 
 ## 参考文章
 
