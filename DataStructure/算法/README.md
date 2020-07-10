@@ -2,10 +2,6 @@
 
 * 递归
 
-* 查找算法
-
-* 排序算法
-
 * 回溯算法
 
 * 分治算法
@@ -17,6 +13,32 @@
 * [动态规划（Dynamic Programming）]( [https://github.com/ZhangMiao147/android_learning_notes/blob/master/Algorithm/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92.md](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Algorithm/动态规划.md) )
 
   
+
+## 查找算法
+
+* 查找算法知识
+* 顺序查找
+* 二分查找
+* 插值查找
+* 斐波那契查找
+* 二叉树查找
+* 平衡查找树之2-3查找树（2-3 Tree）
+* 平衡查找树之红黑树（Red-Black Tree）
+* B 树和 B+ 树（B Tree/B+ 树）
+* 分块查找
+* 哈希查找
+
+## 排序算法
+
+* 排序算法总结
+* 直接插入排序
+* 希尔排序
+* 简单选择排序
+* 堆排序
+* 冒泡排序
+* 快速排序
+* 归并排序
+* 基数排序
 
 
 

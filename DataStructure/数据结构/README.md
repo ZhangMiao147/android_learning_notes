@@ -1,11 +1,11 @@
 # 数据结构
 
-* 线性表
+* 线性表顺序存储
+* 线性表链式存储
+* 队列
 * 栈
 * 哈希表
 * 堆
-* 树
-* 图
 * 并查集
 * Set集合
 
@@ -23,6 +23,13 @@
 * [线段树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/线段树.md)
 * [字典树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/字典树.md)
 * [Huffman 树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/Huffman树.md)
+
+## 图
+
+* 图的基本知识
+* 
+
+
 
 
 
