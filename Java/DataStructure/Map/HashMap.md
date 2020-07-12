@@ -1,7 +1,7 @@
 # HashMap
 　　HashMap 是一个哈希表，它存储的内容是键值对（key-value）映射。
 
-　　HashMap 由数组+链表组成，数组是 HashMap 的主体，链表则是主要为了解决哈希冲突的。
+　　HashMap 由数组 + 链表组成，数组是 HashMap 的主体，链表则是主要为了解决哈希冲突的。
 
 ## 1. 哈希表
 　　哈希表（Hash Table，也叫散列表），是根据键（key）直接访问在内存存储位置的数据结构。也就是说，它通过计算一个关于键值的函数，将所需查询的数据映射到表中一个位置来访问记录，这样加快了查找速度。这个映射函数称为**哈希函数**，存放记录的数组称为**哈希表**。
@@ -145,9 +145,9 @@
         this(Math.max((int) (m.size() / DEFAULT_LOAD_FACTOR) + 1,
                       DEFAULT_INITIAL_CAPACITY), DEFAULT_LOAD_FACTOR);
 				// 初始化 table
-        inflateTable(threshold); //3.2 解析方法
+        inflateTable(threshold); // 3.2 解析方法
 				// 将参数 m 的值添加到 table 中
-        putAllForCreate(m); //3.3 解析该方法
+        putAllForCreate(m); // 3.3 解析该方法
     }
 ```
 
@@ -159,7 +159,7 @@
     private void inflateTable(int toSize) {
         // Find a power of 2 >= toSize
 				// roundUpToPowerOf2 返回一个比给定整数大且最接近 2 的幂次方整数，所以 capacity 必然是 2 的幂
-        int capacity = roundUpToPowerOf2(toSize); //3.2.1 解析方法
+        int capacity = roundUpToPowerOf2(toSize); //   3.2.1 解析方法
         
         // 可以看出 threshold 通常是等于 capacity * loadFactor，并且 threshold 不会超过 MAXIMUM_CAPACITY + 1
         threshold = (int) Math.min(capacity * loadFactor, MAXIMUM_CAPACITY + 1);
@@ -412,7 +412,7 @@ void resize(int newCapacity) {
 
 ### 4.4. HashMap 的数组长度为什么一定要保持为 2 的次幂？
 
-1. **扩容后减少数组数组的移动**
+1. **扩容后减少数组的移动**
 
 　　将 HashMap 的数组长度保持为 2 的次幂，在扩容后，与之前的 length-1 相比，只有最高位的一位差异，这样在通过 h & (length-1) 的时候，只要 h 对应的最高位的一位的差异位为 0 ，就能保证得到的新的数组索引和老数组索引一致（减少了之前已经散列好的老数组的数据位置重新调换。）
 
@@ -463,7 +463,7 @@ void resize(int newCapacity) {
     }
 ```
 
-　　getEntry 方法，先通过 key 计算得到 hash 值，然后调用 indexFor 得到 key 对应哈希表的下标，然后遍历 哈希表对应的 key 的 HashMapEntry 链表，如果 e 的 hash 相同并且 key 值也相同，则返回 e，否则就是没找到，返回 null。
+　　getEntry 方法，先通过 key 计算得到 hash 值，然后调用 indexFor 得到 key 对应哈希表的下标，然后遍历哈希表对应的 key 的 Entry 链表，如果 e 的 hash 相同并且 key 值也相同，则返回 e，否则就是没找到，返回 null。
 
 ### 5.2. singleWordWangJenkinsHash(Object k) 方法 
 
@@ -703,6 +703,24 @@ void resize(int newCapacity) {
 ![](./image/JDK1.8扩容例图.webp)
 
 ### 6.5. 将 capacity 设置为 2 的次幂的方式不同
+
+　　JDK 1.7 采用的是 roundUpToPowerOf2(int number) 方法：
+
+```java
+    private static int roundUpToPowerOf2(int number) {
+        int rounded = number >= MAXIMUM_CAPACITY
+                ? MAXIMUM_CAPACITY
+                : (rounded = Integer.highestOneBit(number)) != 0
+                    ? (Integer.bitCount(number) > 1) ? rounded << 1 : rounded
+                    : 1;
+
+        return rounded;
+    }
+```
+
+　　Integer.highestOneBit(number) 返回的是数值的最高位数值，例如 0010 1101 返回的则是 0010 0000，而 Integer.bitCount(number) 返回的是二进制中为 1 的数量，如果最高位数值不为 0 ，并且二进制中 1 的数量也是大于 1 的，那么会返回 rounded << 1 的高一位数值。
+
+　　所以 capacity 一定是 2 的倍数。
 
 　　JDK 1.8 的是调用 tableSizeFor(int cap) 方法来返回一个比给定整数大且最接近的 2 的幂次方整数的：
 

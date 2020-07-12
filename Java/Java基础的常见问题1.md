@@ -325,6 +325,7 @@ finally 块执行：3
 3. IllegalArgumentException：传递非法参数异常。
 4. IndexOutOfBoundsException：下标越界异常。
 5. NumberFormatException：数字格式异常。
+6. ConcurrentModificationException：当方法检测到对象的并发修改，但不允许这种修改时，抛出此异常。
 
 **非运行时异常**：
 

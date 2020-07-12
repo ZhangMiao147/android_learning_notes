@@ -1,6 +1,6 @@
 # ConcurrentHashMap
 
-　　ConcurrentHashMap（简称 chm）是 java 1.5 新引入的 java.util.concurrent 包的成员，作为 hashtable 的替代。为什么呢，hashtable 采用了同步整个方法的结构。虽然实现了线程安全但是性能也就大大降低了，而 HashMap 在并发情况下会很容易出错。所以就有了安全并且在多线程中使用的 ConcurrentHashMap。
+　　ConcurrentHashMap（简称 chm）是 JDK 1.5 新引入的 java.util.concurrent 包的成员，作为 HashTable 的替代。为什么呢，HashTable 采用了同步整个方法的结构，虽然实现了线程安全但是性能也就大大降低了，而 HashMap 在并发情况下会很容易出错。所以就有了安全并且在多线程中使用的 ConcurrentHashMap。
 
 　　ConcurrentHashMap 是线程安全并且高效的一种容器。
 
@@ -26,13 +26,13 @@
 
 　　HashTable 低效主要是因为所有访问 HashTable 的线程都争夺一把锁。如果容器有很多把锁，每一把锁控制容器中的一部分数据，那么当多个线程访问容器里的不同部分的数据时，线程之前就不会存在锁的竞争，这样就可以有效的提高并发的访问效率。
 
-　　这也正是 ConcurrentHashMap 使用的分段锁技术。将 ConcurrentHashMap 容器的数据分段存储，每一段数据存储亦有部分数据，当线程占用其中一段数据时，其他线程可正常访问其他段数据。
+　　这也正是 ConcurrentHashMap 使用的分段锁技术。将 ConcurrentHashMap 容器的数据分段存储，每一段数据存储一部分数据，当线程占用其中一段数据时，其他线程可正常访问其他段数据。
 
 ## 2. ConcurrentHashMap 与 HashMap 等区别
 
 ### 2.1. HashMap
 
-　　HashMap 是线程不安全的，在多线程环境下，使用 HashMap 进行 put 操作会引起死循环，导致 CPU 利用率接近 100%，所以在并发情况下不能使用 HashMap。至于为什么会引起死循环，是因为 HashMap 的 Entry 链表在并发环境下可能会形成环状链表（扩容时可能造成），导致 get 操作时，cpu 空转，所以，再并发环境中使用 HashMap 是非常危险的。
+　　HashMap 是线程不安全的，在多线程环境下，使用 HashMap 进行 put 操作会引起死循环，导致 CPU 利用率接近 100%，所以在并发情况下不能使用 HashMap。至于为什么会引起死循环，是因为 HashMap 的 Entry 链表在并发环境下可能会形成环状链表（扩容时可能造成），导致 get 操作时，cpu 空转，所以，在并发环境中使用 HashMap 是非常危险的。
 
 #### 2.1.1. HashMap 线程不安全的典型表现
 
@@ -135,17 +135,17 @@ do {
 
 　　HashTable 访问效率低下的原因，就是因为所有的线程在竞争同一把锁。如果容器中有多把锁，不同的锁锁定不同的位置，这样线程间就不会存在锁的竞争，这样就可以有效的提高并发访问效率，这就是 ConcurrentHashMap 所使用的锁分段技术。将数据一段一段的存储，然后为每一段都配一把锁，当一个线程只是占用其中的一个数据段时，其他段的数据也能被其他线程访问。
 
-　　Map 一般都是数据 + 链表结构（JDK 1.8 为数组+链表+红黑树）。
+　　Map 一般都是数据 + 链表结构（JDK 1.8 为数组 + 链表 + 红黑树）。
 
 ![](image/链表结构.png)
 
 　　ConcurrentHashMap 避免了对全局加锁，修改成了局部加锁操作，这样就极大地提高了并发环境下的操作速度，由于 ConcurrentHashMap 在 JDK 1.7 和 1.8 中的实现非常不同，接下来看一下 JDK 在 1.7 和 1.8 中的区别。
 
-## 3. JDK 1.7 版本的 CurrentHashMap 的实现原理
+## 3. JDK 1.7 版本的 ConcurrentHashMap 的实现原理
 
 ![](image/currentHashMap.png)
 
-* 在 JDK 1.7 中 ConcurrentHashMap 采用了数组 + Segment + 分段锁的方式实现。其中 Segment 继承于 ReetrantLock。Segment 继承了 ReentrantLock，所以它是一种可重入锁（ReentrantLock）。
+* 在 JDK 1.7 中 ConcurrentHashMap 采用了数组 + Segment + 分段锁的方式实现。其中 Segment 继承于 ReentrantLock，所以它是一种可重入锁（ReentrantLock）。
 * Segment 在其中扮演锁的角色，HashEntry 用于存储数据。
 
 * 核心数据如 value 以及链表都是 volatile 修饰的，保证了获取时的可见性。
@@ -155,7 +155,7 @@ do {
 * 并发环境下，对于不同 Segment 的数据进行操作是不用考虑锁竞争的。所以，对于同一个 Segment 的操作才需考虑线程同步，不同的 Segment 则无需考虑。
 * 写操作的时候可以只对元素所在的 Segment 进行加锁即可，不会影响到其他的 Segment，这样，在最理想的情况下，ConcurrentHashMap 可以最高同时支持 Segment 数量大小的写操作（刚好这些写操作都非常平均的分布在所有的 Segment 上）。
 * 使用 ConcurrentHashMap 的时候有时候会遇到跨段的问题，跨段的时候（size()、containValue()），可能需要锁定部分段或者全段，当操作结束之后，又会按照顺序进行释放每一段的锁。注意是按照顺序解锁的。
-* 得到一个元素需要进行两次 hash 操作，第一次得到 Segment，第二次得到 HashEntry 中的链表头部，这样做会使得 Hash 的过程比普通的 HashMap 要长。
+* 得到一个元素需要进行两次 hash 操作，第一次得到 Segment，第二次得到 HashEntry 中的链表头部，这样做会使得 hash 的过程比普通的 HashMap 要长。
 
 ### 3.1. Segment（分段锁）- 减少锁的粒度
 

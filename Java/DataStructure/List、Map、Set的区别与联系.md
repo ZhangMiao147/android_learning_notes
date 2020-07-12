@@ -20,7 +20,7 @@
 
 1. LinkedList
 
-   基于链表实现，链表内存是散列的，增删块，查找慢。
+   基于链表实现，链表内存是散列的，增删快，查找慢。
 
    对顺序访问进行优化，向 List 中间插入与移除的开销并不大，具有 addFirst()、addLast()、getFirst()、getLast()、removeFirst() 和 removeLast()。这些方法使得 LinkedList 可当作堆栈 / 队列 / 双向队列。
 
@@ -34,7 +34,7 @@
 
    基于数组实现，线程安全，效率低，增删慢，查找慢。
 
-### 2.2. Map 接口有四个实现类：
+### 2.2. Map 接口有四个实现类
 
 1. HashMap
 
@@ -50,9 +50,11 @@
 
 4. SortedMap 接口
 
-   TreeMap，能够把它保存的记录根据键排序，默认是键值的升序排序。
+   SortedMap 接口需要数据的 key 支持 Comparable，或者可以被支持的 Comparator 接受。
+   
+   TreeMap 是 SortedMap 接口的基于红黑树的实现，此类保证了映射按照升序顺序排列关键字，根据使用的构造方法不同，可能会按照键的类的自然顺序进行排序（参见 Comparable），或者按照创建时所提供的比较器进行排序。此实现为 containsKey、get、put 和 remove 操作提供了保证的 log(n) 时间开销。
 
-### 2.3. Set 接口有两个实现类：
+### 2.3. Set 接口有两个实现类
 
 　　存入 Set 的每个元素必须唯一，不保证维护元素的次序。加入 Set 的 Object 必须定义 equals() 方法。
 
