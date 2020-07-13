@@ -448,7 +448,7 @@ static Object newProxyInstance(
 
 5. Set 集合中的对象不按照特定的方式排序，并且没有重复对象，但它的实现类能对集合中的对象按照特定的方式排序，例如 TreeSet 类，可以按照默认顺序，也可以通过实现 Java.util.Comparator< Type > 接口来自定义排序方式。
 
-疑问：list：可存null？**set不行（编译不过）
+6. Map 接口的实现类中 TreeMap 和 Hashtable 不支持存 null，而 HashMap 和 LinkedHashMap 是支持存 null 的。相对应的 Set 接口的实现类中 TreeSet 是不支持存 null 的，HashSet 和 LinkedHashSet 是支持存 null 的。
 
 ### 7.2. List 接口的三个实现类
 

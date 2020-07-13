@@ -60,17 +60,17 @@
 
 1. HashSet
 
-   为快速查找而设计的 Set，底层是由 HashMap 实现，不允许集合中有重复的值，存入 HashSet 对象需要重写 equals() 和 hashCode() 方法。
+   为快速查找而设计的 Set，底层是由 HashMap 实现，不允许集合中有重复的值，存入 HashSet 对象需要重写 equals() 和 hashCode() 方法。支持存 null。
 
 2. LinkedHashSet
 
-   继承于 HashSet，同时又基于 LinkedHashMap 来实现，底层使用的是 LinkedHashMap。
+   继承于 HashSet，同时又基于 LinkedHashMap 来实现，底层使用的是 LinkedHashMap。支持存 null。
    
    具有 HashSet 的查询速度，但内部使用链表维护元素的次序。
    
 3. TreeSet
 
-   TreeSet 保护次序的 Set，使用它可以从 Set 中提取有序序列。
+   TreeSet 保护次序的 Set，使用它可以从 Set 中提取有序序列。不支持存 null。
 
 ## 3. 区别
 
