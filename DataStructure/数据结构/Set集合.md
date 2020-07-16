@@ -1,13 +1,13 @@
 #  Set 集合
 
-## Set 集合的基本概念
+## 1. Set 集合的基本概念
 
 　　Set 集合是对数学中集合的抽象，Set 集合有两个特性：
 
 1. Set 集合里没有重复元素
-2. Set 集合是无需集合
+2. Set 集合是无序集合
 
-## Set 集合的基本操作
+## 2. Set 集合的基本操作
 
 1. 插入
 2. 删除
@@ -15,7 +15,7 @@
 4. Set 是否包含某个元素
 5. Set 元素个数
 
-　　可以将以上几个操作定义几个方法：
+　　可以将以上几个操作定义为 Set 接口的几个方法：
 
 ```java
 /**
@@ -54,7 +54,7 @@ public interface Set<T> {
     boolean isEmpty();
 
     /**
-     * 大小
+     * 元素个数
      *
      * @return
      */
@@ -62,11 +62,11 @@ public interface Set<T> {
 }
 ```
 
-## Set 集合的 BST 实现和 LinkedList 实现
+## 3. Set 集合的 BST 实现和 LinkedList 实现
 
 　　Set 集合底层可以使用顺序的线性表、链表、二叉树来实现。下面分别使用二分搜索树和链表来实现下 Set 集合。
 
-### 二分搜索树实现 Set
+### 3.1. 二分搜索树实现 Set
 
 　　二分搜索树实现 Set 使用二分搜索树的实现类 BST.java。BST 的实现查看 [二分搜索树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/二分搜索树.md)。
 
@@ -110,9 +110,9 @@ public class BSTSet<T extends Comparable<T>> implements Set<T> {
 }
 ```
 
-### 链表实现二分搜索树
+### 3.2. 链表实现二分搜索树
 
-　　链表实现的二分搜索树，使用链表实现类 LinkedList.java。LinkedList 实现查看 [线性表链式存储]()。
+　　链表实现的二分搜索树，使用链表实现类 LinkedList.java。LinkedList 实现查看 [线性表链式存储](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/线性表链式存储.md)。
 
 ```java
 /**
@@ -166,9 +166,9 @@ A Tale of Two Cities
 
 　　从上面的数据可以看出，傲慢与偏见词汇量 6530，双城记为 9944。这个统计只是简单的统计，比如单词的时态、单复数等都当做一个新单词。
 
-## Set 集合两种实现方式的时间复杂度分析
+## 4. Set 集合两种实现方式的时间复杂度分析
 
-　　来对比一下基于二分搜索树和链表来实现的 Set 的性能差异：
+　　来对比一下基于二分搜索树和链表实现的 Set 的性能差异：
 
 ```
 pride-and-prejudice.txt
@@ -183,15 +183,17 @@ BSTSet        Time: 0.121546597
 LinkedListSet Time: 2.122136759
 ```
 
-　　根据上面的统计数据可以看出，BSTSET 要比 LinkedlISTsET 快 20 倍左右。
+　　根据上面的统计数据可以看出，BSTSet 要比 LinkedListSet 快 20 倍左右。
 
 　　链表的插入操作的时间复杂度是 O(1)，但是实现 Set 集合需要先判断集合中是否存在（contains），所以总的下来插入的操作为 O(n)。
 
-　　而二分搜索树的插入时间复杂度为 log(n)。加入网以下一个二分搜索树插入元素 7，插入路径如下图所示：
+　　而二分搜索树的插入时间复杂度为 log(n)。假如往以下一个二分搜索树插入元素 7，插入路径如下图所示：
 
 ![](image/二叉搜索树实现Set.png)
 
-　　根据插入路径，插入元素 7，只要和 8、5、6 作比较，不需要和链表一样最坏的情况需要和每个元素进行比较。而这个路径也就是二分搜索树的高度。下面用一个表格来对比二分搜索树实现的 Set 和链表实现的 Set 的时间复杂度：
+　　根据插入路径，插入元素 7，只要和 8、5、6 作比较，不需要和链表一样最坏的情况需要和每个元素进行比较。而这个路径也就是二分搜索树的高度。
+
+　　下面用一个表格来对比二分搜索树实现的 Set 和链表实现的 Set 的时间复杂度：
 
 | 操作     | LinkedListSet | BSTSet |
 | -------- | ------------- | ------ |
@@ -220,7 +222,7 @@ LinkedListSet Time: 2.122136759
 
 　　用大 O 表示法就是：O(h) = O(log n)
 
-| 操作     | LInkedListSet | BSTSet   |
+| 操作     | LinkedListSet | BSTSet   |
 | -------- | ------------- | -------- |
 | add      | O(n)          | O(log n) |
 | contains | O(n)          | O(log n) |
@@ -238,7 +240,7 @@ LinkedListSet Time: 2.122136759
 
 　　上面对于二分搜索树的分析是基于满二叉树的，也就是最好的情况下，但是二分搜索树在最坏的情况会退化成链表，这就需要用到平衡二叉树如 AVL 树、红黑树，就算是最坏的情况也能保证二分搜索树不会退化成链表，保持树大致的平衡。
 
-## 参考文章
+## 5. 参考文章
 
 1. [数据结构与算法（九）Set集合和BinarySearchTree的时间复杂度分析](https://chiclaim.blog.csdn.net/article/details/80628876)
 
