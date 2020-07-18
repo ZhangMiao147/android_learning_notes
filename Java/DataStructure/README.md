@@ -7,6 +7,7 @@
 * Vector
 * SortedMap / TreeMap
 * CopyOnWriteArrayList
+* PriorityQueue
 
 ## Map
 
