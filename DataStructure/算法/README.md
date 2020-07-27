@@ -1,14 +1,14 @@
 # 算法
 
-* 递归 - 递归
+* 递归 - 已完成
 
 * 回溯算法
 
-* 分治算法
+* 分治算法  - 已完成
 
 * 分支定界法
 
-* 贪心算法
+* 贪心算法 - 已完成
 
 * [动态规划（Dynamic Programming）]( [https://github.com/ZhangMiao147/android_learning_notes/blob/master/Algorithm/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92.md](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Algorithm/动态规划.md) )
 
@@ -17,12 +17,12 @@
 ## 查找算法
 
 * 查找算法知识
-* 顺序查找
+* 顺序查找 - 已完成
 * 二分查找
-* 插值查找
+* 插值查找 - 已完成
 * 斐波那契查找
-* 二叉树查找
-* 平衡查找树之2-3查找树（2-3 Tree）
+* 二叉树查找 - 已完成
+* 平衡查找树之2-3查找树（2-3 Tree） - 已完成
 * 平衡查找树之红黑树（Red-Black Tree）
 * B 树和 B+ 树（B Tree/B+ 树）
 * 分块查找
@@ -37,7 +37,7 @@
 * 堆排序
 * 冒泡排序
 * 快速排序
-* 归并排序
+* 归并排序 - 已完成
 * 基数排序
 
 
