@@ -1,18 +1,13 @@
 # 数据结构
 
 * 线性表顺序存储 
-* 线性表链式存储 - 已完成
+* [线性表链式存储](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/线性表链式存储.md)
 * 队列
 * 栈
 * 哈希表
 * 堆
 * 并查集
-* Set集合 - 已完成
-
-
-
-* 散列表
-* 
+* [Set 集合](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/Set集合.md)
 
 ## 树
 
@@ -23,6 +18,7 @@
 * [线段树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/线段树.md)
 * [字典树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/字典树.md)
 * [Huffman 树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/Huffman树.md)
+* [红黑树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/红黑树.md)
 
 ## 图
 

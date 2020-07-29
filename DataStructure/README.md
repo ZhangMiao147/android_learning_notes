@@ -1,19 +1,7 @@
 # 数据结构
 
-* 线性表
-* 栈
-* 哈希表
-* 树
-* 图
-* 
-* 
-* 
-* 
-* 数组
-* 链表
-* 队列
-* 散列表
-* 堆
+* [线性表链式存储](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/线性表链式存储.md)
+* [Set 集合](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/Set集合.md)
 
 ### 树
 
@@ -24,20 +12,40 @@
 * [线段树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/线段树.md)
 * [字典树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/字典树.md)
 * [Huffman 树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/Huffman树.md)
+* [红黑树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/红黑树.md)
 
 # 算法
 
-* 查找算法
-
-* 排序算法
-
+* [递归](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/递归.md)
 * 回溯算法
 
-* 分治算法
+* [分治算法](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/分治算法.md)
 
-* [动态规划（Dynamic Programming）]( [https://github.com/ZhangMiao147/android_learning_notes/blob/master/Algorithm/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92.md](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Algorithm/动态规划.md) )
+* 分支定界法
 
-  
+* [贪心算法](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/贪心算法.md)
+
+* [动态规划（Dynamic Programming）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/动态规划.md)
+
+
+
+## 查找算法
+
+* [顺序查找](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/顺序查找.md)
+* [二分查找](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/二分查找.md)
+* [插值查找](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/插值查找.md)
+* [斐波那契查找](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/斐波那契查找.md)
+* [二叉树查找](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/二叉树查找.md)
+* [平衡查找树之2-3查找树（2-3 Tree）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/平衡查找树之2-3查找树.md)
+* [平衡查找树之红黑树（Red-Black Tree）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/平衡查找树之红黑树.md)
+* B 树和 B+ 树（B Tree/B+ 树）
+* 分块查找
+* [哈希查找](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/哈希查找.md)
+
+### 排序算法
+
+* [希尔排序](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/排序算法/希尔排序.md)
+* [归并排序](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/排序算法/归并排序.md)
 
 
 
