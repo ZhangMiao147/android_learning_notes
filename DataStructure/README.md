@@ -38,8 +38,8 @@
 * [二叉树查找](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/二叉树查找.md)
 * [平衡查找树之2-3查找树（2-3 Tree）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/平衡查找树之2-3查找树.md)
 * [平衡查找树之红黑树（Red-Black Tree）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/平衡查找树之红黑树.md)
-* B 树和 B+ 树（B Tree/B+ 树）
-* 分块查找
+* [B 树和 B+ 树（B Tree/B+ 树）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/B树和B%2B树.md)
+* [分块查找](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/分块查找.md)
 * [哈希查找](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/哈希查找.md)
 
 ### 排序算法
