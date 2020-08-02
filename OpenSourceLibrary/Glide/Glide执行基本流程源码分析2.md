@@ -6,7 +6,7 @@
 Glide.with(this).load(url).into(imageView);
 ```
 
-　　这篇接上篇，主要分析 into() 的源码流程。
+　　这篇接上篇 [Glide 执行基本流程源码分析 1](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/Glide/Glide执行基本流程源码分析1.md)，上一篇分析了 with() 与 load() 方法，本篇主要分析 into() 的源码流程。
 
 　　into() 方法实现在 DrawableRequestBuilder 的父类 GenericRequestBuilder 类中。
 
@@ -16,7 +16,7 @@ Glide.with(this).load(url).into(imageView);
 2. 解析网络结果；
 3. 将图片显示到界面上。
 
-### 3.1. 第一步：网络请求
+## 1. 第一步：网络请求
 
 #### 3.1.1. GenericRequestBuilder#into
 
@@ -964,7 +964,7 @@ public class HttpUrlFetcher implements DataFetcher<InputStream> {
 
 　　在这里找到了网络通讯的代码。可以看到，loadData() 方法只是返回了一个 InputStream，服务器返回的数据还没有开始读。回到 ImageVideoFetcher 的 loadData() 方法中，在这个方法的最后一行，创建了一个 ImageVideoWrapper 对象，并将得到的 InputStream 作为参数传了进去。
 
-### 3.2. 第二步：解析请求结果
+## 2. 第二步：解析请求结果
 
 　　从 ImageVideoFetcher 的 loadData() 方法返回到 DecodeJob 的 decodeSource() 方法中，在得到了这个 ImageVideoWrapper 对象之后，紧接着又将这个对象传入到了 decodeFromSourceData() 当中，去解码这个对象。
 
@@ -1347,7 +1347,7 @@ public abstract class Downsampler implements BitmapDecoder<InputStream> {
 
 　　可以看到，对服务器返回的 InputStream 的读取，以及对图片的加载全都在这里了。当然这里其实处理了很多的逻辑，包括对图片的压缩，甚至还有旋转、圆角等逻辑处理。decode() 方法执行之后，会返回一个 Bitmap 对象，那么图片在这里其实也就已经被加载出来了，剩下的工作就是如何让这个 Bitmap 显示到界面上。
 
-### 3.3. 第三步：将图片显示在界面上
+## 3. 第三步：将图片显示在界面上
 
 　　回到 StreamBitmapDecoder 当中，decode() 方法返回的是一个 Resource< Bitmap > 对象。而从 DownSampler 中得到的是一个 Bitmap。因此在 StreamBitmapDecoder 的 decode 方法中又调用了 BitmapResource.obtain() 方法，将 Bitmap 对象包装成了 Resource< Bitmap > 对象。
 
@@ -1982,11 +1982,21 @@ public abstract class ImageViewTarget<Z> extends ViewTarget<ImageView, Z> implem
 
 ## 4. 总结
 
-1. with() 方法如果传入的不是 Application 的 Context，就会向当前的 Context 添加一个隐藏的 fragment，为了知道加载的生命周期，而 with() 会返回一个 RequestManager 对象。
+　　对 Glide 的基本执行流程总结如下：
+
+1. with() 方法如果传入的不是 Application 的 Context，就会向当前的 Context 添加一个隐藏的 fragment，这主要是为了知道加载的生命周期，而 with() 会返回一个 RequestManager 对象。
+
+2. load() 方法会创建 Glide 的实例，并调用了 Glide 的初始化，对缓存、下载等对象惊醒初始化，注册好 ModelLoader 的工厂模式，创建 DrawableTypeRequest 对象并返回，DrawableTypeRequest 包含 streamModelLoader 和 fileDescriptorModelLoader 两个 ModelLoader。
+
+   ModelLoader 是一个工厂接口，主要目标是：1. 将特定的模型转换为可解码为资源的数据类型；2. 允许模型与视图的纬度组合以获得特定大小的资源。有一个接口是 getResourceFetcher() 返回 DataFetcher。
+
+   DataFetcher 是用于延迟检索加载资源的数据的接口。方法 loadData() 用于异步从解码资源中获取数据。
+
+3. into() 方法
 
 
 
 
-## 4. 参考文章
+## 5. 参考文章
 1. [Android图片加载框架最全解析（二），从源码的角度理解Glide的执行流程](https://blog.csdn.net/guolin_blog/article/details/53939176)
 

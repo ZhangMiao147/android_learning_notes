@@ -1,4 +1,4 @@
-# Glide 执行基本流程源码分析
+# Glide 执行基本流程源码分析1
 
 　　Glide 的最基本的使用是：
 
@@ -192,7 +192,7 @@ public class RequestManagerRetriever implements Handler.Callback {
             throw new IllegalArgumentException("You cannot start a load on a fragment before it is attached");
         }
         if (Util.isOnBackgroundThread() || Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
-           // 是后台线程
+            // 是后台线程
           	// 调用 get() 方法，参数是 Application 的 context
             return get(fragment.getActivity().getApplicationContext());
         } else {
@@ -367,6 +367,7 @@ public class RequestManager implements LifecycleListener {
 ```java
 public class Glide {
    public static <T> ModelLoader<T, InputStream> buildStreamModelLoader(Class<T> modelClass, Context context) {
+     	// 调用 buildModelLoader() 方法
         return buildModelLoader(modelClass, InputStream.class, context);
     }
     public static <T, Y> ModelLoader<T, Y> buildModelLoader(Class<T> modelClass, Class<Y> resourceClass,
@@ -377,6 +378,7 @@ public class Glide {
             }
             return null;
         }
+      	// 调用 Glide.get(context).getLoaderFactory().buildModelLoader(modelClass, resourceClass) 方法
         return Glide.get(context).getLoaderFactory().buildModelLoader(modelClass, resourceClass);
     }
 }
@@ -388,7 +390,7 @@ public class Glide {
 
 ```java
     private static volatile Glide glide; //线程安全的单例模式
-	public static Glide get(Context context) {
+	  public static Glide get(Context context) {
         if (glide == null) {
             synchronized (Glide.class) {
                 if (glide == null) {
@@ -435,15 +437,15 @@ public class Glide {
                 bitmapPool = new BitmapPoolAdapter();
             }
         }
-		// 内存缓存的处理类
+				// 内存缓存的处理类
         if (memoryCache == null) {
             memoryCache = new LruResourceCache(calculator.getMemoryCacheSize());
         }
-		// 磁盘缓存的处理类
+				// 磁盘缓存的处理类
         if (diskCacheFactory == null) {
             diskCacheFactory = new InternalCacheDiskCacheFactory(context);
         }
-		// 下载的处理类
+				// 下载的处理类
         if (engine == null) {
             engine = new Engine(memoryCache, diskCacheFactory, diskCacheService, sourceService);
         }
@@ -451,12 +453,12 @@ public class Glide {
         if (decodeFormat == null) {
             decodeFormat = DecodeFormat.DEFAULT;
         }
-		// 调用 Glide 构造函数来创建对象
+				// 调用 Glide 构造函数来创建对象
         return new Glide(engine, memoryCache, bitmapPool, context, decodeFormat);
     }
 ```
 
-　　在 GlideBuilder 的 createGlide() 方法中处理化了一些加载图片中需要使用的对象，像是处理缓存的 memoryCache 和 diskCacheFactory，下载的 engine，最后调用了 Glide 的构造函数来创建一个 Glide 对象，并且将创建的对象都传递了进去。
+　　在 GlideBuilder 的 createGlide() 方法中初始化了一些加载图片中需要使用的对象，像是处理缓存的 memoryCache 和 diskCacheFactory，下载的 engine，最后调用了 Glide 的构造函数来创建一个 Glide 对象，并且将创建的对象都传递了进去。
 
 #### 2.3.3. Glide 的构造函数
 
@@ -492,7 +494,7 @@ public class Glide {
                 new ImageVideoGifDrawableLoadProvider(imageVideoDataLoadProvider, gifDrawableLoadProvider, bitmapPool));
 
         dataLoadProviderRegistry.register(InputStream.class, File.class, new StreamFileDataLoadProvider());
-		// 重点注意这里
+				// 重点注意这里
         register(File.class, ParcelFileDescriptor.class, new FileDescriptorFileLoader.Factory());
         register(File.class, InputStream.class, new StreamFileLoader.Factory());
         register(int.class, ParcelFileDescriptor.class, new FileDescriptorResourceLoader.Factory());
@@ -544,6 +546,7 @@ public class Glide {
 public class GenericLoaderFactory {
     private final Map<Class/*T*/, Map<Class/*Y*/, ModelLoaderFactory/*T, Y*/>> modelClassToResourceFactories =
             new HashMap<Class, Map<Class, ModelLoaderFactory>>();
+  // register 方法
 	public synchronized <T, Y> ModelLoaderFactory<T, Y> register(Class<T> modelClass, Class<Y> resourceClass,
             ModelLoaderFactory<T, Y> factory) {
         cachedModelLoaders.clear();
@@ -651,7 +654,7 @@ public class StreamStringLoader extends StringLoader<InputStream> implements Str
                 return result;
             }
         }
-		// 缓存中没有，则调用 getFactory() 方法
+				// 缓存中没有，则调用 getFactory() 方法
         final ModelLoaderFactory<T, Y> factory = getFactory(modelClass, resourceClass);
         if (factory != null) {
             // 存入缓存
@@ -712,7 +715,7 @@ register(Uri.class, InputStream.class, new StreamUriLoader.Factory());
 
 　　Uri.class 和 InputStream.class 对应的 ModelLoaderFacroty 对象是 StreamUrlLoader.Factory()。
 
-#### 2.3.10. StreamUrlLoader
+#### 2.3.10. StreamUriLoader
 
 ```java
 public class StreamUriLoader extends UriLoader<InputStream> implements StreamModelLoader<Uri> {
@@ -754,7 +757,7 @@ public class StreamUriLoader extends UriLoader<InputStream> implements StreamMod
 
 ```
 
-　　StreamUrlLoader 的 Factory 类的 build() 方法返回的是一个 StramUriLoader 对象，在调用 StreamUriLoader 构造方法中传入了 factories.buildModelLoader(GlideUrl.class, InputStream.class) 创建的 ModelLoader 对象。这个 MOdelLoader 对象直接看 Glide 的构造函数中 GlideUrl.class, InputStream.class 中对应的是什么：
+　　StreamUrlLoader 的 Factory 类的 build() 方法返回的是一个 StramUriLoader 对象，在调用 StreamUriLoader 构造方法中传入了 factories.buildModelLoader(GlideUrl.class, InputStream.class) 创建的 ModelLoader 对象。这个 ModelLoader 对象直接看 Glide 的构造函数中 GlideUrl.class, InputStream.class 中对应的是什么：
 
 ```java
 register(GlideUrl.class, InputStream.class, new HttpUrlGlideUrlLoader.Factory());
@@ -898,13 +901,11 @@ public class StringLoader<T> implements ModelLoader<String, T> {
 
 　　也是将传入的 StreamUriLoader 设置给成员变量 uriLoader。
 
-
-
 ### 2.4.  ModelLoader 
 
 ```java
 /**
-* 一种工厂接口，用于将任意复杂的数据模型转换为具体的数据类型，改数据类型可由 DataFaetcher 用于获取由该模型表示的资源的数据。
+* 一种工厂接口，用于将任意复杂的数据模型转换为具体的数据类型，该数据类型可由 DataFaetcher 用于获取由该模型表示的资源的数据。
 * 该接口有两个目标：
 * 1. 将特定模型转换为可解码为资源的数据类型。
 * 2. 允许模型与视图的维度组合以获取特定大小的资源。
@@ -929,7 +930,7 @@ public interface ModelLoader<T, Y> {
 ```java
 /**
  * 用于延迟检索加载资源的数据的接口。
- * ModelLoader 味每次资源加载创建一个新实例。
+ * ModelLoader 为每次资源加载创建一个新实例。
  * load() 方法可以调用也可以不调用任务给定的加载，这取决于是否缓存了相应的资源。
  * cancel() 也可以调用，也可以不调用。
  * 如果调用 loadData() 方法，那么也要调用 cleanup() 方法。
@@ -937,7 +938,7 @@ public interface ModelLoader<T, Y> {
 public interface DataFetcher<T> {
 
     /**
-     * 异步从解码资源种获取数据。浙江始终在后台线程上调用，因此在这里执行长时间运行的任务是安全的。
+     * 异步从解码资源中获取数据。这将始终在后台线程上调用，因此在这里执行长时间运行的任务是安全的。
      * 调用的任何第三方库都必须是线程安全的，因为此方法将从多个后台线程的 ExecutorService 中的一个线程调用。
      * 只有当相应的资源不在缓存中时，才会调用此方法。
      * 注意：此方法将在后台线程上运行，因此阻塞 I/O 是安全的。
@@ -967,10 +968,6 @@ public interface DataFetcher<T> {
     void cancel();
 }
 ```
-
-
-
-
 
 ### 2.6. Glide.buildFileDescriptorModelLoader
 
@@ -1086,7 +1083,7 @@ public class FileDescriptorUriLoader extends UriLoader<ParcelFileDescriptor> imp
 
 ​        到这里，RequestManager 的 loadGeneric() 方法中创建的 streamModelLoader 是 StreamStringLoader 对象，StreamStringLoader 对象的成员变量 uriLoader 是 StreamUrlLoader，而 StreamUrlLoader 对象的成员变量 uriLoader 是 HttpUrlGlideLoader；fileDescriptorModelLoader 是 FileDescriptorStringLoader 对象，FileDescriptorStringLoader 对象的成员变量 uriLoader 是 FileDescriptorUriLoader 对象，而 FileDescriptorUriLoader 对象的成员变量 uriLoader 是 null。
 
-### 2.5. DrawableTypeRequest类
+### 2.7. DrawableTypeRequest类
 
 ```java
 /**
@@ -1133,7 +1130,7 @@ public class DrawableTypeRequest<ModelType> extends DrawableRequestBuilder<Model
             ModelLoader<ModelType, ParcelFileDescriptor> fileDescriptorModelLoader, Context context, Glide glide,
             RequestTracker requestTracker, Lifecycle lifecycle, RequestManager.OptionsApplier optionsApplier) {
         super(context, modelClass,
-              	// 调用 buildProvider 方法，返回一个 FixedLoadProvider 对象
+              	// 调用 buildProvider 方法，返回一个 FixedLoadProvider 对象，将 streamModelLoader 和 fileDescriptorModelLoader 设置为成员变量
               	// 设置给父类的父类 GenericRequestBuilder 的成员变量 loadProvider 
                 buildProvider(glide, streamModelLoader, fileDescriptorModelLoader, GifBitmapWrapper.class,
                         GlideDrawable.class, null),
@@ -1460,9 +1457,7 @@ public class DrawableRequestBuilder<ModelType>
 
 　　DrawableRequestBuilder 中有很多个方法，这些方法其实就是 Glide 绝大多数的 API 了。里面很多方法都是经常使用的，比如说 placeholder() 方法、error() 方法、diskCacheSrategy() 方法、override() 方法等。
 
-　　load() 方法会先调用其 父类 GenericRequestBuilder 的 load() 方法，然后将自己返回到这里就分析完了，也就是说，最终 load() 方法返回的其实就是一个 DrawableRequestBuilder 对象，并且 DrawableRequestBuilder 类中有一个 into() 方法。
-
-
+　　load() 方法会先调用其 父类 GenericRequestBuilder 的 load() 方法，然后将自己返回，到这里就分析完了，也就是说，最终 load() 方法返回的其实就是一个 DrawableRequestBuilder 对象，并且 DrawableRequestBuilder 类中有一个 into() 方法。
 
 
 ## 3. 参考文章
