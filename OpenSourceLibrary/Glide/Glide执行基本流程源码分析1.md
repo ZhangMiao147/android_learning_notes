@@ -1099,6 +1099,8 @@ public class DrawableTypeRequest<ModelType> extends DrawableRequestBuilder<Model
     private final ModelLoader<ModelType, ParcelFileDescriptor> fileDescriptorModelLoader;
     private final RequestManager.OptionsApplier optionsApplier;
 
+  	// streamModelLoader 为 StreamStringLoader 对象实例
+  	// fileDescriptorModelLoader 为 FileDescriptorStringLoader 对象实例
     private static <A, Z, R> FixedLoadProvider<A, ImageVideoWrapper, Z, R> buildProvider(Glide glide,
             ModelLoader<A, InputStream> streamModelLoader,
             ModelLoader<A, ParcelFileDescriptor> fileDescriptorModelLoader, Class<Z> resourceClass,
@@ -1120,7 +1122,7 @@ public class DrawableTypeRequest<ModelType> extends DrawableRequestBuilder<Model
                 fileDescriptorModelLoader);
       	// 创建 FixedLoadProvider 对象
       	// 设置成员变量 modelLoader 为传递的 modelLoader，这就是 ImageVideoModelLoader 对象
-      	// 设置成员变量 transcoder 为传递的 transcoder
+      	// 设置成员变量 transcoder 为传递的 transcoder，该对象用于图片转码
       	// 设置成员变量 dataLoadProvider 为传递的 dataLoadProvider，也就是 DataLoadProvider 对象
         return new FixedLoadProvider<A, ImageVideoWrapper, Z, R>(modelLoader, transcoder, dataLoadProvider);
     }
