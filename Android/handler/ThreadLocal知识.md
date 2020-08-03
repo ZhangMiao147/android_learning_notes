@@ -20,9 +20,9 @@
 
    比如监听器的传递，有些时候一个线程中的任务过于复杂，这可能表现为函数调用栈比较深以及代码入口的多样性，在这种情况下，又需要监听器能够贯穿整个线程的执行过程，其实可以采用 ThreadLocal，采用 ThreadLocal 可以让监听器作为线程内的全局对象而存在，在线程内部只要通过 get 方法就可以获取到监听器。
 
-   而如果不采用 ThreadLocal，那么能想到的可能是如下两种方法：第一种方法是将监听器通过参数的形式在函数调用栈种进行传递，第二种方法就是将监听器作为静态变量供线程访问。
+   而如果不采用 ThreadLocal，那么能想到的可能是如下两种方法：第一种方法是将监听器通过参数的形式在函数调用栈中进行传递，第二种方法就是将监听器作为静态变量供线程访问。
 
-   上述这两种方法都是由局限性的。第一种方法的问题是当程序调用栈很深的时候，通过函数参数来传递监听器对象这几乎是不可接受的，这会让程序的设计看起来很糟糕。第二种方法是可以接受的，但是这种状态是不具有可扩充性的，比如如果同时有两个线程在执行，那么就需要提供两个静态的监听器对象，如果有很多线程在并发执行，就需要提供很多个静态的监听器对象，这显然是不可思议的，而采用 ThreadLocal 每个监听器对象都在自己的线程内部存储，根本就不会有方法二的这种问题。
+   上述这两种方法都是有局限性的。第一种方法的问题是当程序调用栈很深的时候，通过函数参数来传递监听器对象这几乎是不可接受的，这会让程序的设计看起来很糟糕。第二种方法是可以接受的，但是这种状态是不具有可扩充性的，比如如果同时有两个线程在执行，那么就需要提供两个静态的监听器对象，如果有很多线程在并发执行，就需要提供很多个静态的监听器对象，这显然是不可思议的，而采用 ThreadLocal 每个监听器对象都在自己的线程内部存储，根本就不会有方法二的这种问题。
 
 ## 3. 使用
 
@@ -34,7 +34,7 @@ final ThreadLocal<Boolean> mBooleanThreadLocal = new ThreadLocal<Boolean>();
 mBooleanThreadLocal.set(true);
 System.out.println("[Thread#main]mBooleanThreadLocal=" + mBooleanThreadLocal.get());
 
-new Thread("Thread#1") {
+	new Thread("Thread#1") {
             @Override
             public void run() {
                 // 线程 1 设置线程 1 的 mBooleanThreadLocal 的值为 false
@@ -42,7 +42,7 @@ new Thread("Thread#1") {
                 System.out.println("[Thread#1]mBooleanThreadLocal=" + mBooleanThreadLocal.get());
             }
         }.start();
-        new Thread("Thread#2") {
+  	new Thread("Thread#2") {
             @Override
             public void run() {
                 // 线程 2 不设置线程 2 的 mBooleanThreadLocal 的值
@@ -97,7 +97,7 @@ new Thread("Thread#1") {
         }
 ```
 
-　　在 ThreadLocalMap 内部有一个 Entry 的数组：private Entry[] table，所以 ThreadLocal 就存储在这个数组中，下面看 ThreadLocalMap 是如何使用 set 方法将 ThreadLocal 的值存储到 table 数组中的：
+　　在 ThreadLocalMap 内部有一个 Entry 的数组：private Entry[] table，所以 ThreadLocal 就存储在这个数组中，下面看 ThreadLocalMap 是如何使用 set 方法将 ThreadLocal 的值存储到 table 数组中的。
 
 ### 4.2. ThreadLocalMap#set
 
@@ -181,7 +181,7 @@ new Thread("Thread#1") {
 
 　　如果 map 对象不为 null，那就调用 ThreadLocalMap 的 set 方法，将当前线程和 T 的默认值加入。
 
-　　从 ThreadLocal 的 set 和 get 方法可以看出，它们所操作的对象都是当前线程的 Entry 数组，因此在不同线程中访问同一个 ThreadLocal 的 set 和 get 方法，它们对 ThreadLocal 所做的读写操作仅限于各自线程的内部，这就是为什么 ThreadLocal 可以在多个线程中互不干扰地存储和修改数据，理解 ThreadLocal 地实现方式有助于理解 Looper 的工作原理。
+　　从 ThreadLocal 的 set 和 get 方法可以看出，它们所操作的对象都是当前线程的 Entry 数组，因此在不同线程中访问同一个 ThreadLocal 的 set 和 get 方法，它们对 ThreadLocal 所做的读写操作仅限于各自线程的内部，这就是为什么 ThreadLocal 可以在多个线程中互不干扰地存储和修改数据，理解 ThreadLocal 的实现方式有助于理解 Looper 的工作原理。
 
 ## 5. 参考文章
 

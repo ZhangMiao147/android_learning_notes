@@ -1,4 +1,4 @@
-# Java 基础的常见问题
+# Java 基础的常见问题1
 
 ## 1. 面向对象的特性
 
@@ -1306,6 +1306,40 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 ```
 
 　　这四种常见的线程池其底部都是使用 ThreadPoolExecutor 来实现的。
+
+### 6.10. 线程池的使用和原理
+
+https://www.jianshu.com/p/9a8c81066201
+
+https://www.cnblogs.com/snidget/p/12683177.html
+
+
+
+### 6.11. ThreadLocal 原理
+
+　　ThreadLocal 并不是一个 Thread，而是 Thread 的局部变量，它的作用是可以在每个线程中存储数据，数据存储以后，只有在指定线程中可以获取到存储的数据，对于其他线程来说无法获取到数据。
+
+　　比如说熟悉的 Handler ，它需要获取当前线程的 Looper，Looper 的作用域就是线程并且不同线程具有不同的 Looper，Handler 通过 ThreadLocal 实现 Looper 在线程中的存取。
+
+　　ThreadLocal 的 set 和 get() 操作都会先 `Thread t = Thread.currentThread(); ThreadLocalMap map = getMap(t);` 获取本线程的 ThreadLocalMap 对象，而 ThreadLocalMap 中有一个成员  Entry[] table 存储 ThreadLocal 的数据。
+
+```java
+        static class Entry extends WeakReference<ThreadLocal<?>> {
+            /** The value associated with this ThreadLocal. */
+            Object value;
+
+            Entry(ThreadLocal<?> k, Object v) {
+                super(k);
+                value = v;
+            }
+        }
+       
+        private Entry[] table;
+```
+
+　　ThreadLocal 的 set 和 get 的数据就是改变 Entry[] table 的数据。
+
+　　因为 ThreadLocal 的 set 和 get 操作的对象都是当前线程的 Entry 数组，因此在不同线程中访问同一个 ThreadLocal 的 set 和 get 操作仅限于各自线程的内部。
 
 ## 7. 对象的引用类型有哪些？
 

@@ -207,6 +207,22 @@ static Object newProxyInstance(
 
 　　在 Spring 的 AOP 编程中：如果加入容器的目标对象有实现接口，用 JDK 代理，如果目标对象没有实现接口，用 Cglib 代理。
 
+### 3.2. Java 动态代理实现与原理详细分析
+
+
+
+### 3.3. 描述动态代理的几种实现方式，分别说出相应的优缺点
+
+
+
+### 3.4. 动态代理与 cglib 实现的区别
+
+
+
+### 3.5. 为什么 cglib 方式可以对接口实现代理
+
+
+
 ## 4. 注解
 
 　　注解是没有方法的，只有成员变量，变量名就是注解括号中对应的参数名，变量类型是注解括号中对应的参数类型。
@@ -425,7 +441,15 @@ static Object newProxyInstance(
 ## 6. ArrayList 和 LinkedList 的区别
 
 1. ArrayList 是基于动态数组的数据结构，LinkedList 是基于链表的数据结构。
+
 2. 对于随机访问 get 和 set，ArrayList 要优于 LinkedList，因为 LinkedList 要移动指针；对于新增和删除操作 add 和 remove，LinkedList 比较占优势，因为 ArrayList 要移动数据。
+
+   对于随机访问，ArrayList 是线性表（数组），get() 直接读取第几个下标，时间复杂度 O(1)，LinkedList 是链表的操作，get() 虎丘第几个元素，依次遍历，时间复杂度为 O(n)。
+
+   而对于增加和删除，ArrayList add(E) 添加元素，直接在后面添加，时间复杂度为 O(1)，add(intde,E) 添加元素，在第几个元素后面插入，后面的元素需要向后移动，复杂度 O(n)，remove() 删除元素，后面的元素需要逐个移动，时间复杂度为 0(n)。
+
+   对于增加和删除，LinkedList add(E) 添加到末尾，时间复杂度为 0(1)，add(index,E) 添加第几个元素后，需要先查找到第几个元素，直接指针指向操作，复杂度为 O(n)，remove() 删除元素，直接指针指向操作，复杂度为 O(1)。
+
 3. ArrayList 的空间浪费主要体现在在 List 列表的结尾预留一定的容量空间，而 LinkedList 的空间浪费体现在它的每一个元素都需要消耗相当的空间（指向前后的指针）。
 
 ## 7. List 、 Set 和 Map 的区别
@@ -515,6 +539,14 @@ static Object newProxyInstance(
 3. TreeSet 的底是用 TreeMap 来构建的。
 
 　　所以，Set 的实体类主要就是以 Map 为基础，将 Set 构建的对象放入 map 的 key 中，相对应的使用环境也和对应的 map 相同。
+
+### 7.5. 用过哪些 Map 类，都有什么区别？
+
+
+
+### 7.6. 有没有有循序的 Map 实现类，如果有，他们是怎么保证有序的？
+
+
 
 ## 8 . HashMap
 
@@ -768,7 +800,25 @@ Map m = Collections.synchronizeMap(hashMap);
 
 #### 8.8.1. ConcurrentHashMap 如何体现线程安全？
 
- 
+ 　　采用了分段锁。
+
+### 8.9.  JAVA 8 版本的 ConcurrentHashMap 的实现原理
+
+### 8.9.  JAVA 8 的 ConcurrentHashMap 为什么放弃了分段锁，有什么问题吗？如果你来设计，你如何设计？
+
+
+
+### 
+
+## 9. final 
+
+### 9.1. final 的用途
+
+
+
+### 9.2. final关键字，为什么匿名内部类使用局部引用要用final
+
+
 
 
 
