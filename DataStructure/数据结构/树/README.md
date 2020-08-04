@@ -8,6 +8,6 @@
 * [字典树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/字典树.md)
 * [Huffman 树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/Huffman树.md)
 * [红黑树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/红黑树.md)
-* B 树
-* B+ 树
+* [B 树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/B树.md)
+* [B+ 树](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/树/B%2B树.md)
 

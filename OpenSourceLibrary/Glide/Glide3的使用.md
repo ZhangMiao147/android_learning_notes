@@ -89,7 +89,7 @@ Glide.with(this)
 
 　　Glide 当中绝大多数 API 的用法就是在 lode() 和 into() 方法之间串接任意想添加的功能就可以了。
 
-### 3.3. 异常展位图
+### 3.3. 异常占位图
 
 　　异常占位图是指如果因为某些异常情况导致图片加载失败，比如说手机网络信号不好，这个时候就显示这张异常占位图。
 
@@ -173,17 +173,13 @@ Glide.with(this)
 //DiskCacheStrategy.ALL ： 表示既缓存原始图片，也缓存转换过后的图片。
 Glide.with(this)
      .load(url)
-.diskCacheStrategy(DiskCacheStrategy.NONE)
+		 .diskCacheStrategy(DiskCacheStrategy.NONE)
      .into(imageView);
 ```
 
 　　加上 diskCacheStrategy() 方法，并传入 DiskCacheStrategy.NONE 参数，这样就可以禁用掉 Glide 的缓存功能。
 
-
-
-
-
-## 参考文章
+## 4. 参考文章
 
 1. [Android图片加载框架最全解析（一），Glide的基本用法](https://blog.csdn.net/guolin_blog/article/details/53759439)
 
