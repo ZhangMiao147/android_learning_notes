@@ -58,7 +58,7 @@
 
 　　例如，设置 Activity 的启动模式为 `singleTop` ,在 AndroidManifest.xml 中应该是：
 
-```
+```xml
    <activity
             android:name=".FirstActivity"
             android:launchMode="singleTop" />
@@ -70,7 +70,7 @@
 
 　　在 startActivity 时，设置 Intent 的 flag 值，如下:
 
-```
+```java
 Intent intent = new Intent(MainActivity.this, FirstActivity.class);
 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 startActivity(intent);
@@ -90,7 +90,7 @@ startActivity(intent);
 
 #### 3.2. singleTop(栈顶复用)
 
-　　在这种启动模式下，首先会判断要启动的活动是否已经存在于栈顶，如果是的话就不创建新实例，直接复用栈顶活动。如果要启动的活动不位于栈顶，则会创建新实例入栈，并且调用 activity 的 onNewIntent() 方法。
+　　在这种启动模式下，首先会判断要启动的活动是否已经存在于栈顶，如果是的话就不创建新实例，直接复用栈顶活动，并且调用 activity 的 onNewIntent() 方法。如果要启动的活动不位于栈顶，则会创建新实例入栈。
 
 ###### 3.2.1. 栈顶复用模式的应用场景
 
