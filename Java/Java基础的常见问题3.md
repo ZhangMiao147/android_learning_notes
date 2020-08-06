@@ -2,9 +2,39 @@
 
 # 1. 抽象与接口
 
-抽象类和接口的区别，类可以集成多个类吗？接口可以继承多个接口吗？类可以实现多个接口吗？
+## 1.1. 抽象类和接口的区别
 
+1. 抽象类和接口都不能直接实例化，如果要实例化，抽象类变量必须指向实现所有抽象方法的子类对象，接口变量必须指向实现所有接口方法的类对象。
 
+2. 抽象类要被子类继承，接口要被类实现。
+
+3. 接口只能做方法申明（Java 8 可以方法实现，使用 default 标志），抽象类中可以做方法申明，也可以做方法实现。
+
+4. 接口里定义的变量只能是公共的静态的常量，抽象类中的变量是普通变量。
+
+5. 抽象类里的抽象方法必须全部被子类所实现，如果子类不能全部实现父类抽象方法，那么该子类只能是抽象类。同样，一个实现接口的时候，如不能全部实现接口方法，那么该类也只能为抽象类。
+
+6. 抽象方法只能申明，不能实现。abstract void abc();不能写成abstract void abc(){}。
+
+7. 抽象类里可以没有抽象方法。
+
+8. 如果一个类里有抽象方法，那么这个类只能是抽象类。
+
+9. 抽象方法要被实现，所以不能是静态的，也不能是私有的。
+
+10. 接口可继承接口，并可多继承接口，但类只能单继承。
+
+## 1.2. 类可以继承多个类吗
+
+　　不可以，Java 是单继承。
+
+## 1.3. 接口可以继承多个接口吗
+
+　　可以。
+
+## 1.4. 类可以实现多个接口吗
+
+　　可以。
 
 # 2. IO 
 
@@ -12,23 +42,125 @@ IO 模型有哪些，讲讲你理解的 nio，它和 bio、aio 的区别是啥�
 
 # 3. hashCode
 
-如何在父类中为子类自动完成所有的 hashcode 和 equals 实现？这么做有何优劣。
+## 3.1. 如何在父类中为子类自动完成所有的 hashcode 和 equals 实现？这么做有何优劣。
+
+　　父类的 equals 不一定满足子类的 equals 需求。比如所有的对象都继承 Object，默认使用的是 Object 的 equals 方法，在比较两个对象的时候，是看他们是否指向同一个地址。
+
+　　但是需求是对象的某个属性相同，就相等了，而默认的 equals 方法满足不了当前的需求，所以要重写 equals 方法。
+
+　　如果重写了 equals 方法就必须重写 hashcode 法，否则就会降低 map 等集合的索引速度。
+
+　　同时复写 hashcode 和 equals 方法，优势可以添加自定义逻辑，且不必调用超类的实现。
+
+### 3.1.1. 覆盖 equals 时需要遵守的通用约定：
+
+ 　　覆盖 equals 方法看起来似乎很简单，但是如果覆盖不当会导致错误，并且后果相当严重。《Effective Java》一书中提到 “ 最容易避免这类问题的办法就是不覆盖 equals 方法 ”，这句话貌似很搞笑，其实想想也不无道理，其实在这种情况下，类的每个实例都只与它自身相等。如果满足了以下任何一个条件，这就正是所期望的结果：
+
+- **类的每个实例本质上都是唯一的**。对于代表活动实体而不是值的类来说却是如此，例如 Thread。Object 提供的 equals 实现对于这些类来说正是正确的行为。
+
+- **不关心类是否提供了 “ 逻辑相等 ” 的测试功能**。假如 Random 覆盖了 equals，以检查两个 Random 实例是否产生相同的随机数序列，但是设计者并不认为客户需要或者期望这样的功能。在这样的情况下，从 Object 继承得到的 equals 实现已经足够了。
+
+- **超类已经覆盖了 equals，从超类继承过来的行为对于子类也是合适的**。大多数的 Set 实现都从 AbstractSet 继承 equals 实现，List 实现从 AbstractList 继承 equals 实现，Map 实现从 AbstractMap 继承 equals 实现。
+
+- **类是私有的或者是包级私有的，可以确定它的 equals 方法永远不会被调用**。在这种情况下，无疑是应该覆盖 equals 方法的，以防止它被意外调用：
+
+  ```java
+  @Override
+  
+  public boolean equals(Object o){
+  
+   throw new AssertionError(); //Method is never called
+  
+  }
+  ```
+
+　　在覆盖 equals 方法的时候，必须要遵守它的通用约定。下面是约定的内容，来自 Object 的规范[JavaSE6]。
+
+- **自反性**。对于任何非 null 的引用值 x，x.equals(x) 必须返回 true。
+- **对称性**。对于任何非 null 的引用值 x 和 y，当且仅当 y.equals(x) 返回 true 时，x.equals(y) 必须返回 true。
+- **传递性**。对于任何非 null 的引用值 x、y 和 z，如果 x.equals(y) 返回 true，并且 y.equals(z) 也返回 true，那么 x.equals(z) 也必须返回 true。
+- **一致性**。对于任何非 null 的引用值 x 和 y，只要 equals 的比较操作在对象中所用的信息没有被修改，多次调用该 x.equals(y) 就会一直地返回 true，或者一致地返回 false。
+- 对于任何非 null 的引用值 x，x.equals(null) 必须返回 false。
+
+
+　　结合以上要求，得出了以下实现高质量 equals 方法的诀窍：
+
+1. **使用 == 符号检查 “ 参数是否为这个对象的引用 ” **。如果是，则返回 true。这只不过是一种性能优化，如果比较操作有可能很昂贵，就值得这么做。
+2. **使用 instanceof 操作符检查 “ 参数是否为正确的类型 ”**。如果不是，则返回 false。一般来说，所谓 “ 正确的类型 ” 是指 equals 方法所在的那个类。
+3. **把参数转换成正确的类型。**因为转换之前进行过 instanceof 测试，所以确保会成功。
+4. **对于该类中的每个 “ 关键 ” 域，检查参数中的域是否与该对象中对应的域相匹配**。如果这些测试全部成功，则返回 true;否则返回 false。
+5. **当编写完成了 equals 方法之后，检查 “ 对称性 ”、“ 传递性 ”、“ 一致性 ”。**
+   **注意：**
+
+- 覆盖 equal s时总要覆盖 hashCode()。
+- 不要企图让 equals 方法过于智能。
+- 不要将 equals 声明中的 Object 对象替换为其他的类型（因为这样我们并没有覆盖 Object 中的 equals 方法哦）。
 
 
 
-说一说你对 java.lang.Object 对象中 hashcode 和 equals 方法的理解。在什么场景下需要重新实现这两个方法。
+### 3.1.2. 覆盖 equals 时总要覆盖 hashCode
+ 　　一个很常见的错误根源在于没有覆盖 hashCode 方法。在每个覆盖了 equals 方法的类中，也必须覆盖 hashCode 方法。如果不这样做的话，就会违反 Object.hashCode 的通用约定，从而导致该类无法结合所有基于散列的集合一起正常运作，这样的集合包括 HashMap、HashSet 和 Hashtable。
+
+- 在应用程序的执行期间，只要对象的 equals 方法的比较操作所用到的信息没有被修改，那么对这同一个对象调用多次，hashCode 方法都必须始终如一地返回同一个整数。在同一个应用程序的多次执行过程中，每次执行所返回的整数可以不一致。
+- 如果两个对象根据 equals() 方法比较是相等的，那么调用这两个对象中任意一个对象的 hashCode 方法都必须产生同样的整数结果。
+- 如果两个对象根据 equals() 方法比较是不相等的，那么调用这两个对象中任意一个对象的 hashCode 方法，则不一定要产生相同的整数结果。但是程序员应该知道，给不相等的对象产生截然不同的整数结果，有可能提高散列表的性能。
+
+## 3.2. 说一说你对 java.lang.Object 对象中 hashcode 和 equals 方法的理解。在什么场景下需要重新实现这两个方法。
+
+https://blog.csdn.net/qq_21163061/article/details/73606523
+
+https://blog.csdn.net/jingzi123456789/article/details/106224146
+
+## 3.3. 这样的 a.hashcode() 有什么用，与 a.equals(b) 有什么关系？
+
+```java
+//hashCode方法部分源码
+public native int hashCode();
+ 
+//equals方法部分源码
+public boolean equals(Object obj) {
+        return (this == obj);
+}
+```
+
+### 3.3.1. hashCode() 有什么用?
+
+ 　　hashCode() 方法提供了对象的 hashCode 值，是一个 native 方法，返回的默认值与 System.identityHashCode(obj) 一致。
+
+ 　　hashCode()  的作用是获取哈希码，也称为散列码；它实际上是返回一个 int 整数。这个哈希码的作用是确定该对象在哈希表中的索引位置。
+
+ 　　hashCode() 的返回值通常是对象头部的一部分二进制位组成的数字，具有一定的标识对象的意义存在，但绝不定于地址。
+
+ 　　作用是：用一个数字来标识对象。比如在 HashMap、HashSet 等类似的集合类中，如果用某个对象本身作为 Key，即要基于这个对象实现 Hash 的写入和查找，那么对象本身如何实现这个呢？就是基于 hashcode 这样一个数字来完成的，只有数字才能完成计算和对比操作。
+
+### 3.3.2. equals 与 hashCode 的关系?
+
+ 　　equals() 相等的两个对象，hashCode() 一定相等；
+
+ 　　hashCode() 不相等，一定能推出 equals() 也不相等；
+
+ 　　hashCode() 相等，equals() 可能相等，也可能不等。
+
+### 3.3.3 hashcode 是否唯一
+
+ 　　hashcode 只能说是标识对象，在 hash 算法中可以将对象相对离散开，这样就可以在查找数据的时候根据这个 key 快速缩小数据的范围，但 hashcode 不一定是唯一的，所以 hash 算法中定位到具体的链表后，需要循环链表，然后通过 equals 方法来对比 Key 是否是一样的。
+
+## 3.4. 有没有可能 2 个不相等的对象有相同的 hashcode。
+
+有，因为 hashcode 是为了确定对象保存在散列表的位置，但是有可能会发生哈希冲突，就是因为对象的 hashcode 会相同，导致哈希冲突。
+
+1、如果两个对象 equals，Java 运行时环境会认为他们的 hashcode 一定相等。
+2、如果两个对象不 equals，他们的 hashcode 有可能相等。
+3、如果两个对象 hashcode 相等，他们不一定 equals。
+4、如果两个对象 hashcode 不相等，他们一定不 equals。
+
+https://blog.csdn.net/prh1023/article/details/80652704
 
 
-
-这样的 a.hashcode() 有什么用，与 a.equals(b) 有什么关系？
-
-
-
-有没有可能 2 个不想等的对象有相同的 hashcode。
 
 # 4. 访问修饰符
 
-请结合 OO 设计理念，谈谈访问修饰符 public 、private 、protected、default 在应用设计中的作用。
+## 4.1. 请结合 OO 设计理念，谈谈访问修饰符 public 、private 、protected、default 在应用设计中的作用。
 
 
 
@@ -603,15 +735,295 @@ Serializable使用IO读写存储在硬盘上。序列化过程使用了反射技
 
 
 
-# 9. Java 8
-
-## Java 8 的新特性
+# 9. Java 8 的新特性
 
 https://www.jianshu.com/p/0bf8fe0f153b
 
+## 9.1. 接口的默认方法
+
+　　Java 8 允许给接口添加一个非抽象的方法实现，只需要使用 default关键字即可，这个特征又叫做扩展方法，示例如下：
+
+```csharp
+interface Formula {
+    double calculate(int a);
+
+    default double sqrt(int a) {
+        return Math.sqrt(a);
+    }
+}
+```
+
+　　Formula 接口在拥有 calculate 方法之外同时还定义了 sqrt 方法，实现了 Formula 接口的子类只需要实现一个 calculate 方法，默认方法 sqrt 在子类上可以直接使用。
+
+## 9.2. Lambda 表达式
+
+　　对于函数体可见简单表大。
+
+```java
+List<String> names = Arrays.asList("peter", "anna", "mike", "xenia");
+
+Collections.sort(names, new Comparator<String>() {
+    @Override
+    public int compare(String a, String b) {
+        return b.compareTo(a);
+    }
+});
+```
+
+　　使用 Lambda 表达式：
+
+```java
+Collections.sort(names, (a, b) -> b.compareTo(a));
+```
+
+　　Java 编译器可以自动推导出参数类型，所以可以不用再写一次类型。
+
+## 9.3. 函数式接口
+
+　　每一个lambda 表达式都对应一个类型，通常是接口类型。而 “ 函数式接口 ” 是指仅仅只包含一个抽象方法的接口，每一个该类型的 lambda表达式都会被匹配到这个抽象方法。因为默认方法不算抽象方法，所以也可以给你的函数式接口添加默认方法。
+
+　　可以将 lambda 表达式当作任意只包含一个抽象方法的接口类型，确保接口一定达到这个要求，只需要给你的接口添加 @FunctionalInterface 注解，编译器如果发现标注了这个注解的接口有多于一个抽象方法的时候会报错的。
+
+```tsx
+@FunctionalInterface
+interface Converter<F, T> {
+    T convert(F from);
+}
+Converter<String, Integer> converter = (from) -> Integer.valueOf(from);
+Integer converted = converter.convert("123");
+System.out.println(converted);    // 123
+```
+
+　　需要注意如果 @FunctionalInterface 如果没有指定，上面的代码也是对的。
+
+## 9.4. 方法与构造函数引用
+
+　　可以通过静态方法引用来表示方法的调用：
+
+```rust
+Converter<String, Integer> converter = Integer::valueOf;
+Integer converted = converter.convert("123");
+System.out.println(converted);   // 123
+```
+
+　　Java 8 允许你使用 :: 关键字来传递方法或者构造函数引用，上面的代码展示了如何引用一个静态方法，我们也可以引用一个对象的方法：
+
+```ruby
+ converter = something::startsWith;
+String converted = converter.convert("Java");
+System.out.println(converted);    // "J"
+```
+
+　　构造函数使用 :: new 来引用的，
+
+```cpp
+PersonFactory<Person> personFactory = Person::new;
+
+```
+
+　　只需要使用 Person::new 来获取 Person 类构造函数的引用，Java 编译器会自动根据方法的签名来选择合适的构造函数。
+
+## 9.5. Lambda 作用域
+
+　　在 lambda 表达式中访问外层作用域和老版本的匿名对象中的方式很相似。可以直接访问标记了 final 的外层局部变量，或者实例的字段以及静态变量。
+
+## 9.6. 访问局部变量
+
+　　可以直接在 lambda 表达式中访问外层的局部变量：
+
+```dart
+final int num = 1;
+Converter<Integer, String> stringConverter =
+        (from) -> String.valueOf(from + num);
+
+stringConverter.convert(2);     // 3
+```
+
+　　但是和匿名对象不同的是，这里的变量 num 可以不用声明为 final，该代码同样正确：
+
+```dart
+int num = 1;
+Converter<Integer, String> stringConverter =
+        (from) -> String.valueOf(from + num);
+
+stringConverter.convert(2);     // 3
+```
+
+　　不过这里的 num 必须不可被后面的代码修改（即隐性的具有final的语义），例如下面的就无法编译：
+
+```dart
+int num = 1;
+Converter<Integer, String> stringConverter =
+        (from) -> String.valueOf(from + num);
+num = 3;
+```
+
+　　在 lambda 表达式中试图修改 num 同样是不允许的。
+
+## 9.7. 访问对象字段与静态变量
+
+　　和本地变量不同的是，lambda 内部对于实例的字段以及静态变量是即可读又可写。该行为和匿名对象是一致的：
+
+```java
+class Lambda4 {
+    static int outerStaticNum;
+    int outerNum;
+
+    void testScopes() {
+        Converter<Integer, String> stringConverter1 = (from) -> {
+            outerNum = 23;
+            return String.valueOf(from);
+        };
+
+        Converter<Integer, String> stringConverter2 = (from) -> {
+            outerStaticNum = 72;
+            return String.valueOf(from);
+        };
+    }
+}
+```
+
+## 9.8. 访问接口的默认方法
+
+　　上面的接口 Formula 定义了一个默认方法 sqrt 可以直接被 formula 的实例包括匿名对象访问到，但是在 lambda 表达式中这个是不行的。
+　　Lambda 表达式中是无法访问到默认方法的，以下代码将无法编译：
+
+```cpp
+Formula formula = (a) -> sqrt( a * 100);
+Built-in Functional Interfaces
+```
+
+　　JDK 1.8 API 包含了很多内建的函数式接口，在老 Java 中常用到的比如 Comparator 或者 Runnable 接口，这些接口都增加了 @FunctionalInterface 注解以便能用在 lambda 上。
+ Java 8 API 同样还提供了很多全新的函数式接口来让工作更加方便，有一些接口是来自 Google Guava 库里的，这些都被扩展到 lambda 上。
+
+## 9.9. Data API
+
+　　Java 8 在包 java.time 下包含了一组全新的时间日期API。新的日期API 和开源的 Joda-Time 库差不多，但又不完全一样。
+
+　　Clock 时钟：Clock 类提供了访问当前日期和时间的方法，Clock 是时区敏感的，可以用来取代 System.currentTimeMillis() 来获取当前的微秒数。某一个特定的时间点也可以使用 Instant 类来表示，Instant 类也可以用来创建老的 java.util.Date 对象。
+
+　　Timezones 时区：在新 API 中时区使用 ZoneId 来表示。时区可以很方便的使用静态方法 of 来获取到。 时区定义了到 UTS 时间的时间差，在 Instant 时间点对象到本地日期对象之间转换的时候是极其重要的。
+
+　　LocalTime 本地时间：LocalTime 定义了一个没有时区信息的时间，例如 晚上 10 点，或者 17:30:15。
+
+　　LocalDate 本地日期：LocalDate 表示了一个确切的日期，比如 2014-03-11。该对象值是不可变的，用起来和 LocalTime 基本一致。
+
+　　LocalDateTime 本地日期时间：LocalDateTime 同时表示了时间和日期，相当于前两节内容合并到一个对象上了。LocalDateTime 和 LocalTime 还有 LocalDate 一样，都是不可变的。LocalDateTime 提供了一些能访问具体字段的方法。
+
+## 9.10. Annotation 注解
+
+　　在 Java 8 中支持多重注解了，先看个例子来理解一下是什么意思。
+ 首先定义一个包装类 Hints 注解用来放置一组具体的 Hint 注解：
+
+```css
+@interface Hints {
+    Hint[] value();
+}
+
+@Repeatable(Hints.class)
+@interface Hint {
+    String value();
+}
+```
+
+　　Java 8 允许把同一个类型的注解使用多次，只需要给该注解标注一下 @Repeatable 即可。
+
+　　例 1: 使用包装类当容器来存多个注解（老方法）
+
+```kotlin
+@Hints({@Hint("hint1"), @Hint("hint2")})
+class Person {}
+```
+
+　　例 2：使用多重注解（新方法）
+
+```kotlin
+@Hint("hint1")
+@Hint("hint2")
+class Person {}
+```
+
+　　第二个例子里 java 编译器会隐性的定义好 @Hints 解，即便没有在 Person 类上定义 @Hints 注解，还是可以通过  getAnnotation(Hints.class)  来获取 @Hints 注解，更加方便的方法是使用 getAnnotationsByType 可以直接获取到所有的 @Hint 注解。
+
 # 10. 运算符
 
-##  java 运算符与（&） 、非（～）、或（|）、异或（^）
+##  10.1. java 运算符与（&） 、非（～）、或（|）、异或（^）
 
-https://www.cnblogs.com/liaojie970/p/5329690.html
+　　位运算符主要针对二进制，它包括了：“与”、“非”、“或”、“异或”。从表面上看似乎有点像逻辑运算符，但逻辑运算符是针对两个关系运算符来进行逻辑运算，而位运算符主要针对两个二进制数的位进行逻辑运算。下面详细介绍每个位运算符。
+
+### 10.1.1．与运算符
+
+　　与运算符用符号 “&” 表示，其使用规律如下：
+两个操作数中位都为 1，结果才为1，否则结果为 0，例如下面的程序段。
+
+```java
+public class data13 {
+    public static void main(String[] args) {
+        int a = 129;
+        int b = 128;
+        System.out.println("a 和b 与的结果是：" + (a & b));
+    }
+}
+```
+
+　　运行结果
+　　a 和b 与的结果是：128
+　　下面分析这个程序：
+　　“a” 的值是129，转换成二进制就是 10000001，而 “b” 的值是128，转换成二进制就是 10000000。根据与运算符的运算规律，只有两个位都是1，结果才是1，可以知道结果就是 10000000，即 128。
+### 10.1.2．或运算符
+　　或运算符用符号 “|” 表示，其运算规律如下：
+　　两个位只要有一个为1，那么结果就是1，否则就为 0，下面看一个简单的例子。
+
+```java
+public class data14 {
+    public static void main(String[] args) {
+        int a = 129;
+        int b = 128;
+        System.out.println("a 和b 或的结果是：" + (a | b));
+    }
+}
+```
+
+　　运行结果
+　　a 和 b 或的结果是：129
+　　下面分析这个程序段：
+　　a 的值是129，转换成二进制就是 10000001，而 b 的值是128，转换成二进制就是 10000000，根据或运算符的运算规律，只有两个位有一个是 1，结果才是 1，可以知道结果就是 10000001，即 129。
+
+### 10.1.3．非运算符
+　　非运算符用符号 “~” 表示，其运算规律如下：
+
+　　如果位为0，结果是1，如果位为1，结果是0，下面看一个简单例子。
+
+```java
+public class data15 {
+    public static void main(String[] args) {
+        int a = 2;
+        System.out.println("a 非的结果是：" + (~a));
+    }
+}
+```
+
+　　运行结果
+　　a 非得结果是：-3
+　　下面分析这个程序段：
+　　a 的值是 2 ，转换成二进制就是 00000010，非 a 就是 1111 1101，就是 -3 。
+
+### 10.1.4．异或运算符
+
+　　异或运算符是用符号 “^” 表示的，其运算规律是：
+两个操作数的位中，相同则结果为 0，不同则结果为 1。下面看一个简单的例子。
+
+```java
+public class data16 {
+    public static void main(String[] args) {
+        int a = 15;
+        int b = 2;
+        System.out.println("a 与 b 异或的结果是：" + (a ^ b));
+    }
+}
+```
+
+　　运行结果
+　　a 与 b 异或的结果是：13
+　　分析上面的程序段：a 的值是 15，转换成二进制为 1111，而 b 的值是 2，转换成二进制为 0010，根据异或的运算规律，可以得出其结果为1101 即13。
 

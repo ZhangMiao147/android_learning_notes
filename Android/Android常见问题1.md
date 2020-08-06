@@ -88,73 +88,66 @@ Android 是基于 Linux 系统的，而在 Linux 中，所有的进程都是由 
 
 #### 2.2.1.1. FLAG_ACTIVITY_CLEAR_TOP
 
-**描述**：设置此标志，如果 activity 已经在栈中，会将栈中 activity 之上的 activities 进行出栈关闭，如果启动模式是默认的（标准模式），设置了 FLAG_ACTIVITY_CLEAR_TOP 标志的 activity 会结束并重新创建；如果是其他模式或者 Intent 设置了 FLAG_ACTIVITY_SINGLE_TOP，则 activity 会将新的 intent 传递给栈中的 activity 的 onNewIntent() 方法。
-
-**举例**：C 跳转 B 的 flag 设置为 FLAG_ACTIVITY_CLEAR_TOP ，当前栈中（从栈底到栈顶）的情况是：A->B->C，然后 C 跳转 B，栈的情况就成了：A->B。
+1. 新活动已在当前任务中时，在新活动上面的活动会被关闭，新活动不会重新启动，只会接收new intent。
+2.  新活动已在任务最上面时：如果启动模式是"multiple" (默认的)，并且没添加 FLAG_ACTIVITY_SINGLE_TOP，那么活动会被销毁重新创建；如果启动模式是其他的，或者添加了FLAG_ACTIVITY_SINGLE_TOP，那么只会调用活动的onNewIntent()。
+3. 跟 FLAG_ACTIVITY_NEW_TASK 联合使用效果很好：如果用于启动一个任务中的根活动，会把该任务移到前面并清空至root状态。这特别有用，比如用于从 notification manager 中启动活动。
 
 #### 2.2.1.2. FLAG_ACTIVITY_NO_HISTORY
 
-**描述**：如果这只此 flag，则启动的 activity 将不会保留在历史栈中，一旦用户离开它，activity 将结束。
+1.  新活动不会保留在历史栈中，一旦用户切换到其他页面，新活动会马上销毁。
+2. 旧活动的onActivityResult()方法永远不会被触发。
 
 **举例**：A 跳转 B 的 flag 设置为 FLAG_ACTIVITY_NO_HISTORY，B 跳转 C，在 C 界面点击返回键，则会直接回到 A 界面。
 
-#### 2.2.1.3. FLAG_ACTIVITY_NEW_TASK
+#### 2.2.1.3. FLAG_ACTIVITY_SINGLE_TOP
+
+1. 新活动已存在历史栈的顶端时就不会重新启动。
+2. 与 launchMode 的 “singleTask” 相同。
+
+#### 2.2.1.4. FLAG_ACTIVITY_NEW_TASK
+
+1. 新活动会成为历史栈中的新任务（一组活动）的开始。
+2. 通常用于具有"launcher"行为的活动：让用户完成一系列事情，完全独立于之前的活动。
+3. 如果新活动已存在于一个为它运行的任务中，那么不会启动，只会把该任务移到屏幕最前。
+4. 如果新活动要返回result给启动自己的活动，就不能用这个flag。
+5. 与 launchModel 的 “singleTask” 启动模式效果相同？
 
 **描述**：设置 FLAG_ACTIVITY_NEW_TASK 标签后，首先会查找是否存在和被启动的 activity 具有相同亲和性的任务栈，如果没有，则新建一个栈让 activity 入栈；如果有，则保持栈中 activity 的顺序不变，如果栈中没有 activity，将 activity 入栈，如果栈中有 activity，则将整个栈移动到前台。
 
 **举例**：设置 A 跳转 B 的 flag 为 FLAG_ACTIVITY_NEW_TASK，设置 B 的 taskAffinity 的值。A 跳转 B ，B 跳转 C，C 跳转回到 A，A 跳转 B,会显示 C 界面。
 
-#### 2.2.1.4. FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_CLEAR_TASK
+#### 2.2.1.5. FLAG_ACTIVITY_NEW_DOCUMENT
 
-**描述**：FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_CLEAR_TASK 联合使用时，首先会查找是否存在和被启动的 activity 具有相同亲和性的任务栈，如果有则先将栈清空，将被启动的 activity 会入栈，并将栈整体移动到前台；如果没有，则新建栈来存放被启动的 activity。
+1. 本 flag 会给启动的活动开一个新的任务记录。使用了本 flag 或 documentLaunchMode 属性时，相同的活动的多实例会在最近任务列。
+2. 使用本 flag 比使用 documentLaunchMode 属性好，因为 documentLaunchMode 属性会跟活动绑定，而 flag 只在需要时添加。
+3. 注意本 flag 的默认词义，活动销毁后最近任务列表中的入口不会移除。这跟使用 FLAG_ACTIVITY_NEW_TASK 不一样，后者活动销毁后入口马上移除。可以用 FLAG_ACTIVITY_RETAIN_IN_RECENTS 改变这个行为。
+4. 本 flag 可以跟 FLAG_ACTIVITY_MULTIPLE_TASK 联合使用。单独使用时跟 manifest 活动中定义 documentLauchMode = "intoExisting" 效果相同，联合使用时跟 manifest 活动中定义 documentLaunchMode = "always" 效果相同。
 
-**举例**：设置 A 跳转 B 的 flag 为 FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_CLEAR_TASK，设置 B 的 taskAffinity 的值。A 跳转 B ，B 跳转 C，C 跳转回到 A，A 跳转 B，显示 B 界面。
-
-**其他**：与单独使用 FLAG_ACTIVITY_NEW_TASK 不同的是，启动设置的 activity，如果存在 activity 亲和性的栈，会先将栈中的 activity 全部清除，不管栈中是否存在启动的 activity 的实例，然后将启动的 activity 入栈。
-
-#### 2.2.1.5. FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_CLEAR_TOP
-
-**描述**：FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_CLEAR_TOP 联合使用时，首先会查找是否存在和被被启动的 activity 具有相同亲和性的任务栈，如果有，栈中如果包含 activity ，则将栈中 activity 之上包括栈中的 activity 移除，将被启动的 activity 入栈，并将栈整体移动到前台，如果栈中没有要启动 activity，则直接将 activity 入栈；如果没有，则新建栈来存放被启动的 activity。
-
-**举例**：C 跳转 B 设置 FLAG_ACTIVITY_NEW_TASK 和 FLAG_ACTIVITY_CLEAR_TOP , A 跳转 B，B 跳转 C，栈中情况是:A->B->C，C 跳转 B ,栈中情况是:A->B（B是新启动的B）。
-
-#### 2.2.1.6. FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
-
-**描述**：如果设置 FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS，则新的 activity 将不会被保留在最近启动 activities 的列表中。
-
-**举例**：A 跳转 B 设置 FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS，设置 B 的亲和性。A 跳转 B，然后查看多任务管理器，可以看到多任务管理器列表中只有 A 所在的任务栈，并没有 B 所在的任务栈，所以在 B 界面按 home 退出应用后，再次打开只会回到 A 界面。
-
-**其他**：FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS 与使用 FLAG_ACTIVITY_NO_HISTORY 标志不同，使用 FLAG_ACTIVITY_NO_HISTORY 标志时，在经过 A -> B -> C 的界面跳转后，在 C 界面点击 back 键就会回到 A 界面，而 FLAG_ACTIVITY_NEW_TASK 和 FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS 一起使用时，在经过 A -> B -> C 的界面跳转后 ，在 C 点击 back 返回，还是会回到 B 界面的。
-
-#### 2.2.1.7. FLAG_ACTIVITY_NEW_DOCUMENT
-
-**描述**：被用于基于 Intent 的 activity 活动开一个新的任务。同一个 activity 的不同实例将会在最近的任务列表中显示不同的记录。
-
-**举例**：A 跳转 B 设置为 FALG_ACTIVITY_NEW_DOCUMENT，A 跳转 B，B 跳转 C，当前栈情况是：栈1（A），栈2（B->C）,C 跳转 A，A 跳转 B，当前栈情况是：栈1（A），栈2（B->C），显示 C 界面。
-
-**其他**：相当于在 manifest 中定义 android.R.attr#documentLaunchMode="intoExisting"，如果之前已经打开过，则会打开之前的。FALG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_NEW_TASK 的不同点在于亲和性上，FLAG_ACTIVITY_NEW_TASK 会寻找与自己亲和性的栈，如果有，则进入，如果没有，则创建栈，而 FALG_ACTIVITY_NEW_DOCUMENT 是没有打开过，则直接创建栈。
-
-#### 2.2.1.8. FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_MULITIPLE_TASK
-
-**描述**：单独使用 FLAG_ACTIVITY_NEW_DOCUMENT 时，会先从存在的任务栈中搜索匹配 Intent 的栈，如果没有任务栈被发现则创建新的任务栈，当与 FLAG_ACTIVITY_MULTIPLE_TASK 配合使用时，会跳过搜索匹配任务栈而是直接开启一个新的任务栈。
-
-**举例**：A 跳转 B 设置 FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_MULTIPLE_TASK 联合使用，A 跳转 B，B 跳转 C，C 跳转 A，当前栈情况是:栈1（A），栈2（B->C），A 跳转 B，当前栈情况是：栈1（A），栈2（B->C），栈3：B。
-
-**其他**：FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_MULTIPLE_TASK 联合使用，相比较 FLAG_ACTIVITY_NEW_DOCUMENT 的单独使用就是，不管是否存在 activity 所在的任务栈，都新建任务栈。效果等同于documentLaunchMode=“always”，不管之前有没有打开，都新创建一个。
-
-#### 2.2.1.9. FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_MULITIPLE_TASK
-
-**描述**：单独使用  FLAG_ACTIVITY_NEW_TASK 时，会先从存在的任务栈中搜索匹配 Intent 的栈，如果没有任务栈被发现则创建新的任务栈，当与 FLAG_ACTIVITY_MULTIPLE_TASK 配合使用时，会跳过搜索匹配任务栈而是直接开启一个新的任务栈。
-
-**举例**：FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_MULTIPLE_TASK 联合使用的情况和 FLAG_ACTIVITY_NEW_DOCUMENT 与 FLAG_ACTIVITY_MULTIPLE_TASK 联合使用的情况基本相同，不同的点就在于 FLAG_ACTIVITY_NEW_TASK 与 FLAG_ACTIVITY_NEW_DOCUMENT 的不同上。
-
-### 2.3. launchMode 与 Intent 的 flags 的对比
+## 2.3. launchMode 与 Intent 的 flags 的对比
 
 1. Intent 的 flags 的优先于 launchMode 。
-
-2. launchMode 设置的一些启动模式 Intent 的 flags 无法代替，比如 ，Intent 的 flag 的一些使用 launchMode 也无法代替，比如。
-
+2. launchMode 设置的一些启动模式只有四种，而 Intent 的 flags 比较多，可以搭配使用，实现效果也多种多样。
 3. 指定 launchMode 的 activity 被任何对象任何地方调用，启动模式都一样；而 Intent 的 flags 只对 startActivity 的 activity 有效，其他调用同样的 activity 可以设置其他的启动模式，并不会相互影响。
+
+## 2.4. Activity 属性
+
+### 2.4.1. allowTaskReparenting
+
+　　在这种情况下，Activity 可以从其启动的任务移动到与其具有关联的任务（如果该任务出现在前台）。
+
+　　例如，假设将报告所选城市天气状况的 Activity 定义为旅行应用的一部分。它与同一应用中的其他 Activity 具有相同的关联（默认应用关联），并允许利用此属性重定父级。当你的一个 Activity 启动天气预报 Activity 时，它最初所属的任务与你的 Activity 相同。但是，当旅游应用的任务出现在前台时，系统会将天气预报 Activity 重新分配给该任务并显示在其中。
+
+### 2.4.2. alwaysRetainTaskStat
+
+　　如果用户长时间将某个task移入后台，则系统会将该task的栈内容弹出只剩下栈底的activity，此时用户再返回，则只能看到根activity了。如果栈底的activity的这个属性设置成true，则将阻止这一行为，从而保留所有的栈内容。
+
+### 2.4.3. clearTaskOnLaunch
+
+　　根activity的这个属性设置成true时，则每当用户离开任务然后返回时，系统都会将堆栈清除到只剩下根 Activity 。换而言之，它与 alwaysRetainTaskState 正好相反。即使只离开任务片刻时间，用户也始终会返回到任务的初始状态。
+
+### 2.4.4. finishOnTaskLaunch
+
+　　此属性类似于 clearTaskOnLaunch ，但它对单个 Activity 起作用，而非整个任务。此外，它还有可能会导致任何 Acivity 停止，包括根 Activity 。设置为 “true” 时，Activity 仍是任务的一部分，但是仅限于当前会话。如果用户离开然后返回任务，则任务将不复存在。
 
 ## 3. Activity 的事件分发机制
 
@@ -200,7 +193,7 @@ Android Fragment学习与使用—高级篇 https://blog.csdn.net/qq_24442769/ar
 
 Android子线程创建Handler方法 https://blog.csdn.net/hongdameng/article/details/42639961
 
-# 10 .跨进程通信方式
+# 10. 跨进程通信方式
 
 
 
