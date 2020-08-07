@@ -149,11 +149,21 @@ Android 是基于 Linux 系统的，而在 Linux 中，所有的进程都是由 
 
 　　此属性类似于 clearTaskOnLaunch ，但它对单个 Activity 起作用，而非整个任务。此外，它还有可能会导致任何 Acivity 停止，包括根 Activity 。设置为 “true” 时，Activity 仍是任务的一部分，但是仅限于当前会话。如果用户离开然后返回任务，则任务将不复存在。
 
-## 3. Activity 的事件分发机制
+# 3. Activity 的事件分发机制
 
 Android事件分发机制完全解析，带你从源码的角度彻底理解(上) https://blog.csdn.net/guolin_blog/article/details/9097463
 
+　　Android 的事件分发机制基本会遵从 Activity -> ViewGroup -> View 的顺序进行事件分发，然后通过调用 onTouchEvent() 方法进行事件的处理。
 
+　　当点击事件产生后，事件首先会传递给当前的 Activity，这会调用 Activity 的 dispatchTouchEvent() 方法，在这个方法中会调用 getWindow().superDispatchTouchEvent() 方法，其实就是调用了 DecorView 的 superDispatchTouchEvent()，DecoreView 的父类是 ViewGroup，其实也就是 ViewGroup 的 dispatchEvent() 方法。
+
+![](view/image/Activity的事件分发示意图.png)
+
+　　一般情况下，事件列都是从用户按下（ACTION_DOWN）的那一刻产生的，不得不提到，三个非常重要的于事件相关的方法。
+
+* dispatchTouchEvent() - 分发事件
+* onTouchEvent() - 处理事件
+* onInterceptTouchEvent() - 拦截事件
 
 ## 4. Android 的缓存机制
 

@@ -32,7 +32,7 @@
             onUserInteraction();
         }
         if (getWindow().superDispatchTouchEvent(ev)) {
-          	// 若 getWIndow().superDispatchTouchEvent(ev) 返回 true
+          	// 若 getWindow().superDispatchTouchEvent(ev) 返回 true
           	// 则 Activity.dispatchTouchEvent() 也返回 true，停止事件传递
             return true;
         }
