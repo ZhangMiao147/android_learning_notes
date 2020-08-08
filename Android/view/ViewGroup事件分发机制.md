@@ -241,7 +241,7 @@ public class MyLayout extends LinearLayout {
             boolean alreadyDispatchedToNewTouchTarget = false;
             // 没有拦截也没有停止
             // ACTION_DOWN
-            //虽然说 ACTION_DOWN、ACTION_MOVE、ACTION_UP 三个事件都可以进入这个判断中,但是里面有个判断，大部分的代码只有 ACTION_DOWN 可以进入
+            // 虽然说 ACTION_DOWN、ACTION_MOVE、ACTION_UP 三个事件都可以进入这个判断中,但是里面有个判断，大部分的代码只有 ACTION_DOWN 可以进入
             // canceled ：是否取消
             if (!canceled && !intercepted) {
 
@@ -299,7 +299,7 @@ public class MyLayout extends LinearLayout {
  // 判断当前的 x,y 坐标是否落在子 View 身上                               
                                 !isTransformedTouchPointInView(x, y, child, null)) {
                                 ev.setTargetAccessibilityFocus(false);
-                                // 入伏哦触摸的不是当前子 View，则进行下一个子 view 处理
+                                // 如果触摸的不是当前子 View，则进行下一个子 view 处理
                                 continue;
                             }
 

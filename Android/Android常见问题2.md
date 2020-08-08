@@ -8,7 +8,11 @@ Android 性能优化之旅4--UI卡顿分析 https://www.jianshu.com/p/72144b627b
 
 # 2. View 的绘制流程
 
+https://www.cnblogs.com/andy-songwei/p/10955062.html
 
+　　每一个视图的绘制过程都必须经历三个最主要的阶段，即 onMeasure()、onLayout() 和 onDraw()。
+
+ 　　onMeasure()：
 
 # 3. Android 进程保活
 
@@ -151,9 +155,15 @@ cat /proc/进程ID/oom_adj
 
 # 4. 动画的分类及其原理
 
-
+https://www.jianshu.com/p/88d349009530
 
 # 5. SparseArray 原理
+
+https://www.cnblogs.com/xiaxveliang/p/12396049.html
+
+https://www.jianshu.com/p/081b78dfe9f6
+
+https://www.cnblogs.com/RGogoing/p/5095168.html
 
 # 6. 一个 Android 程序至少包含几个线程
 

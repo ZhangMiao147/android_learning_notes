@@ -37,7 +37,7 @@
 
 #### 1.2.3. Handler
 
-　　消息辅助类，主要功能向消息池发送各种消息事件（Hnadler sendMessage）和处理相应消息事件（Handler.handleMessage）。
+　　消息辅助类，主要功能向消息池发送各种消息事件（Handler sendMessage）和处理相应消息事件（Handler.handleMessage）。
 
 　　可以使用 Handler 发送并处理与一个线程关联的 Message 和 Runnable。（注意：Runnable 会被封装进一个 Message，所以它本质上还是一个 Message）。
 
@@ -290,7 +290,7 @@ public final class ActivityThread {
 
 　　添加消息到消息队列是通过 Handler 来操作的。
 
-　　每一个 Handler 实例关联了一个单一的 thread 和这个 thread 的 messageQueue，当 Handler 的实例被创建的时候它就被绑定到了创建它的 thread。它用来调度 message 和 runnables（也会被封装成一个 Message 对象） 在未来某个时间点的执行，还可以排列其他线程里执行的操作。
+　　每一个 Handler 实例关联了一个单一的 thread 和这个 thread 的 MessageQueue，当 Handler 的实例被创建的时候它就被绑定到了创建它的 thread。它用来调度 message 和 runnables（也会被封装成一个 Message 对象） 在未来某个时间点的执行，还可以排列其他线程里执行的操作。
 
 #### 4.2.1. 创建 Handler
 
@@ -754,7 +754,7 @@ public class Handler {
 
 1. Handler 的背后有着 Looper 以及 MessageQueue 的协助，三者通力合作。
 
-2. Looper 负责关联线程以及消息的分发。在该线程下循环从 MessageQueue 获取 Message，分发给 Handler。在创建 Handler 之前一定需要先创建 Looper。Looper 有退出的功能，但是主线程的 Looper 不允许退出。异步线程的 Looper 需要自己调用 Looper.myLooper().quit()；退出。
+2. Looper 负责关联线程以及消息的分发。在该线程下循环从 MessageQueue 获取 Message，分发给 Handler。在创建 Handler 之前一定需要先创建 Looper。Looper 有退出的功能，但是主线程的 Looper 不允许退出。异步线程的 Looper 需要自己调用 `Looper.myLooper().quit()；`退出。
 
 3. MessageQueue 负责消息的存储与管理。负责管理由 Handler 发送过来的 Message。
 
@@ -774,11 +774,11 @@ public class Handler {
 
 
 ## 7. 参考文章
-[Android消息机制的原理及源码解析](https://www.jianshu.com/p/f10cff5b4c25)
+1. [Android消息机制的原理及源码解析](https://www.jianshu.com/p/f10cff5b4c25)
 
-[Handler 都没搞懂，拿什么去跳槽啊？](https://juejin.im/post/5c74b64a6fb9a049be5e22fc)
+2. [Handler 都没搞懂，拿什么去跳槽啊？](https://juejin.im/post/5c74b64a6fb9a049be5e22fc)
 
-[Android Handler 消息机制（解惑篇）](https://juejin.im/entry/57fb3c53128fe100546ea4f2)
+3. [Android Handler 消息机制（解惑篇）](https://juejin.im/entry/57fb3c53128fe100546ea4f2)
 
-[Android异步消息处理机制完全解析，带你从源码的角度彻底理解](https://blog.csdn.net/guolin_blog/article/details/9991569)
+4. [Android异步消息处理机制完全解析，带你从源码的角度彻底理解](https://blog.csdn.net/guolin_blog/article/details/9991569)
 

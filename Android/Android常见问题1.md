@@ -151,13 +151,7 @@ Android 是基于 Linux 系统的，而在 Linux 中，所有的进程都是由 
 
 # 3. Activity 的事件分发机制
 
-Android事件分发机制完全解析，带你从源码的角度彻底理解(上) https://blog.csdn.net/guolin_blog/article/details/9097463
-
 　　Android 的事件分发机制基本会遵从 Activity -> ViewGroup -> View 的顺序进行事件分发，然后通过调用 onTouchEvent() 方法进行事件的处理。
-
-　　当点击事件产生后，事件首先会传递给当前的 Activity，这会调用 Activity 的 dispatchTouchEvent() 方法，在这个方法中会调用 getWindow().superDispatchTouchEvent() 方法，其实就是调用了 DecorView 的 superDispatchTouchEvent()，DecoreView 的父类是 ViewGroup，其实也就是 ViewGroup 的 dispatchEvent() 方法。
-
-![](view/image/Activity的事件分发示意图.png)
 
 　　一般情况下，事件列都是从用户按下（ACTION_DOWN）的那一刻产生的，不得不提到，三个非常重要的于事件相关的方法。
 
@@ -165,27 +159,243 @@ Android事件分发机制完全解析，带你从源码的角度彻底理解(上
 * onTouchEvent() - 处理事件
 * onInterceptTouchEvent() - 拦截事件
 
-## 4. Android 的缓存机制
+## 3.1. Activity
+
+　　当点击事件产生后，事件首先会传递给当前的 Activity，这会调用 Activity 的 dispatchTouchEvent() 方法，在这个方法中会调用 getWindow().superDispatchTouchEvent() 方法，其实就是调用了 DecorView 的 superDispatchTouchEvent()，DecoreView 的父类是 ViewGroup，其实也就是 ViewGroup 的 dispatchEvent() 方法。
+
+![](view/image/Activity的事件分发示意图.png)
+
+## 3.2. View
+
+　　不管是 DOWN、MOVE 还是 UP 都是按照下面的顺序执行：
+
+1. dispatchTouchEvrnt
+2. setOnTouchListener 的 onTouch
+3. onTouchEvent
+
+　　如果 setOnToucheListener 和 setClickListener 都注册了，onTouch 是优先于 onClick 执行的。
+
+　　onTouch 方法是由返回值的，如果把 onTouch 方法里的返回值改成 true，onClick 方法不再执行了。
+
+　　只要触摸到了任何一个控件，就一定会调用该控件的 dispatchTouchEvent 方法。当去点击按钮的时候，就回去调用 Buttong 类里面的 dispatchTouchEvent 方法，就是调用的 View 的 dispatchTouchEvent 方法。
+
+### 3.1.1. View#dispatchTouchEvent
+
+```java
+...
+			// 必须满足三个条件都为真，才会返回 true
+          	// 1. mOnTouchListener 不为 null，即调用了 setOnTouchListener()
+          	// 2. (mViewFlags & ENABLED_MASK) == ENABLED
+            // 3. li.mOnTouchListener.onTouch(this, event) 
+            if (li != null && li.mOnTouchListener != null
+                    && (mViewFlags & ENABLED_MASK) == ENABLED
+                	// 调用 li.mOnTouchListener.onTouch 方法
+                    && li.mOnTouchListener.onTouch(this, event)) {
+                result = true;
+            }
+			// 调用 onTouchEvent 方法
+            if (!result && onTouchEvent(event)) {
+                result = true;
+            }
+        }
+...
+```
+
+　　在 View 的 dispatchTouchEvent() 方法内，会进行一个判断，如果 `li != null && li.mOnTouchListener != null && (mViewFlags & ENABLED_MASK) == ENABLED && li.mOnTouchListener.onTouch(this, event)` ，这个判断结果为 true ，则返回 true，否则就会调用 onTouchEvent(event) 方法。
+
+　　`li != null && li.mOnTouchListener != null` ：如果调用了 setTouchListener() 方法设置了触摸监听，`li.mOnTouchListener`就是设置的 OnTouchListener 对象，这个判断结果就是 true。
+
+　　`(mViewFlags & ENABLED_MASK) == ENABLED`：判断当前点击的空间是否是 enable 的，按钮默认都是 enable 的，所以这个条件为 true。
+
+　　`li.mOnTouchListener.onTouch(this, event)`：li.mOnTouchListener 是触摸监听的 OnTouchListener 对象，调用它的 onTouch() 方法，如果 onTouch() 返回 true，则三个条件成立，则 dispatchTouchEvent() 方法返回 true。
+
+　　如果控件是不可点击的或者 OnTouchListener.onTouch() 方法不存在或 OnTouchListener.onTouch() 存在并返回 false，就会执行 onTouchEvent() 方法。
+
+### 3.1.2. View#onTouchEvent
+
+　　如果控件可点击或者长按，View 的 onTouchEvent() 方法最终一定会 return true。
+
+* ACTION_DOWN：如果父控件是可以滚动的，则延时 100ms 处理点击（滚动检测回调），为了防止点击是滚动；如果父控件是不可以滚动的，则刷新背景，检查长按。
+
+  延时到了后，也是执行刷新背景，检测长按。
+
+  刷新背景的方法中在刷新背景后，还会调用 dispatchSetPressed() 方法将消息传递给子 View。
+
+  检查长按是，如果支持是长按，就会发送延迟消息（长按的检测回调），延时时间到了后，就会调用 performLongClick() 方法，而 performLongClick() 方法调用了 li.mOnLongClickListener.onLongClick() 方法。
+
+* ACTION_MOVE：显示判断触摸点是否还在当前 View 上，如果不再当前 View 上，则移除滚动和长按的检测回调，并刷新背景；如果现在当前 View 上，则移除原来的长按检测回调，重新发出长按检测回调。
+
+* ACTION_UP：控件可以点击或者长按时并且设置的长按回调 onLongClick() 方法返回了 false，则移除长按检测回调，并且接着运行 performClickInternal() 方法；如果 onLongClick() 方法返回了 true，就不会执行 performClickInternal() 方法。如果检测滚动还没完，则刷新背景，最后移除滚动检测。
+
+  performClickInternal() 方法就是调view用设置的 onClickListener() 的 OnClick() 方法。
+
+　　View的事件分发示意图：
+
+![](view/image/View的事件分发示意图.png)
+
+## 3.3. ViewGroup
+
+　　ViewGroup事件分发示意图
+
+![](view/image/ViewGroup事件分发示意图.png)
+
+1. Android 事件分发是先传递给 ViewGroup，再由 ViewGroup 传递给 View 的。
+
+2. ViewGroup 的 dispatchTouchEvent() 方法中回去调用 onInterceptTouchEvent() 方法，在 ViewGroup 中可以通过 onInterceptTouchEvent() 方法对事件传递进行拦截，onInterceptTouchEvent() 方法返回 true 代表不允许事件继续向子 View 传递，返回 false 代表不对事件进行拦截，默认返回 false。
+
+3. ViewGroup 的 dispatchTouchEvent() 方法中在 ACTION_DOWN 时会先去遍历所有的子 View，判断看点击的地方是否是子 View 的控件，如果是，则调用子 View  的 dispatchTouchEvent() 方法；如果点击的地方不是子 View 控件，则调用父类 View 的 dispatchTouchEvent() 方法。在 ACTION_MOVE、ACTION_UP 事件中如果触摸的子 View 存在，也是去调用子 View 的 dispatchTouchEvent() 方法，不存在，则调用父类 View 的 dispatchTouchEvent() 方法。
+
+   子 View 中如果将传递的事件消费掉，ViewGroup 中将无法接收到任何事件。
+
+   如果 ViewGroup 找到了能够处理该事件的 View，则直接交给子 View 处理，自己的 onTouchEvent() 不会被触发。
+
+4. 可以通过覆写 onInterceptTouchEvent(ev) 方法，拦截子 View 的事件（即 return true），把事件交给自己处理，则会执行自己对应的 onTouchEvent() 方法。
+
+5. 子 View 可以通过调用 getParent().requestDisallowInterceptTouchEvent(true); 阻止 ViewGroup 对其 ACTION_MOVE 事件进行拦截。
+
+   也可以在 ACTION_DOWN 和 ACTION_UP 中 return true，但是触摸事件是父控件先执行 dispatchTouchEvent() 方法，然后父控件分发事件调用子控件的 dispatchTouchEvent9) 方法，而子控件在 dispatchTouchEvent() 方法中执行 getParent().requestDisallowInterceptTouchEvent(true) 设置已经不能影响到父控件的  dispatchTouchEvent() 方法了。
+
+   而 ACTION_UP，事件都是最后一个了，return true 拦截子控件，如果不想拦截，直接 return false 就好了，没有必要。
+
+## 3.4. onTouch 和 onTouchEvent 有什么区别？又该如何使用
+
+　　从源码中可以看出，这两个方法都是在 View 的 dispatchTouchEvent 中调用的，onTouch 优先于 onTouchEvent 执行。如果在 onTouch 方法中通过返回 true 将事件消费掉，onTouchEvent 将不会再执行。
+
+　　另外需要注意的是，onTouch 能够得到执行需要两个前提条件，第一 mOnTouchListener 的值不能为空，第二当前点击的控件必须是 enable 的。因此如果有一个控件是非 enable 的，那么给它注册 onTouch 事件将永远得不到执行。对于这一类控件，如果想要监听它的 touch 事件，就必须通过在该控件中重写 onTouchEvent 方法来实现。
+
+# 4. Android 的缓存机制
 
 Android缓存机制 https://www.jianshu.com/p/2608f036f362
 
-## 5. gradle 构建周期
-
-
-
-## 6. Android 的消息机制
-
-![](image/2.jpeg)
-
-![](image/3.jpeg)
-
-## 7. Android 的缓存机制
-
 彻底解析Android缓存机制——LruCache https://www.jianshu.com/p/b49a111147ee
 
+# 5. gradle 构建周期
+
+https://www.jianshu.com/p/2e19268bf387
+
+# 6. Handler
+
+## 6.1. Handler 消息机制的流程
+
+1. 准备阶段
+
+   * 在子线程调用 Looper.prepare() 方法或在主线程调用 Looper.prepareMainLooper() 方法创建当前线程的 Looper 对象。
+
+     主线程中这一步由 Android 系统在应用启动时完成。
+
+     使用 ThreadLocal 将 Loop 对象存储在当前线程中。
+
+   * 在创建 Looper 对象时会创建一个消息队列 MessageQueue。
+
+   * Looper 通过 loop() 方法获取到当前线程的 Looper 和 MessageQyeye，并启动循环，从 MessageQueue 不断提取 Message，若 MessageQueue 没有消息，处于阻塞状态。
+
+2. 发送消息
+
+   * 使用当前线程创建的 Handler 在其他线程通过 sendMessage() 发送 Message 到 MessageQueue。在这个时候会将 Message 对象的 target 设置为 Handler 对象，将 Message 对象的 callback 设置为 Runnable 对象（hanle.post(Runnable runnable)）。
+   * 使用 synchronized(this) 保证同步，将 Message 根据消息时间插入 MessageQueue 的消息链表中。如果是链表中的第一个消息，则唤醒阻塞。
+
+3. 获取消息
+
+   * Looper 的 loop() 方法从 MessageQueue 获取新插入的 Message。
+
+   * MessageQueue 的 next() 方法中是一个死循环，循环重会有一个阻塞唤醒操作，当等待 nextPollTimeoutMillis 时长，或者消息队列被唤醒，都会唤醒。使用 synchronized(this) 保证同步，查找可用的消息并返回。
+
+   * Looper 获取到 Message 后，通过 Message 的 target 即 Handler 调用 dispatchMessage(Message msg) 方法分发提取到的 Message，然后回收 Message 并继续循环获取下一个 Message。
+
+     消息分发的优先级：
+
+     * Message 的回调方法：message.callback.run()，优先级最高。（handle.post() 情况）
+     * Handler 中 Callback 的回调方法：Handler.mCallback.handleMessage(msg)。
+     * Handler.handleMessage(msg)。（handle.sendMessage() 的情况）
+
+     第三种情况是最常用的，通过覆写 Handler.handleMessage() 方法从而实现自己的业务逻辑。
+
+4. 阻塞等待
+
+   * MessageQueue 没有 Message 时，重新进入阻塞状态。
+
+![](handler/image/Handler消息机制图.png)
+
+### 6.1.1.  Message
+
+　　Message 封装了任务携带的信息和处理该任务的 handler，可以被发送给 Handler。
+
+　　尽管 Message 有 public 的默认构造方法，但是应该通过 Message.obtail() 来从消息池中获取空消息对象，以节省资源。
+
+　　如果 Message 只需要携带简单的 int 消息，请优先使用 Message.arg1 和 Message.arg2 来传递消息，这比用 Bundle 更省内存。
+
+　　用 Message.what 来标识消息，以便用不同方式处理 message。
+
+### 6.1.2. MessageQueue
+
+　　Message 并不是直接加到 MessageQueue 的，而是通过 Handler 对象和 Looper 关联在一起。可以通过 Looper.myQueue() 方法来检索当前线程的 MessageQueue。
+
+　　MessageQueue 的内部存储了一组消息，其以队列的形式对外提供插入和删除的工作，虽然叫做消息队列，但是它的内部存储结构并不是真正的队列，而是采取单链表的数据结构来存储列表，因为单链表在插入和删除上比较有优势。
+
+　　MessageQueue 主要功能是像消息池投递消息（MessageQueue.enqueMessage）和取走消息池的消息（MessageQueue.next）。
+
+### 6.1.3. Handler
+
+　　主要功能是向消息池发送各种消息事件（Hadnler.sendMessage）和处理相应消息事件（Handler.handleMessage）。
+
+　　每个 Handler 都会跟一个线程绑定，并与该线程的 MessageQueue 关联在一起，从而实现消息的管理以及线程间通信。
+
+### 6.1.4. Looper
+
+　　不断循环执行（Looper.loop），从 MessageQueue 中读取消息，按分发机制将消息分发给目标处理者。　　
+
+## 6.2. Android子线程创建 Handler 方法
+
+　　如果想在子线程上创建 Handler，通过直接 new 的出来是会报异常:
+
+```java
+AndroidRuntime(2226): java.lang.RuntimeException: Can't create handler inside thread that has not called Looper.prepare()
+```
+
+### 6.2.1. 方法1（直接获取当前子线程的 looper ）
+
+　　既然说要 Looper.prepare()，那就给 prepare()，并且要调用 loop.loop()：
+
+```java
+new Thread(new Runnable() {
+			public void run() {
+				Looper.prepare();  // 此处获取到当前线程的Looper，并且 prepare()
+				Handler handler = new Handler(){
+					@Override
+
+					public void handleMessage(Message msg) {						Toast.makeText(getApplicationContext(), "handler msg", Toast.LENGTH_LONG).show();
+					}
+				};
+				handler.sendEmptyMessage(1);
+                Looper.loop();
+			};
+		}).start();
+```
 
 
-## 8. Fragment 的生命周期，与 Activity 生命周期的比较
+### 6.2.2.  方法2（获取主线程的 looper，或者说是 UI 线程的 looper）
+
+　　这个方法简单粗暴，不过和上面的方法不一样的是，这个是通过主线程的looper来实现的。
+
+```java
+new Thread(new Runnable() {
+			public void run() {
+				Handler handler = new Handler(Looper.getMainLooper()){ // 区别在这！！！！
+					@Override
+					public void handleMessage(Message msg) {
+					Toast.makeText(getApplicationContext(), "handler msg", Toast.LENGTH_LONG).show();
+					}
+				};
+				handler.sendEmptyMessage(1);
+			};
+		}).start();
+```
+
+## 6.3. Handler 的内存泄漏的处理
+
+
+
+# 7. Fragment 的生命周期，与 Activity 生命周期的比较
 
 Activity和Fragment的生命周期，以及对比 https://blog.csdn.net/copy_yuan/article/details/51159552
 
@@ -199,12 +409,8 @@ Android Fragment学习与使用—高级篇 https://blog.csdn.net/qq_24442769/ar
 
 ![](image/1.jpeg)
 
-## 9. Handler 通信原理
+# 8. 跨进程通信方式
 
-Android子线程创建Handler方法 https://blog.csdn.net/hongdameng/article/details/42639961
+　　IPC 是 Inter-Process Communication 的缩写，含义为进程间通信或者跨进程通信，是指两个进程之间进行数据交换的过程。
 
-# 10. 跨进程通信方式
-
-
-
-# 
+Android 开发艺术碳素第 2 章

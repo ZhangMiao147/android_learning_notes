@@ -358,7 +358,7 @@ button.setOnTouchListener(new OnTouchListener() {
 
 2. 第二个条件 li.mOnTouchListener != null
 
-    li.mOnTouchListener 是一个 OnTouchListener 对象，是在 View 的 setTouchEvent() 方法中设置的：
+    li.mOnTouchListener 是一个 OnTouchListener 对象，是在 View 的 setTouchListener() 方法中设置的：
 
    ```java
        /**
@@ -848,7 +848,7 @@ checkForLongClick(
                         // Outside button
                         // Remove any future long press/tap checks
                         // 不在当前 View 上了
-                        // 移除点击的回调
+                        // 移除滚动的回调
                         removeTapCallback();
                         // 移除长按的回调
                         removeLongPressCallback();
