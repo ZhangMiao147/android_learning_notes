@@ -13,7 +13,7 @@ activity 启动过程全解析 https://blog.csdn.net/zhaokaiqiang1992/article/de
 - Instrumentation，每一个应用程序只有一个Instrumentation对象，每个Activity内都有一个对该对象的引用。Instrumentation可以理解为应用进程的管家，ActivityThread要创建或暂停某个Activity时，都需要通过Instrumentation来进行具体的操作。
 - ActivityStack，Activity在AMS的栈管理，用来记录已经启动的Activity的先后关系，状态信息等。通过ActivityStack决定是否需要启动新的进程。
 - ActivityRecord，ActivityStack的管理对象，每个Activity在AMS对应一个ActivityRecord，来记录Activity的状态以及其他的管理信息。其实就是服务器端的Activity对象的映像。
-- TaskRecord，AMS抽象出来的一个“任务”的概念，是记录ActivityRecord的栈，一个“Task”包含若干个ActivityRecord。AMS用TaskRecord确保Activity启动和退出的顺序。如果你清楚Activity的4种launchMode，那么对这个概念应该不陌生。
+- TaskRecord，AMS抽象出来的一个“任务”的概念，是记录ActivityRecord的栈，一个“Task”包含若干个ActivityRecord。AMS用TaskRecord确保Activity启动和退出的顺序。
 
 ## 1.2. 启动流程
 
@@ -24,17 +24,76 @@ Android 是基于 Linux 系统的，而在 Linux 中，所有的进程都是由 
 * 一个单独的 dalvik 虚拟机
 * 一个单独的进程
 
+所以当系统里面的第一个 zygote 进程运行之后，在这之后再开启 App，就相当于开启一个新的进程。而为了实现资源共用和更快的启动速度，Android 系统开启新进程的方式，是通过 fork 第一个 zygote 进程实现的。所以说，除了第一个 zygote 进程，其他应用所在的进程都是 zygote 的子进程。
+
+### SystemService
+
+SystemService 也是一个进程，而且是由 zygote 进程 fork 出来的。
+
+系统里面重要的服务都是在这个进程里面开启的，比如 
+ActivityManagerService、PackageManagerService、WindowManagerService等等。
+
+在zygote开启的时候，会调用ZygoteInit.main()进行初始化，初始化的时候会fork SystemService 进程。
+
+ActivityManagerService，简称AMS，服务端对象，负责系统中所有Activity的生命周期。
+
+ActivityManagerService进行初始化的时机很明确，就是在SystemServer进程开启的时候，就会初始化ActivityManagerService。
+
+在 SystemServer 的 main() 方法中运行了 `new SystemServer().run()`，而在 run() 方法中创建 ActivityManagerService对象，并且完成了成员变量初始化。而且在这之前，调用createSystemContext()创建系统上下文的时候，也已经完成了mSystemContext和ActivityThread的创建。注意，这是系统进程开启时的流程，在这之后，会开启系统的Launcher程序，完成系统界面的加载与显示。
+
+Android系统里面的服务器和客户端的概念：其实服务器客户端的概念不仅仅存在于Web开发中，在Android的框架设计中，使用的也是这一种模式。服务器端指的就是所有App共用的系统服务，比如我们这里提到的ActivityManagerService，和前面提到的PackageManagerService、WindowManagerService等等，这些基础的系统服务是被所有的App公用的，当某个App想实现某个操作的时候，要告诉这些系统服务，比如你想打开一个App，那么我们知道了包名和MainActivity类名之后就可以打开。但是，我们的App通过调用startActivity()并不能直接打开另外一个App，这个方法会通过一系列的调用，最后还是告诉AMS说：“我要打开这个App，我知道他的住址和名字，你帮我打开吧！”所以是AMS来通知zygote进程来fork一个新进程，来开启我们的目标App的。这就像是浏览器想要打开一个超链接一样，浏览器把网页地址发送给服务器，然后还是服务器把需要的资源文件发送给客户端的。
+
+App和AMS(SystemServer进程)还有zygote进程分属于三个独立的进程，他们之间如何通信呢：App与AMS通过Binder进行IPC通信，AMS(SystemServer进程)与zygote通过Socket进行IPC通信。
+
+AMS有什么用？如果想打开一个App的话，需要AMS去通知zygote进程，除此之外，其实所有的Activity的开启、暂停、关闭都需要AMS来控制，所以说，AMS负责系统中所有Activity的生命周期。
+
+在Android系统中，任何一个Activity的启动都是由AMS和应用程序进程（主要是ActivityThread）相互配合来完成的。AMS服务统一调度系统中所有进程的Activity启动，而每个Activity的启动过程则由其所属的进程具体来完成。
+
+### Launcher
+
+当点击手机桌面上的图标的时候，App就由Launcher开始启动了。Launcher本质上也是一个应用程序，和我们的App一样，也是继承自Activity。
+
+Launcher实现了点击、长按等回调接口，来接收用户的输入。通过捕捉图标点击事件，然后startActivity()发送对应的Intent请求。
+
+### Instrumentation
+
+每个Activity都持有Instrumentation对象的一个引用，但是整个进程只会存在一个Instrumentation对象。当startActivityForResult()调用之后，实际上还是调用了mInstrumentation.execStartActivity()。
+
+所以当我们在程序中调用startActivity()的 时候，实际上调用的是Instrumentation的相关的方法。
+
+这个类里面的方法大多数和Application和Activity有关，是的，这个类就是完成对Application和Activity初始化和生命周期的工具类。
+
+### AMS 和 ActivityThread 之间的 Bindler 通信
+
+Binder本质上只是一种底层通信方式，和具体服务没有关系。为了提供具体服务，Server必须提供一套接口函数以便Client通过远程访问使用各种服务。这时通常采用Proxy设计模式：将接口函数定义在一个抽象类中，Server和Client都会以该抽象类为基类实现所有接口函数，所不同的是Server端是真正的功能实现，而Client端是对这些函数远程调用请求的包装。
+
+ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IActivityManager。
+
+虽然都实现了同一个接口，但是代理对象ActivityManagerProxy并不会对这些方法进行真正地实现，ActivityManagerProxy只是通过这种方式对方法的参数进行打包(因为都实现了相同接口，所以可以保证同一个方法有相同的参数，即对要传输给服务器的数据进行打包)，真正实现的是ActivityManagerService。
+
+但是这个地方并不是直接由客户端传递给服务器，而是通过Binder驱动进行中转。
+
+客户端调用ActivityManagerProxy接口里面的方法，把数据传送给Binder驱动，然后Binder驱动就会把这些东西转发给服务器的ActivityManagerServices，由ActivityManagerServices去真正的实施具体的操作。
+
+客户端：ActivityManagerProxy =====>Binder驱动=====> ActivityManagerService：服务器
+
+而且由于继承了同样的公共接口类，ActivityManagerProxy提供了与ActivityManagerService一样的函数原型，使用户感觉不出Server是运行在本地还是远端，从而可以更加方便的调用这些重要的系统服务。
+
+但是！这里Binder通信是单方向的，即从ActivityManagerProxy指向ActivityManagerService的，如果AMS想要通知ActivityThread做一些事情，应该咋办呢？
+
+还是通过Binder通信，不过是换了另外一对，换成了ApplicationThread和ApplicationThreadProxy。
+
+客户端：ApplicationThread <=====Binder驱动<===== ApplicationThreadProxy：服务器
+
+他们也都实现了相同的接口IApplicationThread。
+
+### AMS接收到客户端的请求之后，会如何开启一个Activity？
 
 
 
+### Application是在什么时候创建的？onCreate()什么时候调用的？
 
-
-
-
-
-
-
-
+也是在ActivityThread.main()的时候。
 
 # 2.Activity 的启动模式，及其使用场景
 
