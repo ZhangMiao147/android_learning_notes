@@ -101,7 +101,7 @@
 
 ### 3. 完成则取消延时消息
 
-​		在 system_server 会执行取消AMS.MainHandler 的延时消息，ActiveService 的 serviceDoneExecutingLocked() 方法，在 serviceDoneExecutingLocked() 方法中会移除刚刚延时发送的 Message ：
+​		在 system_server 会执行取消 AMS.MainHandler 的延时消息，ActiveService 的 serviceDoneExecutingLocked() 方法，在 serviceDoneExecutingLocked() 方法中会移除刚刚延时发送的 Message ：
 
 ```java
     private void serviceDoneExecutingLocked(ServiceRecord r, boolean inDestroying,
@@ -464,7 +464,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 2. 执行相应方法
 3. 方法在延时时间内执行完成，取消消息
 4. 方法在延时时间内未执行完成，消息触发
-5. 接收 延时消息，发生 ANR ，调用 AMS.appNotResponding 方法。
+5. 接收延时消息，发生 ANR ，调用 AMS.appNotResponding 方法。
 
 
 ## 参考文章

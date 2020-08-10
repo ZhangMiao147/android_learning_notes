@@ -16,11 +16,11 @@
 2. 其他进程间接引起，例如：
 
    * 当前应用进程进行进程间通信请求其他进程，其他进程的操作长时间没有反馈；
-   * 其他进程的 COU 占用率高，使得当前应用进程无法抢占到 CPU 时间片。
+   * 其他进程的 CPU 占用率高，使得当前应用进程无法抢占到 CPU 时间片。
 
 ## 发生 ANR 的条件
 
- Andriod 系统中，ActivityManangerService(简称 AMS) 和 WindowManangerService(简称 WMS) 会检测 App 的响应事件，如果 App 在特定时间无法响应屏幕触摸或键盘输入事件，或者特定事件没有处理完毕，就会出现 ANR。
+　　Andriod 系统中，ActivityManangerService(简称 AMS) 和 WindowManangerService(简称 WMS) 会检测 App 的响应事件，如果 App 在特定时间无法响应屏幕触摸或键盘输入事件，或者特定事件没有处理完毕，就会出现 ANR。
 
 * InputDispatching Timeout：输入事件分发或屏幕触摸事件超时 5s 未响应完毕；
 * BroadcastQueue Timeout：前台广播在 10秒 内、后台广播在 60 秒内未执行完成；
@@ -138,13 +138,11 @@ jstack {pid}
 * 使用 Thread 或者 HandlerThread 时，调用 Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)设置优先级，否则仍然会降低程序响应，因为默认 Thread 的优先级和主线程相同。
 * 使用 Handler 处理工作线程结果，而不是使用 Thread.wait() 或者 Thread.sleep() 来阻塞主线程。
 * 四大组件的生命周期方法中尽量避免耗时的代码。
-* 如果要在后台进行耗时操作，建议使用 Intentservice 处理。
+* 如果要在后台进行耗时操作，建议使用 IntentService 处理。
 * 在程序启动时，如果要做一些耗时操作，可以选择加上欢迎界面，避免用户察觉卡顿。
 * 主程序需要等待其他线程返回结果时，可以加上进度显示，比如使用 ProgressBar 控件，让用户得知进度。
 * 使用 Systrace 和 TraceView 找到影响响应的问题，进一步优化。
 * 如果是由于内存不足引起的问题，AndroidManifest.xml 文件 < application > 中可以设置 android:largeHeap="true"，以此增大 App 使用内存。不过不建议使用此法，从根本上防止内存泄漏，优化内存使用才是正确的做法。
-
-
 
 ## 参考文章
 
