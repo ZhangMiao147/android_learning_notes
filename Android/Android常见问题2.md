@@ -666,11 +666,11 @@ View 的绘制过程只要分为三部分：measure 测量，layout 布局和 dr
 
 performTraversals() 方法把控整个绘制的流程，调用了 performMeasure() 、performLayout()、performDraw() 方法实现从根节点向下遍历 View 树，完成所有 ViewGroup 和 View 的测量、布局、绘制工作。
 
-measure 过程中是调用的 View 的 measure() 方法，measure() 方法是一个 final 类型的方法，所以子类无法重写该方法，而 measure() 方法中调用了 onMeasure() 方法。View 的 measure() 是一个 final 方法，是不允许重写的，所以要实现自己的测量，就需要重写 onMeasure() 方法。如果是容器类，需要递归调用该容器的子 View 的 measure() 方法测量。
+measure 过程中是调用的 View 的 measure() 方法，measure() 方法是一个 final 类型的方法，所以子类无法重写该方法，而 measure() 方法中调用了 onMeasure() 方法。如果是容器类，需要递归调用该容器的子 View 的 measure() 方法测量。measure 过程完成后，View 的显示的宽高就确定了。
 
-layout 过程只要是对容器控件有用的，只有有子 View 才需要布局。 ViewGroup 的 layout() 方法是一个 final 类型的方法（ViewGroup 的 layout() 是一个 final 类型的，View 不是），所以子类无法重写该方法，ViewGroup 的 layout() 方法中调用了父类 View 的 layout() 方法，在这个方法中调用了 onLayout() 方法。View 的 onLayout() 是一个空实现，onLayout() 对于非容器控件时没有意义的，只有 ViewGroup 才有用。ViewGroup 的 onLayout() 方法会对每一个 child 调用 layout() 方法的。
+layout 过程只是对容器控件有用的，只有有子 View 才需要布局。 ViewGroup 的 layout() 方法是一个 final 类型的方法（ViewGroup 的 layout() 是一个 final 类型的，View 不是），所以子类无法重写该方法，ViewGroup 的 layout() 方法中调用了父类 View 的 layout() 方法，在这个方法中调用了 onLayout() 方法。View 的 onLayout() 是一个空实现，onLayout() 对于非容器控件是没有意义的，只有 ViewGroup 才有用。ViewGroup 的 onLayout() 方法会对每一个 child 调用 layout() 方法的。layout 过程完成后，layout 在父控件的 top、bottom、left、right 就确定了。
 
-draw 过程会从 DecorView 的 draw() 调用到 View 的  draw() 方法，View 的 draw() 方法中会调用 drawBackground() 方法画背景，调用 onDraw() 方法画内容，调用 dispatchDraw() 方法画子 View，调用 onDrawForeground() 方法画装饰。在 ViewGroup 中会实现 dispatchDraw() 方法循环调用子 View 的 draw() 方法。
+draw 过程会从 DecorView 的 draw() 调用到 View 的  draw() 方法，View 的 draw() 方法中会调用 drawBackground() 方法画背景，调用 onDraw() 方法画内容，调用 dispatchDraw() 方法画子 View，调用 onDrawForeground() 方法画装饰。在 ViewGroup 中会实现 dispatchDraw() 方法循环调用子 View 的 draw() 方法。draw 过程完成后，view 就显示在屏幕上了。
 
 # 3. Android 进程保活
 
@@ -1053,348 +1053,37 @@ https://www.jianshu.com/p/88d349009530
 
 ### 4.5.1. View动画
 
-View动画的启动方式是`view.startAnimation(xxx)`，我们就从这个地方入手：
+View 动画的启动方式是 view.startAnimation(xxx) 方法，在这个方法中对 View 设置动画，并且刷新父类缓存和 view 本身及其子类。而 刷新视图最后会调用 View 的 draw 方法。
 
+在 View 的 draw() 方法中会获取 View 上的动画信息，如果存在动画，则绘制动画。
 
+先对 animation 进行初始化，初始化后会回调 onAnimationStart() 方法。之后调用 Animation 的 getTransformation() 方法获取动画信息。在 getTransformation() 方法中根据流逝的时间计算当前动画时间百分比，然后通过插值器（Interpolator）重新计算这个百分比，并且以此来计算当前动画属性值，并会调用 applyTransformation() 方法应用动画，这个方法会在 Animation 的子类中实现，通过 Matrix 来实现功能。之后在动画结束之前会不断重绘，从而形成连续的动画效果。
 
-```cpp
-/**
- * Start the specified animation now.
- *
- * @param animation the animation to start now
- */
-public void startAnimation(Animation animation) {
-    //设置动画开始时间
-    animation.setStartTime(Animation.START_ON_FIRST_FRAME);
-    //对View设置动画
-    setAnimation(animation);
-    //刷新父类缓存
-    invalidateParentCaches();
-    //刷新View本身及子类
-    invalidate(true);
-}
-```
+#### 4.5.1. 插值器与估值器
 
-可以看到View会请求刷新视图，最后会调用View的draw方法：
+插值器，一般和估值器配合使用。
 
+插值器的作用是设置 属性值 从初始值过渡到结束值 的变化规律。
 
+估值器的作用是设置 属性值 从初始值过渡到结束值 的变化具体数值。
 
-```php
- /**
- * This method is called by ViewGroup.drawChild() to have each child view draw itself.
- *
- * This is where the View specializes rendering behavior based on layer type,
- * and hardware acceleration.
- */
-boolean draw(Canvas canvas, ViewGroup parent, long drawingTime) {
-    ...
-    boolean more = false;
-    final boolean childHasIdentityMatrix = hasIdentityMatrix();
-    final int parentFlags = parent.mGroupFlags;
-    //查看是否需要清除动画信息
-    if ((parentFlags & ViewGroup.FLAG_CLEAR_TRANSFORMATION) != 0) {
-        parent.getChildTransformation().clear();
-        parent.mGroupFlags &= ~ViewGroup.FLAG_CLEAR_TRANSFORMATION;
-    }
-    ...
-    //获取View上的动画信息
-    final Animation a = getAnimation();
-    if (a != null) {
-        //绘制动画
-        more = applyLegacyAnimation(parent, drawingTime, a, scalingRequired);
-        concatMatrix = a.willChangeTransformationMatrix();
-        if (concatMatrix) {
-            mPrivateFlags3 |= PFLAG3_VIEW_IS_ANIMATING_TRANSFORM;
-        }
-        transformToApply = parent.getChildTransformation();
-    } else {
-        ....
-    }
-    ....
-}
-```
-
-接下来看一下applyLegacyAnimation方法是怎么绘制动画的：
-
-
-
-```php
-/**
- * Utility function, called by draw(canvas, parent, drawingTime) to handle the less common
- * case of an active Animation being run on the view.
- */
-private boolean applyLegacyAnimation(ViewGroup parent, long drawingTime,
-        Animation a, boolean scalingRequired) {
-    Transformation invalidationTransform;
-    final int flags = parent.mGroupFlags;
-    final boolean initialized = a.isInitialized();
-    //判断动画是否已经初始化过了
-    if (!initialized) {
-        a.initialize(mRight - mLeft, mBottom - mTop, parent.getWidth(), parent.getHeight());
-        a.initializeInvalidateRegion(0, 0, mRight - mLeft, mBottom - mTop);
-        if (mAttachInfo != null) a.setListenerHandler(mAttachInfo.mHandler);
-        //设置了动画监听，则触发回调
-        onAnimationStart();
-    }
-
-    final Transformation t = parent.getChildTransformation();
-    //获取Transformation对象，存储动画信息
-    boolean more = a.getTransformation(drawingTime, t, 1f);
-    if (scalingRequired && mAttachInfo.mApplicationScale != 1f) {
-        if (parent.mInvalidationTransformation == null) {
-            parent.mInvalidationTransformation = new Transformation();
-        }
-        invalidationTransform = parent.mInvalidationTransformation;
-        a.getTransformation(drawingTime, invalidationTransform, 1f);
-    } else {
-        invalidationTransform = t;
-    }
-
-    //根据more判断动画是否需要继续进行
-    if (more) {
-        //判断当前动画是否需要进行位置大小调整，然后刷新不同区域
-        if (!a.willChangeBounds()) {
-            ...
-        } else {
-            if (parent.mInvalidateRegion == null) {
-                parent.mInvalidateRegion = new RectF();
-            }
-            final RectF region = parent.mInvalidateRegion;
-            //获取需要重绘的区域
-            a.getInvalidateRegion(0, 0, mRight - mLeft, mBottom - mTop, region,
-                    invalidationTransform);
-
-            // The child need to draw an animation, potentially offscreen, so
-            // make sure we do not cancel invalidate requests
-            parent.mPrivateFlags |= PFLAG_DRAW_ANIMATION;
-
-            //重新计算有效区域
-            final int left = mLeft + (int) region.left;
-            final int top = mTop + (int) region.top;
-            //更新这块区域
-            parent.invalidate(left, top, left + (int) (region.width() + .5f),
-                    top + (int) (region.height() + .5f));
-        }
-    }
-    return more;
-}
-```
-
-这个方法基本就把整个动画流程串起来了，a.getTransformation方法会返回一个布尔值，表示是否需要继续动画，一旦为true，则父控件会重新计算需要动画需要刷新的区域并且更新该区域。**在动画结束之前会不断重绘，从而形成连续的动画效果**。
- 那么，动画的具体实现就在a.getTransformation方法中，我们看一下：
-
-
-
-```java
-public boolean getTransformation(long currentTime, Transformation outTransformation,
-            float scale) {
-    mScaleFactor = scale;
-    return getTransformation(currentTime, outTransformation);
-}
-```
-
-继续跟中getTransformation方法：
-
-```java
-public boolean getTransformation(long currentTime, Transformation outTransformation) {
-    if (mStartTime == -1) {
-        mStartTime = currentTime;
-    }
-
-    final long startOffset = getStartOffset();
-    final long duration = mDuration;
-    float normalizedTime;
-    if (duration != 0) {
-        normalizedTime = ((float) (currentTime - (mStartTime + startOffset))) /
-                (float) duration;
-    } else {
-        // time is a step-change with a zero duration
-        normalizedTime = currentTime < mStartTime ? 0.0f : 1.0f;
-    }
-
-    final boolean expired = normalizedTime >= 1.0f || isCanceled();
-    mMore = !expired;
-    if (!mFillEnabled) normalizedTime = Math.max(Math.min(normalizedTime, 1.0f), 0.0f);
-
-    if ((normalizedTime >= 0.0f || mFillBefore) && (normalizedTime <= 1.0f || mFillAfter)) {
-        ...
-        final float interpolatedTime = mInterpolator.getInterpolation(normalizedTime);
-        applyTransformation(interpolatedTime, outTransformation);
-    }
-    if (!mMore && mOneMoreTime) {
-        mOneMoreTime = false;
-        return true;
-    }
-
-    return mMore;
-}
-```
-
-在这个方法中，根据流逝的时间计算当前动画时间百分比，然后通过插值器（Interpolator）重新计算这个百分比，并且以此来计算当前动画属性值。后面介绍插值器的作用。
- 继续看一下applyTransformation的作用：
-
-
-
-```dart
-/**
- * Helper for getTransformation. Subclasses should implement this to apply
- * their transforms given an interpolation value.  Implementations of this
- * method should always replace the specified Transformation or document
- * they are doing otherwise.
- *
- * @param interpolatedTime The value of the normalized time (0.0 to 1.0)
- *        after it has been run through the interpolation function.
- * @param t The Transformation object to fill in with the current
- *        transforms.
- */
-protected void applyTransformation(float interpolatedTime, Transformation t) {
-}
-```
-
-是个空方法，那么实现肯定在子类中，我们就以ScaleAnimation为例：
-
-
-
-```java
-@Override
-protected void applyTransformation(float interpolatedTime, Transformation t) {
-    float sx = 1.0f;
-    float sy = 1.0f;
-    float scale = getScaleFactor();
-
-    if (mFromX != 1.0f || mToX != 1.0f) {
-        sx = mFromX + ((mToX - mFromX) * interpolatedTime);
-    }
-    if (mFromY != 1.0f || mToY != 1.0f) {
-        sy = mFromY + ((mToY - mFromY) * interpolatedTime);
-    }
-    
-    //通过Matrix实现View的缩放
-    if (mPivotX == 0 && mPivotY == 0) {
-        t.getMatrix().setScale(sx, sy);
-    } else {
-        t.getMatrix().setScale(sx, sy, scale * mPivotX, scale * mPivotY);
-    }
-}
-```
-
-可以看到，执行完applyTransformation之后，View的属性就发生了变化。
-
-#### 2. 插值器和估值器
-
-上面代码中提到过**插值器（TimeInterpolator）**，它一般是和**估值器（TypeEvaluator）**配合使用，我们看一下它究竟是个什么东西。
-
-
-
-```php
-/**
- * The interpolator used by the animation to smooth the movement.
- */
-Interpolator mInterpolator;
-```
-
-看一下Interpolator定义：
-
-
-
-```php
-public interface Interpolator extends TimeInterpolator {
-    // A new interface, TimeInterpolator, was introduced for the new android.animation
-    // package. This older Interpolator interface extends TimeInterpolator so that users of
-    // the new Animator-based animations can use either the old Interpolator implementations or
-    // new classes that implement TimeInterpolator directly.
-}
-```
-
-继承自TimeInterpolator：
-
-
-
-```csharp
-/**
- * A time interpolator defines the rate of change of an animation. This allows animations
- * to have non-linear motion, such as acceleration and deceleration.
- */
-public interface TimeInterpolator {
-
-    float getInterpolation(float input);
-}
-```
-
-TimeInterpolator是一个接口，只有一个方法getInterpolation(float input)，它的实现类有很多：
-
-
-
-![img](https:////upload-images.jianshu.io/upload_images/9942787-cb1246699b4c9f81.png?imageMogr2/auto-orient/strip|imageView2/2/w/498/format/webp)
-
-image.png
-
-我们挑选AccelerateInterpolator看其实现：
-
-
-
-```cpp
-public float getInterpolation(float input) {
-    if (mFactor == 1.0f) {
-        return input * input;
-    } else {
-        return (float)Math.pow(input, mDoubleFactor);
-    }
-}
-```
-
-从名字能看出来是加速插值器，其getInterpolation方法是对传入的数值（动画时间百分比）做平方并返回，它的作用是对动画做加速。为什么说是加速呢，用下表来说明：
-
-| 时间百分比 | 0.1  | 0.2  | 0.3  | 0.4  |
-| :--------- | :--- | :--- | :--- | :--- |
-| 计算插值   | 0.01 | 0.04 | 0.09 | 0.16 |
-| 相邻差距   | 0.01 | 0.03 | 0.05 | 0.07 |
-
-数据表明，随着时间流逝，插值越来越大，导致动画效果越来越明显，展示出来的效果就是加速动画。
- 除了加速插值器，系统还提供了其他几种，如减速插值器、先加后减插值器、线性插值器......
-
-**插值器只是根据时间百分比计算出一个属性值百分比，而把属性值百分比转换为真正属性值则交给估值器来做**
-
-估值器对应的类是TypeEvaluator，定义如下：
-
-
-
-```java
-public interface TypeEvaluator<T> {
-
-    public T evaluate(float fraction, T startValue, T endValue);
-}
-```
-
-里面有一个泛型方法evaluate用来计算属性值，它的实现类有：
-
-
-
-![img](https:////upload-images.jianshu.io/upload_images/9942787-b25c0763c9cfd2b2.png?imageMogr2/auto-orient/strip|imageView2/2/w/468/format/webp)
-
-image.png
-
-我们选取FloatEvaluator来看一下：
-
-
-
-```cpp
-/**
- * This evaluator can be used to perform type interpolation between <code>float</code> values.
- */
-public class FloatEvaluator implements TypeEvaluator<Number> {
-    public Float evaluate(float fraction, Number startValue, Number endValue) {
-        float startFloat = startValue.floatValue();
-        return startFloat + fraction * (endValue.floatValue() - startFloat);
-    }
-}
-```
-
-evaluate方法做的事情很简单，就是把一个属性值百分比fraction，结合开始值startValue和结束值endValue一起计算出当前的属性值。
+插值器（Interpolator）决定 值 的变化规律（匀速、加速blabla），即决定的是变化趋势；而接下来的具体变化数值则交给估值器。
 
 插值器和估值器都是接口，支持自定义。
 
-#### 3. 属性动画原理
+### 4.5.2. 属性动画原理
+
+属性动画原理
+
+ObjectAnimator 的 ofInt() 方法中会构建一个属性动画对象 ObjectAnimator，并调用 ObjectAnimator 的 setIntValues() 方法设置了一些属性，在 setIntValues() 方法中调用了 setValues(PropertyValuesHolder.ofInt(mProperty, values)) 方法，PropertyValuesHaolder 对象的作用就是保存属性名称和该属性的 setter、getter 方法以及它的目标值。而 setValues() 方法会计算动画的关键帧。
+
+ObjectAnimator 的 start() 方法会调用它的父类 ValueAnimator 的 start() 方法，start() 方法主要做的事情是：
+
+1. 初始化动画的各种标志位；
+2. 注册 callback  回调，获取动画的下一帧回调。
+3. 如果没有延迟启动，初始化动画设置一些监听，并设置 time 为 0 的当前帧数的目标值。
+
+
 
 我们从ObjectAnimator.ofInt方法开始分析：
 
@@ -1837,6 +1526,17 @@ private void scheduleFrameLocked(long now) {
 
 这个方法中USE_VSYNC默认为true，所以会走scheduleVsyncLocked方法，这个方法是一个native方法，我们就不跟了。在这里着重看注释，它的意思是：如果运行在UI线程中，会立刻调用VSYNC机制。而VSYNC是Android系统用来更新界面的信号，每16ms一次。**说明属性动画是通过VSYNC信号来持续改变属性值进行动画的**。
  到这里，总算把属性动画的原理解释完毕了。文章很长，大家可以对着源码一步步来看，能够更好的理解属性动画。
+
+## 4.6. 视图动画和属性动画的区别
+
+　　视图动画只提供为视图类设置动画的能力，所以如果你想为非视图的类设置动画，你需要自己实现代码来完成这个功能。视图动画也只能设置视图类的一部分属性设置动画，例如缩放和旋转视图，但不能为视图的背景设置动画。
+
+　　除了上面提到的缺点外，视图动画只能为当前绘制的视图设置动画，但并没有改变视图本身的属性，例如，如果你为一个按钮设置动画，使按钮在屏幕上移动，按钮在屏幕上按照预期的期望绘制在指定的位置，但是实际你点击按钮能触发按钮事件的位置还是在原处，你需要额
+外的逻辑来处理这种情况。
+
+　　如果使用属性动画，上面提到的这些视图动画的缺点都将不存在。你可以为任何对象设置动画，包括视图类和非视图类，并且修改的就是视图本身的属性。属性动画在实现动画的策略方面也是更健壮的。在一个更高的水平上，可以为动画分配你想设置动画的属性，例如颜色，位置，大小并且可以为动画设置插值器的行为，你也可以同时执行多个动画。
+
+　　当然，视图动画还是有他的优点，设置视图动画的时间要少，为设置视图动画编写的代码也少。如果视图动画能完成你想要做的任何事情，又或者当前的代码已经达到你想要的效果，这时候也不需要使用属性动画。在某些情况下，为不同的情况结合使用两种动画也是有意义的。
 
 # 5. SparseArray 原理
 
