@@ -93,21 +93,25 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
 
 ### AMS接收到客户端的请求之后，会如何开启一个Activity？
 
+回去调用 Instrumentation 去创建一个 Activity 对象，创建成功后会调用 Activity 的 onCreate() 方法。
 
 
-### Application是在什么时候创建的？onCreate()什么时候调用的？
 
-也是在ActivityThread.main()的时候。
+口述：Activity 的启动分为冷启动和热启动两种。冷启动指的是应后台中没有应用的进程，开启应用系统回创建一个进程分配给它，之后会创建和初始化 Application，然后执行 ActivityThread 的 main 方法主线程开启运行 ，而热启动指的是后台存在应用进程中，开启应用就是从以后的进程中来启动引用，不需要走 Application 的部分。
+
+![](components/Activity/image/冷启动流程图.png)
+
+冷启动是从桌面的应用快捷图标的点击开始的，Launcher 类是手机桌面 Activity ，当点击手机桌面上的 Activity 就会触发 Launcher 的 onClick() 方法，在 onClick() 方法中启动 Activity，经过一系列的方法调用，最后将会进入 ActivityThread 类，启动 ActivityThread 的 main() 方法。
+
+![](components/Activity/image/Activity启动流程图.jpg)
+
+在 Activity 的 main() 方法中会初始化主线程的 Looper，并实例化一个 ActivityThread 对象，并且发出创建 Application 的消息，最后开启 Looper，等待接收消息。创建 Application 会交给 AMS 去完成，AMS 完成后会向 客户端  ActivityThread 通信，创建 Instrumentation 对象，创建 Application 的工作会交给 Instrumentation 对象，并通过 Instrumentatiion 调用 Application 的 onCreate() 方法，Application 就创建好了。
+
+在 AMS 处理创建 Application 之后就会去开启 Activity，AMS 会像客户端发消息去开启 LAUNCH_ACTIVITY ，开启 Activity 会先通过 Instrumentation 去创建 Activity 对象，创建完成调用 onCreate() 方法。
 
 # 2.Activity 的启动模式，及其使用场景
 
 启动模式就是定义 Activity 实例与 task 的关联方式。
-
-
-
-口述：
-
-
 
 ## 2.1. Acitivity 的四种启动模式
 

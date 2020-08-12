@@ -27,13 +27,12 @@
 
 [TOC]
 
-
-
-## 1. 冷启动与热启动
+# 1. 冷启动与热启动
 
 　　所谓冷启动就是启动该应用时，后台没有该应用的进程，此时系统会创建一个进程分配给它，之后会创建和初始化 Application，然后通过反射执行 ActivityThread 中的 main 方法。而热启动则是，当启动应用的时候，后台已经存在该应用的进程，比如按 home 键返回主界面再打开该应用，此时会从已有的进程中来启动应用，这种方式下，不会重新走 Application 这一步。
 
-## 2. 冷启动流程图
+# 2. 冷启动流程图
+
 ![](image/冷启动流程图.png)
 
 　　图中设计的几个类：
@@ -56,15 +55,15 @@
 
 （9）TaskRecord：AMS 抽象出来的一个“任务”的概念，是记录 ActivityReacord 的栈，一个“Task”包含若干个 ActivityRecord 。AMS 用 TaskRecord 确保 Activity 启动和退出的顺序。
 
-## 3. 看源码分析冷启动流程
+# 3. 看源码分析冷启动流程
 
 　　在线查看源码地址：https://www.androidos.net.cn/sourcecode 。
 
 　　设备桌面就是一个 Launcher 类，是一个 Activity，在这个类中处理桌面上应用快捷图标的点击事件，所以从 Launcher 类开始追踪代码。
 
-### 3.1. 从应用快捷图标点击开始
+## 3.1. 从应用快捷图标点击开始
 
-#### 3.1.1. 查看 Launcher 类
+### 3.1.1. 查看 Launcher 类
 
 　　Launcher 类的地址：
 https://www.androidos.net.cn/android/8.0.0_r4/xref/packages/apps/Launcher2/src/com/android/launcher2/Launcher.java
@@ -82,7 +81,8 @@ public final class Launcher extends Activity
 ```
 　　可以看到 Launcher 继承自 Activity ，是默认启动应用程序。
 
-#### 3.1.2. 在 Launcher 中找到点击应用快捷图标的点击事件
+### 3.1.2. 在 Launcher 中找到点击应用快捷图标的点击事件
+
 　　在 Launcher 类中有一个 onClick(View v)的方法，是点击快捷图标的点击事件：
 ```java
     /**
@@ -99,7 +99,8 @@ public final class Launcher extends Activity
 ```
 　　在点击应用的快捷图标之后调用了 startActivitySafely 方法，继续查看 startActivitySafely 方法。
 
-#### 3.1.3. 查看 startActivitySafely 方法
+### 3.1.3. 查看 startActivitySafely 方法
+
 ```java
     boolean startActivitySafely(View v, Intent intent, Object tag) {
         boolean success = false;
@@ -112,9 +113,10 @@ public final class Launcher extends Activity
         return success;
     }
 ```
-　　在 startActivitySafely 方法中调用了 startActivity 方法，继续查看 startActivitySafely 方法。
+　　在 startActivitySafely 方法中调用了 startActivity 方法，继续查看 startActivity 方法。
 
-#### 3.1.4. 查看 startActivity() 方法
+### 3.1.4. 查看 startActivity() 方法
+
 ```java
     boolean startActivity(View v, Intent intent, Object tag) {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -156,7 +158,7 @@ public final class Launcher extends Activity
 ```
 　　在 startActivity(View v, Intent intent, Object tag) 方法中，调用了 Activity 的 startActivity() 方法，继续查看 Activity 的 startActivity() 方法。
 
-#### 3.1.5. 查看 Activity 的 startActivity() 方法
+### 3.1.5. 查看 Activity 的 startActivity() 方法
 
 ```java
     @Override
@@ -193,7 +195,8 @@ public final class Launcher extends Activity
 ```
 　　startActivity 最终调用 mInstrumentation.execStartActivity() 方法。
 
-#### 3.1.6. 查看 Instrumentation 的 execStartActivity() 方法
+### 3.1.6. 查看 Instrumentation 的 execStartActivity() 方法
+
 ```java
     public ActivityResult execStartActivity(
             Context who, IBinder contextThread, IBinder token, Activity target,
@@ -211,7 +214,8 @@ public final class Launcher extends Activity
 
 　　接着继续看 ActivityManagerService 的 startActivity() 方法。
 
-#### 3.1.7. 查看 ActivityManagerService 的 startActivity() 方法
+### 3.1.7. 查看 ActivityManagerService 的 startActivity() 方法
+
 ```java
     @Override
     public final int startActivity(IApplicationThread caller, String callingPackage,
@@ -239,7 +243,8 @@ public final class Launcher extends Activity
 ```
 　　startActivity() 方法最后调用到了 ActivityStarter 的 startActivityMayWait() 方法。
 
-#### 3.1.8. 查看 ActivityStarter 的 startActivityMayWait() 方法
+### 3.1.8. 查看 ActivityStarter 的 startActivityMayWait() 方法
+
 ```java
     final int startActivityMayWait(IApplicationThread caller, int callingUid,
             String callingPackage, Intent intent, String resolvedType,
@@ -291,7 +296,8 @@ public final class Launcher extends Activity
 ```
 　　ActivityStarter 的 startActivityMayWait() 方法最后调用到了 ActivityStack 的 startActivityLocked() 方法和 ActivityStackSupervisor 的 resumeFocusedStackTopActivityLocked（） 方法。
 
-#### 3.1.9. ActivityStackSupervisor 的 resumeFocusedStackTopActivityLocked（） 方法
+### 3.1.9. ActivityStackSupervisor 的 resumeFocusedStackTopActivityLocked（） 方法
+
 ```java
     boolean resumeFocusedStackTopActivityLocked(
             ActivityStack targetStack, ActivityRecord target, ActivityOptions targetOptions) {
@@ -308,7 +314,8 @@ public final class Launcher extends Activity
 ```
 　　调用了 ActivityStack 的 resumeTopActivityUncheckedLocked() 方法。
 
-#### 3.1.10. ActivityStack 的 resumeTopActivityUncheckedLocked() 方法
+### 3.1.10. ActivityStack#resumeTopActivityUncheckedLocked() 
+
 ```java
     boolean resumeTopActivityUncheckedLocked(ActivityRecord prev, ActivityOptions options) {
         ...
@@ -333,8 +340,8 @@ public final class Launcher extends Activity
 ```
 　　ActivityStack 的 resumrTopActivityUncheckedLocked() 方法，先调用了 resumeTopActivityInnerLocked() 方法，而 resumeTopActivityInnerLocked() 方法调用了 ApplicationThread 的 schedulePauseActivity() 方法，接着查看 ApplicationThread 的 schedulePauseActivity() 方法。
 
+### 3.1.11. ApplicationThread#schedulePauseActivity()
 
-#### 3.1.11. 查看 ApplicationThread 类的 schedulePauseActivity() 方法
 ```java
         public final void schedulePauseActivity(IBinder token, boolean finished,
                 boolean userLeaving, int configChanges, boolean dontReport) {
@@ -356,7 +363,8 @@ public final class Launcher extends Activity
 ```
 　　在 ApplicationThread 的 schedulePauseActivity() 方法中，发出一个一条 H.PAUSE_ACTIVITY 的消息，接下来查看 H.PAUSE_ACTIVITY 消息的处理。
 
-#### 3.1.12. 查看 H.PAUSE_ACTIVITY 消息的处理
+### 3.1.12. 查看 H.PAUSE_ACTIVITY 消息的处理
+
 ```java
  public void handleMessage(Message msg) {
  	...
@@ -384,7 +392,8 @@ public final class Launcher extends Activity
 ```
 　　ActivityManagerNative.getDefault() 获取的是一个实现 IActivityManager 接口的对象（ActivityMannagerService），调用了 ActivityManagerService 的 activityPaused() 方法。
 
-#### 3.1.13. 查看 ActivityManagerService 的 activityPaused() 方法
+### 3.1.13. ActivityManagerService#activityPaused() 
+
 ```java
     @Override
     public final void activityPaused(IBinder token) {
@@ -396,7 +405,8 @@ public final class Launcher extends Activity
 ```
 　　在 ActivityManagerService 的 activityPaused() 方法中调用了 ActivityStack 的 activityPauseLocked() 方法。
 
-#### 3.1.14. 查看 ActivityStack 的 activityPausedLocked() 方法
+### 3.1.14. 查看 ActivityStack 的 activityPausedLocked() 方法
+
 ```java
     final void activityPausedLocked(IBinder token, boolean timeout) {
         ...
@@ -413,7 +423,8 @@ public final class Launcher extends Activity
 
 　　在 ActivityStack 的 activityPausedLocked() 方法中调用了 completePauseLocked() 方法，而在completePauseLocked() 方法中调用 ActivityStackSupertvisor 的 resumeFocusedStackTopActivityLocked() 方法。
 
-#### 3.1.15. 查看 ActivityStackSupervisor 的 resumeFocusedStackTopActivityLocked() 方法
+### 3.1.15. 查看 ActivityStackSupervisor 的 resumeFocusedStackTopActivityLocked() 方法
+
 ```java
     boolean resumeFocusedStackTopActivityLocked() {
         return resumeFocusedStackTopActivityLocked(null, null, null);
@@ -435,7 +446,7 @@ public final class Launcher extends Activity
 
 　　ActivityStackSupervisor 的 resumeFocusedStackTopActivityLocked() 方法最后调用到了 ActivityStack 的 resumeTopActivityUncheckedLocked（） 方法。
 
-#### 3.1.16. 查看 ActivityStack 的 resumeTopActivityUncheckedLocked（） 方法
+### 3.1.16. ActivityStack #resumeTopActivityUncheckedLocked()
 
 ```java
     /**
@@ -457,8 +468,8 @@ public final class Launcher extends Activity
 ```
 　　ActivityStack 的 resumeTopActivityUncheckedLocked（） 方法最后调用到了 ActivityStackSupervisor 的 startSpecificActivityLocked（） 方法。
 
+### 3.1.17. ActivityStackSupervisor#startSpecificActivityLocked()
 
-#### 3.1.17. ActivityStackSupervisor 类的 startSpecificActivityLocked() 方法
 ```java
     void startSpecificActivityLocked(ActivityRecord r,
             boolean andResume, boolean checkConfig) {
@@ -470,7 +481,8 @@ public final class Launcher extends Activity
 ```
 　　ActivityStackSupervisor 类的 startSpecificActivityLocked() 方法调用了 ActivityManagerService 的 startProcessLocked() 方法。
 
-#### 3.1.18. ActivityManagerService 的 startProcessLocked() 方法
+### 3.1.18. ActivityManagerService#startProcessLocked()
+
 ```java
     final ProcessRecord startProcessLocked(String processName,
             ApplicationInfo info, boolean knownToBeDead, int intentFlags,
@@ -503,17 +515,19 @@ public final class Launcher extends Activity
 
 　　代码运行到这里，进入到了 ActivityThread 的 main() 方法。
 
-#### 3.1.19. 梳理
+### 3.1.19. 梳理
+
 　　代码看到这里，梳理一下之前的逻辑：Launcher 类是手机桌面 Activity ，当点击手机桌面上的 Activity 就会触发 Launcher 的 onClick() 方法，在 onClick() 方法中启动 Activity，经过一系列的方法调用，最后将会进入 ActivityThread 类，启动 ActivityThread 的 main() 方法。
 　　在 Android 中，一个应用程序的开始可以说就是从 ActivityThread.java 的 main() 方法开始的。
 
+## 3.2. 从 ActivityThread.java 的 main() 方法开始
 
-### 3.2. 从 ActivityThread.java 的 main() 方法开始
+### 3.2.1. 从 ActivityThread.java 的 main() 方法开始之后的流程图
 
-#### 3.2.1. 从 ActivityThread.java 的 main() 方法开始之后的流程图
 ![](image/Activity启动流程图.jpg)
 
-#### 3.2.2. 查看 ActivityThread.java 的 main() 方法
+### 3.2.2. 查看 ActivityThread.java 的 main() 方法
+
 ```java
 public static void main(String[] args) {
 		...
@@ -539,7 +553,8 @@ public static void main(String[] args) {
 * 初始化主线程的 Looper、主 Handler 。并使主线程进入等待接收 Message 消息的无限循环状态。
 * 调用 attach() 方法，主要就是为了发送出初始化 Application 的消息。
 
-#### 3.2.3. 查看 attach() 方法
+### 3.2.3. ActivityThread#attach()
+
 ```java
     private void attach(boolean system) {
         ...
@@ -563,7 +578,8 @@ public static void main(String[] args) {
 ```
 　　可以看到，在 attach() 方法中获取到了 ActivityManager 实例（至于 ActivityManager 是什么，在后面解释），并调用其 attachApplication() 方法（就是调用到了 ActivityManangerNative 的 attachApplication() 方法）。
 
-#### 3.2.4. 查看 ActivityManangerNative 的 attachApplication() 方法
+### 3.2.4. ActivityManangerNative#attachApplication()
+
 ```java
     public void attachApplication(IApplicationThread app) throws RemoteException
     {
@@ -582,6 +598,7 @@ public static void main(String[] args) {
 　　attachApplication 方法调用了 IBinder 实例的 transact() 方法，并且把参数 app 放到了 data 中，最终传递给了 ActivityManager 。
 
 #### 3.2.4.1 查看 ATTACH_APPLICATION_TRANSACTION 的处理
+
 ```java
     @Override
     public boolean onTransact(int code, Parcel data, Parcel reply, int flags)
@@ -604,7 +621,8 @@ public static void main(String[] args) {
 ```
 　　ATTACH_APPLICATION_TRANSACTION 消息的处理是在 ActivityManangerNative 类中，调用了 ActivityManangerNative 类的 attachApplication() 方法，而 ActivityManangerNative 是一个抽象类，ActivityManagerService 类继承了 ActivityManagerNative 类，所以接着查看 ActivityManangerService 的 attachApplication() 方法。
 
-#### 3.2.5. 查看 ActivityManangerService 的 attachApplication() 方法
+### 3.2.5. ActivityManangerService#attachApplication()
+
 ```java
     @Override
     public final void attachApplication(IApplicationThread thread) {
@@ -636,8 +654,7 @@ public static void main(String[] args) {
 ```
 　　attachApplication 方法调用了 ApplicationThread 的 bindApplication() 方法。
 
-
-#### 3.2.6. 查看 ApplicationThread 的 bindApplication() 方法
+### 3.2.6. ApplicationThread#bindApplication()
 
 ```java
         public final void bindApplication(String processName, ApplicationInfo appInfo,
@@ -655,7 +672,8 @@ public static void main(String[] args) {
 
 　　ApplicationThread （是 ActivityThread 的内部类）以 IApplicationThread 的身份到了 ActivityManagerService 中，经过一系列的操作，最终被调用了自己的 bindApplication() 方法，发出初始化 Application 的消息。
 
-#### 3.2.7. 查看 H.BIND_APPLICATION 消息的处理
+### 3.2.7. 查看 H.BIND_APPLICATION 消息的处理
+
 ```java
  public void handleMessage(Message msg) {
                  case BIND_APPLICATION:
@@ -693,7 +711,8 @@ public static void main(String[] args) {
 ```
 　　接收到 BIND_APPLICATION 消息之后就创建了 Application 实例，并且调用了 Application 的 onCreate() 方法。
 
-#### 3.2.7.1. 查看 LoadedApk 的 makeApplication() 方法
+#### 3.2.7.1. LoadedApk#makeApplication()
+
 ```java
     public Application makeApplication(boolean forceDefaultAppClass,
             Instrumentation instrumentation) {
@@ -734,8 +753,8 @@ public static void main(String[] args) {
 
 　　从方法中看到：在取得 Application 的实际类名之后，最后的创建工作还是交由 Instrumentation 去完成。
 
+##### 3.2.7.1.1. Instrumentation#newApplication()
 
-#### 3.2.7.1.1 查看 Instrumentation 的 newApplication() 方法
 ```java
     static public Application newApplication(Class<?> clazz, Context context) throws InstantiationException, IllegalAccessException,
             ClassNotFoundException {
@@ -748,7 +767,8 @@ public static void main(String[] args) {
 ```
 　　newApplication() 方法中就是反射创建 Application 对象，并调用 attach() 方法绑定 Context。
 
-#### 3.2.7.2 查看 Instrumentation 的 callApplicationOnCreate()
+#### 3.2.7.2. Instrumentation#callApplicationOnCreate()
+
 ```java
 public void callApplicationOnCreate(Application app) {
     app.onCreate();
@@ -761,9 +781,12 @@ public void callApplicationOnCreate(Application app) {
 #### 3.2.8. 梳理
 　　ActivityThread 的 main() 方法作为程序的入口，在 main() 方法中，初始化了主线程的 Looper，主 Handler，并使主线程进入等待接收 Message 消息的无限循环状态，调用 attach() 方法，而attach() 方法通过调用 ActivityManager 的 attachApplication() 方法，最后调用到 ApplicationThread 的 bindApplication() 方法，在 bindApplication() 方法中发送出 BIND_APPLICATION 的消息，ActivityThread 类处理 BIND_APPLICATION 消息，接收到 BIND_APPLICATION 消息之后，创建一个 Application 实例，初始化一个 Instrumentation 对象，通过 Instrumentation 的 callApplicationOnCreate() 方法去调用 Application 的 onCreate() 方法。
 
-### 3.3. 启动 Activity
+## 3.3. 启动 Activity
+
 　　在 ActivityMannagerService 的 attachApplication() 方法中，在调用 ActivityStackSupervisor 的 attachApplicationLocked(app) 来启动 Activity。
-#### 3.3.1. ActivityStackSupervisor 的 attachApplicationLocked(app) 方法
+
+### 3.3.1. ActivityStackSupervisor#attachApplicationLocked(app)
+
 ```java
     boolean attachApplicationLocked(ProcessRecord app) throws RemoteException {
         ...
@@ -785,8 +808,8 @@ public void callApplicationOnCreate(Application app) {
 ```
 　　ActivityStackSupervisor 的 attachApplicationLocked(app) 方法最后调用到了 ApplicationThread 的 scheduleLaunchActivity() 方法。
 
+### 3.3.2. ApplicationThread 的 scheduleLaunchActivity() 方法
 
-#### 3.3.2. ApplicationThread 的 scheduleLaunchActivity() 方法
 ```java
         @Override
         public final void scheduleLaunchActivity(Intent intent, IBinder token, int ident,
@@ -803,7 +826,8 @@ public void callApplicationOnCreate(Application app) {
 
 　　在 ApplicationThread 的 scheduleLaunchActivity() 方法中发出了一条 LAUNCH_ACTIVITY 的消息。
 
-#### 3.3.3. 查看 H.LAUNCH_ACTIVITY 的消息处理
+### 3.3.3. 查看 H.LAUNCH_ACTIVITY 的消息处理
+
 ```java
         public void handleMessage(Message msg) {
             if (DEBUG_MESSAGES) Slog.v(TAG, ">>> handling: " + codeToString(msg.what));
@@ -833,9 +857,10 @@ public void callApplicationOnCreate(Application app) {
     }
 
 ```
-　　LAUNCH_ACTIVITY 消息的处理是在 ActivityThread 类中。在 hanfleLaunchActivity() 方法中调用 performLaunchActivity() 方法获取到 Activity 实例，activity 创建成功后，处理 onResume() 状态。
+　　LAUNCH_ACTIVITY 消息的处理是在 ActivityThread 类中。在 handleLaunchActivity() 方法中调用 performLaunchActivity() 方法获取到 Activity 实例，activity 创建成功后，处理 onResume() 状态。
 
-#### 3.3.4. 查看 performLaunchActivity() 方法
+### 3.3.4. 查看 performLaunchActivity() 方法
+
 ```java
 private Activity performLaunchActivity(ActivityClientRecord r, Intent customIntent) {
        ...
@@ -860,8 +885,9 @@ private Activity performLaunchActivity(ActivityClientRecord r, Intent customInte
     }
 ```
 
-#### 3.3.5. 查看 Instrumentation 的 newActivity() 方法
-```javajava
+### 3.3.5. Instrumentation#newActivity()
+
+```java
     public Activity newActivity(ClassLoader cl, String className, Intent intent) throws InstantiationException,IllegalAccessException,ClassNotFoundException {
 		//反射实例化 Activity
         return (Activity)cl.loadClass(className).newInstance();
@@ -869,7 +895,8 @@ private Activity performLaunchActivity(ActivityClientRecord r, Intent customInte
 ```
 　　newActivity() 方法主要就是反射实例化 Activity。
 
-#### 3.3.6. 查看 Instrumentation.callActivityOnCreate() 方法
+### 3.3.6. 查看 Instrumentation.callActivityOnCreate() 方法
+
 ```java
     public void callActivityOnCreate(Activity activity, Bundle icicle) {
         prePerformCreate(activity);
@@ -884,7 +911,8 @@ private Activity performLaunchActivity(ActivityClientRecord r, Intent customInte
 ```
 　　callActivityOnCreate() 方法调用了 Activity 的 performCreate() 方法。
 
-#### 3.3.7. 查看 Activity 的 performCreate() 方法
+### 3.3.7. 查看 Activity 的 performCreate() 方法
+
 ```java
     final void performCreate(Bundle icicle) {
         restoreHasCurrentPermissionRequest(icicle);
@@ -904,12 +932,14 @@ private Activity performLaunchActivity(ActivityClientRecord r, Intent customInte
 
 　　所以 handleLaunchActivity() 方法，创建 Activity 之后，就调用了 Activity 的 onCreate() 方法。
 
-#### 3.3.8. 梳理
+### 3.3.8. 梳理
+
 　　ApplicationThread 发出 LAUNCH_ACTIVITY 消息来启动 activity，通过反射机制创建 activity 实例，创建完成之后就会调用 onCreate() 方法。
 
-## 4. 关于 IActivityManager、ActivityManagerNative、ActivityManagerProxy、ActivityMnanagerService
+# 4. 关于 IActivityManager、ActivityManagerNative、ActivityManagerProxy、ActivityManagerService
 
-#### 4.1. 查看 IActivityManager 接口
+## 4.1. 查看 IActivityManager 接口
+
 ```java
 /**
  * System private API for talking with the activity manager service.  This
@@ -923,7 +953,8 @@ public interface IActivityManager extends IInterface {
 ```
 　　IActivityManager 是一个接口，并且继承 IInterface 接口。IActivityManager 是一个用来与活动管理服务交流的系统私有 API，并且提供应用返回活动管理的回调。
 
-#### 4.1.1. 查看 IInterface 接口
+### 4.1.1. 查看 IInterface 接口
+
 ```java
 /**
  * Base class for Binder interfaces.  When defining a new interface,
@@ -941,7 +972,8 @@ public interface IInterface
 ```
 　　IInterface 是 Binder 接口的基础类，通过 asBinder() 方法获取 Binder 对象实例。
 
-#### 4.2. 查看 ActivityManagerNative 类
+## 4.2. 查看 ActivityManagerNative 类
+
 ```java
 public abstract class ActivityManagerNative extends Binder implements IActivityManager
 {
@@ -997,7 +1029,8 @@ public abstract class ActivityManagerNative extends Binder implements IActivityM
 
 　　通过 ServiceManager 获取到 IBinder 实例的。如果了解 AIDL 通讯流程的话，就会理解这只是通过另一种方式获取 IBinder 实例罢了。获取 IBinder 的目的就是为了通过这个 IBinder 和 ActivityManager 进行通讯，进而 ActivityManager 会调度发送 H.BIND_APPLICATION 即初始化 Application 的 Message 消息。
 
-#### 4.3. 查看 ActivityManagerProxy 类
+## 4.3. 查看 ActivityManagerProxy 类
+
 ```java
 class ActivityManagerProxy implements IActivityManager
 {
@@ -1017,8 +1050,8 @@ class ActivityManagerProxy implements IActivityManager
 ```
 　　ActivityManagerProxy 的构造函数非常的简单，首先它需要一个 IBinder 参数，然后赋值给 mRemote 变量。这个 mRemote 就是在 ActivityManagerNative 的 asInterface 方法中设置的。 mRemote 是 ActivityManagerProxy 的成员变量，对它的操作是由 ActivityManagerProxy 来代理间接进行的。这样设计的好处是保护了 mRemote，并且能够在操作 mRemote 前执行一些别的事务，并且是以 ActivityManager 来进行这些操作的。
 
+## 4.4. 查看 ActivityManagerService
 
-#### 4.4. 查看 ActivityManagerService
 ```java
 public final class ActivityManagerService extends ActivityManagerNative
         implements Watchdog.Monitor, BatteryStatsImpl.BatteryCallback {
@@ -1027,16 +1060,16 @@ public final class ActivityManagerService extends ActivityManagerNative
 ```
 　　ActiviyManagerService 继承 ActivityManagerNative 抽象类，所以 ActivityManagerNative 方法的具体实现在 ActiviyManagerService 类中。
 
-
-#### 4.5. 总结
+## 4.5. 总结
 
 　　IActivityManager 是一个接口，用于与活动管理服务通讯。ActivityManagerProxy 实现了 IActivityManager 接口，ActivityManagerProxy 主要代理了内核中与 ActivityManager 通讯的 Binder 实例。ActivityManagerProxy 持有一个 ActivityManagerNative 的对象实例，当调用 IActivityManager 的方法时，调用 ActivityManagerNative 的实例来完成。ActivityManagerNative 是一个抽象类，实现 IActivityManager 接口，并且继承 Binder 类，提供 ActivityManagerProxy 实例供外部使用。ActivityManagerService 类继承 ActivityManagerNative 类，真正实现 IActivityManager 接口的方法。
 
 　　很明显 ActivityManager 使用的是代理模式，ActivityManagerProxy 代理了与活动管理服务通讯。
 
-## 5. 关于 ApplicationThread
+# 5. 关于 ApplicationThread
 
-#### 5.1. 查看 ApplicationThread 类
+## 5.1. 查看 ApplicationThread 类
+
 ```java
 private class ApplicationThread extends ApplicationThreadNative {
 	...
@@ -1050,14 +1083,15 @@ final ApplicationThread mAppThread = new ApplicationThread();
 ```
 　　ApplicationThread 是作为 ActivityThread 中的一个常量出现的。这表明系统不喜欢这个变量中途被修改，可见这个变量具有特定而十分重要的作用。
 
-#### 5.2. 查看 ApplicationThreadNative 类
+## 5.2. 查看 ApplicationThreadNative 类
+
 ```java
 public abstract class ApplicationThreadNative extends Binder
         implements IApplicationThread {
     ...
-	//无参构造函数
+	// 无参构造函数
     public ApplicationThreadNative() {
-		//这是 Binder 的方法
+		// 这是 Binder 的方法
         attachInterface(this, descriptor);
     }
 
@@ -1083,7 +1117,8 @@ public abstract class ApplicationThreadNative extends Binder
 　　可以看到 ApplicationThreadNative 继承于 Binder ，所以 ApplicationThreadNative 是一个 Binder，同时也实现了 IAPPlicationThread 接口，所以 ApplicationThreadNative 也是一个 IApplicationThread 。
 　　看到 ApplicationThreadNative 的 asInterface() 方法返回一个 ApplicationThreadProxy 实例，所以 ApplicationThread 也是代理模式。
 
-#### 5.3. 查看 IApplicationThread 类
+## 5.3. 查看 IApplicationThread 类
+
 ```java
 /**
  * System private API for communicating with the application.  This is given to
@@ -1101,27 +1136,30 @@ public interface IApplicationThread extends IInterface {
 ```
 　　IApplicationThread 实现了 IInterface 接口，
 
-#### 5.4. 总结
+## 5.4. 总结
 
 　　ApplicationThread 作为 IApplicationThread 的一个实例，承担了发送 Activity 生命周期以及它一些消息的任务，也就是说发送消息。
 
 　　至于为什么在 ActivityThread 中已经创建出了 ApplicationThread 了还要绕弯路发消息，是为了让系统根据情况来控制这个过程。
 
+# 6. 关于 Instrumentation
 
-## 6. 关于 Instrumentation
 　　Instrumentation 会在应用程序的任何代码运行之前被实例化，它能够允许你监视应用程序和系统的所有交互。
 
-#### 6.1. Instrumentation 是如何实现监视应用程序和系统交互的？
+## 6.1. Instrumentation 是如何实现监视应用程序和系统交互的？
+
 　　Instrumentation 类将 Application 的创建、Activity 的创建以及生命周期这些操作包装起来，通过操作 Instrumentation 进而实现上述操作。
 
-#### 6.2. Instrumentation 封装有什么好处？
-　　Instrumentation 作为抽象，放约定好需要实现的功能之后，只需要给 Instrumentation 添加这些抽象功能，然后调用就好了。关于怎么实现这些功能，都会交给 Instrumentation 的实现对象就好了。这就是多态的运用，依赖抽象，不依赖具体的实践。就是上层提出需求，底层定义接口，即依赖倒置原则的践行。
+## 6.2. Instrumentation 封装有什么好处？
 
-#### 6.3. 总结
+　　Instrumentation 作为抽象，在约定好需要实现的功能之后，只需要给 Instrumentation 添加这些抽象功能，然后调用就好了。关于怎么实现这些功能，都会交给 Instrumentation 的实现对象就好了。这就是多态的运用，依赖抽象，不依赖具体的实践。就是上层提出需求，底层定义接口，即依赖倒置原则的践行。
+
+## 6.3. 总结
+
 　　在 Application 的创建、Activity 的创建和生命周期过程中都会调用 Instrumentation 的方法，Application 的创建是调用 ActivityManagerService 的方法来实现，而 Activity 的创建是反射实现，Activity 的生命周期调用了 activity 的相关方法。
 
+# 7. 参考文章
 
-## 7. 参考文章
 1. [Android 7.0应用冷启动流程分析](https://blog.csdn.net/dd864140130/article/details/60466394)
 2. [Android APP 冷启动流程](https://www.jianshu.com/p/f5e79998cd66)
 3. [Android爬坑之路（二十）App启动过程](https://baijiahao.baidu.com/s?id=1617072163535121555&wfr=spider&for=pc)

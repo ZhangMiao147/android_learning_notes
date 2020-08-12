@@ -21,12 +21,12 @@
 
 [TOC]
 
-## 1. Activity 介绍
-
 　　Activity 是 Android 的四大组件之一，主要用于提供窗口与用户进行交互。
 
-## 2. Activity 的生命周期
-#### 2.1. 生命周期图
+# 1. Activity 的生命周期
+
+## 1.1. 生命周期图
+
 　　官网的 Activity 的生命周期图：
 ![](./image/Activity生命周期图.png)
 
@@ -43,7 +43,8 @@
 | onDestroy | 表示 Activity 即将被销毁 | 来到了这个回调，说明 Activity 即将被销毁，应该将资源的回收和释放工作在该方法中执行。<br /><br />当 Activity 被销毁时，销毁的情况包括：当用户按下 Back 键后、程序中调用 finish() 后。 |
 | onNewIntent | 重用栈中 Activity | 当在 AndroidManifest 里面声明 Activty 的时候设置了 launchMode 或者调用 startActivity 的时候设置了 Intent 的 flag ，当启动 Activity 的时候，复用了栈中已有的 Activity，则会调用 Activity 的该回调。 |
 
-#### 2.2. 常见情况下生命周期的回调
+## 1.2. 常见情况下生命周期的回调
+
 （A 与 B 表示不同的 Activity ）
 
 | 情况 | 回调 |
@@ -59,7 +60,7 @@
 
 　　表中生命周期的验证可以在 [验证 Activity 生命周期的问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E9%AA%8C%E8%AF%81Activity%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%9A%84%E9%97%AE%E9%A2%98.md) 文章中查看。
 
-#### 2.3. 关于生命周期常见问题
+## 1.3. 关于生命周期常见问题
 
 | 问题 | 回调 |
 |--------|--------|
@@ -70,14 +71,17 @@
 
 　　关于生命周期的常见问题的验证可以在 [验证 Activity 生命周期的问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E9%AA%8C%E8%AF%81Activity%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%9A%84%E9%97%AE%E9%A2%98.md) 文章中查看。
 
-#### 2.4. 异常状态下活动的生命周期
+## 1.4. 异常状态下活动的生命周期
+
 　　当 Activity 在运行过程中发生一些情况时，生命周期流程也会发生变化。常见的异常情况有两种，一种是资源配置改变；另一是内存不足导致生命周期流程发生变化。
 
-###### 2.4.1. 资源配置改变导致 Activity 重建
+### 1.4.1. 资源配置改变导致 Activity 重建
+
 　　资源配置最常见的情况就是横竖屏切换导致资源的变化，当程序启动时，会根据不同的配置加载不同的资源，例如横竖屏两个状态对应着两张不同的资源图片。如果在使用过程中屏幕突然旋转，那么 Activity 就会因为系统配置发生改变而销毁重建，加载合适的资源。
 
-###### 2.4.2. 低优先级 Activity 由于内存不足被杀死
-　　后台可以同时运行多个任务，当设备的内存空间不足时，系统为了保证用户的体验，会按照进程优先级将一些低优先级的进程杀死以会回收内存资源，后台 Activity 就有可能会被销毁。
+### 1.4.2. 低优先级 Activity 由于内存不足被杀死
+
+　　后台可以同时运行多个任务，当设备的内存空间不足时，系统为了保证用户的体验，会按照进程优先级将一些低优先级的进程杀死回收内存资源，后台 Activity 就有可能会被销毁。
 
 　　系统回收进程的优先级：
 
@@ -107,10 +111,12 @@
 
 　　不包含任何活跃的应用组件，作用是加快下次启动这个进程中组件所需要的时间，优先级低。
 
-#### 2.5. 异常情况下的处理
+## 1.5. 异常情况下的处理
+
 　　在发生异常情况后，用户再次回到 Activity，原 Activity 会重新建立，原已有的数据就会丢失，比如用户操作改变了一些属性值，重建之后用户就看不到之前操作的结果，在异常的情况下如何给用户带来好的体验，有两种办法。
 
-###### 2.5.1. 数据保存
+### 1.5.1. 数据保存
+
 　　第一种就是系统提供的 **onSaveInstanceState** 和 **onRestoreInstanceState** 方法，onSaveInstanceState 方法会在 Activity 异常销毁之前调用，用来保存需要保存的数据，onRestoreInstanceState 方法在 Activity 重建之后获取保存的数据。
 
 　　在活动异常销毁之前，系统会调用 onSaveInstanceState()，可以在 Bundle 类型的参数中保存需要保留的信息，之后这个 Bundle 对象会作为参数传递给 onRestoreInstanceState 和 onCreate 方法，这样在重新创建时就可以获取数据了。从 onCreate 方法中获取 onSaveInstanceState 方法中保存的数据时，要注意对 bundle 判空。
@@ -125,9 +131,10 @@
 
 　　4. 在 onSaveInstanceState 和 onRestoreInstanceState 这两个方法中，系统会默认为我们进行一定的恢复工作，具体地讲，默认实现会为布局中的每个 View 调用相应的 onSaveInstanceState() 方法，让每个视图都能提供有关自身的应保存信息。Android 框架中几乎每个小部件都会根据需要实现此方法，以便在重建 Activity 时自动保存和恢复 UI 所做的任何可见更改，例如 EditText 中的文本信息、ListView 中的滚动位置、TextView 的文本信息（需要设置 freezesText 属性才能自动保存）等（注意，组件一定要添加 id 才可以）。也可以通过 android:saveEnabled 属性设置为 “false” 或通过调用 setSaveEnabled() 方法显式阻止布局内的视图保存其状态，通常不会将该属性停用，除非想要以不同方式恢复 Activity UI 的状态。
 
-　　5. onSveInstanceState() 常见的触发场景有：横竖屏切换、按下电源键、按下菜单键、切换到别的 Activity 等；onRestoreInstanceState() 常见的触发场景有：横竖屏切换、切换语言等等。
+　　5. onSaveInstanceState() 常见的触发场景有：横竖屏切换、按下电源键、按下菜单键、切换到别的 Activity 等；onRestoreInstanceState() 常见的触发场景有：横竖屏切换、切换语言等等。
 
-###### 2.5.2. 防止重建
+### 1.5.2. 防止重建
+
 　　在默认情况下，资源配置改变会导致活动的重新创建，但是可以通过对活动的 android:configChanges 属性的设置使活动防止重新被创建。
 
 **android: configChanges 属性值**
@@ -157,22 +164,27 @@
 
 　　异常状态下生命周期与异常情况下的处理的的验证可以在  [验证 Activity 生命周期的问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/%E9%AA%8C%E8%AF%81Activity%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%9A%84%E9%97%AE%E9%A2%98.md) 文章中查看。
 
-## 3. 关于 Activity 的不常用的回调方法
-#### 3.1. onPostCreate()
+# 2. 关于 Activity 的不常用的回调方法
+
+## 2.1. onPostCreate()
+
 　　onPostCreate() 方法是指 onCreate() 方法彻底执行完毕的回调。一般都没有实现这个方法，它的作用是在代码开始运行之前，调用系统做最后的初始化工作。现在知道的做法是使用 ActionBarDrawerToggle 时在屏幕旋转的时候在 onPostCreate() 中同步下状态。
 
-#### 3.2. onPostResume()
+## 2.2. onPostResume()
+
 　　onPostResume() 与 onPostCreate() 方法类似，onPostResume() 方法在 onResume() 方法彻底执行完毕的回调。 onCreate() 方法中获取某个 View 的高度和宽度时，返回的值是 0 ，因为这个时候 View 可能还没初始化好，但是在 onPostResume() 中获取就不会有问题，因为 onPostResume() 是在 onResume() 彻底执行完毕的回调。
 
-#### 3.3. onContentChanged()
+## 2.3. onContentChanged()
+
 　　当 Activity 的布局改动时，即 setContentView() 或者 addContentView() 方法执行完毕时就会调用该方法。所以，Activity 中 View 的 findViewById() 方法都可以放到该方法中。
 
-#### 3.4. onUserLeaveHint()
+## 2.4. onUserLeaveHint()
+
 　　当用户的操作使一个 activity 准备进入后台时，此方法会像 activity 的生命周期的一部分被调用。例如，当用户按下 Home 键，Activity#onUserLeaveHint() 将会被调用。但是当来电导致 activity 自动占据前台（系统自动切换），Activity#onUserLeaveHint() 将不会被回调。
 
 　　一般监听返回键，是重写 onKeyDown() 方法，但是 Home 键和 Menu 键就不好监听，但是可以在 onUserLeaveHint() 方法中监听。
 
-#### 3.5. onUserInteraction()
+## 2.5. onUserInteraction()
 
 　　Activity 无论分发按键事件、触摸事件或者轨迹球事件都会调用 Activity#onUserInteraction()。如果想知道用户用某种方式和你正在运行的 activity 交互，可以重写 Activity#onUserInteraction()。所有调用 Activity#onUserLeaveHint() 的回调都会首先回调 Activity#onUserInteraction() 。
 
@@ -180,11 +192,12 @@
 
 　　可以用这个方法来监控用户有没有与当前的 Activity 进行交互。
 
-#### 3.6 onCreateDescription()
+## 2.6 onCreateDescription()
 
 　　仅在要停止 Activity 时调用，先于 onPause()。
 
-## 参考文章：
+# 3. 参考文章：
+
 1. [老生常谈-Activity](https://juejin.im/post/5adab7b6518825670c457de3)
 2. [全面了解 Activity](https://juejin.im/entry/589847f7128fe10058ebd803)
 3. [超详细的生命周期图-你能回答全吗](https://www.jianshu.com/p/d586c3406cfb)

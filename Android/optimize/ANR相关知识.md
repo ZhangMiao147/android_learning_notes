@@ -1,10 +1,10 @@
 # ANR 相关知识 
 
-## 什么是 ANR
+# 1. 什么是 ANR
 
 　　ANR 全称是 Application Not Responding，意思就是应用程序未响应。如果一个应用无法响应用户的输入，系统就会弹出一个 ANR 对话框，用户可以自行选择继续等待或者是停止当前程序。
 
-## ANR 的发生原因
+# 2. ANR 的发生原因
 
 1. 代码自身引起，例如：
    * 主线程阻塞、IOWait 等；
@@ -18,7 +18,7 @@
    * 当前应用进程进行进程间通信请求其他进程，其他进程的操作长时间没有反馈；
    * 其他进程的 CPU 占用率高，使得当前应用进程无法抢占到 CPU 时间片。
 
-## 发生 ANR 的条件
+# 3. 发生 ANR 的条件
 
 　　Andriod 系统中，ActivityManangerService(简称 AMS) 和 WindowManangerService(简称 WMS) 会检测 App 的响应事件，如果 App 在特定时间无法响应屏幕触摸或键盘输入事件，或者特定事件没有处理完毕，就会出现 ANR。
 
@@ -27,16 +27,16 @@
 * Service Timeout：前台服务在 20 秒内、后台服务在 200 秒内未执行完成；
 * ContentProvider Timeout：内容提供者，在 publish 超时 10s；
 
-## 分析 ANR 的方法
+# 4. 分析 ANR 的方法
 
-#### ANR 分析方法一：Log
+## 4.1. ANR 分析方法一：Log
 
 ![](image/ANR_LOG.png)
 　　可以看到 logcat 清晰地记录了 ANR 发生的时间，发生 ANR 所在的报名、类名以及线程的 tid 和一句话概括原因：WaitingInMainSignalCatcherLoop，大概意思为主线程等待异常。
 
 　　最后一句 The application may be doing too much work on its main thread. 告知可能在主线程做了太多的工作。
 
-#### ANR 分析方法二：traces.txt
+## 4.2. ANR 分析方法二：traces.txt
 
 　　上面的 log 有第二句 Wrote stack trances to '/data/anr/trances.txt'，说明 ANR 异常已经输出到 trances.txt 文件，使用 adb 命令把这个文件从手机里导出来：
 
@@ -106,7 +106,7 @@ Heap: 22% free, 1478KB/1896KB; 21881 objects    ----> 内存使用情况
 
 **注意**：产生新的 ANR，原来的 traces.txt 文件会被覆盖。
 
-#### ANR 分析方法三：Java 线程调用分析
+## 4.3. ANR 分析方法三：Java 线程调用分析
 
 　　通过 JDK 提供的命令可以帮助分析和调试 Java 应用，命令是：
 
@@ -121,14 +121,12 @@ jstack {pid}
 7267 Jps
 ```
 
-#### ANR 分析方法四：DDMS 分析 ANR 问题
+## 4.4. ANR 分析方法四：DDMS 分析 ANR 问题
 
 * 使用 DDMS-----Update Threads 工具
 * 阅读 Update Threads 的输出
 
-
-
-## 如何避免 ANR
+# 5. 如何避免 ANR
 
 　　不是所有的 ANR 都可找到原因，也受限于当时发生的环境或系统 bug，因此对 ANR ，是避免而不是分析。
 
@@ -144,11 +142,11 @@ jstack {pid}
 * 使用 Systrace 和 TraceView 找到影响响应的问题，进一步优化。
 * 如果是由于内存不足引起的问题，AndroidManifest.xml 文件 < application > 中可以设置 android:largeHeap="true"，以此增大 App 使用内存。不过不建议使用此法，从根本上防止内存泄漏，优化内存使用才是正确的做法。
 
-## 参考文章
+# 6. 参考文章
 
-[说说 Android 中的 ANR](https://droidyue.com/blog/2015/07/18/anr-in-android/)
+1. [说说 Android 中的 ANR](https://droidyue.com/blog/2015/07/18/anr-in-android/)
 
-[Android ANR：原理分析及解决办法](https://www.jianshu.com/p/388166988cef)
+2. [Android ANR：原理分析及解决办法](https://www.jianshu.com/p/388166988cef)
 
-[Android性能优化（七）之你真的理解ANR吗？](https://juejin.im/post/58e5bd6dda2f60005fea525c)
+3. [Android性能优化（七）之你真的理解ANR吗？](https://juejin.im/post/58e5bd6dda2f60005fea525c)
 
