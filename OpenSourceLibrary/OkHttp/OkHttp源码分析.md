@@ -1,12 +1,12 @@
 # OkHttp 源码分析
 
-## 1. OkHttp 请求网络的流程图
+# 1. OkHttp 请求网络的流程图
 
 ![](image/OkHttp流程图.png)
 
-## 2. 请求分析
+# 2. 请求分析
 
-### 2.1. OkHttpClient 的构建
+## 2.1. OkHttpClient 的构建
 
 ```java
 OkHttpClient client = new OkHttpClient();
@@ -40,7 +40,7 @@ OkHttpClient client = new OkHttpClient();
       socketFactory = SocketFactory.getDefault();
       // HostnameVerifier 接口的实现，与证书校验相关。在握手期间，如果通信 URL 的主机名和服务器的标识主机名不匹配或者说不安全时，则底层的握手验证机制会回调 HostnameVerifier 接口的实现程序来确定是否应该允许此连接。
       hostnameVerifier = OkHostnameVerifier.INSTANCE;
-      // 证书锁定，防止证书攻击。典型的用例时防止代理工具抓包。
+      // 证书锁定，防止证书攻击。典型的用例是防止代理工具抓包。
       certificatePinner = CertificatePinner.DEFAULT;
       proxyAuthenticator = Authenticator.NONE;
       // 授权相关，如著名的 401 返回码。一般场景是在 token 过期的情况下发生，但在实际开发中，大部分服务器不会这样实现，而是正常返回在自定义码里面。
@@ -111,13 +111,13 @@ OkHttpClient client = new OkHttpClient();
   final int writeTimeout;//写入超时
 ```
 
-### 2.2. 请求网络
+## 2.2. 请求网络
 
 ```java
         //构建请求
-		    Request request = new Request.Builder()
-                .url(url)
-                .build();
+		Request request = new Request.Builder()
+           	.url(url)
+            .build();
         Response response = null;
         try {
             //请求
@@ -145,7 +145,7 @@ OkHttpClient client = new OkHttpClient();
 * 同步请求：client.newCall(request).execute()；
 * 异步请求：client.newCall(request).enqueue()；
 
-### 2.3. 异步请求
+## 2.3. 异步请求
 
 　　异步的请求调用的就是 enqueue() 方法了：
 
@@ -193,7 +193,7 @@ OkHttpClient client = new OkHttpClient();
 
 2. 利用 dispatcher 调度器，来进行实际的执行 client.dispatcher().enqueue(new AsyncCall(responseCallback));，dispatcher 是 OkHttpClient.Builder 的成员之一，是 HTTP 请求的执行策略， 在上面的 OkhttpClient.Build 可以看出已经初始化了 Dispatcher 实例。
 
-#### 2.3.1 Dispatcher 调度器
+### 2.3.1 Dispatcher 调度器
 
 　　Dispatcher 的 enqueue 的方法实现：
 
@@ -257,7 +257,7 @@ public final class Dispatcher {
 
 　　`readyAsyncCalls.add(call)`，前面是将 call 放入了线程池中运行，而这个 call 是 AysncCall。
 
-#### 2.3.2 AysncCall
+### 2.3.2 AysncCall
 
 　　来看一下 AsyncCall 的类结构：
 
@@ -295,7 +295,7 @@ public abstract class NamedRunnable implements Runnable {
 
 　　NamedRunnable 实现了 Runnable，所以 AsyncCall 其实就是一个 Runnable，线程池执行到了 NamedRunnable 的 run 方法，会执行 AsyncCall 的 execute() 方法。
 
-##### 2.3.2.1 execute
+#### 2.3.2.1. AsyncCall#execute()
 
 　　接着来看 AsyncCall 的 execute 方法：
 
@@ -356,7 +356,7 @@ public abstract class NamedRunnable implements Runnable {
 
 　　从 AsyncCall 的 execute 方法可以看出真正执行请求的是 getResponseWithInterceptorChain() ，然后通过回调将 Response 返回给用户。
 
-##### 2.3.2.2. dispatcher#finished()
+#### 2.3.2.2. dispatcher#finished()
 
 　　值得注意的是 finally 执行了 client.dispatcher().finished(this)；通过调度器移除队列，并且判断是否存在等待队列，如果存在，检查执行队列是否达到最大值，如果没有将等待队列变为执行队列。这样也就确保了等待队列被执行。
 
@@ -411,7 +411,7 @@ public abstract class NamedRunnable implements Runnable {
 
 　　正在执行的请求执行完毕了，会调用 promoteCalls() 函数，把 readyAsyncCalls 队列中的 AsyncCall “ 提升 ” 为 runningAsyncCalls，并等待线程池的执行。
 
-##### 2.3.2.3. getResponseWithInterceptorChain
+#### 2.3.2.3. getResponseWithInterceptorChain
 
 　　而真正执行网络请求和返回响应结果是在 getResponseWithInterceptorChain()：
 
@@ -448,12 +448,12 @@ public abstract class NamedRunnable implements Runnable {
     Interceptor.Chain chain = new RealInterceptorChain(interceptors, null, null, null, 0,
         originalRequest, this, eventListener, client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis());
-		// 执行责任链
+	// 执行责任链
     return chain.proceed(originalRequest);
   }
 ```
 
-#### 2.3.3. RealInterceptorChain
+### 2.3.3. RealInterceptorChain
 
 　　okhttp 是通过责任链来进行传递返回数据的。
 
@@ -512,11 +512,11 @@ public abstract class NamedRunnable implements Runnable {
   }
 ```
 
-　　在 RealInterceptorChain 的 proceed 方法里面，用 index +1 新建了一个 RealInterceptorChain，也就是下一个拦截器，然后获得 index （当前）的拦截器 interceptor，最后执行 interceptor.intercept(next) 方法，这个方法的参数是新建的 RealInterceptorChain（下一个拦截器），其实就会按顺序执行拦截器，最终将结果返回到最开始调用的这里，将最终响应结果返回。 
+　　在 RealInterceptorChain 的 proceed 方法里面，用 index +1 新建了一个 RealInterceptorChain，也就是以下一个拦截器为头的责任链，然后获得 index （当前）的拦截器 interceptor，最后执行 interceptor.intercept(next) 方法，这个方法的参数是新建的 RealInterceptorChain（下一个拦截器为头），其实就会按顺序执行拦截器，最终将结果返回到最开始调用的这里，将最终响应结果返回。 
 
 　　这样设计的一个好处就是，责任链中每个拦截器都会执行 chain.proceed() 方法之前的代码，等责任链最后一个拦截器执行完毕后会返回最终的响应数据，而 chain.proceed() 方法会得到最终的响应数据，这时就会执行每个拦截器的 chain.proceed() 方法之后的代码，其实就是对响应数据的一些操作。
 
-#### 2.3.4. Interceptor 拦截器
+### 2.3.4. Interceptor 拦截器
 
 　　OkHttp 里面的拦截器有：
 
@@ -532,7 +532,7 @@ public abstract class NamedRunnable implements Runnable {
 
 　　对于把 Request 变成 Response 这件事来说，每个 Interceptor 都可能完成这件事，链条让每一个 Interceptor 自行决定是否完成任务以及怎么完成任务（自己解决或者交给下一个 Interveptor）。这样完成网络请求这件事就彻底从 RealCall 类中剥离了出来，简化了各自的责任和逻辑。
 
-##### 3.2.4.1. RetryAndFollowUpInterceptor 重试以及重定向
+#### 2.3.4.1. RetryAndFollowUpInterceptor 重试以及重定向
 
 　　RetryAndFollowUpInterceptor 的 intercept 方法：
 
@@ -761,7 +761,7 @@ public abstract class NamedRunnable implements Runnable {
 
 　　是否请求成功是通过 followUpRequest() 方法来进行的，通过 response code 来进行一系列的异常判断，从而决定是否要重新请求。返回为 null，则表示请求成功或者准确的说是不需要重试或者重定向，否则就是请求失败了需要重新请求。
 
-##### 3.2.4.2. BridgeInterceptor 桥接
+#### 2.3.4.2. BridgeInterceptor 桥接
 
 　　BridgeInterceptor 的 intercept 方法：
 
@@ -841,7 +841,7 @@ public abstract class NamedRunnable implements Runnable {
 
 　　BridgeInterceptor 用于桥接 request 和 response，主要就是依据 Http 协议配置请求头，然后通过 chain.proceed() 发出请求，待结果返回后再构建响应结果。
 
-##### 3.2.4.3. CacheInterceptor 缓存
+#### 2.3.4.3. CacheInterceptor 缓存
 
 　　CacheInterceptor 的 intercept 方法：
 
@@ -967,7 +967,7 @@ public abstract class NamedRunnable implements Runnable {
 
 　　这样就体现除了责任链的好处，当责任链执行完毕，拦截器可以拿到最终的数据做其他的逻辑处理等操作，也不用再做其他的调用方法逻辑了，就可以直接在当前的拦截器拿到最终的数据。
 
-##### 3.2.4.4. ConnectInterceptor 建立连接
+#### 2.3.4.4. ConnectInterceptor 建立连接
 
 　　ConnectInterceptor 的 intercept 方法：
 
@@ -995,7 +995,7 @@ public abstract class NamedRunnable implements Runnable {
 
 　　而创建 HttpCodec 对象的过程涉及了 StreamAllocation、RealConnection，这个过程可以概括为：找到一个可用的 RealConnection，再利用 RealConnection 的输入、输出（BufferedSource 和 BufferedSink）创建 HttpCodec 对象，供后面步骤使用。
 
-##### 3.2.4.5. CallServerInterceptor 发送和接收数据
+#### 2.3.4.5. CallServerInterceptor 发送和接收数据
 
 　　CallServerInterceptor 的 intercept 方法：
 
@@ -1120,7 +1120,7 @@ public abstract class NamedRunnable implements Runnable {
 
 　　其实 Interceptor 的设计也是一种分层的思想，每个 Interceptor 就是一层。为什么要套这么多层呢？分层的思想在 TCP/IP 协议中就体现的淋漓尽致，分层简化了每一层的逻辑，每层只需要关注自己的责任（单一原则思想也在此体现），而各层之间通过约定的接口 / 协议进行合作（面向接口编程思想），共同完成复杂的任务。
 
-### 2.4. 同步请求
+## 2.4. 同步请求
 
 　　OkHttp 的同步请求调用的是 RealCall 的 execute() 方法：
 
@@ -1171,7 +1171,7 @@ public abstract class NamedRunnable implements Runnable {
 
 　　同步请求和异步请求的原理是一样的，都是在 getResponseWithInterceptorChain() 函数中通过 Interceptor 链条来实现的网络逻辑，只是异步是通过 ExectorService （线程池）实现。
 
-## 3. 返回数据的获取
+# 3. 返回数据的获取
 
 　　在同步（Call # execute() 执行之后）或者异步（Call # onResponse() 回调中）请求完成之后，就可以从 Response 对象中获取到响应数据了，包括 Http status code、status message、response header、response body 等。这里 body 部分最为特殊，因为服务器返回的数据可能非常大，所以必须通过数据流的方式来进行访问（也提供了诸如 string() 和 bytes() 这样的方法将流内的数据一次性读取完毕），而响应中其他部分则可以随意获取。
 
@@ -1192,7 +1192,7 @@ public abstract class NamedRunnable implements Runnable {
 
 　　OkHttp 对响应的校验非常严格，Http status line 不能有任何杂乱的数据，否则就会抛出异常。
 
-## 4. 总结
+# 4. 总结
 
 　　简述 OkHttp 的执行流程：
 
@@ -1201,10 +1201,10 @@ public abstract class NamedRunnable implements Runnable {
 3. getResponseWithInterceptorChain() 中利用 Interceptor 链条，分层实现缓存、透明压缩、网络 IO 等功能，最终将响应数据返回给用户。
 4. OkHttp 的实现采用了责任链模式，它包含了一些命令对象和一系列的处理对象，每一个处理对象决定它能处理哪些命令对象，它也知道如何将它不能处理的命令对象传递给该链中的下一个处理对象，该模式还描述了往该处理链的末尾添加新的处理对象的方法。
 
-## 5. 参考文章
+# 5. 参考文章
 
-[彻底理解 OkHttp - OkHttp 源码解析及 OkHttp 的设计思想](https://www.jianshu.com/p/cb444f49a777)
+1. [彻底理解 OkHttp - OkHttp 源码解析及 OkHttp 的设计思想](https://www.jianshu.com/p/cb444f49a777)
 
-[拆轮子系列：拆 OkHttp](https://blog.piasy.com/2016/07/11/Understand-OkHttp/index.html)
+2. [拆轮子系列：拆 OkHttp](https://blog.piasy.com/2016/07/11/Understand-OkHttp/index.html)
 
-[OkHttp深入分析——源码分析部分](https://www.jianshu.com/p/5bc1353ee933)
+3. [OkHttp深入分析——源码分析部分](https://www.jianshu.com/p/5bc1353ee933)

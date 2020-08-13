@@ -1418,7 +1418,7 @@ final class CallEnqueueOnSubscribe<T> implements OnSubscribe<Response<T>> {
 5. 生成的 CallAdapter 有四个工厂，分别对应不同的平台：RxJava、Java8、Guava 还有一个 Retrofit 默认的。简单来说就是用来将 Call 转成 T 的一个策略。因为这里具体请求时耗时操作，所以需要 CallAdapter 去管理线程。比如 RxJava 会根据调用方法的返回值，如 Response < T > | Result < T > | Observable < T >，生成不同的 CallAdapter。实际上就是对 RxJava 的回调方式做封装。比如将 response 再拆解为 success 和 error 等。
 
 ## 11. 参考文章
-[Retrofit是如何工作的？](https://www.jianshu.com/p/cb3a7413b448)
+1. [Retrofit是如何工作的？](https://www.jianshu.com/p/cb3a7413b448)
 
-[拆轮子系列：拆 Retrofit](https://blog.piasy.com/2016/06/25/Understand-Retrofit/index.html)
+2. [拆轮子系列：拆 Retrofit](https://blog.piasy.com/2016/06/25/Understand-Retrofit/index.html)
 
