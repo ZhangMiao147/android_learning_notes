@@ -1,31 +1,32 @@
 # BroadcastReceiver 的实现原理
 
-### 1. 采用的模型
+# 1. 采用的模型
 
 　　Android 中的广播使用了设计模式中的观察者模式：基于消息的发布 / 订阅事件模型。Android 将广播的发送者和接受者解耦，使得系统方便集成、更易扩展。
 
-### 2. 模型讲解
+## 1.1. 模型讲解
 
 　　模型中有 3 个角色：1.消息订阅者（广播接受者），2.消息发布者（广播发布者），3.消息中心（AMS，即 Activity Manager Service）。
 ![](image/广播原理图.png)
 
-### 3. 静态广播的注册
+# 2. 静态广播的注册
 
 　　静态广播是通过 PackageManagerService 在启动的时候扫描已安装的应用去注册的。
 
 　　在 PackageManagerservice 的构造方法中，会去扫描应用安装目录，顺序是先扫描系统应用安装目录再去扫描第三方应用安装目录。
 
-　　PaackageManagerService.scanDirLI 就是用于扫描目录的方法：
+　　PackageManagerService.scanDirLI 就是用于扫描目录的方法：
 ```java
 //用于扫描目录
-private void scanDirLI(File dir, final int parseFlags, int scanFlags, long currentTime) {				final File[] files = dir.listFiles();
+private void scanDirLI(File dir, final int parseFlags, int scanFlags, long currentTime) {				
+    final File[] files = dir.listFiles();
     if (ArrayUtils.isEmpty(files)) {
         Log.d(TAG, "No files in app dir " + dir);
         return;
     }
-		...
-		for (File file : files) {
-      	//isApkFile() 方法将目录下的所有后缀为 “.apk” 的文件过滤出来
+	...
+	for (File file : files) {
+      	// isApkFile() 方法将目录下的所有后缀为 “.apk” 的文件过滤出来
     		final boolean isPackage = (isApkFile(file) || file.isDirectory())
             && !PackageInstallerService.isStageName(file.getName());
         if (!isPackage) {
@@ -33,6 +34,7 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
             continue;
         }
         try {
+            // 调用 scanPackageTracedLI 方法继续扫描
             scanPackageTracedLI(file, parseFlags | PackageParser.PARSE_MUST_BE_APK,
                    scanFlags, currentTime, null);
         } catch (PackageManagerException e) {
@@ -61,6 +63,7 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
             int scanFlags, long currentTime, UserHandle user) throws PackageManagerException {
         Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "scanPackage");
         try {
+            // 调用 scanPackageLI 方法扫描
             return scanPackageLI(scanFile, parseFlags, scanFlags, currentTime, user);
         } finally {
             Trace.traceEnd(TRACE_TAG_PACKAGE_MANAGER);
@@ -95,7 +98,7 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
         } finally {
             Trace.traceEnd(TRACE_TAG_PACKAGE_MANAGER);
         }
-
+		// 调用 scanPackageLI 扫描文件
         return scanPackageLI(pkg, scanFile, parseFlags, scanFlags, currentTime, user);
     }
 ```
@@ -123,12 +126,12 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
         }
 
         // Scan the parent
-        //扫描父文件
+        // 扫描父文件
         PackageParser.Package scannedPkg = scanPackageInternalLI(pkg, scanFile, policyFlags,
                 scanFlags, currentTime, user);
 
         // Scan the children
-        //扫描子文件
+        // 扫描子文件
         final int childCount = (pkg.childPackages != null) ? pkg.childPackages.size() : 0;
         for (int i = 0; i < childCount; i++) {
             PackageParser.Package childPackage = pkg.childPackages.get(i);
@@ -182,7 +185,7 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
     private PackageParser.Package scanPackageLI(PackageParser.Package pkg, final int policyFlags, int scanFlags, long currentTime, UserHandle user) throws PackageManagerException {
         boolean success = false;
         try {
-          	//解析 pkg
+          	// 解析 pkg
             final PackageParser.Package res = scanPackageDirtyLI(pkg, policyFlags, scanFlags,
                     currentTime, user);
             success = true;
@@ -202,15 +205,15 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
     private PackageParser.Package scanPackageDirtyLI(PackageParser.Package pkg,
             final int policyFlags, final int scanFlags, long currentTime, UserHandle user)
             throws PackageManagerException {
-		...
+			...
 		    N = pkg.services.size();
             r = null;
-      			//遍历包
+      		// 遍历包
             for (i=0; i<N; i++) {
                 PackageParser.Service s = pkg.services.get(i);
                 s.info.processName = fixProcessName(pkg.applicationInfo.processName,
                         s.info.processName, pkg.applicationInfo.uid);
-              	//保存注册的组件在 mServices
+              	// 保存注册的组件在 mServices
                 mServices.addService(s);
                 if ((policyFlags&PackageParser.PARSE_CHATTY) != 0) {
                     if (r == null) {
@@ -232,7 +235,7 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
     public @NonNull ParceledListSlice<ResolveInfo> queryIntentReceivers(Intent intent,
             String resolvedType, int flags, int userId) {
         return new ParceledListSlice<>(
-          			//查询注册的 BroadcastReceiver
+          		// 查询注册的 BroadcastReceiver
                 queryIntentReceiversInternal(intent, resolvedType, flags, userId));
     }
 ```
@@ -249,7 +252,7 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
                 comp = intent.getComponent();
             }
         }
-        //根据 Intent 的 component 来查找 BroadcaseReceiver
+        // 根据 Intent 的 component 来查找 BroadcaseReceiver
         if (comp != null) {
             List<ResolveInfo> list = new ArrayList<ResolveInfo>(1);
             ActivityInfo ai = getReceiverInfo(comp, flags, userId);
@@ -269,7 +272,7 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
             }
             final PackageParser.Package pkg = mPackages.get(pkgName);
             if (pkg != null) {
-            		//查询注册的 BroadcaseReceiver
+            	// 查询注册的 BroadcaseReceiver
                 return mReceivers.queryIntentForPackage(intent, resolvedType, flags, pkg.receivers,
                         userId);
             }
@@ -278,7 +281,7 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
     }
 ```
 
-### 3. 动态广播的注册
+# 3. 动态广播的注册
 
 　　调用 Context.registerReceiver 最后会调用 ActivityManagerService.registerReceiver：
 ```java
@@ -290,14 +293,14 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
 		BroadcastFilter bf = new BroadcastFilter(filter, rl, callerPackage,
                     permission, callingUid, userId);
         rl.add(bf);
-    //动态注册广播保存在 mReceiverResolver 
+    	// 动态注册广播保存在 mReceiverResolver 
 		mReceiverResolver.addFilter(bf);
 		...
 	}
 ```
 　　通过 `mReceiverResolver.queryIntent()` 就能获得 intent 对应的动态广播了。
 
-### 4. 发送广播
+# 4. 发送广播
 
 　　`ContextImpl.sendBroadcast` 中会调用 `ActivityManagerService.getDefault().broadcastIntent()` 发送广播：
 ```java
@@ -307,7 +310,7 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
         String resolvedType = intent.resolveTypeIfNeeded(getContentResolver());
         try {
             intent.prepareToLeaveProcess(this);
-          //调用 AMS 的 broadcastIntent 方法
+          	// 调用 AMS 的 broadcastIntent 方法
             ActivityManagerNative.getDefault().broadcastIntent(
                     mMainThread.getApplicationThread(), intent, resolvedType, null,
                     Activity.RESULT_OK, null, null, null, AppOpsManager.OP_NONE, null, false, false,
@@ -332,7 +335,7 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
             final int callingPid = Binder.getCallingPid();
             final int callingUid = Binder.getCallingUid();
             final long origId = Binder.clearCallingIdentity();
-          	//调用 broadcastIntentLocked 方法
+          	// 调用 broadcastIntentLocked 方法
             int res = broadcastIntentLocked(callerApp,
                     callerApp != null ? callerApp.info.packageName : null,
                     intent, resolvedType, resultTo, resultCode, resultData, resultExtras,
@@ -351,19 +354,19 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
             Bundle resultExtras, String[] requiredPermissions, int appOp, Bundle bOptions,
             boolean ordered, boolean sticky, int callingPid, int callingUid, int userId) {
 		...
-	    	// Figure out who all will receive this broadcast.
-				// 静态广播
+	    // Figure out who all will receive this broadcast.
+		// 静态广播
         List receivers = null;
-				// 动态广播
+		// 动态广播
         List<BroadcastFilter> registeredReceivers = null;
-		 		// Need to resolve the intent to interested receivers...
+		// Need to resolve the intent to interested receivers...
         if ((intent.getFlags()&Intent.FLAG_RECEIVER_REGISTERED_ONLY)
                  == 0) {
-						// 查询静态广播
+			// 查询静态广播
             receivers = collectReceiverComponents(intent, resolvedType, callingUid, users);
         }
 		if (intent.getComponent() == null) {
-						// 查询动态广播
+			// 查询动态广播
             if (userId == UserHandle.USER_ALL && callingUid == Process.SHELL_UID) {
                 // Query one target user at a time, excluding shell-restricted users
                 for (int i = 0; i < users.length; i++) {
@@ -406,7 +409,7 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
                     resultExtras, ordered, sticky, false, userId);
             final boolean replaced = replacePending && queue.replaceParallelBroadcastLocked(r);
             if (!replaced) {
-								//发送动态广播
+				// 发送动态广播
                 queue.enqueueParallelBroadcastLocked(r);
                 queue.scheduleBroadcastsLocked();
             }
@@ -424,7 +427,7 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
 
             boolean replaced = replacePending && queue.replaceOrderedBroadcastLocked(r);
             if (!replaced) {
-								//发送静态广播
+				// 发送静态广播
                 queue.enqueueOrderedBroadcastLocked(r);
                 queue.scheduleBroadcastsLocked();
             }
@@ -438,29 +441,29 @@ private void scanDirLI(File dir, final int parseFlags, int scanFlags, long curre
     private List<ResolveInfo> collectReceiverComponents(Intent intent, String resolvedType,
             int callingUid, int[] users) {
         ...
-        //从 PackageManagerService 中查找静态注册的广播
+        // 从 PackageManagerService 中查找静态注册的广播
         List<ResolveInfo> newReceivers = AppGlobals.getPackageManager().queryIntentReceivers(intent, resolvedType, pmFlags, user).getList();
 				...
 	}
 ```
 
-### 5. 广播队列
+# 5. 广播队列
 
 　　从 ActivityManangerService.broadcastIntentLocked 中可以看到，实际上它不是直接将广播发送到 BroadcastReceiver 中的，而是将它包装到 BroadcastRecord 中，再放进 BroadcastQueue：
 ```java
-//注册广播	
+// 注册广播	
 public Intent registerReceiver(IApplicationThread caller, String callerPackage,
             IIntentReceiver receiver, IntentFilter filter, String permission, int userId) {
-    	//获取广播队列
- 			final BroadcastQueue queue = broadcastQueueForIntent(intent);
-  		//包装到 BroadcaseRecord 对象
+      // 获取广播队列
+ 	  final BroadcastQueue queue = broadcastQueueForIntent(intent);
+  	  // 包装到 BroadcaseRecord 对象
       BroadcastRecord r = new BroadcastRecord(queue, intent, callerApp,
             callerPackage, callingPid, callingUid, resolvedType, requiredPermissions,
             appOp, brOptions, registeredReceivers, resultTo, resultCode, resultData,
             resultExtras, ordered, sticky, false, userId);
       final boolean replaced = replacePending && queue.replaceParallelBroadcastLocked(r);
      	if (!replaced) {
-        		//发送广播
+        	// 发送广播
             queue.enqueueParallelBroadcastLocked(r);
             queue.scheduleBroadcastsLocked();
       }
@@ -469,7 +472,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
 　　enqueueParallelBroadcastLocked() 方法用于并发执行广播的发送，很简单，就是将 BroadcastRecord 放到了 mParallelBroadcasts 中：
 ```java
     public void enqueueParallelBroadcastLocked(BroadcastRecord r) {
-      	//将 BroadcastRecord 加入到 mParallelBroadcasts 中
+      	// 将 BroadcastRecord 加入到 mParallelBroadcasts 中
         mParallelBroadcasts.add(r);
         r.enqueueClockTime = System.currentTimeMillis();
     }
@@ -480,7 +483,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
         if (mBroadcastsScheduled) {
             return;
         }
-      	//向 mHandler 发送一条 BROADCAST_INTENT_MSG 消息
+      	// 向 mHandler 发送一条 BROADCAST_INTENT_MSG 消息
         mHandler.sendMessage(mHandler.obtainMessage(BROADCAST_INTENT_MSG, this));
         mBroadcastsScheduled = true;
     }
@@ -496,7 +499,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case BROADCAST_INTENT_MSG: {
-                  	//从队列中获取广播消息并发送
+                  	// 从队列中获取广播消息并发送
                     processNextBroadcast(true);
                 } break;
                 case BROADCAST_TIMEOUT_MSG: {
@@ -510,7 +513,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
 ```
 　　processNextBroadcast 方法用于从队列中获取广播消息并发送给 BroadcastReceiver，它内部有两个分支，并行处理和串行处理。
 
-### 6. 并行处理
+# 6. 并行处理
 
 　　例如动态注册的非有序广播等就是使用并行处理，先看并行处理的分支：
 ```java
@@ -532,7 +535,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
                 final int N = r.receivers.size();
                 for (int i=0; i<N; i++) {
                     Object target = r.receivers.get(i);
-           					// 发送消息给 Receiver
+           			// 发送消息给 Receiver
                     deliverToRegisteredReceiverLocked(r, (BroadcastFilter)target, false, i);
                 }
                 addBroadcastToHistoryLocked(r);
@@ -541,14 +544,14 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
 		}
 		...
 	}
-		//发送消息给 receiver
+	// 发送消息给 receiver
     private void deliverToRegisteredReceiverLocked(BroadcastRecord r,
             BroadcastFilter filter, boolean ordered, int index) {
 		...
-		//获取 BroadcastReceiver 的 Binder
+		// 获取 BroadcastReceiver 的 Binder
 		r.receiver = filter.receiverList.receiver.asBinder();
 		...
-		//使用 Binder 机制将消息传递给 BroadcastReceiver
+		// 使用 Binder 机制将消息传递给 BroadcastReceiver
 		performReceiveLocked(filter.receiverList.app, filter.receiverList.receiver,
                         new Intent(r.intent), r.resultCode, r.resultData,
                         r.resultExtras, r.ordered, r.initialSticky, r.userId);
@@ -559,13 +562,13 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
             Intent intent, int resultCode, String data, Bundle extras,
             boolean ordered, boolean sticky, int sendingUser) throws RemoteException {
 		...
-		//通过 Binder 将消息处理传到应用进程，应用进程内部再使用 Handler 机制，将消息处理放到主线程中
+		// 通过 Binder 将消息处理传到应用进程，应用进程内部再使用 Handler 机制，将消息处理放到主线程中
 		app.thread.scheduleRegisteredReceiver(receiver, intent, resultCode,data, extras, ordered, sticky, sendingUser, app.repProcState);
 		...
 	}
 ```
 
-### 7. 串行处理
+# 7. 串行处理
 
 　　例如有序广播和静态广播等，会通过 enqueueOrderedBroadcastLocked 传给 BroadcastQueue:
 ```java
@@ -579,8 +582,8 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
     final void processNextBroadcast(boolean fromMsg) {
 		synchronized(mService) {
             BroadcastRecord r;
-						//开始处理有序广播
-						// Now take care of the next serialized one...
+			// 开始处理有序广播
+			// Now take care of the next serialized one...
 
             // If we are waiting for a process to come up to handle the next
             // broadcast, then do nothing at this point.  Just in case, we
@@ -609,8 +612,8 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
             }
 
             boolean looped = false;
-						//循环处理有序广播
-						do {
+			// 循环处理有序广播
+			do {
                 if (mOrderedBroadcasts.size() == 0) {
                     // No more broadcasts pending, so all done!
                     mService.scheduleAppGcsLocked();
@@ -665,7 +668,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
                         || r.resultAbort || forceReceive) {
                     // No more receivers for this broadcast!  Send the final
                     // result if requested...
-										//还有下一个接收广播的 Receiver
+					// 还有下一个接收广播的 Receiver
                     if (r.resultTo != null) {
                         try {
                             if (DEBUG_BROADCAST) Slog.i(TAG_BROADCAST,
@@ -718,7 +721,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
             Intent intent, int resultCode, String data, Bundle extras,
             boolean ordered, boolean sticky, int sendingUser) throws RemoteException {
         		...
-            //调用 IntentReceiver 的 performReceiver 方法
+            // 调用 IntentReceiver 的 performReceiver 方法
             receiver.performReceive(intent, resultCode, data, extras, ordered,
                     sticky, sendingUser);
         }
@@ -736,7 +739,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
                     rd = mDispatcher.get();
                 }
                 if (rd != null) {
-										//结束接收
+					// 结束接收
                     rd.performReceive(intent, resultCode, data, extras,
                             ordered, sticky, sendingUser);
                 } else {
@@ -749,7 +752,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
                         if (extras != null) {
                             extras.setAllowFds(false);
                         }
-												//结束接收
+						// 结束接收
                         mgr.finishReceiver(this, resultCode, data, extras, false, intent.getFlags());
                     } catch (RemoteException e) {
                         throw e.rethrowFromSystemServer();
@@ -777,15 +780,15 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
             synchronized(this) {
                 BroadcastQueue queue = (flags & Intent.FLAG_RECEIVER_FOREGROUND) != 0
                         ? mFgBroadcastQueue : mBgBroadcastQueue;
-              	//从 queue 中获取匹配的 BroadcaseReceiver
+              	// 从 queue 中获取匹配的 BroadcaseReceiver
                 r = queue.getMatchingOrderedReceiver(who);
                 if (r != null) {
-										//调用finishReceiverLocked方法
+					//调用 finishReceiverLocked方法
                     doNext = r.queue.finishReceiverLocked(r, resultCode,
                         resultData, resultExtras, resultAbort, true);
                 }
             }
-						//继续下一个，循环调用了 BroadcastQueue 的 processNextBroadcast() 方法
+			// 继续下一个，循环调用了 BroadcastQueue 的 processNextBroadcast() 方法
             if (doNext) {
                 r.queue.processNextBroadcast(false);
             }
@@ -800,7 +803,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
     public boolean finishReceiverLocked(BroadcastRecord r, int resultCode,
             String resultData, Bundle resultExtras, boolean resultAbort, boolean waitForServices) {
         final int state = r.state;
-      	//当前接收者的 ActivityInfo
+      	// 当前接收者的 ActivityInfo
         final ActivityInfo receiver = r.curReceiver;
         r.state = BroadcastRecord.IDLE;
         r.receiver = null;
@@ -815,7 +818,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
         r.curReceiver = null;
         r.curApp = null;
         mPendingBroadcast = null;
-				//返回的数据
+		// 返回的数据
         r.resultCode = resultCode;
         r.resultData = resultData;
         r.resultExtras = resultExtras;
@@ -829,7 +832,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
                 && r.queue.mOrderedBroadcasts.size() > 0
                 && r.queue.mOrderedBroadcasts.get(0) == r) {
             ActivityInfo nextReceiver;
-          	//下一个接收者
+          	// 下一个接收者
             if (r.nextReceiver < r.receivers.size()) {
                 Object obj = r.receivers.get(r.nextReceiver);
                 nextReceiver = (obj instanceof ActivityInfo) ? (ActivityInfo)obj : null;
@@ -857,13 +860,13 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
         // We will process the next receiver right now if this is finishing
         // an app receiver (which is always asynchronous) or after we have
         // come back from calling a receiver.
-					//如果已经完成了一个一个应用的接收（始终是异步的）则即可进行一下个接受者的处理，或者返回到调用接受者的地方。
+		// 如果已经完成了一个应用的接收（始终是异步的）则即可进行一下个接受者的处理，或者返回到调用接受者的地方。
         return state == BroadcastRecord.APP_RECEIVE
                 || state == BroadcastRecord.CALL_DONE_RECEIVE;
     }
 ```
 
-### 8. 总结
+# 8. 总结
 
 　　广播队列传送广播给 Receiver 的原理其实就是将 BroadcastReceiver 和消息都放到 BroadcastRecord 里面，然后通过 Handler 机制遍历 BroadcastQueue 里面的 BroadcastRecord ，将消息发送给 BroadcastReceiver：
 ![](image/广播队列传送广播原理.png)
@@ -871,7 +874,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,
 　　整个广播的机制总结成下图：
 ![](image/广播机制图.png)
 
-### 9. 参考文章
+# 9. 参考文章
 
-[安卓广播的底层实现原理](https://www.jianshu.com/p/02085150339c)
+1. [安卓广播的底层实现原理](https://www.jianshu.com/p/02085150339c)
 

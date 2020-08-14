@@ -1,6 +1,6 @@
 # ContentProvider 的共享数据更新通知机制
 
-## 1. 概述
+# 1. 概述
 
 　　Android 应用程序组件 ContentProvider 中的数据更新通知机制和 Android 系统中的广播（Broadcast）通知机制的实现思路是相似的。
 
@@ -20,27 +20,27 @@
 2. 监控数据变化的 ContentObserver 的注册过程
 3. 数据更新通知的发送过程
 
-## 2. ContentService 启动
+# 2. ContentService 启动
 
-### 2.1. ContentService 概述
+## 2.1. ContentService 概述
 
 　　ContentService 可以看做 Android 中一个系统级别的消息中心，可以说搭建一个系统级的观察者模型，App 可以向消息中心注册观察者，选择订阅自己关心的消息，也可以通过消息中心发送消息，通知其他进程，简单模型如下：
 
 ![](image/ContentService简单模型.png)
 
-　　ContentService 服务伴随系统启动，更准确的说是伴随 SystemServer进程启动，本身是一个 Binder 系统服务，运行在 SystemServer 进程。
+　　ContentService 服务伴随系统启动，更准确的说是伴随 SystemServer 进程启动，本身是一个 Binder 系统服务，运行在 SystemServer 进程。
 
 　　作为系统服务，最好能保持高效运行，因此 ContentService 通知 App 都是异步的，被限制 oneway，仅仅插入目标进程（线程）的 Queue 队列，不必等待执行。
 
-### 2.2. 源码分析
+## 2.2. 源码分析
 
-#### 2.2.1. Lifecycle
+### 2.2.1. Lifecycle
 
 　　Lifecycle 是 ContentService 的静态内部类。
 
 ```java
-		// Lifecycle 继承 SystemService   
-		public static class Lifecycle extends SystemService {
+	// Lifecycle 继承 SystemService   
+	public static class Lifecycle extends SystemService {
         private ContentService mService; // ContentService 的成员对象
 
         public Lifecycle(Context context) {
@@ -76,11 +76,11 @@
 
 　　Lifecycle 是 SystemService 的子类，持有 ContentService 成员 mService，在 onStart 方法中初始化 mService，并调用 publishBinderService 方法。
 
-#### 2.2.2. SystemServer
+### 2.2.2. SystemServer
 
 　　SystemServer 是一个进程，从 main 方法进入开始执行。
 
-##### 2.2.2.1. SystemServer#main
+#### 2.2.2.1. SystemServer#main
 
 ```java
     public static void main(String[] args) {
@@ -97,12 +97,12 @@
 
 　　在 SystemServer 的 main 方法中调用 SystemServer 的构造方法创建了一个 SystemServer 对象，并调用了 SystemServer 的 run 方法。
 
-##### 2.2.2.2. SystemServer#run
+#### 2.2.2.2. SystemServer#run
 
 　　在 SystemServer 的 run 方法中会有如下部分代码：
 
 ```java
- 				// Start services.开启一些系统核心服务与其他服务
+ 		// Start services.开启一些系统核心服务与其他服务
         try {
             traceBeginAndSlog("StartServices");
             startBootstrapServices();
@@ -120,7 +120,7 @@
 
 　　在 SystemServer 的 run 方法中调用了 startOtherService 方法。
 
-##### 2.2.2.3. SystemServer#startOtherService
+#### 2.2.2.3. SystemServer#startOtherService
 
 　　在 SystemServer 的 startOtherService 方法中有如下部分代码：
 
@@ -139,7 +139,7 @@ traceEnd();
 
 　　CONTENT_SERVICE_CLASS 就是 ContentService 的内部类 Lifecycle。启动之后就会调用 Lifecycle 的 onStart 方法，创建 ContentService 对象，并调用 publicBinderService 方法。
 
-#### 2.2.3. SystemService#publishBinderService
+### 2.2.3. SystemService#publishBinderService
 
 ```java
 /**
@@ -160,7 +160,7 @@ protected final void publishBinderService(String name, IBinder service,
 
 　　在 publishBinderService 方法中调用了 ServiceMananger 的 addService 方法。
 
-##### 2.2.3.1. ServiceManager#addService
+#### 2.2.3.1. ServiceManager#addService
 
 　　SystemServer 进程启动系统服务有两种方式，分别是 SystemServiceManager 的`startService` 方式和 ServiceManager 的 `addService` 方式。
 
@@ -178,7 +178,7 @@ public static void addService(String name, IBinder service, boolean allowIsolate
 
 　　主要功能是将对应服务的 Binder 对象添加到 SystemManager 中去。
 
-##### 2.2.3.2. ServiceManagerNative#addService
+#### 2.2.3.2. ServiceManagerNative#addService
 
 ```java
 
@@ -198,13 +198,13 @@ public static void addService(String name, IBinder service, boolean allowIsolate
 
 　　调用 mRemote 的 transact 方法执行添加服务的 Binder 操作。
 
-## 3. 监控数据变化的 ContentObserver 的注册过程
+# 3. 监控数据变化的 ContentObserver 的注册过程
 
-### 3.1. 注册更新
+## 3.1. 注册更新
 
 ```java
 // 注册数据更新
-resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovider/contact"),  true,new MyContentObserver(new Handler()));
+resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovider/contact"), true, new MyContentObserver(new Handler()));
 ```
 
 　　通过调用 ContentResolver 对象的 registerContentObserver() 方法来注册一个自定义的 ContentObserver(MyContentObserver) 来监控 MyContentProvider 这个 ContentProvider 中的数据变化。
@@ -221,7 +221,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
             super(handler);  
         }  
   		
-     		// 接收到数据更新时的回调
+     	// 接收到数据更新时的回调
         @Override  
         public void onChange(boolean selfChange) {  
             
@@ -235,7 +235,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 
 　　在这个应用程序中，MyContentObserver 继承了 Observer 类，它负责监控的 URL 是 “"content://com.content.mycontentprovider/contact"”。当这个 URI 为前缀的 URI 对应的数据发生改变时，ContentService 都会调用这个 MyContentObserver 类的 onChange 函数来处理。
 
-### 3.2. 注册过程分析
+## 3.2. 注册过程分析
 
 　　在 ContentObserver 类的构造函数中，有一个 handler，它的类型为 Handler：
 
@@ -244,7 +244,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
     
 	public ContentObserver(Handler handler) {
         mHandler = handler;
-  }
+  	}
 ```
 
 　　这个 handler 是用来分发和处理消息用的。
@@ -252,7 +252,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 　　由于是在主线程中调用的 `resolver.registerContentObserver(...,  
                 ..,new MyContentObserver(new Handler()));`，因此，这个 handler 参数就是和应用程序主线程的消息循环关联在一起的。
 
-#### 3.2.1. ContentResolver#registerContentObserver
+### 3.2.1. ContentResolver#registerContentObserver
 
 ```java
     public final void registerContentObserver(@NonNull Uri uri, boolean notifyForDescendants,
@@ -286,7 +286,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 2. 调用从参数传进来的 ContentObserver 对象 observer 的 getContentObserver 函数来获得一个 Binder 对象。
 3. 通过调用 ContentService 远程接口的 registerContentObserver 函数来把这个 Binder 对象注册到 ContentService 中去。
 
-#### 3.2.2. ContentResolver#getContentService
+### 3.2.2. ContentResolver#getContentService
 
 ```java
     public static IContentService getContentService() {
@@ -303,7 +303,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 
 　　在 ContentProvider 类中，有一个静态成员变量 sContentService。开始时 sContentService 为 null。当ContentResolver 类的 getContentService 函数第一次被调用时，它便会通过 ServiceMananger 类的 getService 方法来获得前面已经启动起来了的 ContentService 服务的远程接口，然后把它保存在 sContentService 变量中。这样，当下次 ContentResolver 类的 getContentService 函数再次被调用时，就可以直接把这个 ContentService 远程接口返回给调用者了。
 
-#### 3.2.3. ContentObserver#getContentObserver
+### 3.2.3. ContentObserver#getContentObserver
 
 ```java
     public IContentObserver getContentObserver() {
@@ -342,7 +342,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 
 　　Transport 是一个 Binder 对象，它是要传递给 ContentService 服务的，以便当 ContentObserver 所监控的数据发生变化时，ContentService 服务可以通过这个 Binder 对象通知相应的 ContentObserver 它监控的数据发生变化了。
 
-#### 3.2.4. ContentService#registerContentObserver
+### 3.2.4. ContentService#registerContentObserver
 
 ```java
     @Override
@@ -394,7 +394,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 
 　　成员变量 mRootNode 的类型为 ContentService 在内部定义的一个类 ObserverNode。
 
-##### 3.2.4.1. ObserverNode#addObserverLocked
+#### 3.2.4.1. ObserverNode#addObserverLocked
 
 ```java
         private void addObserverLocked(Uri uri, int index, IContentObserver observer,
@@ -438,7 +438,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 
 　　每一个 ObserverNode 节点都对应一个名字，它是从 URI 中解析出来的。
 
-##### 3.2.4.2. ObserverNode#countUriSegments
+#### 3.2.4.2. ObserverNode#countUriSegments
 
 ```java
         private int countUriSegments(Uri uri) {
@@ -455,7 +455,7 @@ resolver.registerContentObserver(Uri.parse("content://com.content.mycontentprovi
 
 　　例如对于 "content://com.content.mycontentprovider/contact"  uri.getPathSegments 方法返回的就是 “content” 一个元素。
 
-##### 3.2.4.3. ObserverNode#getUriSegment
+#### 3.2.4.3. ObserverNode#getUriSegment
 
 ```java
         private String getUriSegment(Uri uri, int index) {
@@ -501,9 +501,9 @@ mRootNode("")
 
 　　这样，ContentObserver 的注册过程就完成了。
 
-## 4. 数据更新通知的发送过程
+# 4. 数据更新通知的发送过程
 
-### 4.1. 通知更新
+## 4.1. 通知更新
 
 　　调用 ContentResolver 来插入数据：
 
@@ -534,9 +534,9 @@ contentValues.put("number",num);
 
 　　传递进来的参数 uri 的值为 “content://com.content.mycontentprovider/contact”。在 MyContentProvider 类的 insert 方法将数据加入到 SQLite 数据库之后，返回来的 id 值为 d，于是通过调用 ContentUris.withAppendedId(uri,id) 得到的 u 就是 “content://com.content.mycontentprovider/contact/d”。随后就会调用 `contentResolver.notifyChange` 方法来通知那些注册了监控 “content://com.content.mycontentprovider/contact/d” 这个 URI 的 ContentObserver，它监控的数据发生变化了。
 
-### 4.2. 通知过程分析
+## 4.2. 通知过程分析
 
-#### 4.2.1. ContentResolver#notifyChange
+### 4.2.1. ContentResolver#notifyChange
 
 ```java
     public void notifyChange(@NonNull Uri uri, @Nullable ContentObserver observer) {
@@ -570,7 +570,7 @@ contentValues.put("number",num);
 
 　　调用了 ContentService 的远程接口来调用它的 notifyChange() 方法来发送数据更新通知。
 
-##### 4.2.1.2. ContentService#notifyChange
+#### 4.2.1.2. ContentService#notifyChange
 
 ```java
     public void notifyChange(Uri uri, IContentObserver observer,
@@ -674,9 +674,9 @@ contentValues.put("number",num);
 1. 第一件事情是调用 ContentService 的成员变量 mRootNode 的 collectObserverLocked() 方法来收集那些注册了监控 “content://com.content.mycontentprovider/contact/d” 这个 URI 的 ContentObserver。
 2. 第二件事情是分别调用这些 ContentObserver 的 onChange() 方法来通知它们监控的数据发生变化了。
 
-#### 4.2.2. 收集注册了监控的 ContentObserver
+### 4.2.2. 收集注册了监控的 ContentObserver
 
-##### 4.2.2.1. ObserverNode#collectObserverLocked
+#### 4.2.2.1. ObserverNode#collectObserverLocked
 
 　　ObserverNode 是 ContentService 的内部类。
 
@@ -715,7 +715,7 @@ contentValues.put("number",num);
         }
 ```
 
-##### 4.2.2.2. ObserverNode#collectMyObserverLocked
+#### 4.2.2.2. ObserverNode#collectMyObserverLocked
 
 ```java
         private void collectMyObserversLocked(boolean leaf, IContentObserver observer,
