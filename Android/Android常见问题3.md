@@ -385,6 +385,59 @@ public class MainActivity extends AppCompatActivity {
 
 # 3. MVP
 
+## 3.1. MVC
+
+![](架构与设计模式/image/mvc.png)
+
+　　视图层（View）对应于 xml 布局文件和 java 代码动态 view 部分。
+
+　　控制层（Controller）MVC 中 Android 的控制层是由 Activity 来承担的，Activity 本来主要是作为初始化页面，展示数据的操作，但是因为 XML 视图功能太弱，所以 Activity 既要负责视图的显示又要加入控制逻辑，承担的功能太多。
+
+　　模型层（Model）针对业务模型，建立的数据结构和相关的类，它主要负责网络请求、数据库处理、I/O 操作。
+
+　　优点：具有一定的分层，mode 彻底戒耦，业务逻辑被放置在 mode 层，能够更好的复用和修改增加业务。
+
+　　缺点：controller 和 view 在 android 中无法做到彻底分离，并没有解耦。
+
+## 3.2. MVP
+
+　　MVP 和 MVC 很像，MVP 也是三层，唯一的差别是 Mode 和 View 之间不进行通讯，都是通过 Presenter 完成。MVC 有一个缺点就是在 Android 中由于 Activity 的存在，Controller 和 View 很难做到完全解耦，但在 MVP 中就可以很好的解决这个问题。
+
+![](架构与设计模式/image/mvp.png)
+
+　　MVP 中也有一个 Contract 类，Contract 在 MVP 中是一个契约类，契约类用于定义同一个界面的 view 接口和 presenter 的具体实现，好处是通过规范的方法命名和注释可以清晰的看到整个页面的逻辑。
+
+　　优点：实现了视图层的独立，通过中间层 presnter 实现了 model 和 view 的完全解耦。
+
+　　缺点：随着业务逻辑的增加，一个页面可能会非常复杂，UI 的改变是非常多的，会有非常多的 case，这样就会造成 view 接口会很庞大。
+
+## 3.3. MVVM
+
+　　MVP 会随着业务逻辑的增加、UI 的改变多的情况下，会有非常多的跟 UI 相关的 case，这样就会造成 View 的接口会很庞大。而 MVVM 就解决了这个问题，通过双向绑定的机制，实现数据和 UI 内容，只要想改其中一方，另一方都能及时更新的一种设计理念，这样就省去了很多在 View 层中写很多 case 的情况，只需要改变数据就行。MVVM 的设计图：
+![](架构与设计模式/image/MVVM.png)
+
+　　一般情况就这两种情况，看起来跟 MVP 好像没什么差别，其实区别还是挺大的，在 MVP 中 View 和 Presenter 要相互持有，方便调用对方，而在 MVP 中 View 和 ViewModel 通过 Binding 进行关联，他们之间的关联处理通过 DataBinding 完成。
+
+　　优点：很好的解决了 MVC 和 MVP 的不足。
+
+　　缺点：由于数据和视图的双向绑定，导致出现问题时不太好定位来源，有可能数据问题导致，也有可能业务逻辑中对数据属性的修改导致。
+
+### 3.3.1. MVVM 与 DataBinding 的关系
+
+　　MVVM 是一种思想，DataBinding 是谷歌推出的方便实现 MVVM 的工具。在 google 推出 DataBinding 之前，因为 xml layout 功能较弱，想实现 MVVM 非常困难，而 DataBinding 的出现可以很方便的实现 MVVM。
+
+　　DataBinding 是实现视图和数据双向绑定的工具。
+
+## 3.4. 关于 MVC、MVP、MVVM 如何选择
+
+　　在 MVP 中要实现根据业务逻辑和页面逻辑做很多 Present 和 View 的具体实现，如果这些 case 太多，会导致代码的可读性变差，但是通过引入 contract 契约类，会让业务逻辑变得清晰许多。
+
+　　简单建议：
+
+1. 如果项目简单，没什么复杂性，未来改动也不大的话，那就不要用设计模式或者架构方法，只需要将每个模块封装好，方便调用即可，不要为了使用设计模式或架构方法而使用。
+2. 对于偏向展示型的 app，绝大多数业务逻辑都在后端，app 主要功能就是展示数据、交互等，建议使用 mvvm。
+3. 对于工具类或者需要写很多业务逻辑 app，使用 mvp 或者 mvvm 都可。
+
 https://www.jianshu.com/p/e1e10211621d
 
 # 4. Activity
