@@ -30,7 +30,7 @@ OkHttpClient okHttpClient = new OkHttpClient.Builder()
 // 创建 Retrofit 对象，外观模式
 Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://test")
-								.addConverterFactory(GsonConverterFactory.create(new GsonBuilder().create())) // 解析使用 GsonConverterFactory
+				.addConverterFactory(GsonConverterFactory.create(new GsonBuilder().create())) // 解析使用 GsonConverterFactory
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create()) // 返回使用 RxJavaCallAdapterFactory
                 .client(okHttpClient) // 请求使用 OkHttpClient
                 .build();
@@ -82,7 +82,7 @@ Observable<ApiService.BaseResponse> observable = service.getMessage(1);
 
 ## 2. 流程图
 
-![](image/retrofit源码流程图.webp)
+![](image/retrofit源码流程图.png)
 
 ## 3. 源码分析
 
@@ -118,9 +118,9 @@ Observable<ApiService.BaseResponse> observable = service.getMessage(1);
             // 重点
             // 为 Method 生成一个 ServiceMethod
             ServiceMethod<Object, Object> serviceMethod =
-                (ServiceMethod<Object, Object>) loadServiceMethod(method);
+                (ServiceMethod<Object, Object>) loadServiceMethod(method); // 4
             // 再包装成 OkHttpCall
-            OkHttpCall<Object> okHttpCall = new OkHttpCall<>(serviceMethod, args); // 请求
+            OkHttpCall<Object> okHttpCall = new OkHttpCall<>(serviceMethod, args); // 请求 5
             return serviceMethod.callAdapter.adapt(okHttpCall);
           }
         });
@@ -136,7 +136,7 @@ Observable<ApiService.BaseResponse> observable = service.getMessage(1);
     Observable<BaseResponse> getMessage(@Path("page") int page);
 ```
 
-　　动态代理技术就是动态生成接口的实例类（当然生成实现类由缓存机制），并创建其实例（称之为代理），代理把对接口的调用转发给 InvocationHandler 实例，而在 InvocationHandler 的实现中，处理执行真正的逻辑（例如再次转发给真正的实现类对象），还可以进行一些有用的操作，例如统计执行时间，进行初始化和清理、对接口调用进行检查等。
+　　动态代理技术就是动态生成接口的实例类（当然生成实现类有缓存机制），并创建其实例（称之为代理），代理把对接口的调用转发给 InvocationHandler 实例，而在 InvocationHandler 的实现中，处理执行真正的逻辑（例如再次转发给真正的实现类对象），还可以进行一些有用的操作，例如统计执行时间，进行初始化和清理、对接口调用进行检查等。
 
 　　为什么要用动态代理？因为对接口所有方法的调用都会集中转发到 InvocationHandler#invoke 函数中，这样就可以集中进行处理，更方便了。
 
@@ -173,7 +173,7 @@ ServiceMethod<?, ?> loadServiceMethod(Method method) {
       // 先从缓存去获取
       result = serviceMethodCache.get(method);
       if (result == null) {
-        // 缓存中更没有则新建，并存入缓存
+        // 缓存中没有则新建，并存入缓存
         result = new ServiceMethod.Builder<>(this, method).build();
         serviceMethodCache.put(method, result);
       }
@@ -193,7 +193,7 @@ ServiceMethod<?, ?> loadServiceMethod(Method method) {
 ```java
     public ServiceMethod build() {
       // 设置 callAdapter
-      callAdapter = createCallAdapter();
+      callAdapter = createCallAdapter(); // 4.1.2
       responseType = callAdapter.responseType();
       if (responseType == Response.class || responseType == okhttp3.Response.class) {
         throw methodError("'"
@@ -201,10 +201,10 @@ ServiceMethod<?, ?> loadServiceMethod(Method method) {
             + "' is not a valid response body type. Did you mean ResponseBody?");
       }
       // 设置 responseConverter
-      responseConverter = createResponseConverter();
-			// 解析方法的注解
+      responseConverter = createResponseConverter(); // 4.1.3
+	  // 解析方法的注解
       for (Annotation annotation : methodAnnotations) {
-        parseMethodAnnotation(annotation);
+        parseMethodAnnotation(annotation); // 4.1.4
       }
 
       if (httpMethod == null) {
@@ -237,7 +237,7 @@ ServiceMethod<?, ?> loadServiceMethod(Method method) {
           throw parameterError(p, "No Retrofit annotation found.");
         }
 
-        parameterHandlers[p] = parseParameter(p, parameterType, parameterAnnotations);
+        parameterHandlers[p] = parseParameter(p, parameterType, parameterAnnotations); // 4.1.6
       }
 
       if (relativeUrl == null && !gotUrl) {
@@ -252,7 +252,7 @@ ServiceMethod<?, ?> loadServiceMethod(Method method) {
       if (isMultipart && !gotPart) {
         throw methodError("Multipart method must contain at least one @Part.");
       }
-			// 创建 ServiceMethod() 实例
+	  // 创建 ServiceMethod() 实例
       return new ServiceMethod<>(this);
     }
 ```
@@ -262,7 +262,7 @@ ServiceMethod<?, ?> loadServiceMethod(Method method) {
 1. 调用 createCallAdapter 方法设置 callAdapter。
 2. 设置 responseConverter。
 3. 解析方法的参数。
-4. 创建 parameterHandlers 实例，为后面做准备
+4. 创建 parameterHandlers 实例，为后面做准备。
 5. 创建了 ServiceMethod() 实例。
 
 #### 4.1.2. createCallAdapter() 方法
@@ -363,7 +363,7 @@ ServiceMethod<?, ?> loadServiceMethod(Method method) {
         throw methodError("Only one HTTP method is allowed. Found: %s and %s.",
             this.httpMethod, httpMethod);
       }
-      //设置 httpMethod，例如“GET”、“PUT”等
+      // 设置 httpMethod，例如“GET”、“PUT”等
       this.httpMethod = httpMethod;
       this.hasBody = hasBody;
 
@@ -383,7 +383,7 @@ ServiceMethod<?, ?> loadServiceMethod(Method method) {
               + "For dynamic query parameters use @Query.", queryParams);
         }
       }
-			// 请求的 url
+	  // 请求的 url
       this.relativeUrl = value;
       // 请求的 url 参数名称
       this.relativeUrlParamNames = parsePathParameters(value);
@@ -889,7 +889,7 @@ OkHttpCall okHttpCall = new OkHttpCall<>(serviceMethod,args);
     for (int p = 0; p < argumentCount; p++) {
       handlers[p].apply(requestBuilder, args[p]);
     }
-		// 创建 Request，并返回
+	// 创建 Request，并返回
     return requestBuilder.build();
   }
 ```
@@ -955,7 +955,7 @@ OkHttpCall okHttpCall = new OkHttpCall<>(serviceMethod,args);
       responseType = observableType;
       isBody = true;
     }
-		// 返回 RxJavaCallAdapter 对象
+	// 返回 RxJavaCallAdapter 对象
     return new RxJavaCallAdapter(responseType, scheduler, isAsync, isResult, isBody, isSingle,
         false);
   }
@@ -973,7 +973,7 @@ OkHttpCall okHttpCall = new OkHttpCall<>(serviceMethod,args);
   @Override public Object adapt(Call<R> call) {
     // 这个 call 是 OkHttpCall
     // OkHttpCall = new OkHttpCall<>(serviceMethod, args) 生成的 OkHttpCall
-    //是否是异步，异步就是CallEnqueueOnSubscribe，同步是 CallExecuteOnSubscribe
+    // 是否是异步，异步就是 CallEnqueueOnSubscribe，同步是 CallExecuteOnSubscribe
     OnSubscribe<Response<R>> callFunc = isAsync
         ? new CallEnqueueOnSubscribe<>(call)
         : new CallExecuteOnSubscribe<>(call);
@@ -988,7 +988,7 @@ OkHttpCall okHttpCall = new OkHttpCall<>(serviceMethod,args);
     }
     // 创建 Observable 对象
     Observable<?> observable = Observable.create(func);
-		// 在子线程中运行
+	// 在子线程中运行
     if (scheduler != null) {
       observable = observable.subscribeOn(scheduler);
     }
@@ -1004,7 +1004,7 @@ OkHttpCall okHttpCall = new OkHttpCall<>(serviceMethod,args);
   }
 ```
 
-　　RxJavaCallAdapter 的 adap 方法很简单，创建一个 Observable 获取 CallEnqueueOnSubscribe （异步请求）或者 CallExecuteOnSubscribe（同步请求） 中的 Response < T > ，通过  observable.toSingle() 或者 toCompletable() 转为 Object 返回。这里去发送请求获取数据的任务在 OnSubscribe 的实现类中（例如 CallEnqueueOnSubscribe），并且最后走到了 okHttpCall.execute 或者 okHttpCall.enqueue 中去了。
+　　RxJavaCallAdapter 的 adapt() 方法很简单，创建一个 Observable 获取 CallEnqueueOnSubscribe （异步请求）或者 CallExecuteOnSubscribe（同步请求） 中的 Response < T > ，通过  observable.toSingle() 或者 toCompletable() 转为 Object 返回。这里去发送请求获取数据的任务在 OnSubscribe 的实现类中（例如 CallEnqueueOnSubscribe），并且最后走到了 okHttpCall.execute 或者 okHttpCall.enqueue 中去了。
 
 ### 6.2. CallExecuteOnSubscribe() 方法-同步
 
@@ -1042,12 +1042,12 @@ final class CallExecuteOnSubscribe<T> implements OnSubscribe<Response<T>> {
 
 　　CallExecuteOnSubscribe 的方法做了四件事：
 
-1. clone 了原来的 call，因为 okhttp3.call 是只能用一次的，所以每次都是新clone 一个进行网络请求；
+1. clone 了原来的 call，因为 okhttp3.call 是只能用一次的，所以每次都是新 clone 一个进行网络请求；
 2. 创建了一个叫做 CallArbiter 的 producer；
 3. 把这个 producer 设置给 subscriber。
 4. 调用 call 的 execute() 方法请求数据。
 
-　　producer 的工作机制：大部分情况下 Subscriber 都是被动接收 Observable push 福哦来的数据，但要是 Observable 发的太快，Subscriber 处理不过来，那就有问题了，所有就有了一种 Subscriber 主动 pull 的机制，而这种机制就是通过 producer 实现的。给 Subscriber 设置 Producer 之后（通过 Subscriber#setProducer 方法）Subscriber 就会通过 Producer 向上流根据自己的能力请求数据（通过 Producer#request 方法），而 Producer 收到请求之后（通常都是 Observable 管理 Producer，所以 “相当于” 就是 Observable 收到了请求），再根据请求的量给 Subscriber 发数据。
+　　producer 的工作机制：大部分情况下 Subscriber 都是被动接收 Observable push 过来的数据，但要是 Observable 发的太快，Subscriber 处理不过来，那就有问题了，所有就有了一种 Subscriber 主动 pull 的机制，而这种机制就是通过 producer 实现的。给 Subscriber 设置 Producer 之后（通过 Subscriber#setProducer 方法）Subscriber 就会通过 Producer 向上流根据自己的能力请求数据（通过 Producer#request 方法），而 Producer 收到请求之后（通常都是 Observable 管理 Producer，所以 “相当于” 就是 Observable 收到了请求），再根据请求的量给 Subscriber 发数据。
 
 #### 6.2.1. CallAbviter 
 
@@ -1068,7 +1068,7 @@ final class CallExecuteOnSubscribe<T> implements OnSubscribe<Response<T>> {
             return;
           }
           break; // State transition failed. Try again.
-				// 有回复了
+		// 有回复了
         case STATE_HAS_RESPONSE:
           // 切换到结束状态
           if (compareAndSet(STATE_HAS_RESPONSE, STATE_TERMINATED)) {
@@ -1169,7 +1169,7 @@ final class CallExecuteOnSubscribe<T> implements OnSubscribe<Response<T>> {
     if (canceled) {
       call.cancel();
     }
-		// 调用 call.execute() 方法，并调用 parseResponse() 方法解析答案并返回
+	// 调用 call.execute() 方法，并调用 parseResponse() 方法解析答案并返回
     return parseResponse(call.execute());
   }
 ```
@@ -1218,7 +1218,7 @@ final class CallExecuteOnSubscribe<T> implements OnSubscribe<Response<T>> {
 
     ExceptionCatchingRequestBody catchingBody = new ExceptionCatchingRequestBody(rawBody);
     try {
-    	// 调用 ServideMthod 的 toResponse 方法，将其转为 T 类型
+      // 调用 ServideMthod 的 toResponse 方法，将其转为 T 类型
       T body = serviceMethod.toResponse(catchingBody);
       return Response.success(body, rawResponse);
     } catch (RuntimeException e) {
@@ -1277,7 +1277,7 @@ final class CallEnqueueOnSubscribe<T> implements OnSubscribe<Response<T>> {
     final CallArbiter<T> arbiter = new CallArbiter<>(call, subscriber);
     subscriber.add(arbiter);
     subscriber.setProducer(arbiter);
-		// 进行异步请求。call 是 OkHttpCall 的实例
+	// 进行异步请求。call 是 OkHttpCall 的实例
     call.enqueue(new Callback<T>() {
       @Override public void onResponse(Call<T> call, Response<T> response) {
         arbiter.emitResponse(response);
@@ -1335,7 +1335,7 @@ final class CallEnqueueOnSubscribe<T> implements OnSubscribe<Response<T>> {
     if (canceled) {
       call.cancel();
     }
-		//请求
+	//请求
     call.enqueue(new okhttp3.Callback() {
       @Override public void onResponse(okhttp3.Call call, okhttp3.Response rawResponse)
           throws IOException {
@@ -1407,7 +1407,7 @@ final class CallEnqueueOnSubscribe<T> implements OnSubscribe<Response<T>> {
 
 3. Retrofit 中的数据究竟是怎么处理的？它是怎么返回 RxJava.Observable 的?
 
-   Retrofit 中的数据其实是交给了 callAdapter 以及 converter 去处理，callAdapter 负责把 okHttpCall 转为用户所需的 Observable 类型，converter 负责把服务器返回的数据专程具体的实体类。
+   Retrofit 中的数据其实是交给了 callAdapter 以及 converter 去处理，callAdapter 负责把 okHttpCall 转为用户所需的 Observable 类型，converter 负责把服务器返回的数据转成具体的实体类。
 
 ## 10. 总结
 

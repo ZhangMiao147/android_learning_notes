@@ -806,15 +806,39 @@ Map m = Collections.synchronizeMap(hashMap);
 
 #### 8.8.1. ConcurrentHashMap 如何体现线程安全？
 
- 　　采用了分段锁。
+ 　　采用了分段锁。在插入和删除的时候先定位 Segment 所在的位置，然后对 Segment 加锁，确保线程安全，在获取和查询的时候，数据 value 是 volatile 修饰的，也确保了数据的同步。
 
 ### 8.9.  JAVA 8 版本的 ConcurrentHashMap 的实现原理
 
+![](DataStructure/Map/image/ConcurrentHashMap1.8数据结构.png)
+
+ 　　JDK 1.8 的实现依然使用分段锁机制，不过分段的不再是 Segment，而是 Node，所以锁采用的也不再是 ReentrantLock（Segment 继承 ReententLock），而是利用 CAS + Synchronized 来保证并发更新的安全。数据结构采用：数组+链表+红黑树。
+
+ 　　put 方法中，通过 key 定位出 node，如果为空表示当前位置可以写入数据，利用循环 CAS 写入，如果不为空，则利用 synchronized 锁写入数据。写入完成后如果数量大于 TREEIFY_HRESHOLD（8） 则要转换为红黑树。
+
+ 　　因为 Node 的 val（值） 和 next （下一个节点）成员是被 volatile 修饰的，所以 get 方法并不需要进行加锁操作，因为获取的就是最新的值。
+
+ 　　ConcurrentHashMap 的 key 和 value 不允许为 null，是因为在 put 方法中，如果 key 或者 value 为 null，就会直接抛出 NullPointerException 异常。
+
 ### 8.9.  JAVA 8 的 ConcurrentHashMap 为什么放弃了分段锁，有什么问题吗？如果你来设计，你如何设计？
 
+### 8.9.1. JAVA 8 的 ConcurrentHashMap 为什么放弃了分段锁
 
+ 　　原因：
 
-### 
+1. 减少内存开销。如果使用 ReentrantLock 则需要结点继承 AQS 来获得同步支持，增加内存开销，而 1.8 中只有链表的头结点需要进行同步。
+
+   1.8 插入操作：首先通过 hash 找到对应链表过后，查看是否是第一个 object，如果是，直接用 CAS 原则插入，无需加锁，然后如果不是链表第一个 Object，则直接用链表第一个 Object 加锁，这里加的锁是 synchronized，虽然效率不如 ReentrantLock，但节约了空间，这里会一直用第一个 Object 为锁，直到重新计算 map 大小，比如扩容或者操作了第一个 Object 为止。
+
+2. 内部优化。synchronized 则是 JVM 直接支持的，JVM 能够在运行时作出相应的优化操作：锁粗化、锁消除、锁自旋等等。
+
+### 8.9.2. JAVA 8 的 ConcurrentHashMap 放弃了分段锁，有什么问题
+
+ 　　synchronized 可能会造成死锁，ReentrantLock 可以获取锁的时间进行设置，避免死锁。
+
+### 8.9.3. 如果你来设计，你如何设计？
+
+ 　　给 synchronized 加上阻塞等待和唤醒，避免死锁。
 
 ## 9. final 
 
