@@ -67,7 +67,7 @@
 
 2. 流量削峰
 
-   在高并发、大刘向的场景下，rabbitmq 可以减少突发访问压力，不会因为突发的超时负荷要求而奔溃。
+   在高并发、大流向的场景下，RabbitMQ 可以减少突发访问压力，不会因为突发的超时负荷要求而崩溃。
 
 3. 异步通信
 
@@ -110,8 +110,6 @@
 9. 插件机制（Plugin System）
 
    RabbitMQ 提供了许多插件，以实现从多方面进行扩展，当然也可以编写自己的插件。
-
-
 
 ## 2. 基本定义
 
@@ -587,14 +585,14 @@ channel.BasicQos(int prefetchSize, int prefetchCount, boolean global)
 
 ## 5 参考文章
 
-[快速掌握 RabbitMQ](https://www.cnblogs.com/wyy1234/p/10743567.html)
+1. [快速掌握 RabbitMQ](https://www.cnblogs.com/wyy1234/p/10743567.html)
 
-[消息队列之 RabbitMQ](https://www.jianshu.com/p/79ca08116d57)
+2. [消息队列之 RabbitMQ](https://www.jianshu.com/p/79ca08116d57)
 
-[RabbitMQ 的应用场景以及基本原理介绍](https://learnku.com/articles/27446)
+3. [RabbitMQ 的应用场景以及基本原理介绍](https://learnku.com/articles/27446)
 
-[RabbitMQ 实践](https://juejin.im/post/5da71217f265da5b591b7173)
+4. [RabbitMQ 实践](https://juejin.im/post/5da71217f265da5b591b7173)
 
-[RabbitMQ 教程](https://blog.csdn.net/hellozpc/article/details/81436980)
+5. [RabbitMQ 教程](https://blog.csdn.net/hellozpc/article/details/81436980)
 
-[RabbitMQ 使用以及原理解析](https://zhuanlan.zhihu.com/p/79385336)
+6. [RabbitMQ 使用以及原理解析](https://zhuanlan.zhihu.com/p/79385336)
