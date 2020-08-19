@@ -61,7 +61,7 @@ public class Observable<T> {
             return ((ScalarSynchronousObservable<T>)this).scalarScheduleOn(scheduler);
         }
         // 生成 OperatorSubscribeOn 对象，上一步生成的 Observable 作为 OperatorSubscribeOn 的 source 成员,scheduler 就是 Schedulers.computation() 对象
-    	// create() 方法生成新的 Observable，OperatorSubscribeOn 作为新的 Observable 的 onSubscribe 成员
+    	  // create() 方法生成新的 Observable，OperatorSubscribeOn 作为新的 Observable 的 onSubscribe 成员
         return create(new OperatorSubscribeOn<T>(this, scheduler));
     }
 	...
@@ -94,7 +94,7 @@ public final class OperatorSubscribeOn<T> implements OnSubscribe<T> {
         final Worker inner = scheduler.createWorker(); 		
         // Worker 也实现了 Subscription，所以可以加入到 Subscriber 中，用于集体取消订阅。
         subscriber.add(inner);
-        //启动线程
+        // 启动线程
         inner.schedule(new Action0() {
             @Override
             public void call() {
@@ -124,7 +124,7 @@ public final class OperatorSubscribeOn<T> implements OnSubscribe<T> {
                             inner.unsubscribe();
                         }
                     }
-									// 同时设置了 observeOn() 方法，setProducer 方法会被调用，从而确保 OnSubscribe 的 call 方法运行在指定的线程中
+									  // 同时设置了 observeOn() 方法，setProducer 方法会被调用，从而确保 OnSubscribe 的 call 方法运行在指定的线程中
                     @Override
                     public void setProducer(final Producer p) {
                         subscriber.setProducer(new Producer() {
