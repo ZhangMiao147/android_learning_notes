@@ -202,7 +202,7 @@ ServiceMethod<?, ?> loadServiceMethod(Method method) {
       }
       // 设置 responseConverter
       responseConverter = createResponseConverter(); // 4.1.3
-	  // 解析方法的注解
+	  	// 解析方法的注解
       for (Annotation annotation : methodAnnotations) {
         parseMethodAnnotation(annotation); // 4.1.4
       }
@@ -889,7 +889,7 @@ OkHttpCall okHttpCall = new OkHttpCall<>(serviceMethod,args);
     for (int p = 0; p < argumentCount; p++) {
       handlers[p].apply(requestBuilder, args[p]);
     }
-	// 创建 Request，并返回
+		// 创建 Request，并返回
     return requestBuilder.build();
   }
 ```
@@ -955,7 +955,7 @@ OkHttpCall okHttpCall = new OkHttpCall<>(serviceMethod,args);
       responseType = observableType;
       isBody = true;
     }
-	// 返回 RxJavaCallAdapter 对象
+		// 返回 RxJavaCallAdapter 对象
     return new RxJavaCallAdapter(responseType, scheduler, isAsync, isResult, isBody, isSingle,
         false);
   }
@@ -988,7 +988,7 @@ OkHttpCall okHttpCall = new OkHttpCall<>(serviceMethod,args);
     }
     // 创建 Observable 对象
     Observable<?> observable = Observable.create(func);
-	// 在子线程中运行
+	  // 在子线程中运行
     if (scheduler != null) {
       observable = observable.subscribeOn(scheduler);
     }
@@ -1068,7 +1068,7 @@ final class CallExecuteOnSubscribe<T> implements OnSubscribe<Response<T>> {
             return;
           }
           break; // State transition failed. Try again.
-		// 有回复了
+				// 有回复了
         case STATE_HAS_RESPONSE:
           // 切换到结束状态
           if (compareAndSet(STATE_HAS_RESPONSE, STATE_TERMINATED)) {
@@ -1119,7 +1119,7 @@ final class CallExecuteOnSubscribe<T> implements OnSubscribe<Response<T>> {
       return;
     }
     try {
-       // 如果处理完毕，调用了 subscriber 的 onComplete 方法
+      // 如果处理完毕，调用了 subscriber 的 onComplete 方法
       if (!isUnsubscribed()) {
         subscriber.onCompleted();
       }
@@ -1169,7 +1169,7 @@ final class CallExecuteOnSubscribe<T> implements OnSubscribe<Response<T>> {
     if (canceled) {
       call.cancel();
     }
-	// 调用 call.execute() 方法，并调用 parseResponse() 方法解析答案并返回
+	  // 调用 call.execute() 方法，并调用 parseResponse() 方法解析答案并返回
     return parseResponse(call.execute());
   }
 ```
@@ -1277,7 +1277,7 @@ final class CallEnqueueOnSubscribe<T> implements OnSubscribe<Response<T>> {
     final CallArbiter<T> arbiter = new CallArbiter<>(call, subscriber);
     subscriber.add(arbiter);
     subscriber.setProducer(arbiter);
-	// 进行异步请求。call 是 OkHttpCall 的实例
+	  // 进行异步请求。call 是 OkHttpCall 的实例
     call.enqueue(new Callback<T>() {
       @Override public void onResponse(Call<T> call, Response<T> response) {
         arbiter.emitResponse(response);
@@ -1335,7 +1335,7 @@ final class CallEnqueueOnSubscribe<T> implements OnSubscribe<Response<T>> {
     if (canceled) {
       call.cancel();
     }
-	//请求
+	  // 请求
     call.enqueue(new okhttp3.Callback() {
       @Override public void onResponse(okhttp3.Call call, okhttp3.Response rawResponse)
           throws IOException {

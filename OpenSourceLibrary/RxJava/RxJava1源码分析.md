@@ -86,7 +86,7 @@
         };
 ```
 
-　　不仅基本使用方式一样，实质上，再 RxJava 的 subscribe 过程中，Observer 也总是会先被转换成一个 Subscriber 再使用。
+　　不仅基本使用方式一样，实质上，在 RxJava 的 subscribe 过程中，Observer 也总是会先被转换成一个 Subscriber 再使用。
 
 #### 3.1.1. Observer 和 Subscriber 的区别
 
@@ -110,7 +110,7 @@
 
    unsubscribe() 这个方法很重要，因为在 subscribe() 之后，Observable 会持有 Subscriber 的引用，这个引用如果不能及时被释放，将有内存泄漏的风险。
 
-   所以最好保持一个原则：要在不再使用的时候尽快在可是的地方（例如 onPause()、onStop() 等方法中）调用 unsubscribe() 来解除引用关系，以避免内存泄漏的发生。
+   所以最好保持一个原则：要在不再使用的时候尽快在合适的地方（例如 onPause()、onStop() 等方法中）调用 unsubscribe() 来解除引用关系，以避免内存泄漏的发生。
 
 ### 3.2. 创建 Observable
 
@@ -153,7 +153,7 @@ observable.subscribe(subscribe);
             @Override
             public void call(Subscriber<String> subscriber) {
                 subscriber.onNext("next");
-				subscriber.onCompleted();
+								subscriber.onCompleted();
             }
         })
         .subscribe(new Subscriber<String>() {
@@ -312,7 +312,7 @@ public class Observable< T > {
 public class SafeSubscriber<T> extends Subscriber<T> {
 
     private final Subscriber<? super T> actual;
-	// 通过改标志来保证 onCompleted 或 onError 调用的时候会中止 onNext 的调用
+	  // 通过改标志来保证 onCompleted 或 onError 调用的时候会中止 onNext 的调用
     boolean done; 
 
     public SafeSubscriber(Subscriber<? super T> actual) {
@@ -411,7 +411,7 @@ public class SafeSubscriber<T> extends Subscriber<T> {
 
 　　方法的主导只要由 Observable（被观察者） 来，在创建 Observable 的时候，会将 OnSubscribe(订阅操作)传给 Observable(被观察者) 作为成员变量，在调用 subscribe 的方法（订阅）时，将 Subscriber (观察者)作为参数传入，调用 onSubscribe 的 call 方法来处理订阅的事件，OnSubscribe 的 call 方法中调用 Subcriber 的相关方法来通知观察者。
 
-## 5.hook
+## 5. hook
 
 　　在多种重要的节点上，都有 hook，例如创建 Observable（create）时，有 onCreate，可以进行任意想要的操作，记录、修饰、甚至抛出异常；以及和 scheduler 相关的内容，获取 scheduler 时，都可以继续想要的操作，例如让 Scheduler.io() 返回立即执行的 scheduler。
 
@@ -435,6 +435,6 @@ public class SafeSubscriber<T> extends Subscriber<T> {
 
 
 ## 8. 参考文章
-[拆轮子系列：拆 RxJava](https://blog.piasy.com/2016/09/15/Understand-RxJava/index.html)
+1. [拆轮子系列：拆 RxJava](https://blog.piasy.com/2016/09/15/Understand-RxJava/index.html)
 
-[RxJava 源码解析之观察者模式](https://juejin.im/post/58dcc66444d904006dfd857a)
+2. [RxJava 源码解析之观察者模式](https://juejin.im/post/58dcc66444d904006dfd857a)

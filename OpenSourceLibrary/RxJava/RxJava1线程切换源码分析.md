@@ -6,9 +6,9 @@
 
 　　observeOn 操作观察者的运行线程。一般都是主线程，也就是 UI 线程。
 
-## 1. subscribeOn 流程分析
+# 1. subscribeOn 流程分析
 
-### 1.1. 简单使用
+## 1.1. 简单使用
 
 　　subscribeOn(Schedulers.computation()) 方法让 OnSubscribe()（订阅操作） 运行在计算线程。
 　　简单使用：
@@ -47,11 +47,11 @@
                 });
 ```
 
-### 1.2. create() 方法
+## 1.2. create() 方法
 
 　　create() 方法会创建一个 Observable 对象，并设置 onSubscribe 成员的值为传递的 OnSubscribe 对象，这里为了下面流程看起来清晰，把 create() 方法创建的 Observable 对象称为 Observable1，它的 onSubscribe 成员称为 onSubscribe1。
 
-### 1.3. subscribeOn() 方法
+## 1.3. subscribeOn() 方法
 
 ```java
 public class Observable<T> {
@@ -61,7 +61,7 @@ public class Observable<T> {
             return ((ScalarSynchronousObservable<T>)this).scalarScheduleOn(scheduler);
         }
         // 生成 OperatorSubscribeOn 对象，上一步生成的 Observable 作为 OperatorSubscribeOn 的 source 成员,scheduler 就是 Schedulers.computation() 对象
-    	// create() 方法生成新的 Observable，OperatorSubscribeOn 作为新的 Observable 的 onSubscribe 成员
+    	  // create() 方法生成新的 Observable，OperatorSubscribeOn 作为新的 Observable 的 onSubscribe 成员
         return create(new OperatorSubscribeOn<T>(this, scheduler));
     }
 	...
@@ -75,7 +75,7 @@ public class Observable<T> {
 
 　　subscribeOn 就是 create + OperatorSubscribeOn 实现。
 
-### 1.4. OperatorSubscribeOn
+## 1.4. OperatorSubscribeOn
 
 ```java
 public final class OperatorSubscribeOn<T> implements OnSubscribe<T> {
@@ -94,7 +94,7 @@ public final class OperatorSubscribeOn<T> implements OnSubscribe<T> {
         final Worker inner = scheduler.createWorker(); 		
         // Worker 也实现了 Subscription，所以可以加入到 Subscriber 中，用于集体取消订阅。
         subscriber.add(inner);
-        //启动线程
+        // 启动线程
         inner.schedule(new Action0() {
             @Override
             public void call() {
@@ -124,7 +124,7 @@ public final class OperatorSubscribeOn<T> implements OnSubscribe<T> {
                             inner.unsubscribe();
                         }
                     }
-									// 同时设置了 observeOn() 方法，setProducer 方法会被调用，从而确保 OnSubscribe 的 call 方法运行在指定的线程中
+									  // 同时设置了 observeOn() 方法，setProducer 方法会被调用，从而确保 OnSubscribe 的 call 方法运行在指定的线程中
                     @Override
                     public void setProducer(final Producer p) {
                         subscriber.setProducer(new Producer() {
@@ -160,11 +160,11 @@ public final class OperatorSubscribeOn<T> implements OnSubscribe<T> {
 
 　　关于使用多次调用 subscribeOn 的效果，后面的 subscribeOn 只会改变前面的 subscribeOn 调度操作所在的线程，并不能改变最终被调度的代码执行的线程，但对于中途的代码执行的线程，还是会影响到的。
 
-### 1.5 subscribe() 方法
+## 1.5. subscribe() 方法
 
 　　从 RxJava 的简单流程可以得知，subscribe() 方法会调用 Observable 的 onSubscribe 的 call() 方法，当前的 Observable 是 Observable2，Observable2 的 onSubscribe 的值是 OperatorSubscribeOn 对象，所以就会调用 OperatorSubscribeOn 对象的方法，而 OperatorSubscribeOn 的 call() 方法会在线程池中调用 `source.unsafeSubscribe(s);`这句代码，s 是在 call 方法中生成的，称他为 Subscriber3，而 source 是 Observable1。
 
-#### 1.5.1. Observable#unsafeSubscribe
+### 1.5.1. Observable#unsafeSubscribe
 
 ```java
     public final Subscription unsafeSubscribe(Subscriber<? super T> subscriber) {
@@ -222,13 +222,13 @@ new Subscriber<String>() {
 ```
 　　就这样被观察者将消息传递到了观察者。
 
-### 1.6 总结
+## 1.6. 总结
 
 　　从调用 OperatorSubscribeOn 的 call 方法，自己实现的 OnSubscribe1 对象的 call() 方法是在指定线程中运行，所以如果设置一个 subscribeOn 会导致 OnSubscribe1 对象的 call() 方法在指定线程中运行，而且 subscribeOn() 方法的 OnSubscribe1 只是指调用 subscribeOn() 方法的 Observable 对象，之后的 Observable 对象是没有用的。而 Subscriber 的 onNext() 方法也在指定线程运行，是因为在 call 中调用的时候没有切换线程，所以 onNext() 方法也在指定线程中运行。
 
-## 2. observeOn 流程分析
+# 2. observeOn 流程分析
 
-### 2.1. 简单使用
+## 2.1. 简单使用
 
 ```java
         Observable.create(new Observable.OnSubscribe<String>() { // Observable 1
@@ -266,7 +266,7 @@ new Subscriber<String>() {
 ```
 　　将 create() 方法传入的参数 Observable.OnSubscribe 记为 OnSubscribe1，将 subscribe() 方法的参数 Subscriber 记为 Subscriber1（为了后面的分析）。
 
-### 2.2. AndroidSchedulers.mainThread() 返回的是什么？
+## 2.2. AndroidSchedulers.mainThread() 返回的是什么？
 
 ```java
 public final class AndroidSchedulers {
@@ -304,7 +304,7 @@ public final class AndroidSchedulers {
 
 }
 ```
-#### 2.2.1. LooperScheduler
+### 2.2.1. LooperScheduler
 
 　　mainThread 返回的是一个 LooperScheduler(Looper.getMainLooper()) 的实例对象。
 
@@ -422,7 +422,7 @@ class LooperScheduler extends Scheduler {
 
 　　AndroidSchedulers.mainThread 就是通过向主线程的 MessageQueue 中发消息，主线程的 Looper 会从 MessageQueue 取出来进行消费，处理消息也就到了主线程。
 
-### 2.3. observeOn(AndroidSchedulers.mainThread()) 方法：
+## 2.3. observeOn(AndroidSchedulers.mainThread()) 方法：
 
 ```java
 public class Observable<T> {
@@ -448,7 +448,7 @@ public class Observable<T> {
 
 　　所以 observeOn 就是 lift + OperatorObserveOn 实现。
 
-### 2.4. lift() 
+## 2.4. lift() 
 
 ```java
 public class Observable<T> {
@@ -459,7 +459,7 @@ public class Observable<T> {
 ```
 　　将 onSubscribe （也就是 onSubscribe1 ）与 operator (也就是 OperatorObserveOn )作为参数，创建 onSubscribeList，当前的 Observable 的 onSubscribe 成了 OnSubscribeLift 对象，而 onSubscribe1 成为 OnSubscribeLift 的 parent 变量，而 OperatorObserverOn 成为 OnSubscribeLift 的 operator 变量。
 
-### 2.5. OnSubscribeLift
+## 2.5. OnSubscribeLift
 
 　　从 RxJava 的简单流程可知 subscribe() 方法调用 Observable 的 onSubscribe 的 call() 方法，也就是  OnSubscribeLift 的 call() 方法。
 ```java
@@ -498,7 +498,7 @@ public final class OnSubscribeLift<T, R> implements OnSubscribe<R> {
 ```
 　　先调用了 OperatorObserveOn 的 call 方法，即对下游 subscriber 用操作符进行处理，然后又调用了 onSubscribe1 的 call 方法通知处理后的 subscriber。而参数 o 就是自己写的 Subscriber1。将这里生成的 Subscriber st 记录为 Subscriber2。
 
-#### 2.5.1. OperatorObserveOn 
+### 2.5.1. OperatorObserveOn 
 
 ```java
 public final class OperatorObserveOn<T> implements Operator<T, T> {
@@ -561,7 +561,7 @@ public final class OperatorObserveOn<T> implements Operator<T, T> {
 
 　　作为操作符的逻辑，还是很简单的，如果 scheduler 是 ImmediateScheduler/TrampolineScheduler，就什么都不做，否则就把  subscriber 包装为 ObserveOnSubscriber。
 
-##### 2.5.1.1.  ObserveOnSubscriber
+#### 2.5.1.1.  ObserveOnSubscriber
 
 　　ObserveOnSubscriber 除了负责把向下游发送数据的操作调度到指定的线程，还负责 backpressure 支持。
 
@@ -694,6 +694,16 @@ public final class OperatorObserveOn<T> implements Operator<T, T> {
                 }
             }
         } 
+      
+        protected void schedule() {
+            if (counter.getAndIncrement() == 0L) {
+              	// recursiveScheduler 就是 AndroidSchedulers 的 Work 线程
+              	// 传递给主线程的消息的 Runnable 就是 ObserveOnSubcribe
+              	// 主线程调用的 handle 处理消息的时候会调用 ObserveOnSubcribe 的 call() 方法，这样 ObserveOnSubcribe 的 call 方法就运行在了主线程
+               	recursiveScheduler.schedule(this);
+            }
+
+        }
 }
 ```
 　　调用了 schedule() 方法(onError() 与 onComplete() 方法都会调用 schedule() 方法)，而 schedule() 方法会在主线程发送 message 出去，最终会调用 ObserveOnSubscriber 的 call() 方法，而在 ObserveOnSubscriber 的 call() 方法中调用了 localChild 的 onNext() 方法，而 localChild 是什么呢？就是在创建 ObserveOnSubscriber 时传递的参数，也就是 Subscriber1。
@@ -704,18 +714,18 @@ public final class OperatorObserveOn<T> implements Operator<T, T> {
 
 　　多次调用 observable 的效果，每次调用都会改变数据向下传递时所在的线程。
 
-### 2.6. 总结
+## 2.6. 总结
 
 　　ObserveOn() 方法会生成 OperatorObserveOn 对象，并且将其设置为 Observable 的 onSubscribe 对象，并且将下游的 Subscriber 作为对象进行封装，在调用 onNext()、onError()、onComplete() 方法时通过向主线程发送 message 消息，在主线程中处理消息，从而确保 Subscriber 的 onNext()、onError()、onComplete() 运行在主线程。
 
-## 3. 完整过程
+# 3. 完整过程
 
 ![](image/RxJava_call_stack_just_map_subscribeOn_observeOn.png)
 
 　　subscribeOn() 方法会使用 OperatorSubscribeOn 类作为 Observable 的 onSubscribe 对象，将上游的 Observable 进行封装，从而确保上游的 OnSubscribe 的 call() 方法运行在指定线程。ObserveOn() 方法会使用 OperatorObserveOn 类作为 Observable 的 onSubscribe 对象，将下游的 Subscriber 进行封装，从而确保 Subscriber 的 onNext()、onError()、onComplete() 运行在指定的线程。
 
-## 4. 参考文章
+# 4. 参考文章
 
-[拆轮子系列：拆 RxJava](https://blog.piasy.com/2016/09/15/Understand-RxJava/index.html)
+1. [拆轮子系列：拆 RxJava](https://blog.piasy.com/2016/09/15/Understand-RxJava/index.html)
 
-[RxJava 源码解析之观察者模式](https://juejin.im/post/58dcc66444d904006dfd857a)
+2. [RxJava 源码解析之观察者模式](https://juejin.im/post/58dcc66444d904006dfd857a)

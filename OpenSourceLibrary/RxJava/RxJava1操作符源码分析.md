@@ -1,6 +1,6 @@
 # RxJava 1 操作符源码分析
 
-## 1. 简单使用
+# 1. 简单使用
 
 ```java
         Observable.just("hello word")
@@ -32,9 +32,9 @@
 
 　　使用 map 操作符，把字符串转换为它的长度。
 
-## 2. just
+# 2. just
 
-### 2.1. Observable#just
+## 2.1. Observable#just
 
 ```java
     public static <T> Observable<T> just(final T value) {
@@ -57,7 +57,7 @@
 
 　　而 Observable 的构造函数接受一个 OnSubscribe，OnSubscribe 是一个回调，会在 Observable#subscribe 中使用，用于通知 observable 自己被订阅。
 
-### 2.2. JustOnSubscribe#call
+## 2.2. JustOnSubscribe#call
 
 　　在 just() 的实现里面，创建了一个 JustOnSubscribe，并将其设置为 Observable 的 onSubscribe 成员。所以在 subscribe() 方法中执行 `hook.onSubscribeStart(observable, observable.onSubscribe).call(subscriber)` 方法实际执行的就是 JustOnSubscribe 的 call 方法。
 
@@ -68,7 +68,7 @@
         JustOnSubscribe(T value) {
             this.value = value;
         }
-		// s 是 subscribe 方法的参数
+		    // s 是 subscribe 方法的参数
         @Override
         public void call(Subscriber<? super T> s) {
             s.setProducer(createProducer(s, value));
@@ -85,7 +85,7 @@
 
 　　在 RxJava 1.x 中，数据都是从 observable push 到 subscriber 的，但要是 observable 发的太快，subscriber 处理不过来，该怎么办？一种办法是，把数据保存起来，但这显然可能导致内存耗尽；另一种办法是，多余的数据来了之后就丢掉，至于丢掉和保留的策略可以按需指定；还有一种办法就是让 subscriber 向  observale 主动请求数据，subscriber 不请求，onservable 就不发出数据。它两互相协调，避免出现过多的数据，而协调的桥梁，就是 producer。
 
-### 2.3. Subscriber#setProducer
+## 2.3. Subscriber#setProducer
 
 ```java
     public void setProducer(Producer p) {
