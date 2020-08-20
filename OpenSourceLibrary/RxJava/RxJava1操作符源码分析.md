@@ -30,7 +30,7 @@
 
 　　just() 方法会将传入的参数依次发送出来。
 
-　　使用 map 操作符，把字符串转换为它的长度。
+　　使用 map() 操作符，把字符串转换为它的长度。
 
 # 2. just
 
@@ -68,7 +68,7 @@
         JustOnSubscribe(T value) {
             this.value = value;
         }
-		    // s 是 subscribe 方法的参数
+		// s 是 subscribe 方法的参数
         @Override
         public void call(Subscriber<? super T> s) {
             s.setProducer(createProducer(s, value));
@@ -121,7 +121,7 @@
 
 　　最后调用了 producer 的 request() 方法。
 
-### 2.4. WeakSingleProducer#request
+## 2.4. WeakSingleProducer#request
 
 ```java
     static final class WeakSingleProducer<T> implements Producer {
@@ -171,15 +171,15 @@
 
 　　在 request() 中，调用了 subscriber 的 onNext() 和 onCompleted()，那么 Hello World 就传递到了 Action 中，并被打印出来了。
 
-### 2.5. 完整的过程
+## 2.5. 完整的过程
 
 ![](image/RxJava_call_stack_just.png)
 
 　　一切行为都由 subscribe 触发，而且都是直接的函数调用，所以在调用 subscribe 的线程执行。
 
-##  3. map 操作符
+# 3. map 操作符
 
-### 3.1. Observable#map
+## 3.1. Observable#map
 
 ```java
     public final <R> Observable<R> map(Func1<? super T, ? extends R> func) {
@@ -193,7 +193,7 @@
 
 　　subcribe() 方法调用的时候会调用 `hook.onSubscribeStart(observable, observable.onSubscribe).call(subscriber)` 方法，在这里也就是 OnSubscribeMap 的 call 方法。
 
-### 3.2. OnSubscribeMap
+## 3.2. OnSubscribeMap
 
 ```java
 // OnSubscribeMap 是 OnSubscribe 的子类
@@ -227,7 +227,7 @@ public final class OnSubscribeMap<T, R> implements OnSubscribe<R> {
 
 　　call() 方法的逻辑很简单，只是将例子中 Observable.subscribe() 传入的 Subscriber 分装成 MapSubscriber ，调用 Observable.unsafeSubscribe 方法。
 
-#### 3.2.1. Observable#unsafeSubscribe
+### 3.2.1. Observable#unsafeSubscribe
 
 ```java
     public final Subscription unsafeSubscribe(Subscriber<? super T> subscriber) {
@@ -261,10 +261,10 @@ public final class OnSubscribeMap<T, R> implements OnSubscribe<R> {
 
 　　Observable 的 unsafeSubscribe 方法调用了 MapSubscriber 的 call 方法。
 
-### 3.3. MapSubscriber
+## 3.3. MapSubscriber
 
 ```java
-		static final class MapSubscriber<T, R> extends Subscriber<T> {
+	static final class MapSubscriber<T, R> extends Subscriber<T> {
 
         final Subscriber<? super R> actual;
 
@@ -335,7 +335,7 @@ public final class OnSubscribeMap<T, R> implements OnSubscribe<R> {
 
 　　上面的流程依然由 subscribe 触发，而且都是直接的函数调用，所以都在调用 subscribe 的线程执行。
 
-## 4. interval
+# 4. interval
 
 　　interval 操作符是创建一个按固定时间间隔发送整数序列的 Observable。
 
@@ -347,7 +347,7 @@ public final class OnSubscribeMap<T, R> implements OnSubscribe<R> {
 
 　　可以看出 interval() 和 map() 一样都是通过生成新的 Observable 并向 Observable 中传入与之对应的 OnSubscribe 的子类来完成具体操作。
 
-### 4.1. OnSubscribeTimerPeriodically
+## 4.1. OnSubscribeTimerPeriodically
 
 ```java
 public final class OnSubscribeTimerPeriodically implements OnSubscribe<Long> {
@@ -391,8 +391,8 @@ public final class OnSubscribeTimerPeriodically implements OnSubscribe<Long> {
 
 　　在指定的 scheduler 线程中按固定时间调用 subscriber 的 onNext() 方法，也就是通知观察者。
 
-## 5. 参考文章
+# 5. 参考文章
 
-[拆轮子系列：拆 RxJava](https://blog.piasy.com/2016/09/15/Understand-RxJava/index.html)
+1. [拆轮子系列：拆 RxJava](https://blog.piasy.com/2016/09/15/Understand-RxJava/index.html)
 
-[RxJava 源码解析之观察者模式](https://juejin.im/post/58dcc66444d904006dfd857a)
+2. [RxJava 源码解析之观察者模式](https://juejin.im/post/58dcc66444d904006dfd857a)

@@ -1,8 +1,8 @@
 # RxJava 2 背压源码分析
 
-## 1. Flowable 源码分析
+# 1. Flowable 源码分析
 
-### 1.1. 简单使用
+## 1.1. 简单使用
 
 　　背压 Flowable 方法的简单使用：
 
@@ -43,7 +43,7 @@
 * 首先创建通过调用 Flowable 的 create 方法创建实例，传入两个参数，第一个是 OnSubscribe 接口实例，并实现其 subscribe 方法，第二个参数则是背压特有的背压策略。
 * 调用 Flowable 的 subscribe 方法。
 
-### 1.2. Flowable#create
+## 1.2. Flowable#create
 
 ```java
     @CheckReturnValue
@@ -59,7 +59,7 @@
 
 　　这里返回的是一个 FlowableCreate 对象，在 subscribe() 方法里调用 subscribeActual() 方法，也就是调用 FlowableCreate  类的 subscribeActual() 方法：
 
-### 1.3. FlowableCreate#subscribeActual
+## 1.3. FlowableCreate#subscribeActual
 
 ```java
     @Override
@@ -106,7 +106,7 @@
 
 　　接着调用了 source.subscribe(emitter)，就是调用了  FlowableOnSubscribe 的 subscribe 方法，并传入 emitter，意味着订阅流程开启，代码中创建 Flowable 时实现的 subscribe 方法被调用，里面调用的 onNext()、onComplete() 方法依次执行。
 
-### 1.4. BaseEmmitter
+## 1.4. BaseEmmitter
 
 ```java
     abstract static class BaseEmitter<T>
@@ -216,7 +216,7 @@
 
 　　在 request 方法中首先判断传入的参数是否有效（不得小于 0 ），接着调用 BackpressureHelper 的 add 方法，传入 BaseEmitter 实例和指定的数值。
 
-#### 1.4.1. BackpressureHelper#add
+### 1.4.1. BackpressureHelper#add
 
 ```java
     public static long add(AtomicLong requested, long n) {
@@ -235,7 +235,7 @@
 
 　　首先获取默认值 r ，为 0 ，接着调用 addCap 方法，其实就是返回 n，最后将 AtomicLong 类型的 requested 设置为 n，将其返回。
 
-### 1.5. DropAysncEmitter
+## 1.5. DropAysncEmitter
 
 　　以 DropAysncEmitter 为例，查看背压的具体实现：
 
@@ -270,14 +270,12 @@
     }
 ```
 
-　　在 DropAysncEmitter 的 onNext 方法中首先调用 get 方法取出对应的值，默认值是 0，这就是说如果不在 onSubscribe 方法中设置这个值，那么就是 0，所以就不会执行 actual 变量（就是 Subscribe 接口实例）的    onNext() 方法。
+　　在 DropAysncEmitter 的 onNext 方法中首先调用 get 方法取出对应的值，默认值是 0，这就是说如果不在 onSubscribe 方法中设置这个值，那么就是 0，所以就不会执行 actual 变量（就是 Subscribe 接口实例）的 onNext() 方法。
 
-## 2. 分析图
+# 2. 分析图
 
 ![](image/flowerable.png)
 
+# 3. 参考文章
 
-
-
-## 3. 参考文章
-[浅析RxJava 1.x&2.x版本使用区别及原理（一）：Observable、Flowable等基本元素源码解析](https://blog.csdn.net/itermeng/article/details/80139074)
+1. [浅析RxJava 1.x&2.x版本使用区别及原理（一）：Observable、Flowable等基本元素源码解析](https://blog.csdn.net/itermeng/article/details/80139074)
