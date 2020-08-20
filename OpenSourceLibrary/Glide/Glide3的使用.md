@@ -1,6 +1,6 @@
 # Glide 3 的使用
 
-## 1. 概述
+# 1. 概述
 
 　　Android 上的图片加载框架非常成熟，从最早的老牌图片加载框架 UniversalImageLoader，到后来 Google 推出的 Volley，再到后来的 Glide 和 Picasso，还有 Facebook 的 Fresco。每一个都非常稳定，功能也都十分强大。但是它们的使用场景基本都是重合的，基本只需要选择其中一个来进行学习和使用就足够了。
 
@@ -8,7 +8,7 @@
 
 　　Glide 和 Picasso 这两个框架的用法非常相似，但其实它们各有特色。Picasso 比 Glide 更加简洁和轻量，Glide 比 Picasso 功能更为丰富。
 
-## 2. 引入库
+# 2. 引入库
 
 　　Glide 是一款由 Bump Technologies 开发的图片加载框架，可以在 Android 平台上以极度简单的方式加载和展示图片。
 
@@ -28,9 +28,9 @@ dependencies {
 
 　　这样就可以使用 Glide 中的功能了。
 
-## 3. 使用
+# 3. 使用
 
-### 3.1. 加载图片
+## 3.1. 加载图片
 
 　　在 Activity 中使用 Glide 显示图片：
 
@@ -72,7 +72,7 @@ Glide.with(this).load(imageUri).into(imageView);
 
 　　Glide 的关键三步是：先 with()、再 load()、最后 into()。
 
-### 3.2. 加载占位图
+## 3.2. 加载占位图
 
 　　Glide 提供了各种各样非常丰富的 API 支持，其中就包括了占位图功能。
 
@@ -89,7 +89,7 @@ Glide.with(this)
 
 　　Glide 当中绝大多数 API 的用法就是在 lode() 和 into() 方法之间串接任意想添加的功能就可以了。
 
-### 3.3. 异常占位图
+## 3.3. 异常占位图
 
 　　异常占位图是指如果因为某些异常情况导致图片加载失败，比如说手机网络信号不好，这个时候就显示这张异常占位图。
 
@@ -102,7 +102,7 @@ Glide.with(this)
 
 　　加上 error() 方法就可以指定异常占位图了。
 
-### 3.4. 指定图片格式
+## 3.4. 指定图片格式
 
 　　Glide 是支持 GIF 图片的，而 Picasso 是不支持加载 GIF 图片的。
 
@@ -110,7 +110,7 @@ Glide.with(this)
 
 　　也就是说，不管传入的是一张普通图片，还是一张 GIF 图片，Glide 都会自动进行判断，并且可以正确地把它解析并展示出来。
 
-#### 3.4.1. 指定加载静态图片
+### 3.4.1. 指定加载静态图片
 
 　　如果希望加载的图片是一张静态图片，不需要 Glide 自动判断它是静态图片还是 GIF 图片:
 
@@ -125,7 +125,7 @@ Glide.with(this)
 
 　　调用了 asBitmap() 方法后，GIF 图就无法正常播放了，而是会在界面上显示第一帧的图片。
 
-#### 3.4.2. 指定加载动态图片
+### 3.4.2. 指定加载动态图片
 
 　　类似的，也能强制指定加载动态图片：
 
@@ -140,7 +140,7 @@ Glide.with(this)
 
 　　指定了只允许加载动态图片，如果传入了一个静态图片的 URL 地址，结果是加载失败。
 
-### 3.5. 指定图片大小
+## 3.5. 指定图片大小
 
 　　实际上，使用 Glide 在绝大多数情况下都是不需要指定图片大小的。
 
@@ -162,7 +162,7 @@ Glide.with(this)
 
 　　使用 override() 方法指定一个图片的尺寸，这样 Glide 只会将图片加载成指定大小像素的尺寸，而不会管 ImageView 的大小是多少了。
 
-### 3.6. 关闭硬件缓存
+## 3.6. 关闭硬件缓存
 
 　　Glide 有非常强大的缓存机制，第一次加载的时候会把图片缓存下来，下次加载的时候将会直接从缓存中读取，不会再去网络下载，因而加载的速度非常快。
 
@@ -173,51 +173,14 @@ Glide.with(this)
 //DiskCacheStrategy.ALL ： 表示既缓存原始图片，也缓存转换过后的图片。
 Glide.with(this)
      .load(url)
-		 .diskCacheStrategy(DiskCacheStrategy.NONE)
+	 .diskCacheStrategy(DiskCacheStrategy.NONE)
      .into(imageView);
 ```
 
 　　加上 diskCacheStrategy() 方法，并传入 DiskCacheStrategy.NONE 参数，这样就可以禁用掉 Glide 的缓存功能。
 
-## 4. 参考文章
+# 4. 参考文章
 
 1. [Android图片加载框架最全解析（一），Glide的基本用法](https://blog.csdn.net/guolin_blog/article/details/53759439)
 
 2. [Glide使用总结](https://www.jianshu.com/p/791ee473a89b)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

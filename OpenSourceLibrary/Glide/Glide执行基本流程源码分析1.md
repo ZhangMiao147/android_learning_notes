@@ -10,9 +10,9 @@ Glide.with(this).load(url).into(imageView);
 
 　　源码分析分为三部分，也就是 with()、load()、into() 这三个方法来分析。
 
-　　这篇只分析 with() 和 load() 两个方法的源码流程。
+　　这篇只分析 with() 和 load() 两个方法的源码流程。into() 的分析看[Glide 执行基本流程源码分析 2](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/Glide/Glide执行基本流程源码分析2.md)。
 
-## 1. with()
+# 1. with()
 
 　　with() 方法是 Glide 类中的一组静态方法，它有好几个方法重载。
 
@@ -57,7 +57,7 @@ public class Glide {
 
 　　所以 with() 方法返回的就是一个 RequestManager 对象。
 
-### 1.1. RequestManagerRetriever#get
+## 1.1. RequestManagerRetriever#get
 
 ```java
 /**
@@ -295,11 +295,11 @@ public class RequestManagerRetriever implements Handler.Callback {
 
 　　传入非 Application 参数的 get() 方法：在使用 Glide.with() 方法中不管传入的是 Activity、FragmeActivity、v4 包下的 Fragment 还是 app 包下的 Fragment，最终的流程都是一样的，那就是调用 getSupportRequestManagerFragment 方法向当前的 Activity 当中添加一个隐藏的 Fragment。为什么要添加一个隐藏的 Fragment ? 因为 Glide 需要知道加载的生命周期。Glide 并没有办法知道 Activity 的生命周期，于是 Glide 就是用了添加隐藏 Fragment 这种小技巧，因为 Fragment 的生命周期和 Activity 是同步的，如果 Activity 被销毁了，Fragment 是可以监听到的，这样 Glide 就可以捕获这个事件并停止图片加载了。
 
-### 1.2. with() 方法总结
+## 1.2. with() 方法总结
 
 　　with() 方法就是为了得到一个 RequestManager 对象而已，然后 Glide 会根据传入的 with() 方法的参数来确定图片加载的生命周期。
 
-## 2. load()
+# 2. load()
 
 　　with() 方法返回的是一个 RequestManager 对象，那么 lode() 方法就是在 RequestManager 类当中的。
 
@@ -324,7 +324,7 @@ public class RequestManager implements LifecycleListener {
 
 　　load() 方法的逻辑非常简单，就是先调用了 fromString() 方法，fromString() 方法返回的是一个 DrawableTypeRequest 对象，接着调用了 DrawableTypeRequest 的 load() 方法，然后把传入的图片 URL 地址传进去。
 
-### 2.1. RequestManager#from
+## 2.1. RequestManager#from
 
 ```java
     public DrawableTypeRequest<String> fromString() {
@@ -335,7 +335,7 @@ public class RequestManager implements LifecycleListener {
 
 　　fromString() 方法也极为简单，就是调用了 loadGeneric() 方法，并且指定参数为 String.class，因为 load() 方法传入的是一个字符串参数。所以主要的工作是在 loadGeneric() 方法中进行的。
 
-### 2.2. RequestManager#loadGeneric
+## 2.2. RequestManager#loadGeneric
 
 ```java
     private <T> DrawableTypeRequest<T> loadGeneric(Class<T> modelClass) {
@@ -362,7 +362,7 @@ public class RequestManager implements LifecycleListener {
 
 　　最后，loadGeneric() 方法是要返回一个 DrawableTypeRequest 对象的，因此在 loadGeneric() 方法的最后又去 new 了一个 DrawableTypeRequest 对象，然后把刚才获得的 ModelLoader 对象，还有一些数据都传了进去。 
 
-### 2.3. Glide.buildStreamModelLoader
+## 2.3. Glide.buildStreamModelLoader
 
 ```java
 public class Glide {
@@ -386,10 +386,10 @@ public class Glide {
 
 　　Glide 的 buildStreamModelLoader() 方法中直接调用了 buildModelLoad() 方法，而在 buildModelLoad() 方法里面调用了 Glide.get(context).getLoaderFactory().buildModelLoader(modelClass, resourceClass) 这一段代码。
 
-#### 2.3.1. Glide#get()
+### 2.3.1. Glide#get()
 
 ```java
-    private static volatile Glide glide; //线程安全的单例模式
+      private static volatile Glide glide; // 线程安全的单例模式
 	  public static Glide get(Context context) {
         if (glide == null) {
             synchronized (Glide.class) {
@@ -416,7 +416,7 @@ public class Glide {
 
 　　Glide 的 get() 方法其实就是初始化 Glide glide 对象，并返回。可以看到 Glide 是单例模式，调用了 build.createGlide() 来初始化 glide 对象。
 
-#### 2.3.2. GlideBuilder#createGlide
+### 2.3.2. GlideBuilder#createGlide
 
 ```java
     Glide createGlide() {
@@ -437,15 +437,15 @@ public class Glide {
                 bitmapPool = new BitmapPoolAdapter();
             }
         }
-				// 内存缓存的处理类
+		// 内存缓存的处理类
         if (memoryCache == null) {
             memoryCache = new LruResourceCache(calculator.getMemoryCacheSize());
         }
-				// 磁盘缓存的处理类
+		// 磁盘缓存的处理类
         if (diskCacheFactory == null) {
             diskCacheFactory = new InternalCacheDiskCacheFactory(context);
         }
-				// 下载的处理类
+		// 下载的处理类
         if (engine == null) {
             engine = new Engine(memoryCache, diskCacheFactory, diskCacheService, sourceService);
         }
@@ -453,14 +453,14 @@ public class Glide {
         if (decodeFormat == null) {
             decodeFormat = DecodeFormat.DEFAULT;
         }
-				// 调用 Glide 构造函数来创建对象
+		// 调用 Glide 构造函数来创建对象
         return new Glide(engine, memoryCache, bitmapPool, context, decodeFormat);
     }
 ```
 
 　　在 GlideBuilder 的 createGlide() 方法中初始化了一些加载图片中需要使用的对象，像是处理缓存的 memoryCache 和 diskCacheFactory，下载的 engine，最后调用了 Glide 的构造函数来创建一个 Glide 对象，并且将创建的对象都传递了进去。
 
-#### 2.3.3. Glide 的构造函数
+### 2.3.3. Glide 的构造函数
 
 ```java
    Glide(Engine engine, MemoryCache memoryCache, BitmapPool bitmapPool, Context context, DecodeFormat decodeFormat) {
@@ -471,7 +471,7 @@ public class Glide {
         loaderFactory = new GenericLoaderFactory(context);
         mainHandler = new Handler(Looper.getMainLooper());
         bitmapPreFiller = new BitmapPreFiller(memoryCache, bitmapPool, decodeFormat);
-
+		// 编解码器注册
         dataLoadProviderRegistry = new DataLoadProviderRegistry();
 
         StreamBitmapDataLoadProvider streamBitmapLoadProvider =
@@ -494,7 +494,7 @@ public class Glide {
                 new ImageVideoGifDrawableLoadProvider(imageVideoDataLoadProvider, gifDrawableLoadProvider, bitmapPool));
 
         dataLoadProviderRegistry.register(InputStream.class, File.class, new StreamFileDataLoadProvider());
-				// 重点注意这里
+		// 重点注意这里，ModelLoader 的工厂注册
         register(File.class, ParcelFileDescriptor.class, new FileDescriptorFileLoader.Factory());
         register(File.class, InputStream.class, new StreamFileLoader.Factory());
         register(int.class, ParcelFileDescriptor.class, new FileDescriptorResourceLoader.Factory());
@@ -523,11 +523,11 @@ public class Glide {
     }
 ```
 
-　　在 Glide 的构造函数中，除了一些变量的初始化和赋值之后，还调用了 register 方法。
+　　在 Glide 的构造函数中，除了一些变量的初始化和赋值之后，还调用了 register() 方法。
 
 　　register() 方法传入了三个参数，modelClass 就是调用 load() 方法是传入的参数类型，像是 load("http://image.png") 那么 modelClass 就是 String.class，而 resourceClass 在 Glide 的 buildStreamModelLoader 设置的是 InputStream.class ，而 factory 在 Glide 的构造函数中传入的是一个 `new StreamStringLoader.Factory()`。register() 方法的第三个参数是一个实现了 ModelLoaderFactory 接口的类。
 
-#### 2.3.4. Glide#register
+### 2.3.4. Glide#register
 
 ```java
     public <T, Y> void register(Class<T> modelClass, Class<Y> resourceClass, ModelLoaderFactory<T, Y> factory) {
@@ -540,13 +540,13 @@ public class Glide {
 
 　　Glide 的 register() 方法中继续调用了 loaderFactory.register() 方法，而 loadFactory 是  GenericLoaderFactory 对象。
 
-#### 2.3.5. GenericLoaderFactory#register
+### 2.3.5. GenericLoaderFactory#register
 
 ```java
 public class GenericLoaderFactory {
     private final Map<Class/*T*/, Map<Class/*Y*/, ModelLoaderFactory/*T, Y*/>> modelClassToResourceFactories =
             new HashMap<Class, Map<Class, ModelLoaderFactory>>();
-  // register 方法
+    // register 方法
 	public synchronized <T, Y> ModelLoaderFactory<T, Y> register(Class<T> modelClass, Class<Y> resourceClass,
             ModelLoaderFactory<T, Y> factory) {
         cachedModelLoaders.clear();
@@ -577,7 +577,7 @@ public class GenericLoaderFactory {
 
 　　GenericLoaderFactory 的 register() 方法将 modelClass、resourceClass、factory 信息都存储在了 modelClassToResourceFactories 变量中。
 
-#### 2.3.6. ModelLoaderFactory 接口
+### 2.3.6. ModelLoaderFactory 接口
 
 ```java
 /**
@@ -604,7 +604,7 @@ public interface ModelLoaderFactory<T, Y> {
 
 　　对于传入 String.Class 和 InputStream.class ，ModelLoaderFactory 是一个 new StreamStringLoader.Factory()，接下来看一下这个对象。
 
-#### 2.3.7. StreamStringLoader
+### 2.3.7. StreamStringLoader
 
 ```java
 public class StreamStringLoader extends StringLoader<InputStream> implements StreamModelLoader<String> {
@@ -638,7 +638,7 @@ public class StreamStringLoader extends StringLoader<InputStream> implements Str
 
 　　在 Factory 的 build 的方法中创建 StreamStringLoader 对象时，传入的参数是 factories.buildModelLoader(Uri.class, InputStream.class)，这个方法返回的是一个 ModelLoader 对象。
 
-#### 2.3.8. GenericLoaderFactory#buildModelLoader
+### 2.3.8. GenericLoaderFactory#buildModelLoader
 
 ```java
     public synchronized <T, Y> ModelLoader<T, Y> buildModelLoader(Class<T> modelClass, Class<Y> resourceClass) {
@@ -654,7 +654,7 @@ public class StreamStringLoader extends StringLoader<InputStream> implements Str
                 return result;
             }
         }
-				// 缓存中没有，则调用 getFactory() 方法
+		// 缓存中没有，则调用 getFactory() 方法
         final ModelLoaderFactory<T, Y> factory = getFactory(modelClass, resourceClass);
         if (factory != null) {
             // 存入缓存
@@ -671,7 +671,7 @@ public class StreamStringLoader extends StringLoader<InputStream> implements Str
 
 　　GenericLoaderFactory 的 buildModelLoader() 方法中会先从缓存中获取，如果缓存中没有则调用 getFactory() 方法来得到 ModelLoaderFactory 对象，最后将 factory.build 得到的 ModelLoader 存储到缓存中。
 
-#### 2.3.9. GenericLoaderFactory#getFactory
+### 2.3.9. GenericLoaderFactory#getFactory
 
 ```java
     private <T, Y> ModelLoaderFactory<T, Y> getFactory(Class<T> modelClass, Class<Y> resourceClass) {
@@ -715,7 +715,7 @@ register(Uri.class, InputStream.class, new StreamUriLoader.Factory());
 
 　　Uri.class 和 InputStream.class 对应的 ModelLoaderFacroty 对象是 StreamUrlLoader.Factory()。
 
-#### 2.3.10. StreamUriLoader
+### 2.3.10. StreamUriLoader
 
 ```java
 public class StreamUriLoader extends UriLoader<InputStream> implements StreamModelLoader<Uri> {
@@ -765,7 +765,7 @@ register(GlideUrl.class, InputStream.class, new HttpUrlGlideUrlLoader.Factory())
 
 　　继续查看 HttpUrlGlideUrlLoader.Factory()。
 
-#### 2.3.11. HttpUrlGlideUrlLoader
+### 2.3.11. HttpUrlGlideUrlLoader
 
 ```java
 public class HttpUrlGlideUrlLoader implements ModelLoader<GlideUrl, InputStream> {
@@ -817,7 +817,7 @@ public class HttpUrlGlideUrlLoader implements ModelLoader<GlideUrl, InputStream>
 
 　　回到 StreamUrlLoader 类中，StreamUrlLoader 的 Factory 类的 build() 方法调用了 StreamUriLoader() 的构造方法，而这个构造方法直接调用了 StreamUriLoader 符类  UriLoader 的构造方法。
 
-#### 2.3.12. UriLoader
+### 2.3.12. UriLoader
 
 ```java
 public abstract class UriLoader<T> implements ModelLoader<Uri, T> {
@@ -865,7 +865,7 @@ public abstract class UriLoader<T> implements ModelLoader<Uri, T> {
 
 　　再回到 SreamStringLoader 中，StreamStringLoader 的 Factory 类的 build 调用了 StreamStringLoader() 构造方法，参入的参数是 StreamUriLoader 对象，而 StreamStringLoader() 的构造方法调用了父类 StringLoader 的构造方法。
 
-#### 2.3.13. StringLoader
+### 2.3.13. StringLoader
 
 ```java
 public class StringLoader<T> implements ModelLoader<String, T> {
@@ -901,7 +901,7 @@ public class StringLoader<T> implements ModelLoader<String, T> {
 
 　　也是将传入的 StreamUriLoader 设置给成员变量 uriLoader。
 
-### 2.4.  ModelLoader 
+## 2.4.  ModelLoader 
 
 ```java
 /**
