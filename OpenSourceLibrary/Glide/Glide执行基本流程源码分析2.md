@@ -1,4 +1,4 @@
-# Glide 执行基本流程源码分析
+# Glide 执行基本流程源码分析2-into
 
 　　Glide 的最基本的使用是：
 
@@ -51,7 +51,7 @@ Glide.with(this).load(url).into(imageView);
                     // Do nothing.
             }
         }
-				// 调用 glide.buildImageViewTarget() 方法，构造一个 Target 对象
+		// 调用 glide.buildImageViewTarget() 方法，构造一个 Target 对象
         return into(glide.buildImageViewTarget(view, transcodeClass));
     }
 ```
@@ -121,7 +121,7 @@ public class ImageViewTargetFactory {
         if (!isModelSet) {
             throw new IllegalArgumentException("You must first set a model (try #load())");
         }
-				// target 是 GlideDrawableImageViewTarget 对象
+		// target 是 GlideDrawableImageViewTarget 对象
         Request previous = target.getRequest();
 
         if (previous != null) {
@@ -155,7 +155,7 @@ public class ImageViewTargetFactory {
         return buildRequestRecursive(target, null);
     }
 
-		// target 是 GlideDrawableImageViewTarget 对象
+	// target 是 GlideDrawableImageViewTarget 对象
     private Request buildRequestRecursive(Target<TranscodeType> target, ThumbnailRequestCoordinator parentCoordinator) {
         if (thumbnailRequestBuilder != null) {
             if (isThumbnailBuilt) {
@@ -195,7 +195,7 @@ public class ImageViewTargetFactory {
             return coordinator;
         } else {
             // Base case: no thumbnail.
-          	//	调用 obtainRequest 方法
+          	// 调用 obtainRequest 方法
             return obtainRequest(target, sizeMultiplier, priority, parentCoordinator);
         }
     }
@@ -203,13 +203,13 @@ public class ImageViewTargetFactory {
     private Request obtainRequest(Target<TranscodeType> target, float sizeMultiplier, Priority priority,
             RequestCoordinator requestCoordinator) {
         return GenericRequest.obtain(
-          			// 这个 loadProvider 就是在 load()方法中设置的 FixedLoadProvider
+          		// 这个 loadProvider 就是在 load()方法中设置的 FixedLoadProvider
                 loadProvider,
                 model,
                 signature,
                 context,
                 priority,
-          			// target 是 GlideDrawableImageViewTarget 对象
+          		// target 是 GlideDrawableImageViewTarget 对象
                 target,
                 sizeMultiplier,
                 placeholderDrawable,
@@ -267,7 +267,7 @@ public class ImageViewTargetFactory {
         if (request == null) {
             request = new GenericRequest<A, T, Z, R>();
         }
-   			// 设置 GenericRequest 的 loadProvider 成员变量为 FixedLoadProvider
+   		// 设置 GenericRequest 的 loadProvider 成员变量为 FixedLoadProvider
         request.init(loadProvider,
                 model,
                 signature,
@@ -333,6 +333,7 @@ public class ImageViewTargetFactory {
         }
 
         status = Status.WAITING_FOR_SIZE;
+        // 图片请求并显示
         if (Util.isValidDimensions(overrideWidth, overrideHeight)) {
           	// 	调用 onSizeReady() 方法，调整显示图片的大小
             onSizeReady(overrideWidth, overrideHeight);
@@ -361,7 +362,7 @@ public class ImageViewTargetFactory {
         if (!canNotifyStatusChanged()) {
             return;
         }
-				// 调用 getFallbackDrawable() 方法获取错误显示的图片
+		// 调用 getFallbackDrawable() 方法获取错误显示的图片
         Drawable error = model == null ? getFallbackDrawable() : null;
         if (error == null) {
           // 调用 getErrorDrawable() 方法获取错误显示的图片
@@ -439,7 +440,7 @@ public abstract class ImageViewTarget<Z> extends ViewTarget<ImageView, Z> implem
 
         width = Math.round(sizeMultiplier * width);
         height = Math.round(sizeMultiplier * height);
-				// 这个 loadProvider 就是传递进来的 FixedLoadProvider 对象
+		// 这个 loadProvider 就是传递进来的 FixedLoadProvider 对象
       	// 而 loadProvider.getModelLoader() 返回的是在 DrawableTypeRequest 类的 buildProvider 方法中创建的 ImageVideoModelLoader
         ModelLoader<A, T> modelLoader = loadProvider.getModelLoader();
       	// 而 modelLoader.getResourceFetcher 返回的 ImageVideoFetcher 对象
@@ -692,7 +693,7 @@ public class Engine implements EngineJobListener,
             }
             return new LoadStatus(cb, current);
         }
-				// 没有缓存
+		// 没有缓存
         // 构建了一个 EngineJob
         EngineJob engineJob = engineJobFactory.build(key, isMemoryCacheable);
       	// 创建 DecodeJob 对象
@@ -753,7 +754,7 @@ public class Engine implements EngineJobListener,
             }
             return;
         }
-				// 处理获取到的数据
+		// 处理获取到的数据
         if (resource == null) {
           	// 调用 onLadFailed() 方法，如果没有获取到，回到主线程，显示显示失败
             onLoadFailed(exception);
@@ -1354,7 +1355,7 @@ public abstract class Downsampler implements BitmapDecoder<InputStream> {
                         + " sample=" + options.inSampleSize, e);
             }
         }
-				// 返回 result
+		// 返回 result
         return result;
     }
 
@@ -1823,7 +1824,7 @@ class EngineJob implements EngineRunnable.EngineRunnableManager {
             status = Status.COMPLETE;
             return;
         }
-				// 调用 onResourceReady 方法
+		// 调用 onResourceReady 方法
         onResourceReady(resource, (R) received);
     }
 
@@ -2003,13 +2004,13 @@ public abstract class ImageViewTarget<Z> extends ViewTarget<ImageView, Z> implem
 
 1. with() 方法如果传入的不是 Application 的 Context，就会向当前的 Context 添加一个隐藏的 fragment，这主要是为了知道加载的生命周期，而 with() 会返回一个 RequestManager 对象。
 
-2. load() 方法会创建 Glide 的实例，并调用了 Glide 的初始化，对缓存、下载等对象惊醒初始化，注册好 ModelLoader 的工厂模式，创建 DrawableTypeRequest 对象并返回，DrawableTypeRequest 包含 streamModelLoader 和 fileDescriptorModelLoader 两个 ModelLoader。
+2. load() 方法会创建 Glide 的实例，并调用了 Glide 的初始化，对缓存、下载等对象进行初始化，注册好 ModelLoader 的工厂模式，创建 DrawableTypeRequest 对象并返回，DrawableTypeRequest 包含 streamModelLoader 和 fileDescriptorModelLoader 两个 ModelLoader。
 
    ModelLoader 是一个工厂接口，主要目标是：1. 将特定的模型转换为可解码为资源的数据类型；2. 允许模型与视图的纬度组合以获得特定大小的资源。有一个接口是 getResourceFetcher() 返回 DataFetcher。
 
    DataFetcher 是用于延迟检索加载资源的数据的接口。方法 loadData() 用于异步从解码资源中获取数据。
 
-3. into() 方法主要分为三个部分：1. 请求数据；2. 将请求的数据解析转换为图片格式；3. 将图片显示到 ImageView 上。请求数据是使用 Engine 来开启线程来调用 Fetcher 接口的 loadData 来获取数据的。数据转码是通过 ResourceDecoder 接口的 decoder() 方法来实现的，将数据转换为图片或者 Gif 格式，并将结果分装为 Resouce 对象。将图片显示到 ImageView 的过程是先使用 ResourceTranscode 接口的 transcode() 方法将 Resouce 包含的 Bitmap 转换为可以显示的 Drawable 格式，转换完成后使用 Handle 进入 UI 线程，然后显示图片。
+3. into() 方法主要分为三个部分：1. 请求数据；2. 将请求的数据解析转换为图片格式；3. 将图片显示到 ImageView 上。请求数据是使用 Engine 来开启线程来调用 Fetcher 接口的 loadData 来获取数据的。数据转码是通过 ResourceDecoder 接口的 decoder() 方法来实现的，将数据转换为图片或者 Gif 格式，并将结果封装为 Resouce 对象。将图片显示到 ImageView 的过程是先使用 ResourceTranscode 接口的 transcode() 方法将 Resouce 包含的 Bitmap 转换为可以显示的 Drawable 格式，转换完成后使用 Handle 进入 UI 线程，然后显示图片。
 
 # 5. 参考文章
 

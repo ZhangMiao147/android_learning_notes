@@ -93,7 +93,11 @@
 
 # 3. JVM 的内存结构，Eden 和 Survivor 比例。
 
+![img](https://img-blog.csdn.net/20181020170432441?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L01zX2xhbmc=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
 
+eden 和 survior 是按8比1分配的
+
+http://blog.csdn.net/lojze_ly/article/details/49456255
 
 ### 4. JVM 内存为什么要分成新生代、老年代、持久代。新生代中为什么要分为 Eden 和 Survivor。
 
@@ -101,11 +105,25 @@
 
 ### 5. JVM 中一次完整的 GC 流程是怎么样的，对象如何晋升到老年代，说说你知道的几种主要的 JVM 参数。
 
+对象诞生即新生代->eden，在进行minor gc过程中，如果依旧存活，移动到from，变成Survivor，进行标记代数，如此检查一定次数后，晋升为老年代，
 
+http://www.cnblogs.com/redcreen/archive/2011/05/04/2037056.html 
+
+http://ifeve.com/useful-jvm-flags/ 
+
+https://wangkang007.gitbooks.io/jvm/content/jvmcan_shu_xiang_jie.html
 
 ### 6. 讲下 cms 和 G1，包括原理、流程、优缺点。
 
+深入理解Java 虚拟机第三章
+
+Serial、parNew、ParallelScavenge、SerialOld、ParallelOld、CMS、G1
+
+https://wangkang007.gitbooks.io/jvm/content/chapter1.html
+
 # 7. 垃圾回收算法的实现原理。
+
+http://www.importnew.com/13493.html
 
 # 8. G1 包括原理、流程、优缺点。
 

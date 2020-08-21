@@ -40,6 +40,10 @@
 
 IO 模型有哪些，讲讲你理解的 nio，它和 bio、aio 的区别是啥？谈谈 reactor 模型。
 
+[I/O模型之四：Java 浅析I/O模型（BIO、NIO、AIO、Reactor、Proactor）](https://www.cnblogs.com/duanxz/p/5150973.html)
+
+
+
 # 3. hashCode
 
 ## 3.1. 如何在父类中为子类自动完成所有的 hashcode 和 equals 实现？这么做有何优劣。
@@ -162,7 +166,11 @@ https://blog.csdn.net/prh1023/article/details/80652704
 
 ## 4.1. 请结合 OO 设计理念，谈谈访问修饰符 public 、private 、protected、default 在应用设计中的作用。
 
+https://blog.csdn.net/riemann_/article/details/87487472
 
+OO 就是面向对象，而面向对象的四大特性是：抽象、封装、继承、多态。
+
+修饰符的存在可以在包与包之间、类与类之间产生一种权限的关系，并不能保证随心所欲，这样才能确保安全。
 
 # 5. String
 
@@ -237,11 +245,9 @@ https://blog.csdn.net/prh1023/article/details/80652704
 
 　　如果一个对象内部只有基本数据类型，那用 clone() 放啊获取到的就是这个对象的深拷贝，而如果其内部还有引用数据类型，那用 clone() 方法就是依次浅拷贝的操作。
 
-# 6. HashSet
+# 6. HashSet 内部是如何工作的
 
- Java 中的 HashSet 内部是如何工作的。
-
-
+　　HashSet 的底层是使用 HashMap 来实现的，通过 key 的唯一的特性，主要将 set 构建的对象放入 key 中，以这样的方式来使用集合的遍历一些特性，从而可以直接用 Set 来进行调用。
 
 # 7. 序列化
 

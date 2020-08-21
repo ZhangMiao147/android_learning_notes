@@ -2,23 +2,43 @@
 
 # 1. JVM 内存模型的相关知识了解多少，比如重排序、内存屏障、happen-before、主内存、工作内存等。
 
+内存屏障：为了保障执行顺序和可见性的一条cpu指令
 
+重排序：为了提高性能，编译器和处理器会对执行进行重拍
+
+happen-before：操作间执行的顺序关系。有些操作先发生。
+
+主内存：共享变量存储的区域即是主内存
+
+工作内存：每个线程copy的本地内存，存储了该线程以读/写共享变量的副本
+
+http://ifeve.com/java-memory-model-1/ 
+
+http://www.jianshu.com/p/d3fda02d4cae 
+
+http://blog.csdn.net/kenzyq/article/details/50918457
 
 # 2. 简单说说你了解的类加载器，可以打破双亲委派吗，怎么打破
 
 深入理解 Java 虚拟机 第 7 章
 
+类加载器的分类（bootstrap,ext,app,curstom），类加载的流程(load-link-init)
 
+http://blog.csdn.net/gjanyanlig/article/details/6818655/
 
 ### 13. 讲讲 JAVA 的反射机制。
 
+Java程序在运行状态可以动态的获取类的所有属性和方法，并实例化该类，调用方法的功能
 
+[http://baike.baidu.com/link?url=C7p1PeLa3ploAgkfAOK-4XHE8HzQuOAB7K5GPcK_zpbAa_Aw-nO3997K1oir8N–1_wxXZfOThFrEcA0LjVP6wNOwidVTkLBzKlQVK6JvXYvVNhDWV9yF-NIOebtg1hwsnagsjUhOE2wxmiup20RRa#7](https://blog.csdn.net/ms_lang/article/details/83214901#7)
 
 ### 14. 加载时机与加载过程
 
 
 
 ### 15. Java 类加载的方式
+
+
 
 #  6. Java 对象的创建过程
 
@@ -101,6 +121,38 @@ org.gradle.jvmargs=-Xmx4096m -XX:MaxPermSize=4096m -XX:+HeapDumpOnOutOfMemoryErr
 ```
 
 # gl 和 cms 区别，吞吐量优先和响应优先的垃圾收集器选择。
+
+Cms是以获取最短回收停顿时间为目标的收集器。基于标记-清除算法实现。比较占用cpu资源，切易造成碎片。
+
+G1是面向服务端的垃圾收集器，是jdk9默认的收集器，基于标记-整理算法实现。可利用多核、多cpu，保留分代，实现可预测停顿，可控。
+
+http://blog.csdn.net/linhu007/article/details/48897597 
+
+请解释如下 jvm 参数的含义：
+
+-server -Xms512m -Xmx512m -Xss1024K
+
+-XX:PermSize=256m -XX:MaxPermSize=512m -XX:MaxTenuringThreshold=20
+
+XX:CMSInitiatingOccupancyFraction=80 -XX:+UseCMSInitiatingOccupancyOnly。
+
+Server模式启动
+
+最小堆内存512m
+
+最大512m
+
+每个线程栈空间1m
+
+永久代256
+
+最大永久代256
+
+最大转为老年代检查次数20
+
+Cms回收开启时机：内存占用80%
+
+命令JVM不基于运行时收集的数据来启动CMS垃圾收集周期
 
 # 19. 怎么打出线程栈信息。
 

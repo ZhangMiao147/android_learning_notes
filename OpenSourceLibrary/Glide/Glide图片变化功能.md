@@ -102,7 +102,7 @@ Glide.with(this)
      .into(imageView);
 ```
 
-### 2.2. DrawableRequestBuilder#centerCrop#fitCenter
+### 2.1. DrawableRequestBuilder#centerCrop#fitCenter
 
 　　centerCrop() 和 fitCenter() 方法其实也只是对 transform() 方法进行了一层封装而已，它们背后的源码仍然还是借助 transform() 方法来实现的。
 

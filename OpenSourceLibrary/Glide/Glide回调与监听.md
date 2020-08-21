@@ -1,6 +1,6 @@
 # Glide 回调与监听
 
-## 1. 回调的源码分析
+# 1. 回调的源码分析
 
 　　使用 Glide 在界面上加载并展示一张图片只需要一行代码：
 
@@ -12,7 +12,7 @@ Glide.with(this).load(url).into(imageView);
 
 　　首先来看一下 into() 方法，在这里将 ImageView 的实例传入到 into() 方法当中，Glide 将图片加载完成之后，图片就能显示到 ImageView 上了。
 
-### 1.1. GenericRequestBuilder#into
+## 1.1. GenericRequestBuilder#into
 
 ```java
     /**
@@ -52,7 +52,7 @@ Glide.with(this).load(url).into(imageView);
 
 　　可以看到，最后一行代码会调用 glide.buildImageViewTarget() 方法构建出一个 Target 对象，然后再将它传入到另一个接收 Target 参数的 into() 方法中。Target 对象则是用来最终展示图片用的，如果跟进到 glide.buildImageViewTarget() 方法，glide.buildImageViewTarget() 方法中会调用 imageViewTargetFactory.buildTarget() 方法。
 
-### 1.2. ImageViewTargetFactory#buildTarget
+## 1.2. ImageViewTargetFactory#buildTarget
 
 ```java
 /**
@@ -65,7 +65,7 @@ public class ImageViewTargetFactory {
     public <Z> Target<Z> buildTarget(ImageView view, Class<Z> clazz) {
         if (GlideDrawable.class.isAssignableFrom(clazz)) {
             return (Target<Z>) new GlideDrawableImageViewTarget(view);
-        } else if (Bitmap.class.equals(clazz)) {
+        } else if (Bitmap.class.equals(clazz)) { // asBitmap()
             return (Target<Z>) new BitmapImageViewTarget(view);
         } else if (Drawable.class.isAssignableFrom(clazz)) {
             return (Target<Z>) new DrawableImageViewTarget(view);
@@ -81,7 +81,7 @@ public class ImageViewTargetFactory {
 
 　　之后就会把这里构建出来的 Target 对象传入到 GenericRequest 当中，而 Glide 在图片加载完成之后又会回调 GenericReqeust 的 onResourceReady() 方法。
 
-### 1.3. GenericRequest#onResourceReady
+## 1.3. GenericRequest#onResourceReady
 
 ```java
 /**
@@ -101,6 +101,7 @@ public final class GenericRequest<A, T, Z, R> implements Request, SizeReadyCallb
      * @param resource original {@link Resource}, never <code>null</code>
      * @param result object returned by {@link Resource#get()}, checked for type and never <code>null</code>
      */
+    // 获取数据后，会回调这个方法
     private void onResourceReady(Resource<?> resource, R result) {
         // We must call isFirstReadyResource before setting status.
         boolean isFirstResource = isFirstReadyResource();
@@ -110,6 +111,7 @@ public final class GenericRequest<A, T, Z, R> implements Request, SizeReadyCallb
         if (requestListener == null || !requestListener.onResourceReady(result, model, target, loadedFromMemoryCache,
                 isFirstResource)) {
             GlideAnimation<R> animation = animationFactory.build(loadedFromMemoryCache, isFirstResource);
+            // 调用 target 的 onResourceReady() 方法
             target.onResourceReady(result, animation);
         }
 
@@ -128,7 +130,7 @@ public final class GenericRequest<A, T, Z, R> implements Request, SizeReadyCallb
 
 　　在 onResourceReady() 方法中调用了 target.onResourceReady() 方法，而这里的 target 就是 GlideDrawableImageViewTarget 对象。
 
-### 1.4. GlideDrawableImageViewTarget#onResourceReady
+## 1.4. GlideDrawableImageViewTarget#onResourceReady
 
 ```java
 /**
@@ -173,7 +175,7 @@ public class GlideDrawableImageViewTarget extends ImageViewTarget<GlideDrawable>
 
 　　在 GlideDrawableImageView  的 onResourceReady() 方法里面调用了父类 ImageViewTarget 的 onResourceReady() 方法。
 
-### 1.5. ImageViewTarget#onResourceReady
+## 1.5. ImageViewTarget#onResourceReady
 
 ```java
 /**
@@ -197,7 +199,7 @@ public abstract class ImageViewTarget<Z> extends ViewTarget<ImageView, Z> implem
 
 　　在 ImageViewTarget 的 onResourceReady() 方法中调用了抽象方法 setResource()，再来看 GlideDrawImageViewTarget 的 setResource() 方法。
 
-### 1.6. GlideDrawableImageViewTarget#setResource
+## 1.6. GlideDrawableImageViewTarget#setResource
 
 ```java
 /**
@@ -214,6 +216,7 @@ public class GlideDrawableImageViewTarget extends ImageViewTarget<GlideDrawable>
      */
     @Override
     protected void setResource(GlideDrawable resource) {
+        // 将图片数据设置给控件
         view.setImageDrawable(resource);
     }
     
@@ -224,7 +227,7 @@ public class GlideDrawableImageViewTarget extends ImageViewTarget<GlideDrawable>
 
 　　原理分析完了，接着看一下在回调和监听方面还有哪些扩展知识。
 
-## 2. into() 方法
+# 2. into() 方法
 
 　　into() 方法除了可以传入 ImageView ，还可以传入别的参数。into() 方法还有一个接收 Target 参数的重载。即使传入的参数是 ImageView，Glide 也会在内部自动构建一个 Target 对象，而如果能够掌握自定义 Target 技术的话，就可以更加随心所欲地控制 Glide 回调了。
 
@@ -236,11 +239,11 @@ public class GlideDrawableImageViewTarget extends ImageViewTarget<GlideDrawable>
 
 　　如果要进行自定的话，通常只需要在两种 Target 的基础上去自定义就可以了，一种是 SimpleTarget，一种是 ViewTarget。
 
-### 2.1. SimpleTarget
+## 2.1. SimpleTarget
 
 　　首先来看 SimpleTarget，顾名思义，它是一种极为简单的 Target，使用它可以将 Glide 加载出来的图片对象获取到，而不是像之前那样只能将图片在 ImageView 上显示出来。
 
-#### 2.1.1. SimpleTarget 使用
+### 2.1.1. SimpleTarget 使用
 
 　　SimpleTarget 的用法示例：
 
@@ -285,11 +288,11 @@ public void loadImage(View view) {
 
 　　可以看到，这里将 SimpleTarget 的泛型指定成 Bitmap，然后在加载图片的时候调用了 asBitmap() 方法强制指定这是一张静态图，这样就能在 onResourceReady() 方法中获取到这张图的 Bitmap 对象了。
 
-### 2.2. ViewTarget
+## 2.2. ViewTarget
 
 　　事实上，从上面的继承结构图上就能看出，Glide 的内部自动创建的 GlideDrawableImageViewTarget 就是 ViewTarget 的子类。只不过 GlideDrawableImageViewTarget 被限定只能作用在 ImageView 上，而 ViewTarget 的功能更加广泛，它可以作用在任意的 View 上。
 
-#### 2.2.1. 定义 ViewTarget 对象
+### 2.2.1. 定义 ViewTarget 对象
 
 　　创建一个自定义布局的 MyLayout：
 
@@ -322,7 +325,7 @@ public class MyLayout extends LinearLayout {
 
 　　在 MyLayout 的构造函数中，创建了一个 ViewTarget 的实例，并将 MyLayout 当前的实例 this 传了进去。ViewTarget 中需要指定两个泛型，一个是 View 的类型，一个图片的类型（GlideDrawable 或 Bitmap）。然后在 onResourceReady() 方法中，就可以通过 getView() 方法获取到 MyLayout 的实例，并调用它的任意接口了。比如调用 setImageAsBackgorund() 方法来将加载出来的图片作为 MyLayout 布局的背景图。
 
-#### 2.2.2. 使用 ViewTarget
+### 2.2.2. 使用 ViewTarget
 
 　　接下来看一下如何使用这个 Target，由于 MyLayout 中已经提供了 getTarget() 接口，只需要在加载图片的地方这样写就可以了：
 
@@ -350,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
 
 　　就是这么简单，在 into() 方法中传入 myLayout.getTarget() 即可。
 
-## 3. preload() 方法
+# 3. preload() 方法
 
 　　Glide 加载图片会自动判断该图片是否已经有缓存了，如果有的话就直接从缓存中读取，没有得话再从网络去下载。但是如果希望提前对图片进行一个预加载，等真正需要加载图片得时候就直接从缓存中读取，不想再等待漫长得网络加载时间了。
 
@@ -358,7 +361,7 @@ public class MainActivity extends AppCompatActivity {
 
 　　事实上，Glide 专门提供了预加载的接口，也就是 preload() 方法，只需要直接使用就可以了。
 
-### 3.1. preload 的使用
+## 3.1. preload 的使用
 
 　　preload() 方法有两个方法重载，一个不带参数，表示将会加载图片的原始尺寸，另一个可以通过参数指定加载图片的宽和高。
 
@@ -386,16 +389,16 @@ Glide.with(this)
 
 　　preload() 方法的用法大概就是这么简单。
 
-### 3.2. preload 的源码分析
+## 3.2. preload 的源码分析
 
 　　和 into() 方法一样，preload() 方法也是在 GenericRequestBuilder 类当中的。
 
-#### 3.2.1. GenericRequestBuilder#preload
+### 3.2.1. GenericRequestBuilder#preload
 
 ```java
 /**
  * A generic class that can handle setting options and staring loads for generic resource types.
- *
+ * 一个泛型类，可以处理泛型资源类型的设置选项和启动加载。
  * @param <ModelType> The type of model representing the resource.
  * @param <DataType> The data type that the resource {@link com.bumptech.glide.load.model.ModelLoader} will provide that
  *                  can be decoded by the {@link com.bumptech.glide.load.ResourceDecoder}.
@@ -445,7 +448,7 @@ public class GenericRequestBuilder<ModelType, DataType, ResourceType, TranscodeT
 
 　　然后可以看到，在 preload() 方法种调用了 PreloadTarget.obtail() 方法获取一个 PreloadTarget 的实例，并把它传入到了 into() 方法当中，从继承结构图种可以看出，PreloadTarget 是 SimpleTarget 的子类，因此它是可以直接传入到 into() 方法中的。
 
-#### 3.2.2. PreloadTarget 类
+### 3.2.2. PreloadTarget 类
 
 ```java
 /**
@@ -484,7 +487,7 @@ public final class PreloadTarget<Z> extends SimpleTarget<Z> {
 
 　　PreloadTarget 的思想就是什么都不做就可以了，因为加载完成之后只将它缓存而不去显示它，就相当于预加载了。
 
-## 4. downloadOnly() 方法
+# 4. downloadOnly() 方法
 
 　　如果想要去访问图片的缓存文件需要用到 downloadOnly() 方法。
 
@@ -499,9 +502,9 @@ public <Y extends Target<File>> Y downloadOnly(Y target)
 
 　　这两个方法各自有各自的应用场景，其中 downloadOnly(int width, int height) 用于在子线程中下载图片，而 downloadOnly(Y target) 是用于在主线程中下载图片的。
 
-### 4.1. downloadOnly(int width, int height)
+## 4.1. downloadOnly(int width, int height)
 
-#### 4.1.1. downloadOnly(int width, int height) 的用法
+### 4.1.1. downloadOnly(int width, int height) 的用法
 
 　　先来看 downloadOnly(int width, int height) 的用法。
 
@@ -557,11 +560,11 @@ public void loadImage(View view) {
 
 　　这个时候图片的加载和显示是非常快的，因为 Glide 直接使用的是刚才下载好的缓存文件。
 
-#### 4.1.2. downloadOnly(int width, int height) 工作原理
+### 4.1.2. downloadOnly(int width, int height) 工作原理
 
 　　首先在 DrawableTypeRequest 类当中可以找到定义这个方法的地方。
 
-##### 4.1.2.1. DrawableTypeRequest#downloadOnly
+#### 4.1.2.1. DrawableTypeRequest#downloadOnly
 
 ```java
 /**
@@ -591,7 +594,7 @@ public class DrawableTypeRequest<ModelType> extends DrawableRequestBuilder<Model
 
 　　这里会先调用 getDownkiadOnlyRequest() 方法得到一个 GenericTranscodeRequest 对象，然后再调用它的 downloadOnly() 方法。
 
-##### 4.1.2.2. GenericTranscodeRequest#downloadOnly
+#### 4.1.2.2. GenericTranscodeRequest#downloadOnly
 
 ```java
 /**
@@ -636,7 +639,7 @@ public class GenericTranscodeRequest<ModelType, DataType, ResourceType>
 
 　　getDownloadOnlyRequest() 方法会返回一个 GenericRequestBuilder 对象，接着调用它的 into(width, height) 方法。
 
-##### 4.1.2.3. GenericRequestBuilder#into
+#### 4.1.2.3. GenericRequestBuilder#into
 
 ```java
 /**
@@ -687,7 +690,7 @@ public class GenericRequestBuilder<ModelType, DataType, ResourceType, TranscodeT
 
 　　那么也就是说，其实这里就是调用了接收 Target 参数的 into() 方法，然后 Glide 就开始执行正常的图片加载逻辑了。
 
-##### 4.1.2.4. RequestFutureTarget 类
+#### 4.1.2.4. RequestFutureTarget 类
 
 ```java
 /**
@@ -727,6 +730,7 @@ public class RequestFutureTarget<T, R> implements FutureTarget<R>, Runnable {
 
     @Override
     public R get(long time, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
+        // 调用 doGet() 方法
         return doGet(timeUnit.toMillis(time));
     }
 
@@ -757,12 +761,15 @@ public class RequestFutureTarget<T, R> implements FutureTarget<R>, Runnable {
     @Override
     public synchronized void onResourceReady(R resource, GlideAnimation<? super R> glideAnimation) {
         // We might get a null result.
+        // 资源下载好了
         resultReceived = true;
         this.resource = resource;
+        // 唤醒等待线程
         waiter.notifyAll(this);
     }
 
     private synchronized R doGet(Long timeoutMillis) throws ExecutionException, InterruptedException, TimeoutException {
+        // 判断是否是子线程
         if (assertBackgroundThread) {
             Util.assertBackgroundThread();
         }
@@ -774,7 +781,7 @@ public class RequestFutureTarget<T, R> implements FutureTarget<R>, Runnable {
         } else if (resultReceived) {
             return resource;
         }
-
+		// 阻塞等到资源获取
         if (timeoutMillis == null) {
             waiter.waitForTimeout(this, 0);
         } else if (timeoutMillis > 0) {
@@ -787,7 +794,7 @@ public class RequestFutureTarget<T, R> implements FutureTarget<R>, Runnable {
             throw new ExecutionException(exception);
         } else if (isCancelled) {
             throw new CancellationException();
-        } else if (!resultReceived) {
+        } else if (!resultReceived) { // 资源还没有下载好
             throw new TimeoutException();
         }
 
@@ -830,7 +837,7 @@ public class RequestFutureTarget<T, R> implements FutureTarget<R>, Runnable {
 
 　　但是 downloadOnly(Y target) 方法的用法也会相对复杂一些，因此又要自己创建一个 Target 了，而且这次必须直接去实现最顶层的 Target 接口，比之前的 SimpleTarget 和 ViewTarget 都要复杂不少。
 
-#### 4.2.1. downloadOnly(Y target) 的用法
+### 4.2.1. downloadOnly(Y target) 的用法
 
 　　举例实现一个简单的 DownloadImageTarget ，注意 Target 接口的泛型必须指定成 File 对象，这是 downloadOnly(Y target) 方法要求的。
 
@@ -903,7 +910,7 @@ public void downloadImage(View view) {
 
 　　这样就使用了 downloadOnly(Y target) 方法同样获取到下载的图片文件的缓存路径了。
 
-## 5. listener() 方法
+# 5. listener() 方法
 
 　　listener() 方法可以用来监听 Glide 加载图片的状态。
 
@@ -939,11 +946,11 @@ public void loadImage(View view) {
 
 　　listener() 方法就是这么简单。不过还有一点需要处理，onResourceReady() 方法和 onException() 方法都有一个布尔值的返回值，返回 false 就表示这个事件没有被处理，还会继续向下传递，返回 true 就表示这个事件已经被处理掉了，从而不会再继续向下传递。
 
-### 5.2. listener 源码分析
+## 5.2. listener 源码分析
 
 　　首先，listener() 方法是定义在 GenericRequestBuilder 类当中的，而传入到 listener() 方法中的实例则会赋值到一个 requestListener 变量当中。
 
-#### 5.2.1. GenericRequestBuilder#listener
+### 5.2.1. GenericRequestBuilder#listener
 
 ```java
 /**
@@ -979,7 +986,7 @@ public class GenericRequestBuilder<ModelType, DataType, ResourceType, TranscodeT
 
 　　在 listener() 方法中，会设置 GenericRequestBuilder 的 requestLister 成员为传递进来的 requestListener ，接下来在在构建 GenericRequest 的时候这个变量也会被一起传进入。
 
-#### 5.2.2. GenericRequest#onResourceReady
+### 5.2.2. GenericRequest#onResourceReady
 
 ```java
 /**
@@ -1006,7 +1013,7 @@ public final class GenericRequest<A, T, Z, R> implements Request, SizeReadyCallb
         boolean isFirstResource = isFirstReadyResource();
         status = Status.COMPLETE;
         this.resource = resource;
-
+		// 调用了 requestListener 的 onResourceReady() 方法
         if (requestListener == null || !requestListener.onResourceReady(result, model, target, loadedFromMemoryCache,
                 isFirstResource)) {
             GlideAnimation<R> animation = animationFactory.build(loadedFromMemoryCache, isFirstResource);
@@ -1028,7 +1035,7 @@ public final class GenericRequest<A, T, Z, R> implements Request, SizeReadyCallb
 
 　　另一个 onException() 方法的实现机制也是一摸一样的，代码同样是在 GenericRequest 类中。
 
-#### 5.2.3. GenericRequest#onException
+### 5.2.3. GenericRequest#onException
 
 ```java
 /**
@@ -1053,6 +1060,7 @@ public final class GenericRequest<A, T, Z, R> implements Request, SizeReadyCallb
 
         status = Status.FAILED;
         //TODO: what if this is a thumbnail request?
+        // 调用 requestListener 的 onException() 方法
         if (requestListener == null || !requestListener.onException(e, model, target, isFirstReadyResource())) {
             setErrorPlaceholder(e);
         }
@@ -1063,42 +1071,6 @@ public final class GenericRequest<A, T, Z, R> implements Request, SizeReadyCallb
 
 　　可以看到，会回调 requestListener 的 onException() 方法，只有在 onException() 方法返回 false 的情况下才会继续调用 setErrorPlaceholder() 方法。也就是说，如果在 onException() 方法中返回了 true，那么 Glide 请求中使用 error(int resourceId) 方法设置的异常占位图就失效了。
 
+# 6. 参考文章
 
-## 6. 参考文章
 1. [Android图片加载框架最全解析（四），玩转Glide的回调与监听](https://blog.csdn.net/guolin_blog/article/details/70215985)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

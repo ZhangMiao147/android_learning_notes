@@ -925,7 +925,7 @@ public interface ModelLoader<T, Y> {
 
 　　ModelLoader 是一个工厂接口，只有一个 getResourceFetcher() 方法。而 getResourceFacher() 方法用于获取 DataFetcher 对象，DaraFetcher 对象可以获取解码资源的数据。
 
-### 2.5. DataFetcher
+## 2.5. DataFetcher
 
 ```java
 /**
@@ -948,7 +948,7 @@ public interface DataFetcher<T> {
     T loadData(Priority priority) throws Exception;
 
     /**
-     * 清除或祸首此数据获取程序使用的任何资源。在 loadData() 返回的数据被 ResourceDecoder 解码后，将在 finnally 块中调用此方法。
+     * 清除或回收此数据获取程序使用的任何资源。在 loadData() 返回的数据被 ResourceDecoder 解码后，将在 finnally 块中调用此方法。
      * 注意：此方法将在后台线程中运行，因此阻塞 I/O 是安全的。
      */
     void cleanup();
@@ -962,14 +962,14 @@ public interface DataFetcher<T> {
 
     /**
      * 当加载不再进行并且已经关闭将调用的方法。这种方法不需要确保任何正在进行的加载任何进程中没有完成的加载，它也可以在加载开始之前或加载完成之后调用。
-     * 使用此方法的最佳方法是取消尚未启动的任何加载，但允许正在进行的加载完成，因为通常希望在不久的将来再不同的视图中显示相同的资源。
+     * 使用此方法的最佳方法是取消尚未启动的任何加载，但允许正在进行的加载完成，因为通常希望在不久的将来在不同的视图中显示相同的资源。
      * 注意：此方法将在主线程上运行，因此它不应执行阻塞操作，并且应快速完成。
      */
     void cancel();
 }
 ```
 
-### 2.6. Glide.buildFileDescriptorModelLoader
+## 2.6. Glide.buildFileDescriptorModelLoader
 
 ```java
     public static <T> ModelLoader<T, ParcelFileDescriptor> buildFileDescriptorModelLoader(Class<T> modelClass,
@@ -989,7 +989,7 @@ register(String.class, ParcelFileDescriptor.class, new FileDescriptorStringLoade
 
 　　接着看 FileDescriptorStringLoader.Factory。
 
-#### 2.6.1. FileDescriptorStringLoader
+### 2.6.1. FileDescriptorStringLoader
 
 ```java
 public class FileDescriptorStringLoader extends StringLoader<ParcelFileDescriptor>
@@ -1030,7 +1030,7 @@ public class FileDescriptorStringLoader extends StringLoader<ParcelFileDescripto
 
 　　接着看 FileDescriptorUriLoader.Factory。
 
-#### 2.6.2. FileDescriptorUriLoader
+### 2.6.2. FileDescriptorUriLoader
 
 ```java
 public class FileDescriptorUriLoader extends UriLoader<ParcelFileDescriptor> implements FileDescriptorModelLoader<Uri> {
@@ -1083,7 +1083,7 @@ public class FileDescriptorUriLoader extends UriLoader<ParcelFileDescriptor> imp
 
 ​        到这里，RequestManager 的 loadGeneric() 方法中创建的 streamModelLoader 是 StreamStringLoader 对象，StreamStringLoader 对象的成员变量 uriLoader 是 StreamUrlLoader，而 StreamUrlLoader 对象的成员变量 uriLoader 是 HttpUrlGlideLoader；fileDescriptorModelLoader 是 FileDescriptorStringLoader 对象，FileDescriptorStringLoader 对象的成员变量 uriLoader 是 FileDescriptorUriLoader 对象，而 FileDescriptorUriLoader 对象的成员变量 uriLoader 是 null。
 
-### 2.7. DrawableTypeRequest类
+## 2.7. DrawableTypeRequest类
 
 ```java
 /**
@@ -1196,7 +1196,7 @@ public class DrawableTypeRequest<ModelType> extends DrawableRequestBuilder<Model
 
 　　DrawableTypeRequest 的父类是 DrawableRequestBuilder。
 
-### 2.2. DrawableRequestBuilder
+## 2.8. DrawableRequestBuilder
 
 ```java
 
@@ -1430,7 +1430,7 @@ public class DrawableRequestBuilder<ModelType>
   	// load 方法，返回本对象
     @Override
     public DrawableRequestBuilder<ModelType> load(ModelType model) {
-      	// 调用父类 load 方法，设置成员变量 model 为参数 model
+      	// 调用父类 load 方法，父类的方法就是设置成员变量 model 为参数 model
         super.load(model);
         return this;
     }
@@ -1461,7 +1461,7 @@ public class DrawableRequestBuilder<ModelType>
 
 　　load() 方法会先调用其 父类 GenericRequestBuilder 的 load() 方法，然后将自己返回，到这里就分析完了，也就是说，最终 load() 方法返回的其实就是一个 DrawableRequestBuilder 对象，并且 DrawableRequestBuilder 类中有一个 into() 方法。
 
+# 3. 参考文章
 
-## 3. 参考文章
 1. [Android图片加载框架最全解析（二），从源码的角度理解Glide的执行流程](https://blog.csdn.net/guolin_blog/article/details/53939176)
 

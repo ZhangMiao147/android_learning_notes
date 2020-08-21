@@ -211,7 +211,7 @@ static Object newProxyInstance(
 
 ### 3.2. Java 动态代理实现与原理详细分析
 
-
+https://www.cnblogs.com/gonjan-blog/p/6685611.html
 
 ### 3.3. 描述动态代理的几种实现方式，分别说出相应的优缺点
 
@@ -221,13 +221,28 @@ static Object newProxyInstance(
 
 　　cglib 动态代理是继承并重写目标类，所以目标类和方法不能被声明成 final。
 
+[描述动态代理的几种实现方式 分别说出相应的优缺点](http://xzc.fun/w/index.php?title=描述动态代理的几种实现方式_分别说出相应的优缺点)
+
+https://blog.csdn.net/riemann_/article/details/86849078
+
 ### 3.4. 动态代理与 cglib 实现的区别
 
+　　java 动态代理是利用反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用 InvokeHandler 来处理。
 
+　　而 cglib 动态代理是利用 asm 开源包，对代理对象类的 class 文件加载进来，通过修改其字节码生成子类来处理。
+
+1. 如果目标对象实现了接口，默认情况下会采用 JDK 的动态代理实现 AOP 。
+2. 如果目标对象实现了接口，可以强制使用 CGLIB 实现 AOP。
+3. 如果目标对象没有实现了接口，必须采用 CGLIB 库，spring 会自动在 JDK 动态代理和 CGLIB 之间转换。
+
+　　JDK 动态代理和 CGLIB 字节码生成的区别：
+
+1. JDK 动态代理只能对实现了接口的类生成代理，而不能针对类。
+2. CGLIB 是针对类实现代理，主要是对指定的类生成一个子类，覆盖其中的方法，因为是继承，所以该类或方法最好不要声明成 final。
 
 ### 3.5. 为什么 cglib 方式可以对接口实现代理
 
-
+https://www.cnblogs.com/chinajava/p/5880887.html
 
 ## 4. 注解
 

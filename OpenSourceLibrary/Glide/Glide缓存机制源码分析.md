@@ -1,20 +1,20 @@
 # Glide 的缓存机制源码分析
 
-## 1. Glide 缓存简介
+# 1. Glide 缓存简介
 
 　　Glide 的缓存设计可以说是非常先进的，考虑的场景也很周全。在缓存这一功能上，Glide 又将它分成了两个模块，一个是内存缓存，一个是硬件缓存。
 
-　　这两个缓存模块的作用各不相同，内存缓存的主要作用是防止应用重复将图片数据读取到内存当中，而硬盘缓存的主要作用是防止应用城府从网络或其他地方重复下载和读取数据。
+　　这两个缓存模块的作用各不相同，内存缓存的主要作用是防止应用重复将图片数据读取到内存当中，而硬盘缓存的主要作用是防止应用重复从网络或其他地方重复下载和读取数据。
 
 　　内存缓存和硬盘缓存的相互结合才构成了 Glide 极佳的图片缓存效果。
 
-## 2. 缓存 Key
+# 2. 缓存 Key
 
 　　既然是缓存功能，就必然会有用于进行缓存的 Key。那么 Glide 的缓存 Key 是怎么生成的呢？Glide 的缓存 Key 生成规则非常繁琐，决定缓存 Key 的参数竟然有 10 个之多。不过逻辑还是比较简单的。
 
 　　生成缓存 Key 的代码在 Engine 类的 load() 方法当中开始。
 
-### 2.1. Engine#load
+## 2.1. Engine#load
 
 ```java
     public <T, Z, R> LoadStatus load(Key signature, int width, int height, DataFetcher<T> fetcher,
@@ -40,7 +40,7 @@
 
 　　EngineKey 的源码主要就是重写了 enquals() 和 hashCode() 方法，保证只有传入 EngineKey 的所有参数都相同的情况下才认为是同一个 EngineKey 对象。
 
-## 3. 内存缓存
+# 3. 内存缓存
 
 　　有了缓存 Key，接下来就开始进行缓存了，先看内存缓存。
 
@@ -59,13 +59,13 @@ Glide.with(this)
 
 　　只需要调用 skipMemoryCache() 方法并传入 true，就标识禁用了 Glide 的内存缓存功能。
 
-　　Glide 内存缓存的实现是使用的 LruCache 算法，LruCache 算法（Least Recently Used）也叫近期最少使用算法。它的主要算法原理就是把最近使用的对象用强引用存储在 LInkedHashMap 中，并且把最近最少使用的对象在缓存值达到预设定值之前从内存中移除。Glide 还结合了一种弱引用的机制，共同完成了内存缓存功能。
+　　Glide 内存缓存的实现是使用的 LruCache 算法，LruCache 算法（Least Recently Used）也叫近期最少使用算法。它的主要算法原理就是把最近使用的对象用强引用存储在 LinkedHashMap 中，并且把最近最少使用的对象在缓存值达到预设定值之前从内存中移除。Glide 还结合了一种弱引用的机制，共同完成了内存缓存功能。
 
-### 3.1. 从内存缓存中获取
+## 3.1. 从内存缓存中获取
 
 　　在 load() 方法中，调用了 RequestManager 的  loadGeneric() 方法，而 loadGeneric() 方法中会调用 Glide.buildStreamModelLoader() 方法来获取一个 ModelLoader 对象。
 
-#### 3.1.1. Glide#buildStreamModelLoader
+### 3.1.1. Glide#buildStreamModelLoader
 
 ```java
 public class Glide {
@@ -135,11 +135,11 @@ public class Glide {
 }
 ```
 
-　　在构建 ModelLoader 对象的时候，先调用课一个 Glide.get() 方法，而这个方法就是关键。
+　　在构建 ModelLoader 对象的时候，先调用了一个 Glide.get() 方法，而这个方法就是关键。
 
 　　get() 方法中实现的是一个单例功能，而创建 Glide 对象则是调用 GlideBuilder 的 createGlide() 方法来创建的。
 
-#### 3.1.2. GlideBuilder#createGlide
+### 3.1.2. GlideBuilder#createGlide
 
 ```java
 /**
@@ -165,11 +165,11 @@ public class GlideBuilder {
                 bitmapPool = new BitmapPoolAdapter();
             }
         }
-
+		// 内存缓存
         if (memoryCache == null) {
             memoryCache = new LruResourceCache(calculator.getMemoryCacheSize());
         }
-
+		// 磁盘缓存
         if (diskCacheFactory == null) {
             diskCacheFactory = new InternalCacheDiskCacheFactory(context);
         }
@@ -193,7 +193,7 @@ public class GlideBuilder {
 
 　　Engine 的 load() 方法中有生成缓存 Key 的代码，而内存缓存的代码也是在这里实现的。
 
-#### 3.1.3. Engine#load
+### 3.1.3. Engine#load
 
 ```java
     /**
@@ -294,7 +294,7 @@ public class GlideBuilder {
 
 　　也就是说，Glide 的图片加载过程中会调用两个方法来获取内存缓存，loadFromCache() 和 loadFromActiveResources()。这两个方法中一个使用的就是 LruCache 算法，另一个使用的就是弱引用。
 
-#### 3.1.4. Engine#loadFromCache#loadFromActiveResources
+### 3.1.4. Engine#loadFromCache#loadFromActiveResources
 
 ```java
 /**
@@ -357,7 +357,7 @@ public class Engine implements EngineJobListener,
 }            
 ```
 
-　　在 loadFromCache() 方法的一开始，首先就判断了 isMemoryCacheable 是不是 false，如果是 false 的话就直接返回 null。如果调用了 skipMemoryCache() 方法传图 true，那么这里的 isMemoryCacheable 就会是 false，标识内存缓存已被禁用。
+　　在 loadFromCache() 方法的一开始，首先就判断了 isMemoryCacheable 是不是 false，如果是 false 的话就直接返回 null。如果调用了 skipMemoryCache() 方法传入 true，那么这里的 isMemoryCacheable 就会是 false，标识内存缓存已被禁用。
 
 　　接着调用了 getEngineResourceFromCache() 方法来获取缓存。在这个方法中，会使用缓存 Key 来从 cache 当中取值，而这里的 cache 对象就是在创建 Glide 对象时创建的 LruResourceCache，那么说明这里其实使用的就是 LruCache 算法了。
 
@@ -365,11 +365,11 @@ public class Engine implements EngineJobListener,
 
 　　从内存缓存中获取数据的逻辑大概就是这些了。概括一下来说，就是如果能从内存缓存当中读取到要加载的图片，那么就直接进行回调，如果读取不到的话，才会开启线程执行后面的图片加载逻辑。
 
-### 3.2. 写入内存缓存
+## 3.2. 写入内存缓存
 
 　　在图片加载完成之后，会在 EngineJob 当中通过 Handler 发送一条消息将执行逻辑切回到主线程当中，从而执行 handleResultOnMainThread() 方法。
 
-#### 3.2.1. EngineJob#handleResuleOnMainThread
+### 3.2.1. EngineJob#handleResuleOnMainThread
 
 ```java
 /**
@@ -415,7 +415,7 @@ class EngineJob implements EngineRunnable.EngineRunnableManager {
 
 　　这里通过 EngineResourceFactory 构建出了一个包含图片资源的 EngineResource 对象，然后将这个对象回调到了 Engine 的 onEngineJobComplete() 方法当中。
 
-#### 3.2.2. Engine#onEngineJobComplete
+### 3.2.2. Engine#onEngineJobComplete
 
 ```java
     @SuppressWarnings("unchecked")
@@ -437,13 +437,13 @@ class EngineJob implements EngineRunnable.EngineRunnableManager {
 
 　　可以看到，回调回来的 EngineResource 被 out 到了 activeResources 方法，也就是在这里写入的缓存。
 
-### 3.3. LruCache 缓存
+## 3.3. LruCache 缓存
 
 　　上面的只是弱引用缓存，接下来看 LruCache 缓存。
 
-　　EngineResource 中的一个引用机制：观察刚才的 handleResultOnMainThread() 方法，有调用 EngineResource 的 acquire() 方法，洁在又调用了 EngineResource 的 release() 方法。其实，EngineResource 是用一个 acquired 变量用来记录图片被引用的次数，调用 acquire() 方法会让变量加 1，调用 release() 方法会让变量减 1。
+　　EngineResource 中的一个引用机制：观察刚才的 handleResultOnMainThread() 方法，有调用 EngineResource 的 acquire() 方法，接着又调用了 EngineResource 的 release() 方法。其实，EngineResource 是用一个 acquired 变量用来记录图片被引用的次数，调用 acquire() 方法会让变量加 1，调用 release() 方法会让变量减 1。
 
-#### 3.3.1. EngineResource#acquire#release
+### 3.3.1. EngineResource#acquire#release
 
 ```java
 /**
@@ -497,7 +497,7 @@ class EngineResource<Z> implements Resource<Z> {
 
 　　当 acquired 变量大于 0 的时候，说明图片正在使用中，也就应该放在 activeResources 弱引用缓存当中，而经过 release() 之后，如果 acquired 变量等于 0 了，说明图片已经不再被使用了，那么此时会调用 listener 的 onResourceReleased() 方法来释放资源，这个 listener 就是 Engine 对象。
 
-#### 3.3.2. Engine#onResourceReleased
+### 3.3.2. Engine#onResourceReleased
 
 ```java
     @Override
@@ -514,7 +514,7 @@ class EngineResource<Z> implements Resource<Z> {
 
 　　可以看到，这里首先会将缓存图片从 activeResources 中删除，然后再将它 put 到 LruResourceCache 当中。这样也就实现了正在使用中的图片使用弱引用来进行缓存，不在使用中的图片使用 LruCache 来进行缓存的功能。
 
-## 4. 硬盘缓存
+# 4. 硬盘缓存
 
 　　禁止 Glide 对图片进行硬件缓存使用的代码是：
 
@@ -534,15 +534,15 @@ Glide.with(this)
 * DiskCacheStrategy.RESULT：表示只缓存转换过后的图片（默认选项）。
 * DiskCacheStrategy.ALL：表示既缓存原始图片，也缓存转换过后的图片。
 
-　　用 Glide 去加载一张图片的时候，Glide 默认并不会将原始图片展示出来，而是会对图片进行压缩和转换。总之就是经过种种一系列操作之后得到的图片，就叫转换过后的图片，而 Glide 默认情况下在硬盘缓存的就是转换过后的图片，通过掉哦那个 diskCacheStrategy() 方法则可以改变这一默认行为。
+　　用 Glide 去加载一张图片的时候，Glide 默认并不会将原始图片展示出来，而是会对图片进行压缩和转换。总之就是经过种种一系列操作之后得到的图片，就叫转换过后的图片，而 Glide 默认情况下在硬盘缓存的就是转换过后的图片，通过调用 diskCacheStrategy() 方法则可以改变这一默认行为。
 
 　　和内存缓存类似，硬盘缓存的实现也是使用 LruCache 算法，而且 Google 还提供了一个现成的工具类 DiskLruCache。
 
-### 4.1. 从硬件缓存中读取
+## 4.1. 从硬件缓存中读取
 
 　　Glide 开启线程来加载图片后会执行 EngineRunnable 的 run 方法，run() 方法中又会调用一个 decode() 方法。
 
-#### 4.1.1. EngineRunnable#rdecode
+### 4.1.1. EngineRunnable#decode
 
 ```java
 class EngineRunnable implements Runnable, Prioritized {
@@ -562,7 +562,7 @@ class EngineRunnable implements Runnable, Prioritized {
 
 　　默认情况下 Glide 会优先从缓存当中读取，只有缓存中不存在要读取的图片时，才会去读取原始图片。
 
-#### 4.1.2. EngineRunnable#decodeFromCache
+### 4.1.2. EngineRunnable#decodeFromCache
 
 ```java
     private Resource<?> decodeFromCache() throws Exception {
@@ -584,7 +584,7 @@ class EngineRunnable implements Runnable, Prioritized {
 
 　　可以看到，这里会先去调用 DecodeJob 的 decodeResultFromCache() 方法来获取缓存，如果获取不到，会再调用 decodeSourceFromCache() 方法获取缓存，这两个方法的区别其实就是 DiskCacheStrategy.RESULT 和 DiskCacheStrategy.SOURCE 这两个参数的区别。
 
-#### 4.1.3. EngineRunnable#decodeResultFromCache#decodeSourceFromCache
+### 4.1.3. DecodeJob#decodeResultFromCache#decodeSourceFromCache
 
 ```java
     /**
@@ -635,7 +635,7 @@ class EngineRunnable implements Runnable, Prioritized {
 
 　　这两个方法中在调用 loadFromCache() 方法时传入的参数却不一样，一个传入的是 resultKey，另外一个却又调用了 resultKey 的 getOriginalKey() 方法。Glide 的缓存 Key 是由 10 个参数共同组成的，包括图片的 width、height 等等。但如果要缓存的原始图片，其实并不需要这么多的参数，因为不用对图片做任何的变化。
 
-#### 4.1.4. EngineKey#getOriginalKey
+### 4.1.4. EngineKey#getOriginalKey
 
 ```java
     public Key getOriginalKey() {
@@ -648,7 +648,7 @@ class EngineRunnable implements Runnable, Prioritized {
 
 　　可以看到，这里其实就是忽略了绝大部分的参数，只使用了 id 和 signature 这两个参数来构成缓存 Key。而 signature 参数绝大多数情况下都是用不到的，因此基本上可以说就是由 id （也就是图片 url）来决定的 Original 缓存 Key。
 
-#### 4.1.5. loadFromCache
+### 4.1.5. DecodeJob#loadFromCache
 
 ```java
     private Resource<T> loadFromCache(Key key) throws IOException {
@@ -671,11 +671,11 @@ class EngineRunnable implements Runnable, Prioritized {
 
 　　这个方法的逻辑非常简单，调用 getDiskCache() 方法获取到的就是 Glide 自己编写的 DiskLruCache 工具类的实例，然后调用它的 get() 方法并把缓存 Key 传入，就能得到硬件缓存的文件了。如果文件为空就返回 null，如果文件不为空则将它解码成 Resource 对象后返回即可。
 
-### 4.2. 写入硬盘缓存
+## 4.2. 写入硬盘缓存
 
 　　在 EngineRunnable 的 decode() 方法中，在没有缓存的情况下，会调用 decodeFromSource() 方法来读取原始图片，而 deocderFromSource() 方法调用了 DecodeJob 的 decodeFromSource() 方法。
 
-#### 4.2.1. DecodeJob#decodeFromSource
+### 4.2.1. DecodeJob#decodeFromSource
 
 ```java
     /**
@@ -690,20 +690,21 @@ class EngineRunnable implements Runnable, Prioritized {
      * @throws Exception
      */
     public Resource<Z> decodeFromSource() throws Exception {
-        Resource<T> decoded = decodeSource();
-        return transformEncodeAndTranscode(decoded);
+        Resource<T> decoded = decodeSource();// SOURCE 资源的缓存会在这里
+        return transformEncodeAndTranscode(decoded); // RESULT 资源的缓存在这里
     }
 ```
 
 　　这个方法中只有两行代码，decodeSource() 顾名思义是用来解析原图片的，而 transformEncodeAndTranscode() 则是用来对图片进行转码和解码的。
 
-#### 4.2.2. DecodeJob#decodeSource
+### 4.2.2. DecodeJob#decodeSource
 
 ```java
     private Resource<T> decodeSource() throws Exception {
         Resource<T> decoded = null;
         try {
             long startTime = LogTime.getLogTime();
+            // 加载拿到数据
             final A data = fetcher.loadData(priority);
             if (Log.isLoggable(TAG, Log.VERBOSE)) {
                 logWithTimeAndKey("Fetched data", startTime);
@@ -711,6 +712,7 @@ class EngineRunnable implements Runnable, Prioritized {
             if (isCancelled) {
                 return null;
             }
+            // 解析数据
             decoded = decodeFromSourceData(data);
         } finally {
             fetcher.cleanup();
@@ -721,6 +723,7 @@ class EngineRunnable implements Runnable, Prioritized {
 
     private Resource<T> decodeFromSourceData(A data) throws IOException {
         final Resource<T> decoded;
+        // 检查缓存
         if (diskCacheStrategy.cacheSource()) {
             decoded = cacheAndDecodeSourceData(data);
         } else {
@@ -736,6 +739,7 @@ class EngineRunnable implements Runnable, Prioritized {
     private Resource<T> cacheAndDecodeSourceData(A data) throws IOException {
         long startTime = LogTime.getLogTime();
         SourceWriter<A> writer = new SourceWriter<A>(loadProvider.getSourceEncoder(), data);
+        // 将数据存储到硬盘缓存中
         diskCacheProvider.getDiskCache().put(resultKey.getOriginalKey(), writer);
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
             logWithTimeAndKey("Wrote source to cache", startTime);
@@ -752,11 +756,11 @@ class EngineRunnable implements Runnable, Prioritized {
 
 　　在 decodeSource() 方法中会先调用 fetcher 的 loadData() 方法读取图片数据，然后调用 decodeFromSourceData() 方法来对图片进行解码。
 
-　　在 decodeFromSourceData() 方法中先判断是否允许缓存原始图片，如果允许的话又会调用 cacheAndDecodeSourceData() 方法。而在这个放啊中同样调用了 getDiskCache() 方法来获取 DiskLruCache 实例，接着调用它的 put() 方法就可以写入磁盘缓存了，注意原始图片的缓存 Key 使用的 result.getOriginalKey()。
+　　在 decodeFromSourceData() 方法中先判断是否允许缓存原始图片，如果允许的话又会调用 cacheAndDecodeSourceData() 方法。而在这个方法中同样调用了 getDiskCache() 方法来获取 DiskLruCache 实例，接着调用它的 put() 方法就可以写入磁盘缓存了，注意原始图片的缓存 Key 使用的 result.getOriginalKey()。
 
 　　原始图片的缓存写入就是这么简单。接着来看 transformEncodeAndTranscode() 方法如何写入转换过后的图片缓存。
 
-#### 4.1.4. DecodeJob#transformEncodeAndTranscode
+### 4.2.3. DecodeJob#transformEncodeAndTranscode
 
 ```java
     private Resource<Z> transformEncodeAndTranscode(Resource<T> decoded) {
@@ -765,10 +769,11 @@ class EngineRunnable implements Runnable, Prioritized {
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
             logWithTimeAndKey("Transformed resource from source", startTime);
         }
-
+		// 调用 writeTransformedToCache() 方法
         writeTransformedToCache(transformed);
 
         startTime = LogTime.getLogTime();
+        // 转换数据格式
         Resource<Z> result = transcode(transformed);
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
             logWithTimeAndKey("Transcoded transformed from source", startTime);
@@ -782,6 +787,7 @@ class EngineRunnable implements Runnable, Prioritized {
         }
         long startTime = LogTime.getLogTime();
         SourceWriter<Resource<T>> writer = new SourceWriter<Resource<T>>(loadProvider.getEncoder(), transformed);
+        // 缓存
         diskCacheProvider.getDiskCache().put(resultKey, writer);
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
             logWithTimeAndKey("Wrote transformed from source to cache", startTime);
@@ -793,9 +799,9 @@ class EngineRunnable implements Runnable, Prioritized {
 
 　　到这里 Glide 硬盘缓存的实现原理也分析完了。
 
-## 5. 七牛云问题
+# 5. 七牛云问题
 
-### 5.1. 问题描述
+## 5.1. 问题描述
 
 　　在使用七牛云来保存图片的时候有个问题：七牛云为了对图片资源进行保护，会在图片 url 地址的基础之上再加上一个 token 参数。也就是说，一张图片的 url 地址可能会是如下格式：
 
@@ -803,13 +809,13 @@ class EngineRunnable implements Runnable, Prioritized {
 http://url.com/image.jpg?token=d9caa6e02c990b0a
 ```
 
-　　而使用 Glide 加载这张图片的话，也就会使用这个 url 地址来组成缓存 Key。那么 token 作为一个验证身份的参数并不是一成不变的，很可能时时刻刻都在比变化，而如果 token 变了，那么图片的 url 也就跟着变了，图片 url 变了，缓存 Key 也就跟着变了。结果就造成了，明明是同一张图片，就因为 token 不断在变化，导致 Glide 的缓存功能完全失效了。
+　　而使用 Glide 加载这张图片的话，也就会使用这个 url 地址来组成缓存 Key。那么 token 作为一个验证身份的参数并不是一成不变的，很可能时时刻刻都在变化，而如果 token 变了，那么图片的 url 也就跟着变了，图片 url 变了，缓存 Key 也就跟着变了。结果就造成了，明明是同一张图片，就因为 token 不断在变化，导致 Glide 的缓存功能完全失效了。
 
-### 5.2. 问题分析
+## 5.2. 问题分析
 
 　　先从源码的层面进行分析，首先再来看一下 Glide 生成 Key 这部分的代码。
 
-#### 5.2.1. Engine#load
+### 5.2.1. Engine#load
 
 ```java
     public <T, Z, R> LoadStatus load(Key signature, int width, int height, DataFetcher<T> fetcher,
@@ -829,7 +835,7 @@ http://url.com/image.jpg?token=d9caa6e02c990b0a
 
 　　这里的 id 其实就是图片的 url 地址。那么，这里是通过调用 fetcher.getId() 方法来获取的图片 url 地址。那么，这里是通过调用 fetcher.getId() 方法来获取的图片 url 地址，fetcher 是 HttpUrlFetcher 的实例。
 
-#### 5.2.2. HttpUrlFetcher#getId
+### 5.2.2. HttpUrlFetcher#getId
 
 ```java
 /**
@@ -857,7 +863,7 @@ public class HttpUrlFetcher implements DataFetcher<InputStream> {
 
 　　可以看到，getId() 方法中又调用了 GlideUrl 的 getCacheKey() 方法，而这个 GlideUrl 就是在 lode() 方法中传入的图片 url 地址，然后 Glide 在内部把这个 url 地址包装成了一个 GlideUrl 对象。
 
-#### 5.2.3. GlideUrl 类
+### 5.2.3. GlideUrl 类
 
 ``` java
 /**
@@ -923,7 +929,7 @@ public class GlideUrl {
 
 　　getCacheKey() 方法直接就是将图片的 url 地址进行返回来作为缓存 Key 的。那么解决方法就是重写这个 getCacheKey() 方法，加上一些自己的逻辑判断，就能轻松解决掉问题了。
 
-### 5.3. 解决问题
+## 5.3. 解决问题
 
 　　创建一个 MyGlideUrl 继承自 GlideUrl，代码如下所示：
 
@@ -971,8 +977,8 @@ Glide.with(this)
 
 　　也就是说，需要在 load() 方法中传入这个自定义的 MyGlideUrl 对象，而不能再像之前那样直接传入 url 字符串了。不然的话 Glide 在内部还是会使用原始的 GlideUrl 类，而不是自定义的 MyGlideUrl 类。
 
+# 6. 参考文章
 
-## 6. 参考文章
 1. [Android图片加载框架最全解析（三），深入探究Glide的缓存机制](https://blog.csdn.net/guolin_blog/article/details/54895665)
 
 
