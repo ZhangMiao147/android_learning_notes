@@ -41,11 +41,11 @@ public class MyGlideModule implements GlideModule {
 
 　　在 < application > 标签中加入一个 meta-data 配置项，其中 android:name 指定成自定义的这个 MyGlideModule 了。 
 
-## 2. 自定义模块的原理
+# 2. 自定义模块的原理
 
 　　Glide 类是有创建实例的，只不过在内部由 Glide 自动创建和管理了，对于开发者而言，大多数情况下是不用关心它的，只需要调用它的静态方法就可以了。
 
-### 2.1. Glide#get
+## 2.1. Glide#get
 
 　　Glide 的实例创建从 Glide 类中的 get() 方法中实现。
 
@@ -67,6 +67,7 @@ public class Glide {
             synchronized (Glide.class) {
                 if (glide == null) {
                     Context applicationContext = context.getApplicationContext();
+                    // 解析 AndroidManifext.xml 文件
                     List<GlideModule> modules = new ManifestParser(applicationContext).parse();
 
                     GlideBuilder builder = new GlideBuilder(applicationContext);
@@ -74,6 +75,7 @@ public class Glide {
                         module.applyOptions(applicationContext, builder);
                     }
                     glide = builder.createGlide();
+                    // 注册 GlideModule
                     for (GlideModule module : modules) {
                         module.registerComponents(applicationContext, glide);
                     }
@@ -93,7 +95,7 @@ public class Glide {
 
 　　再往下调用了 GlideBuilder 的 createGlide() 方法，并返回了一个 Glide 对象。也就是说，Glide 对象的实例就是在这里创建的。
 
-### 2.2. GlideBuilder#createGlide
+## 2.2. GlideBuilder#createGlide
 
 ```java
 /**
@@ -160,11 +162,11 @@ public class GlideBuilder {
 
 　　这就是 Glide 自定义模块的全部工作原理。
 
-## 3. 更改 Glide 配置
+# 3. 更改 Glide 配置
 
 　　如果想要更改 Glide 的默认配置，其实只需要在 applyOptions() 方法中提前将 Glide 的配置项进行初始化就可以了。
 
-### 3.1. Glide 的配置项
+## 3.1. Glide 的配置项
 
 1. setMemoryCache()
 
@@ -194,7 +196,7 @@ public class GlideBuilder {
 
 　　但是 Glide 科学的默认配置并不影响学习自定义 Glide 模块的功能，因为总有某些情况下，默认的配置可能将无法满足需求，这个时候就需要自己动手去修改默认配置了。
 
-### 3.2. 更改 Glide 硬盘缓存策略
+## 3.2. 更改 Glide 硬盘缓存策略
 
 　　Glide 默认的硬盘缓存策略使用的是 InternalCacheDiskCacheFactory，这种缓存会将所有 Glide 加载的图片都存储到当前应用的私有目录下，这是一种非常安全的做法，但同时这种做法也造成了一些不便，因为私有目录下即使是开发者自己也是无法查看的，如果想要去验证一下图片到底有没有成功缓存下来，这就有点不太好办了。
 
@@ -222,7 +224,7 @@ public class MyGlideModule implements GlideModule {
 
 　　就是这么简单，现在所有 Glide 加载的图片都会缓存到 SD 卡上了。
 
-### 3.3. 修改缓存大小
+## 3.3. 修改缓存大小
 
 　　另外，InternalCacheDiskCacheFactory 和 ExternalCacheDiskFactory 的默认硬盘缓存大小都是 250M。也就是说，如果应用缓存的图片总大小超过了 250M，那么 Glide 就会按照 DiskLruCache 算法的原则来清理缓存的图片。
 
@@ -250,7 +252,7 @@ public class MyGlideModule implements GlideModule {
 
 　　更改Glide 配置的功能就是这么简单。
 
-### 3.4. 更改图片格式
+## 3.4. 更改图片格式
 
 　　Glide 和 Picasso 的用法是非常相似的，但是有一点差别很大。Glide 加载图片的默认格式是 RGB_565，而 Picasso 加载图片的默认格式是 ARGB_8888。ARGB_8888 格式的图片效果会更加细腻，但是内存开销会比较大，而 RGB_565 格式的图片则更加节省内存，但是图片效果上会差一些。
 
@@ -277,7 +279,7 @@ public class MyGlideModule implements GlideModule {
 
 　　通过这样配置之后，使用 Glide 加载的所有图片都将会使用 ARGB_8888 的格式，虽然图片质量变好了，但同时内存开销也会明显增大。
 
-## 4. 替换 Glide 组件
+# 4. 替换 Glide 组件
 
 　　替换 Glide 组件功能需要在自定义模块的 registerComponents() 方法中加入具体的替换逻辑。相比于更改 Glide 配置，替换 Glide 组件这个功能的难度就明显大了不少。
 
@@ -285,7 +287,7 @@ public class MyGlideModule implements GlideModule {
 
 　　默认情况下，Glide 使用的是基于原生 HttpURLConnection 进行订制的 HTTP 通讯组件，但是现在大多数的 Android 开发者都更喜欢使用 OkHttp，因此将 Glide 中的 HTTP 通讯组件修改成 OkHttp 的这个需求比较常见。
 
-### 4.1. Glide 组件源码分析
+## 4.1. Glide 组件源码分析
 
 　　首先来看 Glide 中目前有哪些组件，在 Glide 类的构造方法当中，如下所示：
 
@@ -327,9 +329,9 @@ register(GlideUrl.class, InputStream.class, new HttpUrlGlideUrlLoader.Factory())
 
 　　这句代码就表示，可以使用 Glide.with(context).load(new GlideUrl(“url...”)).into(imageView) 的方式来加载图片，而 HttpUrlGlideLoader.Factory 则是要负责处理具体的网络通讯逻辑。如果想要将 Glide 的 HTTP 通讯组件替换成 OkHttp 的话，那么只需要再自定义模块当中重新注册一个 GlideUrl 类型的组件就行了。
 
-　　在平时使用 Glide 加载图片时，大多数情况下都是直接将图片的 URL 字符串传入到 load() 方法当中的，很少会将它封装成 GlideUrl 对象之后再传入到 load() 方法当中，那为什么只需要重新注册一个 GlideUrl 类型的组件，而不需要去重新注册一个 String 类型的组件呢？其实道理很简单，因为 load(String) 方法只是 Glide 提供的一种简易的 API 封装而已，它的底层仍然还是调用的 GlideUrl 组件，因此再替换组件的时候只需要直接替换最底层的，这样就一步到位了。
+　　在平时使用 Glide 加载图片时，大多数情况下都是直接将图片的 URL 字符串传入到 load() 方法当中的，很少会将它封装成 GlideUrl 对象之后再传入到 load() 方法当中，那为什么只需要重新注册一个 GlideUrl 类型的组件，而不需要去重新注册一个 String 类型的组件呢？其实道理很简单，因为 load(String) 方法只是 Glide 提供的一种简易的 API 封装而已，它的底层仍然还是调用的 GlideUrl 组件，因此在替换组件的时候只需要直接替换最底层的，这样就一步到位了。
 
-#### 4.1.1. 查看 HttpUrlGlideUrlLoader 源码
+### 4.1.1. 查看 HttpUrlGlideUrlLoader 源码
 
 　　Glide 的网络通讯逻辑是由 HttpUrlGlideUrlLoader.Factory 来负责的，那么查看一下它的源码。
 
@@ -367,6 +369,7 @@ public class HttpUrlGlideUrlLoader implements ModelLoader<GlideUrl, InputStream>
         this.modelCache = modelCache;
     }
 
+    // 返回一个 DataFetcher 对象
     @Override
     public DataFetcher<InputStream> getResourceFetcher(GlideUrl model, int width, int height) {
         // GlideUrls memoize parsed URLs so caching them saves a few object instantiations and time spent parsing urls.
@@ -385,7 +388,7 @@ public class HttpUrlGlideUrlLoader implements ModelLoader<GlideUrl, InputStream>
 
 　　可以看到，HttpUrlGlideUrlLoader.Factory 是一个内部类，外层的 HttpUrlGlideUrlLoader 类实现了 ModelLoader < GlideUrl,InputStream > ，并重写了 getResourceFetcher() 方法。而在 getResourceFetcher() 方法中，又创建了一个 HttpUrlFectcher 的实例，在这里才是真正处理具体网络通讯逻辑的地方。
 
-#### 4.2.1. HttpUrlFetcher 类
+### 4.2.1. HttpUrlFetcher 类
 
 ```java
 /**
@@ -433,6 +436,7 @@ public class HttpUrlFetcher implements DataFetcher<InputStream> {
                 // Do nothing, this is best effort.
             }
         }
+        // 请求数据
         urlConnection = connectionFactory.build(url);
         for (Map.Entry<String, String> headerEntry : headers.entrySet()) {
           urlConnection.addRequestProperty(headerEntry.getKey(), headerEntry.getValue());
@@ -521,7 +525,7 @@ public class HttpUrlFetcher implements DataFetcher<InputStream> {
 
 　　其实就是一些 HttpURLConnection 的用法而已。
 
-### 4.2. 将 HTTP 通讯组件修改成 OkHttp
+## 4.2. 将 HTTP 通讯组件修改成 OkHttp
 
 　　首先第一步，是先将 OkHttp 的库引入到当前项目中，如下所示：
 
@@ -676,13 +680,13 @@ Glide.with(this)
      .into(imageView);
 ```
 
-## 5. 更简单的组件替换
+# 5. 更简单的组件替换
 
 　　Glide 官方提供了非常简便的 HTTP 组件替换方式，并且除了支持 OkHttp3 之外，还支持 OkHttp2 和 Volley。
 
 　　只需要在 gradle 当中添加几行库的配置就行了。
 
-### 5.1. 使用 OkHttp3
+## 5.1. 使用 OkHttp3
 
 　　使用 OkHttp3 来作为 HTTP 通讯组件的配置如下：
 
@@ -693,7 +697,7 @@ dependencies {
 }
 ```
 
-### 5.2. 使用 OkHttp2
+## 5.2. 使用 OkHttp2
 
 　　使用 OkHttp2 来作为 HTTP 通讯组件的配置如下：
 
@@ -704,7 +708,7 @@ dependencies {
 }
 ```
 
-### 5.3. 使用 Volley
+## 5.3. 使用 Volley
 
 　　使用 Volley 来作为 HTTP 通讯组件的配置如下：
 
@@ -717,42 +721,6 @@ dependencies {
 
 　　当然了，这些库背后的工作原理和自己手动实现替换 HTTP 组件的原理是一摸一样的。而学会了手动替换组件的原理就能更加轻松地扩展更多丰富地功能，因此掌握这一技能还是非常重要的。
 
+# 6. 参考文章
 
-## 6. 参考文章
 1. [Android图片加载框架最全解析（六），探究Glide的自定义模块功能](https://blog.csdn.net/guolin_blog/article/details/78179422)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

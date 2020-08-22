@@ -1,12 +1,12 @@
 # Glide 图片变化功能
 
-## 1. 问题
+# 1. 问题
 
 　　使用 Glide 显示图片时，ImageView 的宽高设置的都是 wrap_content，但是图片却充满了全屏。之所以会出现这个现象，就是因为 Glide 的图片变换功能所导致的。
 
 　　在没有明确指定的情况下，ImageView 默认的 scaleType 是 FIT_CENTER。
 
-### 1.1. GenericRequestBuilder#into
+## 1.1. GenericRequestBuilder#into
 
 ```java
     /**
@@ -73,7 +73,7 @@ Glide.with(this)
 
 　　通过 override() 方法将图片的宽和高都指定成 Target.SIZE_ORIGINAL，问题同样被解决了。
 
-## 2. 图片变换的基本用法
+# 2. 图片变换的基本用法
 
 　　图片变换的意思就是说，Glide 从加载了原始图片到最终展示给用户之前，又进行了一些变换处理，从而能够实现一些更加丰富的图片效果，如图片圆角化、图形化、模糊化等等。
 
@@ -102,7 +102,7 @@ Glide.with(this)
      .into(imageView);
 ```
 
-### 2.1. DrawableRequestBuilder#centerCrop#fitCenter
+## 2.1. DrawableRequestBuilder#centerCrop#fitCenter
 
 　　centerCrop() 和 fitCenter() 方法其实也只是对 transform() 方法进行了一层封装而已，它们背后的源码仍然还是借助 transform() 方法来实现的。
 
@@ -157,7 +157,7 @@ public class DrawableRequestBuilder<ModelType>
 
 ## 3. 源码分析
 
-### 3.1. CenterCrop 类
+## 3.1. CenterCrop 类
 
 ```java
 /**
@@ -183,6 +183,7 @@ public class CenterCrop extends BitmapTransformation {
         final Bitmap toReuse = pool.get(outWidth, outHeight, toTransform.getConfig() != null
                 ? toTransform.getConfig() : Bitmap.Config.ARGB_8888);
         Bitmap transformed = TransformationUtils.centerCrop(toReuse, toTransform, outWidth, outHeight);
+        // poo.put(toResuse) 放入缓存池
         if (toReuse != null && toReuse != transformed && !pool.put(toReuse)) {
             toReuse.recycle();
         }
@@ -206,7 +207,7 @@ public class CenterCrop extends BitmapTransformation {
 
 　　transform() 方法首先会从 Bitmap 缓存池中尝试获取一个可重用的 Bitmap 对象，然后把这个对象连同 toTransform、outWidth、outHeight 参数一起传入到了 TransformationUtils.centerCrop() 方法当中。
 
-### 3.2. TransformationUtils#centerCrop
+## 3.2. TransformationUtils#centerCrop
 
 ```java
 /**
@@ -265,11 +266,11 @@ public final class TransformationUtils {
 }
 ```
 
-　　这段代码就是整个图片变换功能的核心代码。先是做了一些校验，如果原图为空，或者原图的尺寸和目标裁剪尺寸相同，那么就方式裁剪。接下来是通过数学计算来算出画布的缩放的比例以及偏移值。然后判断缓存池中取出的 Bitmap 对象是否为空，如果不为空就可以直接使用，如果为空则要创建一个新的 Bitmap 对象。接着将原图 Bitmap 对象的 alpha 值复制到裁剪 Bitmap 对象上面。最后是裁剪 Bitmap 对象进行绘制，并将最终的结果进行返回。
+　　这段代码就是整个图片变换功能的核心代码。先是做了一些校验，如果原图为空，或者原图的尺寸和目标裁剪尺寸相同，那么就放弃裁剪。接下来是通过数学计算来算出画布的缩放的比例以及偏移值。然后判断缓存池中取出的 Bitmap 对象是否为空，如果不为空就可以直接使用，如果为空则要创建一个新的 Bitmap 对象。接着将原图 Bitmap 对象的 alpha 值复制到裁剪 Bitmap 对象上面。最后是裁剪 Bitmap 对象进行绘制，并将最终的结果进行返回。
 
 　　在得到了裁剪后的 Bitmap 对象，回到 CenterCrop 当中，在最终返回这个 Bitmap 对象之前，还会尝试将复用的 Bitmap 对象重新放回到缓存池当中，以便下次继续使用。
 
-## 4. 自定义图片变换
+# 4. 自定义图片变换
 
 　　Glide 定制好了一个图片变换的框架，大致的流程是获取到原始的图片，然后对图片进行变换，再将变换完成后的图片返回给 Glide，最终由 Glide 将图片显示出来。
 
@@ -304,7 +305,7 @@ public class CircleCrop extends BitmapTransformation {
 
 　　这里选择继承 BitmapTransformation 还有一个限制，就是只能对静态图进行图片变换。当然，这已经足够覆盖日常 95% 以上的开发需求了。如果由特殊的需求要对 GIF 图进行图片变换，那就得自己去实现 Transformation 接口就可以了，这个就非常复杂了。
 
-### 4.1. 图形图形化功能
+## 4.1. 图片图形化功能
 
 　　以对图片进行圆形化变化为例自定义图片变换效果。
 
@@ -342,8 +343,7 @@ public class CircleCrop extends BitmapTransformation {
         int dy = (toTransform.getHeight() - diameter) / 2;
         Canvas canvas = new Canvas(result);
         Paint paint = new Paint();
-        BitmapShader shader = new BitmapShader(toTransform, BitmapShader.TileMode.CLAMP, 
-                                            BitmapShader.TileMode.CLAMP);
+        BitmapShader shader = new BitmapShader(toTransform, BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP);
         if (dx != 0 || dy != 0) {
             Matrix matrix = new Matrix();
             matrix.setTranslate(-dx, -dy);
@@ -373,15 +373,15 @@ Glide.with(this)
      .into(imageView);
 ```
 
-## 5. 更多图片变换功能
+# 5. 更多图片变换功能
 
-　　虽说 Glide 的图片变换功能框架已经很强大了，使得我们可以轻松地自定义图片变换效果，但是如果每一种图片变换都要自己去写还是蛮吃力的。
+　　虽说 Glide 的图片变换功能框架已经很强大了，可以轻松地自定义图片变换效果，但是如果每一种图片变换都要自己去写还是蛮吃力的。
 
-　　事实上，确实也没有必要完全靠自己去实现各种个央的图片变换效果，因为大多数的图片变换都是比较通用的。网上出现了很多 Glide 的图片变换开源库，其中做的最出色的就是 glide-transformations 这个库了。它实现了很多通用的图片变换效果，如裁剪变换、颜色变换、模糊变换等等，使得可以非常轻松地进行各种各样地图片变换。
+　　事实上，确实也没有必要完全靠自己去实现各种各样的图片变换效果，因为大多数的图片变换都是比较通用的。网上出现了很多 Glide 的图片变换开源库，其中做的最出色的就是 glide-transformations 这个库了。它实现了很多通用的图片变换效果，如裁剪变换、颜色变换、模糊变换等等，使得可以非常轻松地进行各种各样地图片变换。
 
 　　glide-transformations 地项目主页地址是 https://github.com/wasabeef/glide-transformations 。
 
-### 5.1. 使用 glide-transformation 库
+## 5.1. 使用 glide-transformation 库
 
 #### 5.1.1. 引入库
 
@@ -393,7 +393,7 @@ dependencies {
 }
 ```
 
-#### 5.1.2. 模糊化处理
+### 5.1.2. 模糊化处理
 
 　　如果相对图片进行模糊化处理，那么就可以使用 glide-transformations 库中的 BlurTransformation 这个类，代码如下所示：
 
@@ -406,7 +406,7 @@ Glide.with(this)
 
 　　这里调用的是 bitmapTransform() 方法而不是 transform() 方法，因为 glide-transforms 库都是专门针对静态图片变换来进行设计的。
 
-#### 5.1.3. 黑白化
+### 5.1.3. 黑白化
 
 　　图片黑白化的效果使用的是 GrayscaleTransformation 这个类，代码如下：
 
@@ -417,7 +417,7 @@ Glide.with(this)
      .into(imageView);
 ```
 
-#### 5.1.4. 组合使用
+### 5.1.4. 组合使用
 
 　　还可以将多个图片变换效果组合在一起使用，比如同时执行模糊化和黑白花的变换：
 
@@ -428,46 +428,10 @@ Glide.with(this)
      .into(imageView);
 ```
 
-　　可以看到，同时执行多种图片变换的时候，著需要将它们都传入到 bitmaoTransformation() 方法中即可。
+　　可以看到，同时执行多种图片变换的时候，只需要将它们都传入到 bitmaoTransformation() 方法中即可。
 
 　　上面的只是 glide-transformations 库的一小部分功能而已，还有更多的图片变化效果。
 
+# 6. 参考文章
 
-## 6. 参考文章
 1. [Android图片加载框架最全解析（五），Glide强大的图片变换功能](https://blog.csdn.net/guolin_blog/article/details/71524668)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

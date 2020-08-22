@@ -1,12 +1,12 @@
 # Glide 带进度的图片加载
 
-## 1. 扩展目标
+# 1. 扩展目标
 
 　　虽说 Glide 本身就已经十分强大了，但是有一个功能却长期以来都不支持，那就是监听下载进度功能。
 
  　　使用 Glide 来加载一张网络上的图片是非常简单的，但是让人头疼的是，却无从得知当前图片的下载进度。如果这张图片很小的话，那么问题也不大，反正很快就会被加载出来。但如果这是一张比较大的 GIF 图，用户耐心等了很久结果图片还没显示出来，这个时候就会觉得下载进度功能是十分有必要的了。
 
-## 2. 准备
+# 2. 准备
 
  　　需要将必要的依赖库引入到当前的项目当中，目前必须要依赖的两个库就是 Glide 和 OkHttp。
 
@@ -27,7 +27,7 @@ dependencies {
 
 　　这样准备工作就完成了。
 
-## 3. 替换通讯组件
+# 3. 替换通讯组件
 
 　　Glide 内部 HTTP 通讯组件的底层实现是基于 HttpUrlConnection 来进行定制的。但是  HttpUrlConnection 的可扩展性比较有限，在它的基础之上无法实现监听下载进度的功能，因此首先就是要将 Glide 中的 HTTP 通讯组件替换成 OkHttp。
 
@@ -59,6 +59,7 @@ public class OkHttpFetcher implements DataFetcher<InputStream> {
         if (isCancelled) { 
             return null; 
         } 
+        // 使用 OkClient 请求数据
         Response response = client.newCall(request).execute(); 
         responseBody = response.body(); 
         if (!response.isSuccessful() || responseBody == null) { 
@@ -108,7 +109,7 @@ public class OkHttpGlideUrlLoader implements ModelLoader<GlideUrl, InputStream> 
 
         public Factory() { 
         } 
-
+		// 可以自己配置 OkHttpClient 的参数
         public Factory(OkHttpClient client) { 
             this.client = client; 
         } 
@@ -151,6 +152,7 @@ public class MyGlideModule implements GlideModule {
 
     @Override 
     public void registerComponents(Context context, Glide glide) { 
+        // 注册新的请求方式
         glide.register(GlideUrl.class, InputStream.class, new OkHttpGlideUrlLoader.Factory());
     } 
 }
@@ -172,13 +174,13 @@ public class MyGlideModule implements GlideModule {
 
 　　这样就把 Glide 中的 HTTP 通讯组件成功替换成 OkHttp 了。
 
-## 4. 实现下载进度监听
+# 4. 实现下载进度监听
 
 　　需要依靠 OkHttp 强大的拦截器机制来实现监听下载进度的功能。
 
 　　只要向 OkHttp 中添加一个自定义的拦截器，就可以在拦截器中捕获到整个 HTTP 的通讯过程，然后加入一些自己的逻辑来计算下载进度，这样就可以实现下载进度监听的功能了。
 
-### 4.1. 创建拦截器
+## 4.1. 创建拦截器
 
 　　首先创建一个没有任何逻辑的空拦截器，新建 ProgressInterceptor 类并实现 Interceptor 接口，代码如下：
 
@@ -187,7 +189,9 @@ public class ProgressInterceptor implements Interceptor {
 
     @Override 
     public Response intercept(Chain chain) throws IOException {
+        // 获取请求数据
         Request request = chain.request(); 
+        // 交由下一个链进行数据请求
         Response response = chain.proceed(request); 
         return response; 
     } 
@@ -197,7 +201,7 @@ public class ProgressInterceptor implements Interceptor {
 
 　　这个拦截器就是拦截到了 OkHttp 的请求，然后调用 proceed() 方法去处理这个请求，最终将服务器响应的 Response 返回。
 
-### 4.2. 启动拦截器
+## 4.2. 启动拦截器
 
 　　接下来需要启动这个拦截器，修改 MyGlideModule 中的代码，如下所示：
 
@@ -210,6 +214,7 @@ public class MyGlideModule implements GlideModule {
     @Override 
     public void registerComponents(Context context, Glide glide) { 
         OkHttpClient.Builder builder = new OkHttpClient.Builder(); 
+        // 添加拦截器
         builder.addInterceptor(new ProgressInterceptor()); 
         OkHttpClient okHttpClient = builder.build(); 
         glide.register(GlideUrl.class, InputStream.class, new OkHttpGlideUrlLoader.Factory(okHttpClient));
@@ -221,7 +226,7 @@ public class MyGlideModule implements GlideModule {
 
 　　现在自定义的拦截器已经启用了，接下来就可以开始去实现下载进度监听的具体逻辑了。
 
-### 4.3. 创建监听回调
+## 4.3. 创建监听回调
 
 　　首先新建一个 ProgressListener 接口，用于作为进度监听回调的工具，如下所示：
 
