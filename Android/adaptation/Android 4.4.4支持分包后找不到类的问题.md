@@ -1,6 +1,7 @@
 # Android 4.4.4 支持分包后找不到类的问题
 
-## 问题描述
+# 1. 问题描述
+
 　　打包程序后，点击打开程序时报错：
 
 ```java
@@ -13,7 +14,8 @@ AndroidRuntime: FATAL EXCEPTION: main
 
 　　机器的 Android 版本是 4.4.4 ，在 Android 5 以上是没有问题的。
 
-## 问题原因
+# 2. 问题原因
+
 　　问题的原因是 Android 方法的 id 的数目不能够超过 65535 个，如果超出，就要考虑 dex 分包。
 
 　　之所以存在方法数不能超过 65536 的限制主要有两个原因：
@@ -23,7 +25,8 @@ AndroidRuntime: FATAL EXCEPTION: main
 
 　　在 Android 4.x 的 Android 系统上开启了分包的话，分包的时候系统会随机分配 dex，有可能导致启动时主 dex 中找不到分 dex 中的类，而 5.0 以上系统会自动处理这个问题（自带 multidex），所以 5.0 以及以上的系统设置了分包也不会出现问题。
 
-## 解决问题
+# 3. 解决问题
+
 1. 在 build.gradle 中开启分包
 
    ```ruby

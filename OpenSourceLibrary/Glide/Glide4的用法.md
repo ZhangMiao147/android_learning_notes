@@ -421,13 +421,13 @@ Glide.with(this)
 
 　　可以看到，同时执行多种图片变换的时候，只需要将它们都传入到 transforms() 方法中即可。
 
-## 10. 自定义模块
+# 10. 自定义模块
 
 　　自定义模块属于 Glide 中的高级功能，同样也是难度比较高的一部分内容。
 
 　　自定义模块功能可以将更改 Glide 配置，替换 Glide 组件等操作独立出来，使得能轻松地对 Glide 的各种配置进行自定义，并且又和 Glide 的图片加载逻辑没有任何交集，这也是一种低耦合编程方式的体现。
 
-### 10.1. 实现自定义模块
+## 10.1. 实现自定义模块
 
 　　首先定义一个自己的模块类，并让它继承自 AppGlideModule，如下所示：
 
@@ -454,7 +454,7 @@ public class MyAppGlideModule extends AppGlideModule {
 
 　　这样的话，就将 Glide 自定义模块的功能完成了。后面只需要在 applyOptions() 和 registerComponents() 这两个方法中加入具体的逻辑，就能实现更改 Glide 配置或者替换 Glide 组件的功能了。
 
-## 11. 使用 Generated API
+# 11. 使用 Generated API
 
 　　Generated API 是 Glide 4 中全新引入的一个功能，它的工作原理是使用注解处理器（Annotation Processor）来生成出一个 API，在 Application 模块中可使用该流式 API 一次性调用到 RequestBuilder，RequestOptions 和集成库中所有的选项。
 
@@ -476,7 +476,7 @@ GlideApp.with(this)
 
 　　当然，Generated API 所能做的并不只是这些而已，它还可以对现有的 API 进行扩展，定制出任何属于自己的 API。
 
-### 11.1 定制自己的 API
+## 11.1 定制自己的 API
 
 　　来举一个具体的例子，比如说要求项目中所有图片的缓存策略全部都要缓存原始图片，那么每次在使用 Glide 加载图片的时候，都去指定 diskCacheStrategy(DiskCacheStrategy.DATA) 这么长长的一串代码，确实是让人比较心烦。这种情况就可以去定制一个自己的 API 了。
 
@@ -515,6 +515,7 @@ GlideApp.with(this)
 
 　　有了这个强大的功能之后，使用 Glide 就能变得更加灵活了。
 
+# 12. 参考文章
 
-## 12. 参考文章
 1. [Android图片加载框架最全解析（八），带你全面了解Glide 4的用法](https://blog.csdn.net/guolin_blog/article/details/78582548)
+
