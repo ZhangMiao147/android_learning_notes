@@ -1,15 +1,18 @@
 # Android单元测试之三：使用模拟框架模拟依赖
 
-## 基本描述
-　　如果是一些工具类方法的测试，如计算两数之和的方法，本地 JVM 虚拟机就能提供足够的运行环境，但如果要测试的单元依赖了 Android 框架，比如用到了 Android 中的 Context 类的一些方法，本地 JVM 将无法提供这样的环境，这时候模拟框架 Mockito 就派上用场了。
-## 使用
+# 1. 基本描述
 
-#### 引入框架
+　　如果是一些工具类方法的测试，如计算两数之和的方法，本地 JVM 虚拟机就能提供足够的运行环境，但如果要测试的单元依赖了 Android 框架，比如用到了 Android 中的 Context 类的一些方法，本地 JVM 将无法提供这样的环境，这时候模拟框架 Mockito 就派上用场了。
+# 2. 使用
+
+## 2.1. 引入框架
+
 ```xml
 testImplementation 'org.mockito:mockito-core:2.19.0'
 ```
 
-#### 测试类
+## 2.2. 测试类
+
 ```java
 package com.zm.androidUnitTest;
 
@@ -46,9 +49,11 @@ public class MockUnitTest {
 }
 ```
 
-#### 测试结果
+## 2.3. 测试结果
+
 ![](image/context_test.png)
 
-## 参考文章
-https://www.jianshu.com/p/aa51a3e007e2
+# 3. 参考文章
+
+1. [Android单元测试只看这一篇就够了](https://www.jianshu.com/p/aa51a3e007e2)
 

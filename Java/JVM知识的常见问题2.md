@@ -2,21 +2,176 @@
 
 # 1. JVM 内存模型的相关知识了解多少，比如重排序、内存屏障、happen-before、主内存、工作内存等。
 
-内存屏障：为了保障执行顺序和可见性的一条cpu指令
+　　内存屏障：为了保障执行顺序和可见性的一条cpu指令。
 
-重排序：为了提高性能，编译器和处理器会对执行进行重拍
+　　重排序：为了提高性能，编译器和处理器会对执行进行重排序。
 
-happen-before：操作间执行的顺序关系。有些操作先发生。
+　　happen-before：操作间执行的顺序关系。有些操作先发生。
 
-主内存：共享变量存储的区域即是主内存
+　　主内存：共享变量存储的区域即是主内存。
 
-工作内存：每个线程copy的本地内存，存储了该线程以读/写共享变量的副本
+　　工作内存：每个线程 copy 的本地内存，存储了该线程以读/写共享变量的副本。
 
-http://ifeve.com/java-memory-model-1/ 
+# 并发编程模型的分类
 
-http://www.jianshu.com/p/d3fda02d4cae 
+在并发编程中，我们需要处理两个关键问题：线程之间如何通信及线程之间如何同步（这里的线程是指并发执行的活动实体）。通信是指线程之间以何种机制来交换信息。在命令式编程中，线程之间的通信机制有两种：共享内存和消息传递。
+在共享内存的并发模型里，线程之间共享程序的公共状态，线程之间通过写-读内存中的公共状态来隐式进行通信。在消息传递的并发模型里，线程之间没有公共状态，线程之间必须通过明确的发送消息来显式进行通信。
+同步是指程序用于控制不同线程之间操作发生相对顺序的机制。在共享内存并发模型里，同步是显式进行的。程序员必须显式指定某个方法或某段代码需要在线程之间互斥执行。在消息传递的并发模型里，由于消息的发送必须在消息的接收之前，因此同步是隐式进行的。
+Java的并发采用的是共享内存模型，Java线程之间的通信总是隐式进行，整个通信过程对程序员完全透明。如果编写多线程程序的Java程序员不理解隐式进行的线程之间通信的工作机制，很可能会遇到各种奇怪的内存可见性问题。
 
-http://blog.csdn.net/kenzyq/article/details/50918457
+# Java内存模型的抽象
+
+在java中，所有实例域、静态域和数组元素存储在堆内存中，堆内存在线程之间共享（本文使用“共享变量”这个术语代指实例域，静态域和数组元素）。局部变量（Local variables），方法定义参数（java语言规范称之为formal method parameters）和异常处理器参数（exception handler parameters）不会在线程之间共享，它们不会有内存可见性问题，也不受内存模型的影响。
+Java线程之间的通信由Java内存模型（本文简称为JMM）控制，JMM决定一个线程对共享变量的写入何时对另一个线程可见。从抽象的角度来看，JMM定义了线程和主内存之间的抽象关系：线程之间的共享变量存储在主内存（main memory）中，每个线程都有一个私有的本地内存（local memory），本地内存中存储了该线程以读/写共享变量的副本。本地内存是JMM的一个抽象概念，并不真实存在。它涵盖了缓存，写缓冲区，寄存器以及其他的硬件和编译器优化。Java内存模型的抽象示意图如下：
+[![img](http://ifeve.com/wp-content/uploads/2013/01/113.png)](http://ifeve.com/wp-content/uploads/2013/01/113.png)
+从上图来看，线程A与线程B之间如要通信的话，必须要经历下面2个步骤：
+\1. 首先，线程A把本地内存A中更新过的共享变量刷新到主内存中去。
+\2. 然后，线程B到主内存中去读取线程A之前已更新过的共享变量。
+下面通过示意图来说明这两个步骤：
+[![img](http://ifeve.com/wp-content/uploads/2013/01/221.png)](http://ifeve.com/wp-content/uploads/2013/01/221.png)
+如上图所示，本地内存A和B有主内存中共享变量x的副本。假设初始时，这三个内存中的x值都为0。线程A在执行时，把更新后的x值（假设值为1）临时存放在自己的本地内存A中。当线程A和线程B需要通信时，线程A首先会把自己本地内存中修改后的x值刷新到主内存中，此时主内存中的x值变为了1。随后，线程B到主内存中去读取线程A更新后的x值，此时线程B的本地内存的x值也变为了1。
+从整体来看，这两个步骤实质上是线程A在向线程B发送消息，而且这个通信过程必须要经过主内存。JMM通过控制主内存与每个线程的本地内存之间的交互，来为java程序员提供内存可见性保证。
+
+# 重排序
+
+在执行程序时为了提高性能，编译器和处理器常常会对指令做重排序。重排序分三种类型：
+\1. 编译器优化的重排序。编译器在不改变单线程程序语义的前提下，可以重新安排语句的执行顺序。
+\2. 指令级并行的重排序。现代处理器采用了指令级并行技术（Instruction-Level Parallelism， ILP）来将多条指令重叠执行。如果不存在数据依赖性，处理器可以改变语句对应机器指令的执行顺序。
+\3. 内存系统的重排序。由于处理器使用缓存和读/写缓冲区，这使得加载和存储操作看上去可能是在乱序执行。
+从java源代码到最终实际执行的指令序列，会分别经历下面三种重排序：
+[![img](http://ifeve.com/wp-content/uploads/2013/01/331.png)](http://ifeve.com/wp-content/uploads/2013/01/331.png)
+上述的1属于编译器重排序，2和3属于处理器重排序。这些重排序都可能会导致多线程程序出现内存可见性问题。对于编译器，JMM的编译器重排序规则会禁止特定类型的编译器重排序（不是所有的编译器重排序都要禁止）。对于处理器重排序，JMM的处理器重排序规则会要求java编译器在生成指令序列时，插入特定类型的内存屏障（memory barriers，intel称之为memory fence）指令，通过内存屏障指令来禁止特定类型的处理器重排序（不是所有的处理器重排序都要禁止）。
+JMM属于语言级的内存模型，它确保在不同的编译器和不同的处理器平台之上，通过禁止特定类型的编译器重排序和处理器重排序，为程序员提供一致的内存可见性保证。
+
+# 处理器重排序与内存屏障指令
+
+现代的处理器使用写缓冲区来临时保存向内存写入的数据。写缓冲区可以保证指令流水线持续运行，它可以避免由于处理器停顿下来等待向内存写入数据而产生的延迟。同时，通过以批处理的方式刷新写缓冲区，以及合并写缓冲区中对同一内存地址的多次写，可以减少对内存总线的占用。虽然写缓冲区有这么多好处，但每个处理器上的写缓冲区，仅仅对它所在的处理器可见。这个特性会对内存操作的执行顺序产生重要的影响：处理器对内存的读/写操作的执行顺序，不一定与内存实际发生的读/写操作顺序一致！为了具体说明，请看下面示例：
+
+| Processor A                                             | Processor B             |
+| ------------------------------------------------------- | ----------------------- |
+| a = 1; //A1 x = b; //A2                                 | b = 2; //B1 y = a; //B2 |
+| 初始状态：a = b = 0 处理器允许执行后得到结果：x = y = 0 |                         |
+
+假设处理器A和处理器B按程序的顺序并行执行内存访问，最终却可能得到x = y = 0的结果。具体的原因如下图所示：
+[![img](http://ifeve.com/wp-content/uploads/2013/01/441.png)](http://ifeve.com/wp-content/uploads/2013/01/441.png)
+这里处理器A和处理器B可以同时把共享变量写入自己的写缓冲区（A1，B1），然后从内存中读取另一个共享变量（A2，B2），最后才把自己写缓存区中保存的脏数据刷新到内存中（A3，B3）。当以这种时序执行时，程序就可以得到x = y = 0的结果。
+从内存操作实际发生的顺序来看，直到处理器A执行A3来刷新自己的写缓存区，写操作A1才算真正执行了。虽然处理器A执行内存操作的顺序为：A1->A2，但内存操作实际发生的顺序却是：A2->A1。此时，处理器A的内存操作顺序被重排序了（处理器B的情况和处理器A一样，这里就不赘述了）。
+这里的关键是，由于写缓冲区仅对自己的处理器可见，它会导致处理器执行内存操作的顺序可能会与内存实际的操作执行顺序不一致。由于现代的处理器都会使用写缓冲区，因此现代的处理器都会允许对写-读操作重排序。
+下面是常见处理器允许的重排序类型的列表：
+
+|           | Load-Load | Load-Store | Store-Store | Store-Load | 数据依赖 |
+| --------- | --------- | ---------- | ----------- | ---------- | -------- |
+| sparc-TSO | N         | N          | N           | Y          | N        |
+| x86       | N         | N          | N           | Y          | N        |
+| ia64      | Y         | Y          | Y           | Y          | N        |
+| PowerPC   | Y         | Y          | Y           | Y          | N        |
+
+上表单元格中的“N”表示处理器不允许两个操作重排序，“Y”表示允许重排序。
+从上表我们可以看出：常见的处理器都允许Store-Load重排序；常见的处理器都不允许对存在数据依赖的操作做重排序。sparc-TSO和x86拥有相对较强的处理器内存模型，它们仅允许对写-读操作做重排序（因为它们都使用了写缓冲区）。
+※注1：sparc-TSO是指以TSO(Total Store Order)内存模型运行时，sparc处理器的特性。
+※注2：上表中的x86包括x64及AMD64。
+※注3：由于ARM处理器的内存模型与PowerPC处理器的内存模型非常类似，本文将忽略它。
+※注4：数据依赖性后文会专门说明。
+
+为了保证内存可见性，java编译器在生成指令序列的适当位置会插入内存屏障指令来禁止特定类型的处理器重排序。JMM把内存屏障指令分为下列四类：
+
+| 屏障类型            | 指令示例                   | 说明                                                         |
+| ------------------- | -------------------------- | ------------------------------------------------------------ |
+| LoadLoad Barriers   | Load1; LoadLoad; Load2     | 确保Load1数据的装载，之前于Load2及所有后续装载指令的装载。   |
+| StoreStore Barriers | Store1; StoreStore; Store2 | 确保Store1数据对其他处理器可见（刷新到内存），之前于Store2及所有后续存储指令的存储。 |
+| LoadStore Barriers  | Load1; LoadStore; Store2   | 确保Load1数据装载，之前于Store2及所有后续的存储指令刷新到内存。 |
+| StoreLoad Barriers  | Store1; StoreLoad; Load2   | 确保Store1数据对其他处理器变得可见（指刷新到内存），之前于Load2及所有后续装载指令的装载。StoreLoad Barriers会使该屏障之前的所有内存访问指令（存储和装载指令）完成之后，才执行该屏障之后的内存访问指令。 |
+
+StoreLoad Barriers是一个“全能型”的屏障，它同时具有其他三个屏障的效果。现代的多处理器大都支持该屏障（其他类型的屏障不一定被所有处理器支持）。执行该屏障开销会很昂贵，因为当前处理器通常要把写缓冲区中的数据全部刷新到内存中（buffer fully flush）。
+
+# happens-before
+
+从JDK5开始，java使用新的JSR -133内存模型（本文除非特别说明，针对的都是JSR- 133内存模型）。JSR-133使用happens-before的概念来阐述操作之间的内存可见性。在JMM中，如果一个操作执行的结果需要对另一个操作可见，那么这两个操作之间必须要存在happens-before关系。这里提到的两个操作既可以是在一个线程之内，也可以是在不同线程之间。
+与程序员密切相关的happens-before规则如下：
+
+- 程序顺序规则：一个线程中的每个操作，happens- before 于该线程中的任意后续操作。
+- 监视器锁规则：对一个监视器锁的解锁，happens- before 于随后对这个监视器锁的加锁。
+- volatile变量规则：对一个volatile域的写，happens- before 于任意后续对这个volatile域的读。
+- 传递性：如果A happens- before B，且B happens- before C，那么A happens- before C。
+
+注意，两个操作之间具有happens-before关系，并不意味着前一个操作必须要在后一个操作之前执行！happens-before仅仅要求前一个操作（执行的结果）对后一个操作可见，且前一个操作按顺序排在第二个操作之前（the first is visible to and ordered before the second）。happens- before的定义很微妙，后文会具体说明happens-before为什么要这么定义。
+happens-before与JMM的关系如下图所示：
+
+ [![img](http://ifeve.com/wp-content/uploads/2013/01/552.png)](http://ifeve.com/wp-content/uploads/2013/01/552.png)
+如上图所示，一个happens-before规则通常对应于多个编译器和处理器重排序规则。对于java程序员来说，happens-before规则简单易懂，它避免java程序员为了理解JMM提供的内存可见性保证而去学习复杂的重排序规则以及这些规则的具体实现。
+
+### 什么是 Memory Barrier（内存屏障）？
+
+> 内存屏障，又称内存栅栏，是一个CPU指令，基本上它是一条这样的指令：
+>  1、保证特定操作的执行顺序。
+>  2、影响某些数据（或则是某条指令的执行结果）的内存可见性。
+
+编译器和CPU能够重排序指令，保证最终相同的结果，尝试优化性能。插入一条Memory Barrier会告诉编译器和CPU：不管什么指令都不能和这条Memory Barrier指令重排序。
+
+Memory Barrier所做的另外一件事是强制刷出各种CPU cache，如一个 Write-Barrier（写入屏障）将刷出所有在 Barrier 之前写入 cache 的数据，因此，任何CPU上的线程都能读取到这些数据的最新版本。
+
+
+
+![img](https:////upload-images.jianshu.io/upload_images/2184951-ad0094fa98e6cda0.png?imageMogr2/auto-orient/strip|imageView2/2/w/220/format/webp)
+
+Memory Barrier.png
+
+这和java有什么关系？volatile是基于Memory Barrier实现的。
+
+如果一个变量是volatile修饰的，JMM会在写入这个字段之后插进一个Write-Barrier指令，并在读这个字段之前插入一个Read-Barrier指令。
+
+
+
+![img](https:////upload-images.jianshu.io/upload_images/2184951-6b466ec6493b0a4f.png?imageMogr2/auto-orient/strip|imageView2/2/w/222/format/webp)
+
+volatile.png
+
+
+
+这意味着，如果写入一个volatile变量a，可以保证：
+ 1、一个线程写入变量a后，任何线程访问该变量都会拿到最新值。
+ 2、在写入变量a之前的写入操作，其更新的数据对于其他线程也是可见的。因为Memory Barrier会刷出cache中的所有先前的写入。
+
+### happens-before
+
+> 从jdk5开始，java使用新的JSR-133内存模型，基于happens-before的概念来阐述操作之间的内存可见性。
+
+在JMM中，如果一个操作的执行结果需要对另一个操作可见，那么这两个操作之间必须要存在happens-before关系，这个的两个操作既可以在同一个线程，也可以在不同的两个线程中。
+
+与程序员密切相关的happens-before规则如下：
+ 1、程序顺序规则：一个线程中的每个操作，happens-before于该线程中任意的后续操作。
+ 2、监视器锁规则：对一个锁的解锁操作，happens-before于随后对这个锁的加锁操作。
+ 3、volatile域规则：对一个volatile域的写操作，happens-before于任意线程后续对这个volatile域的读。
+ 4、传递性规则：如果 A happens-before B，且 B happens-before C，那么A happens-before C。
+
+注意：两个操作之间具有happens-before关系，并不意味前一个操作必须要在后一个操作之前执行！仅仅要求前一个操作的执行结果，对于后一个操作是可见的，且前一个操作按顺序排在后一个操作之前。
+
+### 指令重排序
+
+> 在执行程序时，为了提高性能，编译器和处理器会对指令做重排序。但是，JMM确保在不同的编译器和不同的处理器平台之上，通过插入特定类型的Memory Barrier来禁止特定类型的编译器重排序和处理器重排序，为上层提供一致的内存可见性保证。
+
+1、编译器优化重排序：编译器在不改变单线程程序语义的前提下，可以重新安排语句的执行顺序。
+ 2、指令级并行的重排序：如果不存l在数据依赖性，处理器可以改变语句对应机器指令的执行顺序。
+ 3、内存系统的重排序：处理器使用缓存和读写缓冲区，这使得加载和存储操作看上去可能是在乱序执行。
+
+###### 数据依赖性
+
+如果两个操作访问同一个变量，其中一个为写操作，此时这两个操作之间存在数据依赖性。
+ 编译器和处理器不会改变存在数据依赖性关系的两个操作的执行顺序，即不会重排序。
+
+###### as-if-serial
+
+不管怎么重排序，单线程下的执行结果不能被改变，编译器、runtime和处理器都必须遵守as-if-serial语义。
+
+### 抽象结构
+
+> java线程之间的通信由java内存模型（JMM）控制，JMM决定一个线程对共享变量（实例域、静态域和数组）的写入何时对其它线程可见。
+
+从抽象的角度来看，JMM定义了线程和主内存Main Memory（堆内存）之间的抽象关系：线程之间的共享变量存储在主内存中，每个线程都有自己的本地内存Local Memory（只是一个抽象概念，物理上不存在），存储了该线程的共享变量副本。
+
+所以，线程A和线程B之前需要通信的话，必须经过一下两个步骤：
+ 1、线程A把本地内存中更新过的共享变量刷新到主内存中。
+ 2、线程B到主内存中读取线程A之前更新过的共享变量。
 
 # 2. 简单说说你了解的类加载器，可以打破双亲委派吗，怎么打破
 
@@ -26,19 +181,166 @@ http://blog.csdn.net/kenzyq/article/details/50918457
 
 http://blog.csdn.net/gjanyanlig/article/details/6818655/
 
-### 13. 讲讲 JAVA 的反射机制。
+## 2.1. 类的加载过程
 
-Java程序在运行状态可以动态的获取类的所有属性和方法，并实例化该类，调用方法的功能
+　　JVM将类加载过程分为三个步骤：装载（Load），链接（Link）和初始化(Initialize)链接又分为三个步骤，如下图所示：
 
-[http://baike.baidu.com/link?url=C7p1PeLa3ploAgkfAOK-4XHE8HzQuOAB7K5GPcK_zpbAa_Aw-nO3997K1oir8N–1_wxXZfOThFrEcA0LjVP6wNOwidVTkLBzKlQVK6JvXYvVNhDWV9yF-NIOebtg1hwsnagsjUhOE2wxmiup20RRa#7](https://blog.csdn.net/ms_lang/article/details/83214901#7)
+![img](http://hi.csdn.net/attachment/201109/25/0_131691377413Tr.gif)
 
-### 14. 加载时机与加载过程
+1) 装载：查找并加载类的二进制数据；
+
+2)链接：
+
+> 验证：确保被加载类的正确性；
+>
+> 准备：为类的静态变量分配内存，并将其初始化为默认值；
+>
+> 解析：把类中的符号引用转换为直接引用；
+
+3)初始化：为类的静态变量赋予正确的初始值；
+
+​     那为什么我要有验证这一步骤呢？首先如果由编译器生成的class文件，它肯定是符合JVM字节码格式的，但是万一有高手自己写一个class文件，让JVM加载并运行，用于恶意用途，就不妙了，因此这个class文件要先过验证这一关，不符合的话不会让它继续执行的，也是为了安全考虑吧。
+
+​    准备阶段和初始化阶段看似有点牟盾，其实是不牟盾的，如果类中有语句：private static int a = 10，它的执行过程是这样的，首先字节码文件被加载到内存后，先进行链接的验证这一步骤，验证通过后准备阶段，给a分配内存，因为变量a是static的，所以此时a等于int类型的默认初始值0，即a=0,然后到解析（后面在说），到初始化这一步骤时，才把a的真正的值10赋给a,此时a=10。
 
 
 
-### 15. Java 类加载的方式
+**2. 类的初始化**
+
+  类什么时候才被初始化：
+
+> 1）创建类的实例，也就是new一个对象
+
+> 2）访问某个类或接口的静态变量，或者对该静态变量赋值
+>
+> 3）调用类的静态方法
+>
+> 4）反射（Class.forName("com.lyj.load")）
+
+> 5）初始化一个类的子类（会首先初始化子类的父类）
+>
+> 6）JVM启动时标明的启动类，即文件名和类名相同的那个类
+
+​     只有这6中情况才会导致类的类的初始化。
+
+   类的初始化步骤：
+
+​    1）如果这个类还没有被加载和链接，那先进行加载和链接
+
+​    2）假如这个类存在直接父类，并且这个类还没有被初始化（注意：在一个类加载器中，类只能初始化一次），那就初始化直接的父类（不适用于接口）
+
+​     3)加入类中存在初始化语句（如static变量和static块），那就依次执行这些初始化语句。
 
 
+
+**3.类的加载**
+
+​    类的加载指的是将类的.class文件中的二进制数据读入到内存中，将其放在运行时数据区的方法区内，然后在堆区创建一个这个类的java.lang.Class对象，用来封装类在方法区类的对象。看下面2图
+
+![img](http://hi.csdn.net/attachment/201009/25/0_1285381395C6iW.gif)
+
+![img](http://hi.csdn.net/attachment/201109/25/0_1316916841uQvx.gif)
+
+​     类的加载的最终产品是位于堆区中的Class对象
+​    Class对象封装了类在方法区内的数据结构，并且向Java程序员提供了访问方法区内的数据结构的接口
+
+加载类的方式有以下几种：
+
+>  1）从本地系统直接加载
+>
+> 2）通过网络下载.class文件
+>
+> 3）从zip，jar等归档文件中加载.class文件
+>
+> 4）从专有数据库中提取.class文件
+>
+> 5）将Java源文件动态编译为.class文件（服务器）
+
+**4.加载器**
+
+**来自http://blog.csdn.net/cutesource/article/details/5904501**
+
+
+
+JVM的类加载是通过ClassLoader及其子类来完成的，类的层次关系和加载顺序可以由下图来描述：
+
+![img](http://hi.csdn.net/attachment/201009/25/0_1285421756PHyZ.gif)
+
+1）Bootstrap ClassLoader
+
+负责加载$JAVA_HOME中jre/lib/rt.jar里所有的class，由C++实现，不是ClassLoader子类
+
+2）Extension ClassLoader
+
+负责加载java平台中扩展功能的一些jar包，包括$JAVA_HOME中jre/lib/*.jar或-Djava.ext.dirs指定目录下的jar包
+
+3）App ClassLoader
+
+负责记载classpath中指定的jar包及目录中class
+
+4）Custom ClassLoader
+
+属于应用程序根据自身需要自定义的ClassLoader，如tomcat、jboss都会根据j2ee规范自行实现ClassLoader
+
+加载过程中会先检查类是否被已加载，检查顺序是自底向上，从Custom ClassLoader到BootStrap ClassLoader逐层检查，只要某个classloader已加载就视为已加载此类，保证此类只所有ClassLoader加载一次。而加载的顺序是自顶向下，也就是由上层来逐层尝试加载此类。
+
+# 3. 讲讲 JAVA 的反射机制。
+
+Java程序在运行状态可以动态的获取类的所有属性和方法，并实例化该类，调用方法的功能。
+
+1. JAVA 反射机制是在运行状态中，对于任意一个类，都能够知道这个类的所有属性和方法。
+
+2. 对于任意一个对象，都能够调用它的任意方法和属性。
+
+3. 这种动态获取信息以及动态调用对象方法的功能称为 java 语言的反射机制。
+
+# 4. Java 类加载时机与加载过程
+
+https://www.cnblogs.com/fnlingnzb-learner/p/11990943.html
+
+https://blog.csdn.net/justloveyou_/article/details/72466105
+
+# 5. Java 类加载的方式
+
+## 5.1. 三种类加载方式
+
+1. 由 new 关键字创建一个类的实例（静态加载）
+
+   在由运行时刻用 new 方法载入
+
+   如：Dog dog ＝ new Dog（）；
+
+2. 调用 Class.forName() 方法
+   通过反射加载类型，并创建对象实例
+   如：Class clazz ＝ Class.forName（“Dog”）；
+   Object dog ＝clazz.newInstance（）；
+
+3. 调用某个 ClassLoader 实例的 loadClass() 方法
+   通过该 ClassLoader 实例的 loadClass() 方法载入。应用程序可以通过继承 ClassLoader 实现自己的类装载器。
+   如：Class clazz ＝ classLoader.loadClass（“Dog”）；
+   Object dog ＝clazz.newInstance（）；
+
+## 5.2. 三者的区别
+
+　　1 和 2 使用的类加载器是相同的，都是当前类加载器。（即：this.getClass.getClassLoader）。
+　　3 由用户指定类加载器。如果需要在当前类路径以外寻找类，则只能采用第 3 种方式。第 3 种方式加载的类与当前类分属不同的命名空间。
+　　另外：1是静态加载，2、3是动态加载。
+
+　　两个异常(exception)：
+
+- 静态加载的时候如果在运行环境中找不到要初始化的类,抛出的是 NoClassDefFoundError，它在 JAVA 的异常体系中是一个Error。
+- 动态态加载的时候如果在运行环境中找不到要初始化的类，抛出的是 ClassNotFoundException，它在 JAVA 的异常体系中是一个 checked 异常。
+
+## 5.3. Class.forName与ClassLoader.loadClass区别
+
+　　Class 的装载包括 3 个步骤：加载（loading）,连接（link）,初始化（initialize）。
+
+　　Class.forName(className) 实际上是调用 Class.forName(className, true, this.getClass().getClassLoader())。第二个参数，是指 Class 被 loading 后是不是必须被初始化。
+ClassLoader.loadClass(className) 实际上调用的是 ClassLoader.loadClass(name, false)，第二个参数指 Class 是否被 link。
+
+　　Class.forName(className) 装载的 class 已经被初始化，而 ClassLoader.loadClass(className) 装载的 class 还没有被 link。一般情况下，这两个方法效果一样，都能装载 Class。但如果程序依赖于 Class 是否被初始化，就必须用 Class.forName(name) 了。
+
+　　对于相同的类，JVM 最多会载入一次。但如果同一个 class 文件被不同的 ClassLoader 载入，那么载入后的两个类是完全不同的。因为已被加载的类由该类的类加载器实例与该类的全路径名的组合标识。设有 packagename.A Class ，分别被类加载器 CL1 和 CL2 加载，所以系统中有两个不同的 java.lang.Class 实例： <CL1, packagename.A> 和 <CL2, packagename.A>。
 
 #  6. Java 对象的创建过程
 
@@ -94,7 +396,7 @@ Java程序在运行状态可以动态的获取类的所有属性和方法，并�
 
 　　一般来说（由字节码流中 new 指令后面是否跟随 invokespecial 指令所决定，Java 编译器会在遇到 new 关键字的地方同时生成这两条字节码指令，但如果直接通过其他方式产生的则不一定如此），new 指令之后会接着执行 < init >() 方法，按照程序员的意愿对对象进行初始化，这样一个真正可用的对象才算完全被构造出来。
 
-#  线上应用的 JVM 参数有哪些？
+#  7. 线上应用的 JVM 参数有哪些？
 
 　　-Xms：设置堆的最小值。
 
@@ -120,7 +422,7 @@ Java程序在运行状态可以动态的获取类的所有属性和方法，并�
 org.gradle.jvmargs=-Xmx4096m -XX:MaxPermSize=4096m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
 ```
 
-# gl 和 cms 区别，吞吐量优先和响应优先的垃圾收集器选择。
+# 8. gl 和 cms 区别，吞吐量优先和响应优先的垃圾收集器选择。
 
 Cms是以获取最短回收停顿时间为目标的收集器。基于标记-清除算法实现。比较占用cpu资源，切易造成碎片。
 
@@ -154,11 +456,31 @@ Cms回收开启时机：内存占用80%
 
 命令JVM不基于运行时收集的数据来启动CMS垃圾收集周期
 
-# 19. 怎么打出线程栈信息。
+# 9. 怎么打出线程栈信息
 
-# Java 垃圾回收机制
+　　Linux下：
 
+1. 第一步：在终端运行 Java 程序
 
+2. 第二步：通过命令 pidof java 找到已经启动的 java 进程的ID，选择需要查看的 java 程序的进程ID
+
+3. 第三步：使用命令 kill -3 <java进行的 pid> 打印出 java 程序的线程堆栈信息
+
+4. 第四步：通常情况下运行的项目可能会比较大，那么这个时候打印的堆栈信息可能会有几千到几万行，为了方便查看，我们往往需要将输出内容进行重定向
+   使用 linux 下的重定向命令方式即可：例如： demo.sh > run.log 2>&1 将输出信息重定向到 run.log中。
+
+   注：在操作系统中，0 1 2 分别对应着不同的含义， 如下：
+   0 ： 标准输入，即：C 中的stdin ， java 中的 System.in
+   1 ： 标准输出， 即：C 中的stdout ，java 中的 System.out
+   2 ： 错误输出， 即：C 中的stderr ， java 中的 System.err
+
+　　使用命令：kill -3 {pid}，可以打印指定线程的堆栈信息到 tomcat 的 catalina.out 日志中。在性能测试过程中，可以观察响应时间的曲线，如果突然出现波峰则抓取当前时间点 tomcat 线程的堆栈信息供后续分析。
+
+# 10. 如何进行内存调优
+
+http://ifeve.com/useful-jvm-flags/
+
+http://ifeve.com/useful-jvm-flags-part-4-heap-tuning/
 
 
 

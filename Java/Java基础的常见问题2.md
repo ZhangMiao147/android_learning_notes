@@ -132,8 +132,8 @@
         Class class2 = book1.getClass();
 
 /*********************************************/
-				// 方法三：Class.forName
-				Class class3 = null;
+		// 方法三：Class.forName
+		Class class3 = null;
         try {
             class3 = Class.forName("Book");
         } catch (ClassNotFoundException e) {

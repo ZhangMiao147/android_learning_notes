@@ -1,10 +1,12 @@
 # Android单元测试之二：本地测试
 
-## 本地测试
-　　本地测试（ Local tests）：只在本地机器 JVM 上运行，以最小化执行时间，这种单元测试不依赖于 Android 框架，或者即使有依赖，也很方便使用模拟框架来模拟依赖，以达到隔离 Android 依赖的目的，模拟框架如 google 推荐的 Mockito 。
-## 如何进行本地测试
+# 1. 本地测试
 
-#### 添加依赖
+　　本地测试（ Local tests）：只在本地机器 JVM 上运行，以最小化执行时间，这种单元测试不依赖于 Android 框架，或者即使有依赖，也很方便使用模拟框架来模拟依赖，以达到隔离 Android 依赖的目的，模拟框架如 google 推荐的 Mockito 。
+# 2. 如何进行本地测试
+
+## 2.1. 添加依赖
+
 ```xml
 dependencies {
 ...
@@ -15,7 +17,8 @@ dependencies {
 }
 ```
 
-#### 测试代码存放的位置
+## 2.2. 测试代码存放的位置
+
 ```
 app/src
    |-- androidTest/java（仪器化单元测试、 UI 测试）
@@ -23,7 +26,8 @@ app/src
    |-- test/java（本地单元测试）
 ```
 
-#### 测试
+## 2.3. 测试
+
 　　可以自己手动在相应目录创建测试类， AS 也提供了一种快捷方式：选择对应的类 -> 将光标停留在类名上 -> 按下 ALT + ENTER -> 在弹出的弹窗中选择 Create Test 。
 
 ![](image/create_test.png)
@@ -55,9 +59,11 @@ app/src
 
 ![](image/test_failed.png)
 
-## 总结
+# 3. 总结
+
 　　本地测试比较适合一些工具类测试，不需要使用任何 Android 系统的东西，只适用于测试公共方法，比如字符处理，数据整理等这些方法。
 
-## 参考文章
-https://www.jianshu.com/p/aa51a3e007e2
+# 4. 参考文章
+
+1. [Android单元测试只看这一篇就够了](https://www.jianshu.com/p/aa51a3e007e2)
 

@@ -139,11 +139,10 @@ public boolean equals(Object obj) {
 
 ### 3.3.2. equals 与 hashCode 的关系?
 
- 　　equals() 相等的两个对象，hashCode() 一定相等；
-
- 　　hashCode() 不相等，一定能推出 equals() 也不相等；
-
- 　　hashCode() 相等，equals() 可能相等，也可能不等。
+1. 如果两个对象 equals，Java 运行时环境会认为他们的 hashcode 一定相等。 
+2. 如果两个对象不 equals，他们的 hashcode 有可能相等。 
+3. 如果两个对象 hashcode 相等，他们不一定 equals。 
+4. 如果两个对象 hashcode 不相等，他们一定不 equals。 
 
 ### 3.3.3 hashcode 是否唯一
 
@@ -151,16 +150,36 @@ public boolean equals(Object obj) {
 
 ## 3.4. 有没有可能 2 个不相等的对象有相同的 hashcode。
 
-有，因为 hashcode 是为了确定对象保存在散列表的位置，但是有可能会发生哈希冲突，就是因为对象的 hashcode 会相同，导致哈希冲突。
+ 　　有，因为 hashcode 是为了确定对象保存在散列表的位置，但是有可能会发生哈希冲突，就是因为对象的 hashcode 会相同，导致哈希冲突。
 
 1、如果两个对象 equals，Java 运行时环境会认为他们的 hashcode 一定相等。
 2、如果两个对象不 equals，他们的 hashcode 有可能相等。
 3、如果两个对象 hashcode 相等，他们不一定 equals。
 4、如果两个对象 hashcode 不相等，他们一定不 equals。
 
-https://blog.csdn.net/prh1023/article/details/80652704
+ 　　HashSe 和 HashMap 一直都是 JDK 中最常用的两个类，HashSet 要求不能存储相同的对象，HashMap 要求不能存储相同的键。
 
+  　　那么 Java 运行时环境是如何判断 HashSet 中相同对象、HashMap 中相同键的呢？当存储了 “ 相同的东西 ” 之后 Java 运行时环境又将如何来维护呢？ 
 
+ 　　在研究这个问题之前，首先说明一下 JDK 对 equals(Object obj) 和 hashcode() 两个方法的定义和规范：在 Java 中任何一个对象都具备 equals(Object obj) 和 hashcode() 这两个方法，因为他们是在 Object 类中定义的。 
+
+ 　　equals(Object obj) 方法用来判断两个对象是否 “ 相同 ”，如果 “ 相同 ” 则返回 true，否则返回 false。 
+
+ 　　hashcode() 方法返回一个 int 数，在 Object 类中的默认实现是 “ 将该对象的内部地址转换成一个整数返回 ”。 
+
+ 　　接下来有两个个关于这两个方法的重要规范： 
+
+1. 规范 1：若重写 equals(Object obj) 方法，有必要重写 hashcode() 方法，确保通过 equals(Object obj) 方法判断结果为 true 的两个对象具备相等的 hashcode() 返回值。说得简单点就是：“ 如果两个对象相同，那么他们的 hashcode 应该 相等”。不过请注意：这个只是规范，如果你非要写一个类让 equals(Object obj) 返回 true 而 hashcode() 返回两个不相等的值，编译和运行都是不会报错的。不过这样违反了 Java 规范，程序也就埋下了 BUG。
+2.  规范 2：如果 equals(Object obj) 返回 false，即两个对象 “ 不相同 ”，并不要求对这两个对象调用 hashcode() 方法得到两个不相同的数。说的简单点就是：“ 如果两个对象不相同，他们的 hashcode 可能相同”。 
+
+ 　　根据这两个规范，可以得到如下推论： 
+
+1. 如果两个对象 equals，Java 运行时环境会认为他们的 hashcode 一定相等。 
+2. 如果两个对象不 equals，他们的 hashcode 有可能相等。 
+3. 如果两个对象 hashcode 相等，他们不一定 equals。 
+4. 如果两个对象 hashcode 不相等，他们一定不 equals。 
+
+ 　　这样就可以推断 Java 运行时环境是怎样判断 HashSet 和 HastMap 中的两个对象相同或不同了。先判断 hashcode 是否相等，再判断是否 equals。 
 
 # 4. 访问修饰符
 
@@ -168,9 +187,39 @@ https://blog.csdn.net/prh1023/article/details/80652704
 
 https://blog.csdn.net/riemann_/article/details/87487472
 
-OO 就是面向对象，而面向对象的四大特性是：抽象、封装、继承、多态。
+ 　　OO 就是面向对象，而面向对象的四大特性是：抽象、封装、继承、多态。
 
-修饰符的存在可以在包与包之间、类与类之间产生一种权限的关系，并不能保证随心所欲，这样才能确保安全。
+ 　　修饰符的存在可以在包与包之间、类与类之间产生一种权限的关系，并不能保证随心所欲，这样才能确保安全。
+
+ 　　访问修饰符，主要标示修饰块的作用域，方便隔离防护。
+
+* public： Java 语言中访问限制最宽的修饰符，一般称之为 “ 公共的 ”。被其修饰的类、属性以及方法不仅可以跨类访问，而且允许跨包（package）访问。
+
+* private: Java 语言中对访问权限限制的最窄的修饰符，一般称之为 “ 私有的 ”。被其修饰的类、属性以及方法只能被该类的对象访问，其子类不能访问，更不能允许跨包访问。
+
+* protect: 介于 public 和 private 之间的一种访问修饰符，一般称之为 “ 保护形 ”。被其修饰的类、属性以及方法只能被类本身的方法及子类访问，即使子类在不同的包中也可以访问。
+
+* default：即不加任何访问修饰符，通常称为 “ 默认访问模式 “。该模式下，只允许在同一个包中进行访问。
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20190217005808705.jpg)
+
+ 　　类的只有两种 public,default(不同包不可以访问)
+ 　　public–都可访问(公有)
+ 　　private–类内可访问（私有）
+ 　　protected–包内和子类可访问（保护）
+ 　　不写(default)–包内可访问 （默认）
+
+ 　　Java 方法默认访问级别 : 包访问
+
+ 　　Java 类默认访问级别 : 包访问对于一个 Class 的成员变量或成员函数，如果不用 public, protected, private 中的任何一个修饰，那么该成员获得 “ 默认访问控制 ” 级别，即 package access （包访问）。
+
+ 　　属于 package access 的成员可以被同一个包中的其他类访问，但不能被其他包的类访问。
+
+ 　　包访问的控制力弱于 private，但强于 protected。因为一方面，只要是子类，不管子类与父类是否位于同一个包中，那么子类都可以访问父 类中的 protected 方法。但是一旦位于原类的包外，不管是否是其子类，都无法访问其属于 package access 级别的成员。而另一方面，一个类可以访问同一个包中另一个类的 package access 成员，同时也能访问其 protected 成员。
+
+ 　　(注：package 是 Java 中的关键字，虽然包访问也是一种访问控制级别，但关键字 ”package” 只能用来表示类属于哪个包，而不能像 ”private”,”public” 那样放到成员变量或函数前面，作为访问控制修饰符。)
+
+ 　　访问级别保护的强度：public<protected<默认<private。
 
 # 5. String
 
@@ -245,11 +294,11 @@ OO 就是面向对象，而面向对象的四大特性是：抽象、封装、�
 
 　　如果一个对象内部只有基本数据类型，那用 clone() 放啊获取到的就是这个对象的深拷贝，而如果其内部还有引用数据类型，那用 clone() 方法就是依次浅拷贝的操作。
 
-# 6. HashSet 内部是如何工作的
+# 7. HashSet 内部是如何工作的
 
 　　HashSet 的底层是使用 HashMap 来实现的，通过 key 的唯一的特性，主要将 set 构建的对象放入 key 中，以这样的方式来使用集合的遍历一些特性，从而可以直接用 Set 来进行调用。
 
-# 7. 序列化
+# 8. 序列化
 
 https://www.jianshu.com/p/208ac4a71c6f Android 序列化
 

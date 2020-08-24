@@ -79,8 +79,108 @@ smallestWidth的适配机制由系统保证，只需要针对这套规则生成�
 
 但是根据我的观察，这套方案**对老项目是不太友好的**，因为修改了系统的density值之后，整个布局的实际尺寸都会发生改变，如果想要在老项目文件中使用，恐怕整个布局文件中的尺寸都可能要重新按照设计稿修改一遍才行。因此，如果你是在维护或者改造老项目，使用这套方案就要三思了。
 
+```java
+    private static float sNoncompatDensity;
+    private static float sNonCompatScaledDensity;
+    private static float targetDensity;
 
+    public static void setCustomDensity(Activity activity, @NonNull final Application application) {
+        final DisplayMetrics appDisplayMetrics = application.getResources().getDisplayMetrics();
+        Log.d(TAG, "setCustomDensity appDisplayMetrics:" + appDisplayMetrics);
+        LogUtil.d(TAG, "setCustomDensity: sNoncompatDensity=" + sNoncompatDensity + ",sNonCompatScaledDensity=" + sNonCompatScaledDensity);
+        if (sNoncompatDensity == 0) {
+            sNoncompatDensity = appDisplayMetrics.density;
+            sNonCompatScaledDensity = appDisplayMetrics.scaledDensity;
+            LogUtil.d(TAG, "setCustomDensity 1 sNonCompatScaledDensity:" + sNonCompatScaledDensity + ",sNoncompatDensity:" + sNoncompatDensity);
+            application.registerComponentCallbacks(new ComponentCallbacks() {
+                @Override
+                public void onConfigurationChanged(Configuration newConfig) {
+                    if (newConfig != null && newConfig.fontScale > 0) {
+                        sNonCompatScaledDensity = application.getResources().getDisplayMetrics().scaledDensity;
+                    }
+                }
+
+                @Override
+                public void onLowMemory() {
+
+                }
+            });
+        }
+        //获取异常或者系统转向问题，导致获取到平板宽<高
+        if (appDisplayMetrics.widthPixels < appDisplayMetrics.heightPixels) {
+            Log.d(TAG, "setCustomDensity: 宽高异常，需转换");
+            targetDensity = (float) appDisplayMetrics.heightPixels / 1280; // 1280 是设计图的高度
+        } else {
+            targetDensity = (float) appDisplayMetrics.widthPixels / 1280;
+            Log.d(TAG, "setCustomDensity: 宽高正常，无需转换");
+        }
+        final float targetScaledDensity = targetDensity * (sNonCompatScaledDensity / sNoncompatDensity);
+        final int targetDensityDpi = (int) (160 * targetDensity);
+
+        appDisplayMetrics.density = targetDensity; // 密度
+        appDisplayMetrics.scaledDensity = targetScaledDensity;
+        appDisplayMetrics.densityDpi = targetDensityDpi; // dpi
+        final DisplayMetrics activityDisplayMetrics;
+        if (activity == null) {
+            activityDisplayMetrics = application.getResources().getDisplayMetrics();
+        } else {
+            activityDisplayMetrics = activity.getResources().getDisplayMetrics();
+        }
+        activityDisplayMetrics.density = targetDensity;
+        activityDisplayMetrics.scaledDensity = targetScaledDensity;
+        activityDisplayMetrics.densityDpi = targetDensityDpi;
+
+    }
+
+
+    public static void setCustomDensity4Oriention(Activity activity, @NonNull final Application application) {
+        sNoncompatDensity = 0.0f;
+        setCustomDensity(activity, application);
+    }
+```
 
 # 2. 单元测试
 
-　　单元测试
+　　单元测试是应用程序测试策略中的基本测试，通过对代码进行单元测试，一方面可以轻松地验证单个单元的逻辑是否正确，另一方面在每次构建之后运行单元测试，可以快速捕获和修复因代码更改（重构、优化等）带来的回归问题。
+
+## 2.1. 为什么要进行单元测试？
+
+* 提高稳定性，能够明确地了解是否正确的完成开发；
+* 快速反馈 bug ，跑一遍单元测试用例，定位 bug ；
+* 在开发周期中尽早通过单元测试检查 bug ，最小化技术债，越往后可能修复 bug 的代价会越大，严重的情况下会影响项目进度；
+* 为代码重构提供安全保障，在优化代码时不用担心回归问题，在重构后跑一遍测试用例，没通过说明重构可能是有问题的，更加易于维护。
+
+## 2.2. 单元测试要测什么
+
+* 列出想要测试覆盖的正常、异常情况，进行测试验证；
+* 性能测试，例如某个算法的耗时等等。
+
+## 2.3. 单元测试的分类
+
+1. 本地测试（ Local tests）：只在本地机器 JVM 上运行，以最小化执行时间，这种单元测试不依赖于 Android 框架，或者即使有依赖，也很方便使用模拟框架来模拟依赖，以达到隔离 Android 依赖的目的，模拟框架如 google 推荐的 Mockito；
+2. 仪器化测试（Instrumented tests）：在真机或模拟器上运行的单元测试，由于需要跑到设备上，比较慢，这些测试可以访问仪器（Android 系统）信息，比如被测应用程序的上下文，一般地，依赖不太方便通过模拟框架模拟时采用这种方式。
+
+## 2.4. 测试代码存放的位置
+
+```
+app/src
+   |-- androidTest/java（仪器化单元测试、 UI 测试）
+   |-- main/java（业务代码）
+   |-- test/java（本地单元测试）
+```
+
+## 2.5. 本地测试
+
+　　本地测试（ Local tests）：只在本地机器 JVM 上运行，以最小化执行时间，这种单元测试不依赖于 Android 框架，或者即使有依赖，也很方便使用模拟框架来模拟依赖，以达到隔离 Android 依赖的目的，模拟框架如 google 推荐的 Mockito 。
+
+　　本地测试比较适合一些工具类测试，不需要使用任何 Android 系统的东西，只适用于测试公共方法，比如字符处理，数据整理等这些方法。
+
+　　如果是一些工具类方法的测试，如计算两数之和的方法，本地 JVM 虚拟机就能提供足够的运行环境，但如果要测试的单元依赖了 Android 框架，比如用到了 Android 中的 Context 类的一些方法，本地 JVM 将无法提供这样的环境，这时候模拟框架 Mockito 就派上用场了。
+
+## 2.6. 仪器化测试
+
+　　在某些情况下，虽然可以通过模拟的手段来隔离 Android 依赖，但代价很大，这种情况下可以考虑仪器化的单元测试，有助于减少编写和维护模拟代码所需的工作量。
+
+　　仪器化测试是在真机或模拟器上运行的测试，它们可以利用 Android framework APIs 和 supporting APIs 。如果测试用例需要访问仪器（instrumentation）信息（如应用程序的 Context ），或者需要 Android 框架组件的真正实现（如 Parcelable 或 SharedPreferences 对象），那么应该创建仪器化单元测试，由于要跑到真机或模拟器上，所以会慢一些。
+
+　　测试使用 SharedPreferences 的工具类，使用 SharedPreferences 需要访问 Context 类以及 SharedPreferences 的具体实现，采用模拟隔离的话代价会比较大，所以采用仪器化测试比较合适。
