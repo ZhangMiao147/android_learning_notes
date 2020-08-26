@@ -184,3 +184,35 @@ app/src
 　　仪器化测试是在真机或模拟器上运行的测试，它们可以利用 Android framework APIs 和 supporting APIs 。如果测试用例需要访问仪器（instrumentation）信息（如应用程序的 Context ），或者需要 Android 框架组件的真正实现（如 Parcelable 或 SharedPreferences 对象），那么应该创建仪器化单元测试，由于要跑到真机或模拟器上，所以会慢一些。
 
 　　测试使用 SharedPreferences 的工具类，使用 SharedPreferences 需要访问 Context 类以及 SharedPreferences 的具体实现，采用模拟隔离的话代价会比较大，所以采用仪器化测试比较合适。
+
+# 3. RecyclerView
+
+## 3.1. 缓存
+
+RecyclerView拥有**四级缓存**：
+
+1. **屏幕内缓存** ：指在屏幕中显示的ViewHolder，这些ViewHolder会缓存在**mAttachedScrap**、**mChangedScrap**中 。
+   - mChangedScrap 表示数据已经改变的 ViewHolder 列表。
+   - mAttachedScrap 未与 RecyclerView 分离的 ViewHolder 列表。
+2. **屏幕外缓存**：当列表滑动出了屏幕时，ViewHolder会被缓存在 **mCachedViews**，其大小由 mViewCacheMax 决定，默认 DEFAULT_CACHE_SIZE 为 2，可通过 Recyclerview.setItemViewCacheSize() 动态设置。
+3. **自定义缓存**：可以自己实现 **ViewCacheExtension **类实现自定义缓存，可通过 Recyclerview.setViewCacheExtension() 设置。通常我们也不会去设置他，系统已经预先提供了两级缓存了，除非有特殊需求，比如要在调用系统的缓存池之前，返回一个特定的视图，才会用到他。
+4. **缓存池** ：ViewHolder 首先会缓存在 mCachedViews 中，当超过了 2 个（默认为2），就会添加到 mRecyclerPool 中。mRecyclerPool 会根据 ViewType 把 ViewHolder 分别存储在不同的集合中，每个集合最多缓存 5 个 ViewHolder。
+
+在 RecyclewView 的 onLaout() 中会去调用 LayoutManager 的 onLayoutChildren() 方法，在 onLayourChild() 方法中会调用 RecyclewView 的 getViewForPosition() 方法，这个方法用来获取给定位置的初始化 View。在 getViewForPosition() 方法中获取 View 的步骤是：
+
+1. 从 mChangedScrap  缓存中获取 View，如果存在，则返回，如果不存在进行下一步。
+2. 从 mChangedScrap 和 mCachedViews 缓存中获取 View，如果存在，则返回，如果不存在则进行下一步。
+3. 从 ViewCacheExtension 自定义缓存中获取 View，如果存在，则返回，如果不存在则进行下一步。
+4. 从 mRecyclerPool  缓存池中获取缓存，如果存在，则返回，如果不存在，则进行下一步。
+5. 调用 adapter 的 createViewHolder() 方法新键 ViewHolder，Adapter 的 createViewHolder() 方法会调用抽象方法 onCreateViewHolder() 方法，在得到 adapter 之后，还会调用 Adapter 的 bindViewHolder() 方法，这个方法调用了抽象方法 onBindViewHolder() 方法。
+
+RecyclerView最多可以缓存N（屏幕最多可显示的item数）+ 2 (屏幕外的缓存) + 5*M (M代表M个ViewType，缓存池的缓存)。
+
+RecyclerViewPool可以被多个RecyclerView共享。
+
+## 3.2. 优化
+
+### 3.2.1. 预取功能（Prefetch）
+
+
+
