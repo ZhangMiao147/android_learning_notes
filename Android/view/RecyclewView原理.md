@@ -194,13 +194,11 @@ Recyclerview在获取ViewHolder时按四级缓存的顺序查找，如果没找�
 
 还需要注意的是，RecyclerViewPool可以被多个RecyclerView共享。
 
+# 优化
 
+https://www.jianshu.com/p/1d2213f303fc
 
-#### 预取功能(Prefetch)
-
-
-
-
+## 预取功能(Prefetch)
 
 这个功能是rv在版本25之后自带的，也就是说只要你使用了25或者之后版本的rv，那么就自带该功能，并且默认就是处理开启的状态，通过LinearLayoutManager的setItemPrefetchEnabled()我们可以手动控制该功能的开启关闭，但是一般情况下没必要也不推荐关闭该功能，预取功能的原理比较好理解，如图所示
 
@@ -687,18 +685,26 @@ if (viewHolder.hasAnyOfTheFlags(ViewHolder.FLAG_INVALID
 # 参考文章
 
 1. [RecyclerView原理分析](https://blog.csdn.net/sted_zxz/article/details/80781562)
-
 2. [RecyclerView一些你可能需要知道的优化技术](https://www.jianshu.com/p/1d2213f303fc)
+3. [【源码解析】RecyclerView的工作原理](https://www.jianshu.com/p/8c508b51a7b5)
 
-https://www.jianshu.com/p/eabb00c500ef
+
+
+
+
+
+
+
+
+1. [阿里3轮面试都问了RecyclerView](https://www.jianshu.com/p/eabb00c500ef)
+
+
 
 https://www.jianshu.com/p/a57608f2695f
 
 http://www.apkbus.com/blog-705730-61960.html
 
 https://zhuanlan.zhihu.com/p/165939600
-
-https://www.jianshu.com/p/8c508b51a7b5
 
 https://blog.csdn.net/qq_33275597/article/details/93849695
 
