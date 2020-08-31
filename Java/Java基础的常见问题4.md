@@ -13,6 +13,10 @@ public <T> T getValue(MyEnum<T> param);
 public T convert(Object);
 ```
 
+# 2. arraylist,linkedlist,vector 效率
+
+
+
 ## 1. 文件 IO 操作
 
 
