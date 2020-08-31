@@ -397,3 +397,8 @@ rv的setadapter大家都会使用，没什么好说的，但关于swapadapter可
 
 
 # 6. 介绍一下livedata的实现原理
+
+
+
+# 7. LinearLayout 和 RelativeLayout 的源码比较，区别
+
