@@ -171,6 +171,42 @@
 
 　　缺点：因为代理对象需要与目标对象实现一样的接口，所以会有很多代理类，类太多。同时，一旦接口增加方法，目标对象与代理对象都要维护。
 
+```java
+/**
+ * 接口
+ */
+public interface IUserDao {
+    void save();
+}
+/**
+ * 接口实现
+ * 目标对象
+ */
+public class UserDao implements IUserDao{
+    @Override
+    public void save() {
+        System.out.println("----已经保存数据！----");
+    }
+}
+/**
+ * 代理对象，静态代理
+ */
+public class UserDaoProxy implements IUserDao{
+    // 接收保存目标对象
+    private IUserDao target;
+    public UserDaoProxy(IUserDao target){
+        this.target = target;
+    }
+
+    @Override
+    public void save(){
+        System.out.println("开始事务...");
+        target.save(); // 执行目标对象的方法
+        System.out.println("提交事务...");
+    }
+}
+```
+
 #### 3.1.2. 动态代理
 
 　　动态代理就是在程序运行时 JVM 才为被代理对象生成代理对象。
@@ -191,6 +227,39 @@ static Object newProxyInstance(
 ```
 
 　　代理对象不需要实现接口，但是目标对象一定要实现接口，否则不能用动态代理。
+
+```java
+/**
+ * 创建动态代理对象
+ * 动态代理不需要实现接口，但是需要指定接口类型
+ */
+public class ProxyFactory {
+
+    // 维护一个目标对象
+    private Object target;
+
+    public ProxyFactory(Object target) {
+        this.target = target;
+    }
+
+    // 给目标对象生成代理对象
+    public Object getProxyInstance() {
+        return Proxy.newProxyInstance(
+                target.getClass().getClassLoader(),
+                target.getClass().getInterfaces(),
+                new InvocationHandler() {
+                    @Override
+                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                        System.out.println("开始事务...");
+                        Object returnValue = method.invoke(target, args);
+                        System.out.println("提交事务...");
+                        return returnValue;
+                    }
+                }
+        );
+    }
+}
+```
 
 #### 3.1.3. Cglib 代理
 
@@ -225,9 +294,9 @@ https://www.cnblogs.com/gonjan-blog/p/6685611.html
 
 https://blog.csdn.net/riemann_/article/details/86849078
 
-### 3.4. 动态代理与 cglib 实现的区别
+### 3.4. jdk 动态代理与 cglib 实现的区别
 
-　　java 动态代理是利用反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用 InvokeHandler 来处理。
+　　jdk 动态代理是利用反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用 InvokeHandler 来处理。
 
 　　而 cglib 动态代理是利用 asm 开源包，对代理对象类的 class 文件加载进来，通过修改其字节码生成子类来处理。
 
@@ -250,7 +319,7 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
 　　注解的本质就是一个继承了 Annotation 接口的接口。接口的属性都是 static final 的，而定义接口的方法就相当于注解的属性。
 
-　　解析一个类或者方法的注解往往有两种形式，一种是编译器直接的扫描，一种是运行期反射。编译器的扫描指的是编译器在对 jaba 代码编译字节码的过程中会检测到某个类或者方法被一些注解修饰，这时它就会对这些注解进行某些处理。
+　　解析一个类或者方法的注解往往有两种形式，一种是编译器直接的扫描，一种是运行期反射。编译器的扫描指的是编译器在对 java 代码编译字节码的过程中会检测到某个类或者方法被一些注解修饰，这时它就会对这些注解进行某些处理。
 
 　　注解属性类型可以有以下列出的类型：
 
@@ -316,10 +385,10 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
 　　整个反射注解的工作原理：
 
-1. 首先，通过键值对的形式可以为注解属性赋值，香这样 @Hello（value = "hello"）。
+1. 首先，通过键值对的形式可以为注解属性赋值，像这样 @Hello（value = "hello"）。
 2. 接着，用注解修饰某个元素，编译器将扫描每个类或者方法上的注解，会做一个基本的检查，比如这个注解是否允许作用在当前位置，最后将注解信息写入元素的属性表。
 3. 然后，当进行反射的时候，虚拟机将所有生命周期在 RUNTIME 的注解取出来放到一个 map 中，并创建一个 AnnotationInvocationHandler 实例，把这个 map 传递给它。
-4. 最后，虚拟机将采用 JDK 动态代理机制生成一个目标注解的代理类，并初始化号处理器。
+4. 最后，虚拟机将采用 JDK 动态代理机制生成一个目标注解的代理类，并初始化好处理器。
 
 　　这样，一个注解的实例就创建出来了，它的本质上就是一个代理类。
 
@@ -340,7 +409,7 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 3. 运行时处理：某些注解可以在程序运行的时候接受代码的提取，自动做相应的操作。
 4. 注解能够提供原数据。
 
-　　处理提取和处理 Annotation 的嗲吗统称为 ART（Annotation Processing Tool）。
+　　处理提取和处理 Annotation 的代码统称为 ART（Annotation Processing Tool）。
 
 ## 5. 锁
 

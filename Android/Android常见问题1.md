@@ -97,7 +97,7 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
 
 
 
-口述：Activity 的启动分为冷启动和热启动两种。冷启动指的是应后台中没有应用的进程，开启应用系统回创建一个进程分配给它，之后会创建和初始化 Application，然后执行 ActivityThread 的 main 方法主线程开启运行 ，而热启动指的是后台存在应用进程中，开启应用就是从以后的进程中来启动引用，不需要走 Application 的部分。
+口述：Activity 的启动分为冷启动和热启动两种。冷启动指的是应后台中没有应用的进程，开启应用系统会创建一个进程分配给它，之后会创建和初始化 Application，然后执行 ActivityThread 的 main 方法主线程开启运行 ，而热启动指的是后台存在应用进程中，开启应用就是从以后的进程中来启动引用，不需要走 Application 的部分。
 
 ![](components/Activity/image/冷启动流程图.png)
 
@@ -256,7 +256,7 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
 
 ```java
 ...
-			// 必须满足三个条件都为真，才会返回 true
+			      // 必须满足三个条件都为真，才会返回 true
           	// 1. mOnTouchListener 不为 null，即调用了 setOnTouchListener()
           	// 2. (mViewFlags & ENABLED_MASK) == ENABLED
             // 3. li.mOnTouchListener.onTouch(this, event) 
@@ -266,7 +266,7 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
                     && li.mOnTouchListener.onTouch(this, event)) {
                 result = true;
             }
-			// 调用 onTouchEvent 方法
+						// 调用 onTouchEvent 方法
             if (!result && onTouchEvent(event)) {
                 result = true;
             }
@@ -344,7 +344,7 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
 
 ViewGroup 的 dispatchTouchEvent() 方法中会调用 onInterceptTouchEvent() 方法，如果 onInterceptTouchEvent() 方法返回 true 标识不允许事件继续向子 View 传递，则调用父类 View 的 dispatchTouchEvent() 方法消费事件，返回 false 表示不对事件进行拦截。如果对事件不进行拦截，接着就会处理事件，在 ACTION_DOWN 时会去遍历所有的子 View，判断点击的地方是否是子 View 的控件，如果是，则调用子 View 的 dispatchTouchEvent() 方法将事件传递下去，并且会将触摸的子 View 控件存储起来，如果点击的地方不是子 View，则调用父类 View 的 dispatchTouchEvent() 方法消费实现。在 ACTION_MOVE、ACTION_UP 事件中，也是同样的，如果触摸的子 View 存在，也是去调用子 View 的 dispatchTouchEvent() 方法传递事件，如果不存在，则调用父 View 的 dispatchTouchEvent() 方法消费事件。
 
-父控件可以通过覆写 onInterceptTouchEvent() 方法返回 true 而拦截子 View 的事件，把事件交给自己处理，就会执行自己对应的 onTouchEvent() 方法，子 View 可以通过调用 getParent().requestDisallowInterceptTouchEvent(true) 来组织 ViewGroup 对事件的拦截。
+父控件可以通过覆写 onInterceptTouchEvent() 方法返回 true 而拦截子 View 的事件，把事件交给自己处理，就会执行自己对应的 onTouchEvent() 方法，子 View 可以通过调用 getParent().requestDisallowInterceptTouchEvent(true) 来阻止 ViewGroup 对事件的拦截。
 
 View 的 dispatchTouchEvent() 方法中如果控件的状态是 enable 的并且设置了触摸监听 OnTouchListener 对象，就会调用其 onTouch() 方法。如果 onTouch() 方法返回 true，则不会执行下面的 onTouchEvent() 方法，如果返回 false，就会调用接下来的 onTouchEvent() 方法。
 
