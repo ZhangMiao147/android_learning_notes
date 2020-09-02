@@ -18,3 +18,5 @@
 
 # 5. RecyclerView/ListView中的观察者模式
 
+# 6. SharedPareference 的 commit 和 apply 的区别
+

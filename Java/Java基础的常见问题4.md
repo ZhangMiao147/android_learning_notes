@@ -15,12 +15,14 @@ public T convert(Object);
 
 # 2. arraylist,linkedlist,vector 效率
 
+ArrayList底层是数组结构，查询快，增删慢，线程不安全，效率高。
 
+LinkedList底层是链表数据结构，查询慢，增删快，线程不安全，效率高。
 
-## 1. 文件 IO 操作
+Vector底层是数组结构，查询快，增删慢，线程安全，效率低。
 
+# 3. 文件 IO 操作
 
-
-## 2. AtomInteger
+# 4. AtomInteger
 
 AtomInteger
