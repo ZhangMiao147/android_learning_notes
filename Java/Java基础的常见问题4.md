@@ -13,13 +13,32 @@ public <T> T getValue(MyEnum<T> param);
 public T convert(Object);
 ```
 
+可以用以下代码解决
+
+```java
+public enum MyEnum {
+    LITERAL1(String.class),
+    LITERAL2(Integer.class),
+    LITERAL3(Object.class);
+
+    private Class<?> clazz;
+
+    private MyEnum(Class<?> clazz) {
+      this.clazz = clazz;
+    }
+
+    ...
+
+}
+```
+
 # 2. arraylist,linkedlist,vector 效率
 
-ArrayList底层是数组结构，查询快，增删慢，线程不安全，效率高。
+ArrayList 底层是数组结构，查询快，增删慢，线程不安全，效率高。
 
-LinkedList底层是链表数据结构，查询慢，增删快，线程不安全，效率高。
+LinkedList 底层是链表数据结构，查询慢，增删快，线程不安全，效率高。
 
-Vector底层是数组结构，查询快，增删慢，线程安全，效率低。
+Vector 底层是数组结构，查询快，增删慢，线程安全，效率低。
 
 # 3. 文件 IO 操作
 
