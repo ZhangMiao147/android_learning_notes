@@ -28,6 +28,8 @@ https://blog.csdn.net/l707941510/article/details/81300333
 
 https://blog.csdn.net/zhaoyazhi2129/article/details/40042693
 
+
+
 # 8. bundle的数据结构，如何存储，既然有了Intent.putExtra，为啥还要用bundle。 
 
 ## 8.1. 解释
