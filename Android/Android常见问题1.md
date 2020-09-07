@@ -250,7 +250,7 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
 
 　　onTouch 方法是由返回值的，如果把 onTouch 方法里的返回值改成 true，onClick 方法不再执行了。
 
-　　只要触摸到了任何一个控件，就一定会调用该控件的 dispatchTouchEvent 方法。当去点击按钮的时候，就回去调用 Buttong 类里面的 dispatchTouchEvent 方法，就是调用的 View 的 dispatchTouchEvent 方法。
+　　只要触摸到了任何一个控件，就一定会调用该控件的 dispatchTouchEvent 方法。当去点击按钮的时候，就回去调用 Button 类里面的 dispatchTouchEvent 方法，就是调用的 View 的 dispatchTouchEvent 方法。
 
 ### 3.1.1. View#dispatchTouchEvent
 
@@ -483,7 +483,7 @@ https://www.jianshu.com/p/2e19268bf387
 
    * Looper 的 loop() 方法从 MessageQueue 获取新插入的 Message。
 
-   * MessageQueue 的 next() 方法中是一个死循环，循环重会有一个阻塞唤醒操作，当等待 nextPollTimeoutMillis 时长，或者消息队列被唤醒，都会唤醒。使用 synchronized(this) 保证同步，查找可用的消息并返回。
+   * MessageQueue 的 next() 方法中是一个死循环，循环中会有一个阻塞唤醒操作，当等待 nextPollTimeoutMillis 时长，或者消息队列被唤醒，都会唤醒。使用 synchronized(this) 保证同步，查找可用的消息并返回。
 
    * Looper 获取到 Message 后，通过 Message 的 target 即 Handler 调用 dispatchMessage(Message msg) 方法分发提取到的 Message，然后回收 Message 并继续循环获取下一个 Message。
 
@@ -564,7 +564,7 @@ new Thread(new Runnable() {
 					}
 				};
 				handler.sendEmptyMessage(1);
-                Looper.loop();
+        Looper.loop();
 			};
 		}).start();
 ```
@@ -580,7 +580,7 @@ new Thread(new Runnable() {
 				Handler handler = new Handler(Looper.getMainLooper()){ // 区别在这！！！！
 					@Override
 					public void handleMessage(Message msg) {
-					Toast.makeText(getApplicationContext(), "handler msg", Toast.LENGTH_LONG).show();
+							Toast.makeText(getApplicationContext(), "handler msg", Toast.LENGTH_LONG).show();
 					}
 				};
 				handler.sendEmptyMessage(1);

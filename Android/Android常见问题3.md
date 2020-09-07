@@ -1,5 +1,9 @@
 # Android 的常见问题 3
 
+[TOC]
+
+
+
 # 1. ANR
 
 　　ANR 全称是 Application Not Responding，意思就是应用程序未响应。如果一个应用无法响应用户的输入，系统就会弹出一个 ANR 对话框，用户可以自行选择继续等待或者是停止当前程序。
@@ -631,6 +635,12 @@ https://www.jianshu.com/p/e1e10211621d
 
 　　（4）静态注册是在 AndroidManifesy.xml 里通过< receiver > 标签声明的。不受任何组件的生命周期影响，缺点是耗电和占内存，适合在需要时刻监听使用。动态注册在代码中调用 `Context.registerReceiver()` 方法注册，比较灵活，适合在需要特定时刻监听使用。
 
+### 6.2.2. 不同注册方式的生命周期
+
+　　动态注册，指的是在代码中调用方法 registerReceiver 和 unregisterReceiver；它的生命周期开始于registerReceiver，结束于 unregisterReceiver，通常伴随某个 Activity 的生命周期。
+
+　　静态注册，指的是在 AndroidManifest.xml 中注册 receiver 接收器，receiver 节点与 activity 和 service 节点是平级关系；它的生命周期开始于系统启动，结束于系统关机，在系统运行过程中，只要收到符合条件的广播，接收器便会启动工作。
+
 ## 6.3. 广播发送者向 AMS 发送广播
 
 ### 6.3.1. 广播的发送
@@ -715,6 +725,16 @@ https://www.jianshu.com/p/e1e10211621d
 * 对于全局广播的动态注册，回调 onReceiver(Context,intent)中的 context 返回值是：Activity context；
 * 对于应用内广播的动态注册（LocalBroadcastMananger 方式），回调 onReceive(Context,intent)中的 context 返回值是：Application context；
 * 对于应用内广播的动态注册（非 LocalBroadcastManager 方法），回调 onReceive(context,intent)中的 context 返回值：Activity context。
+
+## 6.5. 局部广播和全局广播的区别？分别用什么实现的？
+
+1、本地广播：发送的广播事件**不被其他应用程序获取**，也**不能响应其他应用程序发送的广播事件**。本地广播**只能被动态注册**，不能静态注册。动态注册或方法时需要用到**LocalBroadcastManager。**
+
+2、全局广播：发送的广播事件**可被其他应用程序获取**，也能**响应其他应用程序发送的广播事件**（可以通过 exported–是否监听其他应用程序发送的广播 在清单文件中控制） 全局广播**既可以动态注册，也可以静态注册。**
+
+通过 LocalBroadcastManager 实现，设置 IntentFilter 的 action 过滤来实现广播的局部接收。
+
+平时使用的 BroadcastReceiver 就是全局广播。
 
 # 7. ContentProvider
 
@@ -890,6 +910,10 @@ public int match(Uri uri);
 ​		如果 ContentProvider 的访问者需要知道 ContentProvider 中的数据发生变化，可以在 ContentProvider 发生数据变化时调用 `getContentResolver().notifyChange(uri, null)` 来通知注册在此 Uri 上的访问者。
 
 ​		如果 ContentProvider 的访问者需要得到数据变化通知，必须使用 ContentObserver 对数据（数据采用 uri 描述 ）进行监听，当监听到数据数据变化通知时，系统就会调用 ContentObserver 的 `onChange()` 方法。
+
+## 7.7. ContentProvider 的生命周期
+
+​		contentProvider 的生命周期、理解应该跟进程一样，它作为系统应用组件、其生命周期应该跟 app 应用的生命周期类似，只是它属于系统应用、所以随系统启动而初始化，随系统关机而结束；但也存在其他状态下结束进程、比如说系统内存不够时，进行内存回收、会根据生成时间态、用户操作等情况进行是否内存回收。
 
 # 8. Profile（性能分析器）
 

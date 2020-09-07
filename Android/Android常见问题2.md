@@ -1,5 +1,9 @@
 # Android 的常见问题
 
+[TOC]
+
+
+
 # 1. 性能优化
 
 ## 1.1. 内存优化
@@ -672,6 +676,58 @@ layout 过程只是对容器控件有用的，只有有子 View 才需要布局�
 
 draw 过程会从 DecorView 的 draw() 调用到 View 的  draw() 方法，View 的 draw() 方法中会调用 drawBackground() 方法画背景，调用 onDraw() 方法画内容，调用 dispatchDraw() 方法画子 View，调用 onDrawForeground() 方法画装饰。在 ViewGroup 中会实现 dispatchDraw() 方法循环调用子 View 的 draw() 方法。draw 过程完成后，view 就显示在屏幕上了。
 
+## 2.4. Android的wrap_content是如何计算的
+
+　　MeasureSpec 的值由 specSize 和 specMode 共同组成的，其中 specSize 记录的是大小，specMode 记录的是规格。
+
+　　specMode 一共有三种类型：
+
+1. EXACTLY
+
+   表示父视图希望子视图的大小应该是由 specSize 的值来决定的。
+
+   系统默认会按照这个规则来设置子视图的大小，开发人员当然也可以按照自己的意愿设置成任意的大小。
+
+2. AT_MOST
+
+   表示子视图最多只能是 specSize 中指定的大小，开发人员应该尽可能小的去设置这个视图，并且保证不会超过 specSize。
+
+   系统默认会按照这个规则来设置子视图的大小，开发人员当然也可以按照自己的意愿设置成任意的大小。
+
+3. UNSPECIFIED
+
+   表示开发人员可以将视图按照自己的意愿设置成任意的大小，没有任何限制。
+
+   这种情况比较少见，不太会用到。
+
+　　通常情况下，这两个值都是由父视图经过计算后传递给子视图的，说明父视图会在一定程度上决定子视图的大小。
+
+当 rootDimension 参数等于 MATCH_PARENT 的时候，MeasureSpec 的 specMode 就等于 EXACTLY，当 rootDimension 等于 WRAP_CONTENT 的时候，MeasureSpec 的 specMode 就等于 AT_MOST。并且 MATCH_PARENT 和 WRAP_CONTENT 时的 specSize 都是等于 windowSize 的，也就意味着根视图总是会充满全屏的。
+
+```java
+    private static int getRootMeasureSpec(int windowSize, int rootDimension) {
+        int measureSpec;
+        switch (rootDimension) {
+
+        	case ViewGroup.LayoutParams.MATCH_PARENT:
+            // Window can't resize. Force root view to be windowSize.
+            measureSpec = MeasureSpec.makeMeasureSpec(windowSize, MeasureSpec.EXACTLY);
+            break;
+        	case ViewGroup.LayoutParams.WRAP_CONTENT:
+            // Window can resize. Set max size for root view.
+            measureSpec = MeasureSpec.makeMeasureSpec(windowSize, MeasureSpec.AT_MOST);
+            break;
+       	 	default:
+            // Window wants to be an exact size. Force root view to be that size.
+            measureSpec = MeasureSpec.makeMeasureSpec(rootDimension, MeasureSpec.EXACTLY);
+            break;
+        }
+        return measureSpec;
+    }
+```
+
+
+
 # 3. Android 进程保活
 
 ## 3.1. 进程划分
@@ -776,7 +832,7 @@ draw 过程会从 DecorView 的 draw() 调用到 View 的  draw() 方法，View 
 
 1. 思路一： API level < 18，启动前台 Service 时直接传入 new Notification。
 
-2. 思路二：API level >= 18，同时启动两个 id 相同的前台 Service，然后再将后启动的 Service 做 stop 处理。。
+2. 思路二：API level >= 18，同时启动两个 id 相同的前台 Service，然后再将后启动的 Service 做 stop 处理。
 
 　　使用灰色保活并不代表 Service 就永久不死了，只能说是提高了进程的优先级。如果 app 进程占用了大量的内存，按照回收进程的策略，同样会干掉 app。
 

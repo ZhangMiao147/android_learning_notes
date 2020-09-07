@@ -122,7 +122,7 @@ public class syncTest {
                 }
                 cacheSize--;
                 System.out.println("消费了一个产品。当前产品数量为：" + cacheSize);
-                // 消费之后，幻灯等待的生产者。
+                // 消费之后，唤醒等待的生产者。
               	notifyAll();
             }
         }

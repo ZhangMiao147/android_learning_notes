@@ -1,9 +1,5 @@
 # Android 的常见问题 5
 
-# 1. Android打包哪些类型文件不能混淆
-
-　　屏幕适配
-
 # 2. 模块化怎么做？怎么设计？接口发现暴漏怎么做？基于什么基本思想？ 
 
 模块的接口暴露：https://www.cnblogs.com/cuizhf/archive/2011/08/11/2134868.html
@@ -21,6 +17,12 @@ https://www.jianshu.com/p/75b285f488eb
 # 5. RecyclerView/ListView中的观察者模式
 
 # 6. SharedPareference 的 commit 和 apply 的区别
+
+这两个方法的区别在于： 
+\1. apply没有返回值而commit返回boolean表明修改是否提交成功 
+\2. apply是将修改数据原子提交到内存, 而后异步真正提交到硬件磁盘, 而commit是同步的提交到硬件磁盘，因此，在多个并发的提交commit的时候，他们会等待正在处理的commit保存到磁盘后在操作，从而降低了效率。而apply只是原子的提交到内容，后面有调用apply的函数的将会直接覆盖前面的内存数据，这样从一定程度上提高了很多效率。 
+\3. apply方法不会提示任何失败的提示。 
+由于在一个进程中，sharedPreference是单实例，一般不会出现并发冲突，如果对提交的结果不关心的话，建议使用apply，当然需要确保提交成功且有后续操作的话，还是需要用commit的。
 
 # 7. Android的多点触控如何传递 核心类 
 
@@ -214,5 +216,33 @@ startActivity(intent);
 
 　　这样就可以跳转到 MyActivity。
 
+# 10. 要实现上传日志的功能，应该怎么去实现
 
+几乎所有的应用开发者都知道“用户体验”的重要性，要提升用户体验就离不开一个完备的监控和上报系统，这其中日志（包括Crash上报）是最基本的问题跟踪和解决手段。本文接下来将讨论一下如何设计和实现一个完备的日志上报系统。首先看一下类图：
+
+![img](https://img-blog.csdn.net/20140502002840109?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvemhneGh1YWE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+整个日志监控上报大体分为如下几个部分：
+
+
+
+1. 封装控制系统原生Log，然后根据不同的级别分别输出到Logcat和文件中，主要有类LogcatLog和FileLog实现。
+2. 收集手机其他信息，在将log上报到服务器时一同上报，这些信息包括Settings信息、DropBox打印的log、应用的SharedPreference、设备分辨率信息等。所有这些被时限为XXColector类，可以根据需要（后台配置控制）进行上传。
+3. 将FileLog信息、Crash信息、以及Collector收集的手机信息上报到服务器。上报的方式主要分为：通过Email发送和通过HTTP（以及后台CGI）发送，当然你也可以选择发送到Google Form等。
+4. Crash异常捕获处理（即：继承实现UncaughtExceptionHandler），有LogCenter中实现。
+5. 良好的可配置信息，即：系统中所有的日志收集、发送方式都是后台可配置的。
+
+**什么是Android Dropbox**
+
+Android Dropbox 是 Android 在 Froyo(API level 8) 引入的用来持续化存储系统数据的机制。主要用于记录 Android 运行过程中, 内核, 系统进程, 用户进程等出现严重问题时的 log, 可以认为这是一个可持续存储的系统级别的 logcat。
+
+相关文件记录存储目录：/data/system/dropbox。
+
+[Android开发这么久你竟然还不知道Dropbox？](https://blog.csdn.net/conconbenben/article/details/102550977)
+
+[Android导出Dropbox日志](https://www.jianshu.com/p/eecf9aeda074)
+
+[Android输出日志Log类并保存到文件中](https://www.cnblogs.com/changyiqiang/p/11225350.html)
+
+[android应用开发-------------应用崩溃全局异常捕获处理（UncaughtExceptionHandler）](https://blog.csdn.net/ls703/article/details/43022243)
 

@@ -178,9 +178,9 @@ String S1 = “a” + “b” + “c”;
 
 // 运行最慢
 String S1 = “a”; 
-      String S2 =  “b”; 
-      String S3 =  “c”; 
-      String S1=S1+S2+S3；
+String S2 =  “b”; 
+String S3 =  “c”; 
+String S1=S1+S2+S3；
 
 // 运行中间
 StringBuilder Sb = new StringBuilder(“a”).append(“b”).append(“c”);
@@ -318,7 +318,7 @@ finally 块执行：3
 
 4. throw 语句用在方法体内，表示抛出异常，由方法体内的语句处理。
 
-   throws 语句用在方法声明后面，表示再抛出异常，由调用这个方法的上一级方法种的语句来处理，必须做出处理（捕获或继续声明）。
+   throws 语句用在方法声明后面，表示再抛出异常，由调用这个方法的上一级方法中的语句来处理，必须做出处理（捕获或继续声明）。
 
 5. throws 主要是声明这个方法会抛出这种类型的异常，使其他地方调用它时知道要捕获这个异常，使得提醒必须做出处理。否则编译时不会通过的。
 
@@ -608,7 +608,7 @@ stu.study(); //把对象的地址赋给 stu 引用对象
 
 #### 6.2.1. 继承 Thread 类创建线程
 
-　　使用继承 Thread 类创建线程时，受限需要创建一个类继承 Thread 类并覆写 Thread 类的 run() 方法，在 run() 方法中，要写线程要执行的任务。
+　　使用继承 Thread 类创建线程时，首先需要创建一个类继承 Thread 类并覆写 Thread 类的 run() 方法，在 run() 方法中，要写线程要执行的任务。
 
 　　具体具体说明，代码如下所示：
 
@@ -926,7 +926,7 @@ Callable接口创建线程
 
 4. 利用 AtomicInteger
 
-   和 volatile 类似。
+   和 volatile 类似。采用 CAS 操作保证数据的同步。
 
 #### 6.6.2. 使用管道流
 
@@ -1124,7 +1124,7 @@ public final void wait() throws InterruptedException {
 
 1. wait() 方法的作用是让当前正在执行的线程进入线程阻塞状态的等待状态，该方法是用来将当前线程置为 “ 预执行队列 ” 中，并且调用 wait() 方法后，该线程在 wait() 方法所在的代码处停止执行，直到接到一些通知或被中断为止。
 2. wait() 方法只能在同步代码块或者同步方法中调用，故如果调用 wait() 方法时没有持有适当的锁，就会抛出异常。
-3. wait() 方法执行后，当前线程时长锁并且与其他线程相互竞争重新得到锁。
+3. wait() 方法执行后，当前线程释放锁并且与其他线程相互竞争重新得到锁。
 
 ```java
 public class Test1 {
@@ -1265,7 +1265,7 @@ class MyThread implements Runnable{
 
 ### 6.8. 线程池是什么？
 
-　　Java 中创建线程池很简单/////，只需要调用 Executors 中相应的便捷方法即可。
+　　Java 中创建线程池很简单，只需要调用 Executors 中相应的便捷方法即可。
 
 　　线程池的好处就是可以方便的管理线程，也可以减少内存的消耗，使用线程池，主要解决如下问题：
 
@@ -1486,7 +1486,7 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 　　看整个线程池的工作流程，有以下几个需要特别关注的并发点：
 
-1. 线程池状态和工作线程数量的变更。这个由一个 AtomicInteger 变量 ctl来解决原子性问题。
+1. 线程池状态和工作线程数量的变更。这个由一个 AtomicInteger 变量 ctl 来解决原子性问题。
 2. 向工作 Worker 容器 workers 中添加新的 Worker 的时候，这个线程池本身已经加锁了。
 3. 工作线程 Worker 从等待队列中取任务的时候。这个由工作队列本身来保证线程安全，比如 LinkedBlockingQueue 等。
 
@@ -1595,7 +1595,7 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 ![](image/关闭线程池方法.jpg)
 
-　　关闭原理都是调用线程的 interrupt（）方法来中断所有的工作线程，所以无法中断的线程的任务可能永远没法终止。
+　　关闭原理都是调用线程的 interrupt() 方法来中断所有的工作线程，所以无法中断的线程的任务可能永远没法终止。
 
 　　只要调用了以上两个方法，isShutdown=true; 只有所有的工作线程都关闭，isTerminaed=true;
 
