@@ -1,5 +1,9 @@
 # Java 基础的常见问题 4
 
+[TOC]
+
+
+
 # 1. 为什么 Java 枚举文字不能具有泛型类型参数
 
 [enum泛型 - 为什么Java枚举文字不能具有泛型类型参数?](https://code-examples.net/zh-CN/q/41793e)
