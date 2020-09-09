@@ -165,9 +165,6 @@ public class Dog extends Animal {
 
 2. StringBuffer 是线程安全的，StringBuilder 是线程不安全的。
 
-3. StringBuffer 与 StringBuilder 实现了 Serializable 和 CharSequare 两个接口，String 除了这两个接口，还实现了 Comparable< String > 接口，所以 String 的实例可以通过 compareTo 方法进行比较，而 StringBuffer 与 StringBuilder 不行。
-
-4. String 可以空赋值，而 StringBuffer 和 StringBuilder 是不可以的。
 
 ### 3.2. “+” 与 append 的区别
 
@@ -190,7 +187,7 @@ StringBuilder Sb = new StringBuilder(“a”).append(“b”).append(“c”);
 
 ### 3.3. StringBuffer 是如何实现线程安全的
 
-　　StringBuffer 的方法都加了 synchronzied 关键字。
+　　StringBuffer 除了构造方法其他方法都加了 synchronzied 关键字。
 
 ### 3.4. String 的 concat 方法与 append 的区别
 
