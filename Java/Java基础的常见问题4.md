@@ -288,6 +288,20 @@ Treemap：适用于按自然顺序或自定义顺序遍历键(key)。
 
 
 
+# 8. 在多线程的情况下，在JAVA 中如何保证一个方法只被一个对象调用？
+
+1. synchronized
+2. volitle
+3. Lock/unlock
+4. 信号量
+5. reentrantlock/synchronized 区别？如何实现上锁
+
+
+
+
+
+
+
 # 4. 文件 IO 操作
 
 # 5. AtomInteger

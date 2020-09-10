@@ -172,6 +172,42 @@
      * JDK 1.8 的 ConcurrentHashMap 放弃了分段锁，有什么问题
      * 如果你来设计，你如何设计？
 10. final
+    * final 的用途
+      * 用来修饰一个引用
+      * 用来修饰一个方法
+      * 用来修饰类
+    * final 关键字，为什么匿名内部类使用局部饮用用 final
+
+# Java 基础的常见问题 3
+
+1. 抽象与接口
+   * 抽象类与接口的区别
+   * 类可以继承多个类吗
+   * 接口可以继承多个接口吗
+   * 类可以实现多个接口吗
+2. IO 模型有哪些，讲讲你理解的 nio，它和 bio、aio 的区别是啥？谈谈 reactor 模型。
+3. hashCode
+   * 如何在父类中为子类自动完成所有的 hashcode 和 equals 实现？这样做有何优劣？
+     * 覆盖 equals 时需要遵守的通用约定
+     * 覆盖 equals 时总要覆盖 hashCode
+   * 说一说你对 java.lang.object 对象中 hashCode 和 equals 方法的理解。在什么场景下需要重新实现这两个方法
+   * 这样的 a.hashcode() 有什么用，与 a.equals(b) 有什么关系
+     * hashcode() 有什么用
+     * equals 与 hashcode 的关系
+     * hashcode 是否唯一
+   * 有没有可能 2 个不相等的对象有相同的 hashcode
+4. 请结合 OO 设计理念，谈谈访问修饰符 public、private、protected、default 在应用设计中的作用
+5. String
+   * 在自己的代码中，如果创建一个 java.lang.String 类，这个类是否可以被类加载器加载？为什么？
+     * 双亲委派模型
+     * 为什么要使用这种双亲委派模型呢？
+     * 定义自己的 ClassLoader
+     * 怎么打破双亲委派机制
+       * 双亲委派模型破坏史
+6. 深拷贝和浅拷贝的区别
+7. HashSet 内部是如何工作的
+8. 序列化
+9. 
 
 
 
