@@ -2,19 +2,17 @@
 
 [TOC]
 
-
-
-## 1. 泛型
+# 1. 泛型
 
 　　Java 泛型是 JDK 1.5 中引入的一个新特性，泛型的本质是参数化类型，也就是所操作的数据类型被指定为一个参数。
 
 　　特性：只在编译阶段有效。在编译过程中，正确检验泛型结果后，会将泛型的相关信息擦除，并且在对象进入和离开方法的边界处添加类型检查和类型转换的方法。也就是说，泛型信息不会进入到运行时阶段。
 
-### 1.1. 在 jdk 1.5 中，引入了泛型，泛型的存在是用来解决什么问题的。
+## 1.1. 在 jdk 1.5 中，引入了泛型，泛型的存在是用来解决什么问题的。
 
 　　泛型的本质是为了参数化类型，在不创建新的类型情况下，通过泛型指定的不同类型来控制形参具体限制的类型。
 
-## 2. 反射
+# 2. 反射
 
 　　Java 反射机制是在运行状态中，对于任意一个类，都能够知道这个类的所有属性和方法，对于任意一个对象，都能够调用它的任意方法和属性，这种动态获取信息以及动态调用对象方法的功能称为 Java 语言的反射机制。
 
@@ -27,9 +25,9 @@
 | Method  类     | 代表类的方法                                       |
 | Constructor 类 | 代表类的构造方法                                   |
 
-### 2.1. Class 类
+## 2.1. Class 类
 
-#### 2.1.1 获得类相关的方法
+### 2.1.1 获得类相关的方法
 
 | 方法                         | 用途                                                   |
 | ---------------------------- | ------------------------------------------------------ |
@@ -46,7 +44,7 @@
 | getSuperclass()              | 获得当前类继承的父类的名字                             |
 | getInterfaces()              | 获得当前类实现的类或是接口                             |
 
-#### 2.1.2. 获得类中属性相关的方法
+### 2.1.2. 获得类中属性相关的方法
 
 | 方法                          | 用途                   |
 | ----------------------------- | ---------------------- |
@@ -55,7 +53,7 @@
 | getDeclaredField(String name) | 获得某个属性对象       |
 | getDeclaredFields()           | 获得所有属性对象       |
 
-#### 2.1.3. 获得类中注解相关的方法
+### 2.1.3. 获得类中注解相关的方法
 
 | 方法                                              | 用途                                   |
 | ------------------------------------------------- | -------------------------------------- |
@@ -64,7 +62,7 @@
 | getDeclaredAnnotation(Class< A > annotationClass) | 返回该类中与参数类型匹配的所有主机对象 |
 | getDeclaredAnnotations()                          | 返回该类所有的注解对象                 |
 
-#### 2.1.4. 获得类中构造器相关的方法
+### 2.1.4. 获得类中构造器相关的方法
 
 | 方法                                                 | 用途                                   |
 | ---------------------------------------------------- | -------------------------------------- |
@@ -73,7 +71,7 @@
 | getDeclaredConstructor(Class...< ? > parameterTypes) | 获得该类中与参数类型匹配的构造方法     |
 | getDeclaredConstructors()                            | 获得该类所有的构造方法                 |
 
-#### 2.1.5. 获得类中方法相关的方法
+### 2.1.5. 获得类中方法相关的方法
 
 | 方法                                                         | 用途                   |
 | ------------------------------------------------------------ | ---------------------- |
@@ -82,7 +80,7 @@
 | getDeclaredMethod(String name,Class... < ? > parameterTypes) | 获得该类某个方法       |
 | getDeclaredMethods()                                         | 获得该类所有方法       |
 
-#### 2.1.6. 类中其他重要的方法
+### 2.1.6. 类中其他重要的方法
 
 | 方法                                                         | 用途                             |
 | ------------------------------------------------------------ | -------------------------------- |
@@ -96,7 +94,7 @@
 | isLocalClass()                                               | 如果是局部类则返回 true          |
 | isMemberClass()                                              | 如果是内部类则返回 true          |
 
-### 2.2. Field 类
+## 2.2. Field 类
 
 　　Field 代表类的成员变量（成员变量也称为类的属性）。
 
@@ -106,7 +104,7 @@
 | get(Object obj)              | 获得 obj 中对应的属性值    |
 | set(Object obj,Object value) | 设置 obj 中对应属性值      |
 
-### 2.3. Method 类
+## 2.3. Method 类
 
 　　Method 代表类的方法。
 
@@ -114,7 +112,7 @@
 | ---------------------------------- | --------------------------------------------------------- |
 | invoke(Object obj, Object... args) | 传递 objecy 对象及参数，调用 object 对象对应的方法 method |
 
-### 2.4. Constructor 类
+## 2.4. Constructor 类
 
 　　Constructor 代表类的构造方法。
 
@@ -122,7 +120,29 @@
 | ------------------------------- | -------------------------- |
 | newInstance(Object... initargs) | 根据传递的参数创建类的对象 |
 
-### 2.5. 反射的原理，反射创建类实例的三种方式是什么？
+## 2.5. 反射的原理
+
+[深入理解java反射原理](https://www.cnblogs.com/yougewe/p/10125073.html)
+
+　　通过反射，java 可以动态的加载未知的外部配置对象，临时生成字节码进行加载使用，从而使代码更灵活！可以极大地提高应用的扩展性！
+
+1. 反射类及反射方法的获取，都是通过从列表中搜寻查找匹配的方法，所以查找性能会随类的大小方法多少而变化；
+
+2. 每个类都会有一个与之对应的 Class 实例，从而每个类都可以获取 method 反射方法，并作用到其他实例身上；
+
+3. 反射也是考虑了线程安全的，放心使用；
+
+4. 反射使用软引用 relectionData 缓存 class 信息，避免每次重新从 jvm 获取带来的开销；
+
+5. 反射调用多次生成新代理 Accessor，而通过字节码生存的则考虑了卸载功能，所以会使用独立的类加载器；
+
+6. 当找到需要的方法，都会 copy 一份出来，而不是使用原来的实例，从而保证数据隔离；
+
+7. 调度反射方法，最终是由 jvm 执行 invoke0() 执行；
+
+　　原理：类的字节码加载到 JVM 后，对于任意一个类，都能够知道这个类的所有属性和方法；对于任意一个对象，都能够调用它的任意一个方法和属性；这种动态获取的信息以及动态调用对象的方法的功能称为 java 语言的反射机制。
+
+## 2.6. 反射创建实例的三种方式是什么？
 
 ```java
         // Book 的实例对象如何表示
@@ -148,12 +168,18 @@
 
 　　不管哪种方式获取 Book 的 Class 实例，这些都是代表了 Book 类的类类型，一个类只可能是 Class 类的一个实例对象，所以不管哪种方式获取的类实例都是同一个。意思就是说 class1、class2、class3 是同一个，是相等的。
 
-### 2.6. 反射中，Class.forName 和 ClassLoader 区别。
+　　反射创建类实例的三种方式：
+
+- Class.forName(“com.A”)
+- new A().getClass()
+- A.class
+
+## 2.7. 反射中，Class.forName 和 ClassLoader 区别。
 
 1. Class.forName 加载类时将类进行了初始化。
 2. ClassLoader 的 loadClass 方法并没有对类进行初始化，只是把类加载到了虚拟机中。
 
-## 3. 代理
+# 3. 代理
 
 　　代理（Proxy）是一种设计模式。提供了间接对目标对象进行访问的方式，即通过代理对象访问目标对象。这样做的好处是：可以在目标对象实现的基础上，增强额外的功能操作，即扩展目标对象的功能。
 
@@ -161,11 +187,11 @@
 
 ![](image/Java代理模式图.png)
 
-### 3.1. 三种代理模式
+## 3.1. 三种代理模式
 
 　　三种代理模式：静态代理、动态代理、Cglib 代理。
 
-#### 3.1.1. 静态代理
+### 3.1.1. 静态代理
 
 　　静态代理在使用时，需要定义接口或者父类，被代理对象与代理对象一起实现相同的接口或者是继承相同的父类。
 
@@ -211,7 +237,7 @@ public class UserDaoProxy implements IUserDao{
 }
 ```
 
-#### 3.1.2. 动态代理
+### 3.1.2. 动态代理
 
 　　动态代理就是在程序运行时 JVM 才为被代理对象生成代理对象。
 
@@ -265,7 +291,7 @@ public class ProxyFactory {
 }
 ```
 
-#### 3.1.3. Cglib 代理
+### 3.1.3. Cglib 代理
 
 　　静态代理和动态代理模式有个共同点就是都要求目标对象是实现一个接口的目标对象，如果目标对象只是一个单独的对象，并没有实现任何的接口，这个时候就可以使用继承以目标对象子类的方式来实现实现代理，这种方法就叫做：Cglib 代理。
 
@@ -282,11 +308,17 @@ public class ProxyFactory {
 
 　　在 Spring 的 AOP 编程中：如果加入容器的目标对象有实现接口，用 JDK 代理，如果目标对象没有实现接口，用 Cglib 代理。
 
-### 3.2. Java 动态代理实现与原理详细分析
+## 3.2. Java 动态代理实现与原理详细分析
 
 https://www.cnblogs.com/gonjan-blog/p/6685611.html
 
-### 3.3. 描述动态代理的几种实现方式，分别说出相应的优缺点
+　　jdk 为我们的生成了一个叫 $Proxy0（这个名字后面的 0 是编号，有多个代理类会一次递增）的代理类，这个类文件是放在内存中的，我们在创建代理对象时，就是通过反射获得这个类的构造方法，然后创建的代理实例。通过对这个生成的代理类源码的查看，我们很容易能看出，动态代理实现的具体过程。
+
+　　我们可以对 InvocationHandler 看做一个中介类，中介类持有一个被代理对象，在 invoke 方法中调用了被代理对象的相应方法。通过聚合方式持有被代理对象的引用，把外部对 invoke 的调用最终都转为对被代理对象的调用。
+
+　　代理类调用自己方法时，通过自身持有的中介类对象来调用中介类对象的 invoke 方法，从而达到代理执行被代理对象的方法。也就是说，动态代理通过中介类实现了具体的代理功能。
+
+## 3.3. 描述动态代理的几种实现方式，分别说出相应的优缺点
 
 　　动态代理有 JDK 动态代理和 cglib 动态代理。
 
@@ -294,11 +326,31 @@ https://www.cnblogs.com/gonjan-blog/p/6685611.html
 
 　　cglib 动态代理是继承并重写目标类，所以目标类和方法不能被声明成 final。
 
-[描述动态代理的几种实现方式 分别说出相应的优缺点](http://xzc.fun/w/index.php?title=描述动态代理的几种实现方式_分别说出相应的优缺点)
+　　主要的有jdk动态代理和cglib动态代理两种方式。
 
-https://blog.csdn.net/riemann_/article/details/86849078
+　　 **jdk动态代理**
 
-### 3.4. jdk 动态代理与 cglib 实现的区别
+　　 优点：
+
+1. 最小化依赖关系，减少依赖意味着简化开发和维护，JDK本身的支持，可能比 cglib 更加可靠；
+2. 平滑进行 JDK 版本升级，而字节码类库通常需要进行更新以保证在新版 Java 上能够使用。
+3. 代码实现简单。
+
+　　缺点：目标类必须实现一个接口，使用范围受限；
+
+　　 **cglib：**
+
+　　优点：
+
+1. 用更高性能的字节码操作机制，性能稍高，类似还有 ASM、Javassist 等；
+2.  有的时候调用目标可能不便实现额外接口，从某种角度看，限定调用者实现接口是有些侵入性的实践，类似 cglib 动态代理就没有这种限制；
+3.  只操作我们关心的类，而不必为其他相关类增加工作量；
+
+　　缺点：
+
+1. 由于 cglib 是基于继承的方式实现类的动态代理，因此无法实现对 final 方法的代理，也不能完全算缺点的，只是个坑，大家注意即可。
+
+## 3.4. jdk 动态代理与 cglib 实现的区别
 
 　　jdk 动态代理是利用反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用 InvokeHandler 来处理。
 
@@ -313,11 +365,13 @@ https://blog.csdn.net/riemann_/article/details/86849078
 1. JDK 动态代理只能对实现了接口的类生成代理，而不能针对类。
 2. CGLIB 是针对类实现代理，主要是对指定的类生成一个子类，覆盖其中的方法，因为是继承，所以该类或方法最好不要声明成 final。
 
-### 3.5. 为什么 cglib 方式可以对接口实现代理
+## 3.5. 为什么 cglib 方式可以对接口实现代理
 
 https://www.cnblogs.com/chinajava/p/5880887.html
 
-## 4. 注解
+　　cglib 动态代理是继承并重写目标类，所以目标类和方法不能被声明成 final，而接口是可以被继承的。
+
+# 4. 注解
 
 　　注解是没有方法的，只有成员变量，变量名就是注解括号中对应的参数名，变量类型是注解括号中对应的参数类型。
 
@@ -334,17 +388,17 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 5. Class 类型
 6. 以上类型的一维数组类型
 
-### 4.1. 元注解
+## 4.1. 元注解
 
 　　元注解作用在注解的定义上，一般用于指定某个注解生命周期以及作用目标等信息。
 
-#### 4.1.1. @Retension
+### 4.1.1. @Retension
 
 　　@Retension：表示注解存在阶段是保留在源码（编译器，@Retention(RetentionPolicy.SOURCE)）、字节码（类加载，@Retention(RetentionPolicy.CLASS)）或者是运行期（JVM 中运行，Rentention(RetentionPolicy.RUNTIME)），即这个注解的存活时间。
 
 　　如果是自定义注解，自定义注解如果只存在源码中或者字节码文件中就无法发挥作用，而在运行期间能获取到注解才能实现目的，所以自定义注解中肯定是使用 @Retention(Retention.RUNNTIME)。
 
-#### 4.1.2. @Target
+### 4.1.2. @Target
 
 　　@Target 元注解标识注解作用的范围，可以是类、方法、方法参数变量等。
 
@@ -361,19 +415,19 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 9. @Target(ElementType.TYPE_PARAMETER) 作用于类型泛型，即泛型方法、泛型类、泛型接口（jdk 1.8 加入）
 10. @Target(ElementType.TYPE_USE) 类型使用，可以用于标注任意类型除了 class（jdk 1.8 加入）
 
-#### 4.1.3. @Documented
+### 4.1.3. @Documented
 
 　　@Documented 的作用是能够将注解中的元素包含到 Javadoc 中去。
 
-#### 4.1.4. @Inherited
+### 4.1.4. @Inherited
 
 　　一个被 @Ingerited 注解了的注解修饰了一个父类，如果它的子类没有被其他注解修饰，则它的子类也继承了父类的注解。 
 
-#### 4.1.5. @Repeatable
+### 4.1.5. @Repeatable
 
 　　@Repeatable 是 Java 1.8 才加进来的，所以算是一个新的特性。被这个元注解修饰的注解可以同时作用一个对象多次，但是每次作用注解又可以代表不同的含义。
 
-### 4.2. 获注解解属性
+## 4.2. 获得注解属性
 
 　　有几个基本方法：
 
@@ -383,7 +437,7 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 4. getDeclaredAnnotation()：返回本元素指定的所有注解。
 5. getDeclaredAnnotations()：返回本元素的所有注解，不包含父类继承而来的。
 
-### 4.3. 反射注解的工作原理
+## 4.3. 反射注解的工作原理
 
 　　AnnotationInvovationHandler 是 JAVA 中专门用来处理注解的 Handler。
 
@@ -396,7 +450,7 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
 　　这样，一个注解的实例就创建出来了，它的本质上就是一个代理类。
 
-### 4.4. JDK 提供的注解
+## 4.4. JDK 提供的注解
 
 1. @Override：用来描述当前方法是一个重写的方法，在编译阶段对方法进行检查。
 2. @Deprecated：它是用来描述当前方法是一个过时的方法。
@@ -404,7 +458,7 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 4. @SafeVarargs：参数安全类型注解。目的是提醒开发者不要用参数做一些不安全的操作，它存在会组织编译器产生 unchecked 这样的警告。
 5. @FunctionalInterface：函数式接口注解。
 
-### 4.5. 注解的作用
+## 4.5. 注解的作用
 
 　　注解是一系列元数据，它提供数据用来解释程序代码，但是注解并非是所解释的代码本身的一部分。注解对于代码的运行效果没有直接影响。
 
@@ -415,9 +469,9 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
 　　处理提取和处理 Annotation 的代码统称为 ART（Annotation Processing Tool）。
 
-## 5. 锁
+# 5. 锁
 
-### 5.1. 死锁？
+## 5.1. 死锁
 
 　　死锁是指多个进程同时阻塞，并循环等待彼此占用的资源而无限期的僵持等待下去的局面，这样程序不可能正常终止。
 
@@ -426,7 +480,7 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 1. 系统提供的资源太少了，远不能满足并发进程对资源的需求。
 2. 进程推进顺序不合适，互相占有彼此需要的资源，同时请求对方占用的资源，这往往是因为程序设计不合理。
 
-### 5.2. 造成死锁的四个条件
+## 5.2. 造成死锁的四个条件
 
 1. 互斥条件
 
@@ -444,9 +498,9 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
    即存在一个等待队列，P1 占用 P2 的资源，P2 占用 P3 的资源，P3 占用 P1 的资源。这样就形成了一个等待环路。也就是若干个进程形成环形链，每个都占用对方申请的下一个资源。
 
-　　当上述四个条件都成立的时候，便形成死锁。当然，死锁的情况下如果打破上述任何一个条件，并可让死锁消失。
+　　当上述四个条件都成立的时候，便形成死锁。当然，死锁的情况下如果打破上述任何一个条件，便可让死锁消失。
 
-### 5.3. 解决死锁的方法
+## 5.3. 解决死锁的方法
 
 　　为使系统不发生死锁，必须设法破坏产生死锁的四个必要条件之一，或者允许死锁产生，但当死锁发生时能检测出死锁，并有能力实现恢复。
 
@@ -468,14 +522,14 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
 4. 死锁解除：这是与死锁检测结合使用的，它使用的方式就是剥夺，即将某进程所拥有的资源强行回收，分配给其他的进程。
 
-#### 5.3.1. 死锁预防
+### 5.3.1. 死锁预防
 
 * 打破互斥条件：允许进程同时访问资源（有些资源就是不可以同时访问的，无实用价值）。
 * 打破不可抢占调价 ：比如给进程设置优先级，高优先级的可以抢占资源（实现困难，降低系统性能）。
 * 打破请求和保持条件：实行资源预分配策略，即进程在运行前一次性的向系统申请它所需要的全部资源（不可预测资源的实用、利用率低、降低并发性）。
 * 破坏循环等待条件：采用这种策略，即把资源事先分类编号，按号分配，使进程在申请、占用资源时不会形成环路。所有进程对资源的请求必须严格按资源序号递增的顺序提出（限制和编号实现困难，增加系统开销，有些资源暂时不用也需要先申请，增加了进程对资源的占用时间）。
 
-#### 5.3.2. 死锁避免
+### 5.3.2. 死锁避免
 
 　　允许进程动态的申请资源，但系统在进行资源分配前，应先计算此次资源分配的安全性。若此次分配不会导致系统进入不安全状态，则将资源分配给进程，否则，让进程等待。
 
@@ -485,11 +539,11 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
 　　银行家算法是著名的死锁算法。
 
-#### 5.3.3. 死锁检查
+### 5.3.3. 死锁检查
 
 　　不试图阻止死锁，而是当检查到死锁发生时，采取措施进行恢复。
 
-##### 5.3.3.1. 每种类型一个资源的死锁检测
+#### 5.3.3.1. 每种类型一个资源的死锁检测
 
 ![](线程/image/每种类型一个资源的死锁检测.png)
 
@@ -499,7 +553,7 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
 　　每种类型一个资源的死锁检测算法是通过检测有向图是否存在环来实现的，从一个节点出发进行深度优先搜索，对访问过的节点进行标记，如果访问了已经标记过的节点，就表示有向图存在环，也就是检测到死锁的发生。
 
-##### 5.3.3.2. 每种类型多个资源的死锁检测
+#### 5.3.3.2. 每种类型多个资源的死锁检测
 
 ![](线程/image/每种类型多个资源的死锁检测.png)
 
@@ -518,7 +572,7 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 2. 如果找到了这样一个进程，那么将 C 矩阵的第 i 行向量加到 A 中，标记该进程，并转回 1.
 3. 如果没有这样一个进程，算法终止。
 
-##### 5.3.3.4. 死锁解除
+### 5.3.4. 死锁解除
 
 1. 资源剥夺法。
 
@@ -532,9 +586,9 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
    让一个或多个进程回退到足以回避死锁的地步，进程回退时资源被释放而不是被剥夺。要求系统保持进程的历史信息，设置还原点。
 
-## 6. ArrayList 和 LinkedList 的区别
+# 6. ArrayList 和 LinkedList 的区别
 
-1. ArrayList 是基于动态数组的数据结构，LinkedList 是基于链表的数据结构。
+1. ArrayList 是基于动态数组的数据结构，LinkedList 是基于链表的数据结构。ArrayList 数据满的术后需要扩容，但 LinkedList 不需要。
 
 2. 对于随机访问 get 和 set，ArrayList 要优于 LinkedList，因为 LinkedList 要移动指针；对于新增和删除操作 add 和 remove，LinkedList 比较占优势，因为 ArrayList 要移动数据。
 
@@ -544,11 +598,13 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
    对于增加和删除，LinkedList add(E) 添加到末尾，时间复杂度为 0(1)，add(index,E) 添加第几个元素后，需要先查找到第几个元素，直接指针指向操作，复杂度为 O(n)，remove() 删除元素，直接指针指向操作，复杂度为 O(1)。
 
-3. ArrayList 的空间浪费主要体现在在 List 列表的结尾预留一定的容量空间，而 LinkedList 的空间浪费体现在它的每一个元素都需要消耗相当的空间（指向前后的指针）。
+3. ArrayList 的内存浪费主要体现在在 List 列表的结尾预留一定的容量空间，而 LinkedList 的内存浪费体现在它的每一个元素都需要消耗相当的空间（指向前后的指针）。
 
-## 7. List 、 Set 和 Map 的区别
+4. 如果能预估 ArrayList 大概长度，设置默认容量，防止频繁扩容，优先使用 ArrayList，此时查询、新增性能都比较好，但如果存在频繁删除操作时优先使用 LinkedList。
 
-### 7.1. 区别
+# 7. List 、 Set 和 Map 的区别
+
+## 7.1. 区别
 
 1. List 和 Set 是存储单列数据的集合，两个接口都是继承自 Collection。
 
@@ -568,7 +624,7 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
 6. Map 接口的实现类中 TreeMap 和 Hashtable 不支持存 null，而 HashMap 和 LinkedHashMap 是支持存 null 的。相对应的 Set 接口的实现类中 TreeSet 是不支持存 null 的，HashSet 和 LinkedHashSet 是支持存 null 的。
 
-### 7.2. List 接口的三个实现类
+## 7.2. List 接口的三个实现类
 
 　　次序是 list 的最重要特点，它确保维持元素特定的顺序。
 
@@ -586,7 +642,7 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
    基于数组实现，线程安全，效率低，增删慢，查找慢。
 
-### 7.3. Map 接口的四个实现类
+## 7.3. Map 接口的四个实现类
 
 1. HashMap
 
@@ -594,7 +650,7 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
 2. HashTable
 
-   线程安全、低效，不支持 null 值和 null 键。
+   线程安全、低效，不支持 null 值和 null 键。由于同步导致性能开销，一般不推荐使用，默认初始容量为 11，扩容 2*原数组长度+1。
 
 3. LinkedHashMap
 
@@ -606,7 +662,7 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
    TreeMap 是 SortedMap 接口的基于红黑树的实现，此类保证了映射按照升序排序排列关键字，根据使用的构造方法不同，可能会按照键的类的自然顺序进行排序（参见 Comparable），或者按照创建时所提供的比较器进行排序。此实现为 containsKey、get、put 和 remove 操作提供了保证的 log(n) 时间开销。
 
-### 7.4. Set 接口有两个实现类
+## 7.4. Set 接口的三个实现类
 
 　　存入 Set 的每个元素必须唯一，不保证维护元素的次序。加入 Set 的 Object 必须定义 equeals() 方法。
 
@@ -634,23 +690,19 @@ https://www.cnblogs.com/chinajava/p/5880887.html
 
 　　所以，Set 的实体类主要就是以 Map 为基础，将 Set 构建的对象放入 map 的 key 中，相对应的使用环境也和对应的 map 相同。
 
-### 7.5. 用过哪些 Map 类，都有什么区别？
+## 7.5. 有没有有序的 Map 实现类，如果有，他们是怎么保证有序的？
 
+　　LinkedHashMap 和 TreeMap 是有序的 Map 实现类。
 
+　　LinkedHashMap 是基于链表来实现数据插入有序的。
 
-### 7.6. 有没有有循序的 Map 实现类，如果有，他们是怎么保证有序的？
+　　TreeMap 是基于比较器 Comparator 来实现有序，TreeMap 以红黑树的形式存储，本身就是一个二叉查找树。
 
-LinkedHashMap 和 TreeMap 是有序的 Map 实现类。
-
-LinkedHashMap 使用链表来记录数据的顺序。
-
-TreeMap 是基于红黑树实现的，树的左子树小于树的值，树的右子树大于树的值。
-
-## 8 . HashMap
+# 8 . HashMap
 
 　　HashMap 是一个哈希表，它存储的内容是键值对（key-value）映射。
 
-### 8.1. HashMap 的源码
+## 8.1. HashMap 的源码
 
 　　HashMap 继承 AbstractMap，并且实现 Map、Cloneable、Serializable 接口。
 
@@ -676,7 +728,7 @@ TreeMap 是基于红黑树实现的，树的左子树小于树的值，树的右
 
 　　get() 方法通过 key 值返回对应 value，如果 key 为 null，则直接去 table[0] 处检索，如果不为 null，则调用 getEntry(key) 获取。
 
-### 8.2. HashMap 的数组长度为什么一定要保持为 2 的次幂？
+## 8.2. HashMap 的数组长度为什么一定要保持为 2 的次幂？
 
 1. 扩容后减少数组的移动
 
@@ -690,7 +742,7 @@ TreeMap 是基于红黑树实现的，树的左子树小于树的值，树的右
 
    ![](DataStructure/Map/image/数组索引更加均匀.png)
 
-### 8.3. 为什么 HashMap 的 key 要实现 hashCode() 方法
+## 8.3. 为什么 HashMap 的 key 要实现 hashCode() 方法
 
 　　在 HashMap 中，判断一个 key 值相同：
 
@@ -703,7 +755,7 @@ if (e.hash == hash &&
 
 　　如果传入的 key 对象重写了 equals() 方法却没有重写 hahsCode() 方法，当用 get() 方法来获取 key 对应的 value 值时可能 equals() 判断是相等的，但 hashCode() 结果不同，这时返回的就是 null。
 
-### 8.4. HashMap 不同版本代码的区别
+## 8.4. HashMap 不同版本代码的区别
 
 1. JDK 1.8 在 JDK 1.7 在基础上增加了红黑树来进行优化。即当链表超过 TREEIFY_THRESHOLD（默认为 8）时，将链表转换为红黑树，利用红黑树快速增删改查的特点提高 HashMap 的性能，其中会用到红黑树的插入、删除、查找等算法。当小于 UTREEIFY_THRESHOLD（默认为 6）时，又会转回链表以达到性能平衡。
 
@@ -756,7 +808,7 @@ if (e.hash == hash &&
          return (n < 0) ? 1 : (n >= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;    }
    ```
 
-### 8.5. 为什么有了 HashMap 还有有 HashTable。
+## 8.5. 为什么有了 HashMap 还要有 HashTable
 
 　　HashMap 是非线程安全的，在多线程的情况下，不同线程访问 HashMap 可能会导致死循环、修改数值失败、获取数据不及时等问题，所以引出了 HashTable。
 
@@ -771,10 +823,10 @@ if (e.hash == hash &&
 　　可以用以下语句让 HashMap 进行同步：
 
 ```java
-Map m = Collections.synchronizeMap(hashMap);
+Map m = Collections.synchronizeMap(hashMap);// 性能差，不推荐使用
 ```
 
-### 8.6. HashMap 和 HashTable 的区别
+## 8.6. HashMap 和 HashTable 的区别
 
 1. 继承的父类不同
 
@@ -814,7 +866,7 @@ Map m = Collections.synchronizeMap(hashMap);
 
    由于 HashTable 是线程安全的也是 synchronized，所以在单线程环境下它比 HashMap 要慢。如果不需要同步，只需要单一线程，那么使用 HashMap 的性能要好过 HashTable。
 
-### 8.7. HashMap 线程不安全的体现
+## 8.7. HashMap 线程不安全的体现
 
 　　HashMap 底层是一个 Entry 数组，当发生 hash 冲突的时候，HashMap 是采用链表的方式来解决的，在对应的数组位置访问链表的头节点。对链表而言，新加入的节点会从头节点加入。
 
@@ -822,7 +874,7 @@ Map m = Collections.synchronizeMap(hashMap);
 
 　　在多线程中调用 put() 方法时会调用 addEntry(int hash,  K key, V value, int bucketIndex) 方法，bucketIndex 是位置索引。在这个方法中会先获取链表的头部，然后新建一个节点存储传递进来的键值对，并且会将旧的链表头部作为参数去创建新的节点，而旧的链表头部就是新节点的 next 参数值，最后设置 Entry 数组的 bucketIndex 下标处存储新节点。
 
-　　如果线程 A 和线程 B 同时对容易个数组调用 addEntry()，两个线程会同时得到现在的头节点，然后 A 写入新的头节点之后，B 也写入新的头节点，那 B 的写入操作就会覆盖 A 的写入操作造成 A 的写入操作丢失。
+　　如果线程 A 和线程 B 同时对同一个数组调用 addEntry()，两个线程会同时得到现在的头节点，然后 A 写入新的头节点之后，B 也写入新的头节点，那 B 的写入操作就会覆盖 A 的写入操作造成 A 的写入操作丢失。
 
 ```java
   	// 新增 Entry。将 “key-value” 插入指定位置，bucketIndex 是位置索引。      
@@ -870,13 +922,13 @@ Map m = Collections.synchronizeMap(hashMap);
     }  
 ```
 
-### 8.8. ConcurrentHashMap
+# 9. ConcurrentHashMap
 
 　　ConcurrentHashMap 是 JDK 1.5 新引入的 java.util.concurrent 包的成员，作为 HashTable 的替代。HashTable 采用了同步整个方法的结构，虽然实现了线程安全但是性能也就大大降低了，而 HashMap 在并发情况下会很容易出错。所以就有了安全并且在多线程使用的 ConcurrentHashMap。
 
 　　ConcurrentHashMap 是线程安全并且高效的一种容器。
 
-### 8.8.1. JDK 1.7 版本的 ConcurrentHashMap 的实现原理
+## 9.1. JDK 1.7 版本的 ConcurrentHashMap 的实现原理
 
 　　在 JDK 1.7 中 ConcurrentHashMap 采用了数组 + Segment + 分段锁的方式实现。其中 Segment 继承于 ReetrantLock，所以它是一种可重入锁。
 
@@ -896,11 +948,11 @@ Map m = Collections.synchronizeMap(hashMap);
 
 　　得到一个元素需要进行两次 hash 操作，第一次得到 Segment，第二次得到 HashEntry 中的链表头部，这样做会使得 hash 的过程比普通的 HashMap 要长。 
 
-#### 8.8.1. ConcurrentHashMap 如何体现线程安全？
+### 9.1.1. ConcurrentHashMap 如何体现线程安全
 
  　　采用了分段锁。在插入和删除的时候先定位 Segment 所在的位置，然后对 Segment 加锁，确保线程安全，在获取和查询的时候，数据 value 是 volatile 修饰的，也确保了数据的同步。
 
-### 8.9.  JAVA 8 版本的 ConcurrentHashMap 的实现原理
+## 9.2. JDK 1.8 版本的 ConcurrentHashMap 的实现原理
 
 ![](DataStructure/Map/image/ConcurrentHashMap1.8数据结构.png)
 
@@ -912,9 +964,11 @@ Map m = Collections.synchronizeMap(hashMap);
 
  　　ConcurrentHashMap 的 key 和 value 不允许为 null，是因为在 put 方法中，如果 key 或者 value 为 null，就会直接抛出 NullPointerException 异常。
 
-### 8.9.  JAVA 8 的 ConcurrentHashMap 为什么放弃了分段锁，有什么问题吗？如果你来设计，你如何设计？
+## 9.3.  JDK 1.8 的 ConcurrentHashMap 为什么放弃了分段锁，有什么问题吗？如果你来设计，你如何设计？
 
-### 8.9.1. JAVA 8 的 ConcurrentHashMap 为什么放弃了分段锁
+ 　　分段式锁的粒度任然很大，默认 16 的分段并不能带来很好的并发性能，JDK1.8 的实现已经摒弃了 Segment 的概念，而是直接用 Node 数组+链表+红黑树的数据结构来实现，并发控制使用 Synchronized 和 CAS 来操作，在没有 hash 冲突的情况下直接使用 CAS 来操作，没有锁的性能开销，当 hash 冲突时，则直接用链表第一个 object 加锁，这里加的锁是 synchronized，虽然效率不如 ReentrantLock， 但节约了空间，整个看起来就像是优化过且线程安全的 HashMap。
+
+### 9.3.1. JDK 1.8 的 ConcurrentHashMap 为什么放弃了分段锁
 
  　　原因：
 
@@ -924,11 +978,13 @@ Map m = Collections.synchronizeMap(hashMap);
 
 2. 内部优化。synchronized 则是 JVM 直接支持的，JVM 能够在运行时作出相应的优化操作：锁粗化、锁消除、锁自旋等等。
 
-### 8.9.2. JAVA 8 的 ConcurrentHashMap 放弃了分段锁，有什么问题
+### 9.3.2. JDK 1.8 的 ConcurrentHashMap 放弃了分段锁，有什么问题
 
  　　synchronized 可能会造成死锁，ReentrantLock 可以获取锁的时间进行设置，避免死锁。
 
-### 8.9.3. 如果你来设计，你如何设计？
+ 　　synchronzied 的性能没有 ReentrantLock 高。
+
+### 9.3.3. 如果你来设计，你如何设计？
 
  　　给 synchronized 加上阻塞等待和唤醒，避免死锁。
 

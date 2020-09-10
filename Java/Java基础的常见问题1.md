@@ -1,10 +1,10 @@
 # Java 基础的常见问题1
 
-## 1. 面向对象的特性
+# 1. 面向对象的特性
 
 　　Java 面向对象的四大特性为：封装、继承、抽象、多态。
 
-### 1.1. 封装
+## 1.1. 封装
 
 　　将类的某些信息隐藏在类内部，不允许外部程序直接访问，而是通过该类提供的方法来实现对隐藏信息的操作和访问。
 
@@ -45,7 +45,7 @@ public class Person {
 }
 ```
 
-### 1.2. 继承
+## 1.2. 继承
 
 　　子类就是父类。
 
@@ -81,7 +81,7 @@ public class Student extends Person {
 }
 ```
 
-### 1.3. 抽象
+## 1.3. 抽象
 
 　　将具体的物体的特性抽象出来，是对真实世界的一种描述，用于模拟实际事物的特征和行为。
 
@@ -101,7 +101,7 @@ public class Person {
 }
 ```
 
-### 1.4. 多态
+## 1.4. 多态
 
 　　不同子类的相同属性的值不同、相同方法的实现不同（通过方法的重写）。
 
@@ -129,9 +129,9 @@ public class Dog extends Animal {
 }
 ```
 
-## 2. switch-case
+# 2. switch-case
 
-### 2.1. switch 语句支持的数据类型
+## 2.1. switch 语句支持的数据类型
 
 　　对于表达式 switch 支持的数据类型：
 
@@ -149,11 +149,11 @@ public class Dog extends Animal {
 
 　　所以得出的结论是，switch 在底层实现目前只支持整数数据。
 
-## 3. String、StringBuffer、StringBuilder 
+# 3. String、StringBuffer、StringBuilder 
 
 　　String、StringBuilder 与 StringBuffer 都是 Java 用来处理字符串的类，并且都是 final 类，不允许被继承。
 
-### 3.1. 三者的区别
+## 3.1. 三者的区别
 
 1. 运行速度：StringBuilder > StringBuffer > String。
 
@@ -165,8 +165,7 @@ public class Dog extends Animal {
 
 2. StringBuffer 是线程安全的，StringBuilder 是线程不安全的。
 
-
-### 3.2. “+” 与 append 的区别
+## 3.2. “+” 与 append 的区别
 
 ```java
 // 相当于 String S1 = “abc”; 运行最快
@@ -185,11 +184,11 @@ StringBuilder Sb = new StringBuilder(“a”).append(“b”).append(“c”);
 
 　　String 使用 “+” 来拼接字符串，“+” 的原理是：每遇到一个 “+” ，就创建一个 StringBuilder 对象，然后用 append() 方法，最后调用 StringBuilder 的 toString() 方法返回 String 字符串，在使用之后还需要释放资源，效率低下。而 StringBuilder 的 append 不需要创建新的对象，节省资源。
 
-### 3.3. StringBuffer 是如何实现线程安全的
+## 3.3. StringBuffer 是如何实现线程安全的
 
 　　StringBuffer 除了构造方法其他方法都加了 synchronzied 关键字。
 
-### 3.4. String 的 concat 方法与 append 的区别
+## 3.4. String 的 concat 方法与 append 的区别
 
 　　String 的 concat() 方法的作用是将指定字符串拼接到此字符串的结尾。
 
@@ -213,7 +212,7 @@ public String concat(String str) {
 
 　　所以 StringBuffer 速度是比较快的，而 String 每次生成对象都会对系统性能产生影响，特别当内存中无引用对象多了以后，JVM 的 GC 就会开始工作，对速度的影响一定是相当大的。
 
-### 3.5. 比较string="aaa"和string=new string("aaa")
+## 3.5. 比较string="aaa"和string=new string("aaa")
 
 　　方式一：String a = “aaa” ;
 
@@ -235,11 +234,11 @@ public String concat(String str) {
 
 　　通过方式二创建对象，程序会在**堆内存中开辟一片新空间存放新对象**，**同时会将”aaa”字符串放入常量池，相当于创建了两个对象**。
 
-## 4. 异常
+# 4. 异常
 
-### 4.1. try-catch-finally
+## 4.1. try-catch-finally
 
-#### 4.1.1. 在 try 中 return 还会不会调用 finally
+### 4.1.1. 在 try 中 return 还会不会调用 finally
 
 　　肯定会执行。finally{} 块的代码只有在 try{} 块中包含遇到 System.exit(0); 之类的导致 Java 虚拟机直接退出的语句才会不执行。
 
@@ -297,7 +296,7 @@ finally 块执行：3
 
 　　程序在执行 return x++;时，程序会把 return 语句执行完成，只是等待返回，此时 x 的值已经是 2 了，但程序此时准备返回值依然是 1。接下来程序流程转去执行 finally 块，此时程序会再次对 x 自加，于是 x 变成了 3，而且由于 finally 块中也有 return x；语句，因此程序将会直接由这条语句返回了。
 
-#### 4.1.2. throw 和 throws
+### 4.1.2. throw 和 throws
 
 　　throw 关键字：语句抛出异常；throws 关键字：声明异常（方法抛出异常）。
 
@@ -325,19 +324,19 @@ finally 块执行：3
 
 7. 两者都是消极处理异常的方式，只是抛出或者可能抛出异常，但是不会由函数去处理异常，真正的处理异常由函数的上层调用处理。
 
-### 4.2. error 和 exception
+## 4.2. error 和 exception
 
-#### 4.2.1. Error 和 Exception 的父类子类
+### 4.2.1. Error 和 Exception 的父类子类
 
 ![](image/Error和Exception.png)
 
-#### 4.2.2. Error 和 Exception 的区别
+### 4.2.2. Error 和 Exception 的区别
 
 　　Error：Error 类对象由 Java 虚拟机生成并抛出，大多数错误与代码编写者所执行的操作无关。例如，Java 虚拟机运行错误（Virtual MachineError），当 JVM 不再有继续执行操作所需的内存资源时，将出现 OutOfMemoryError。这些异常发生时，Java 虚拟机（JVM）一般会选择线程终止；还有发生在虚拟机视图执行应用时，如类定义错误（NoClassDefFoundError）、链接错误（LinkageError）。这些错误是不可查的，因为它们在应用程序的控制和处理能力之外，而且绝大多数时程序运行时不允许出现的状况。对于设计合理的应用程序来说，即使确实发生了错误，本质上也不应该试图去处理它所引起的异常状态。在 Java 中，错误通常是使用 Error 的子类描述。
 
 　　Exception：在 Exception 分支中有一个重要的子类 RuntimeException（运行时异常），该类型的异常自动为你所编写的程序定义 ArrayIndexOutOfBoundsException（数组下标越界）、NullPointerException（空指针异常）、ArithmeticException（算术异常）、MissingResourceException（丢失资源）、ClassNotFoundException（找不到类）等异常，这些异常是不检查异常，程序中可以选择捕获异常，也可以不处理。这些异常一般是由程序逻辑错误引起的，程序应该从逻辑角度尽可能避免这类异常的发生；而 RuntimeException 之外的异常统称为非运行时异常，类型上属于 Exception 类及其子类，从程序语法角度讲是必须进行处理的异常，如果不处理，程序就不能编译通过。如 IOException、SQLException 等以及用户自定义的 Exception 异常，一般情况下不自定义检查异常。
 
-#### 4.2.2. 常见的 Exception
+### 4.2.3. 常见的 Exception
 
 **运行时异常（RuntimeException）**：
 
@@ -353,17 +352,17 @@ finally 块执行：3
 
 2. IOException：IO 操作异常。
 
-#### 4.2.3. 常见的 Error
+### 4.2.4. 常见的 Error
 
 1. NoClassDefFoundError：找不到 class 定义异常。
 2. StackOverflowError：深递归导致栈被耗尽而抛出的异常。
 3. OutOfMemoryError：内存溢出异常。
 
-#### 4.2.4. CheckedException、RuntimeException 的区别
+### 4.2.5. CheckedException、RuntimeException 的区别
 
 　　异常表示程序运行过程中可能出现的非正常状态，运行时异常表示虚拟机的通常操作中可能遇到的异常，是一种常见运行错误，只要程序设计的没有问题通常就不会发生。受检异常跟程序运行的上下文环境有关，即使程序设计无误，仍然可能因使用的问题而引发。Java 编译器要求方法必须声明抛出可能发生的受检异常，但是并不要求必须声明抛出未被捕获的运行时异常。
 
-#### 4.2.5. 异常处理的注意事项
+### 4.2.6. 异常处理的注意事项
 
 　　异常和继承一样，是面向对象编程设计中经常被滥用的东西，在 Effective Java 中对异常的使用给出了以下指导原则：
 
@@ -401,7 +400,7 @@ finally 块执行：3
 
    在 finally 中 return 或者处理返回值会让发生很诡异的事情，比如覆盖了 try 中的 return 或者屏蔽的异常。
 
-## 5. Java 的基本数据类型
+# 5. Java 的基本数据类型
 
 　　Java 的两大数据类型：
 
@@ -410,7 +409,7 @@ finally 块执行：3
 
 　　基本数据类型和引用类型的区别主要在于基本数据类型是分配在栈上的，而引用类型是分配在堆上的。
 
-### 5.1. 基本数据类型
+## 5.1. 基本数据类型
 
 　　基本数据类型，也称内置类型，是可以在栈直接分配内存的，Java 保留基本数据类型最大原因是性能。
 
@@ -418,19 +417,19 @@ finally 块执行：3
 
 　　实际上，JAVA 中还存在另外一种基本类型 void，它也有对应的包装类 java.lang.void，不过无法直接对它们进行操作。
 
-#### 5.1.1. byte
+### 5.1.1. byte
 
 1. Java 中最小的数据类型，byte 数据类型是 8 位、 占 1 个字节，有符号的，以二进制补码表示的整数。
-2. 最大存储数据量是 255，存放的数据范围是：[-128(-2^7)，127(2^7-1)] 之间。
+2. 最大存储数据量是 255，存放的数据范围是：[-128(-2^7^)，127(2^7^-1)] 之间。
 3. 默认值是 0；
 4. byte 类型用在大型数组中节约空间，主要代替整数，因为 byte 变量占用得空间只有 int 类型的四分之一。
 5. 例子：byte a = 100，byte b = -50。
 
-#### 5.1.2. short
+### 5.1.2. short
 
 1. 短整型，short 数据类型是 16 位、占 2 字节、有符号的以二进制补码表示的整数。
 
-2. 最大数据存储量是 65536，数据范围是：[-32768(-2^15）， 32767(2^15-1) ]。
+2. 最大数据存储量是 65536，数据范围是：[-32768(-2^15^）， 32767(2^15^-1) ]。
 
 3. short 数据类型也可以像 byte 那样节省空间。一个 short 变量是 int 型变量所占空间的二分之一。
 
@@ -440,18 +439,18 @@ finally 块执行：3
 
 　　注意，byte 类型虽然在语义（逻辑）上占用 1 字节，但实际上，JVM 中是将其当做 int 看的，也就是事实上是占用了 32 位，4 字节的，所以其运算效率和 int 没区别，short 也一样。之所以要有 byte/short 类型，一是因为某些地方要明确使用这些范围类型，二是，在 byte[] 数组中，JVM 存储的则是真的 1 字节，short[] 数组则是 2 字节。但也有的 JVM 其 byte[] 数组也是 4 字节 1 位的。 
 
-#### 5.1.3. int
+### 5.1.3. int
 
 1. 整型，int 数据类型是 32 位、占 4 字节、有符号的以二进制补码表示的整数。
-2. 最大数据存储容量是 2 的 32 次方减 1，数据范围为：[-2,147,483,648（-2^31）， 2,147,485,647（2^31 - 1）]。
+2. 最大数据存储容量是 2 的 32 次方减 1，数据范围为：[-2,147,483,648（-2^31^）， 2,147,485,647（2^31^ - 1）]。
 3. 一般的整数变量默认为 int 类型。
 4. 默认值为 0。
 5. 例子：int a = 100000，int b = -200000。
 
-#### 5.1.4. long
+### 5.1.4. long
 
 1. 长整型，long 数组类型是 64 位、占 8 字节、有符号的以二进制补码表示的整数。
-2. 最大数据存储容量是 2 的 63 次方减 1，数据范围为：[-9,223,372,036,854,775,808（-2^63） ，9,223,372,036,854,775,807（2^63 -1）]。
+2. 最大数据存储容量是 2 的 63 次方减 1，数据范围为：[-9,223,372,036,854,775,808（-2^63^） ，9,223,372,036,854,775,807（2^63^ -1）]。
 3. 这种类型主要使用在需要比较大整数的系统上。
 4. 默认值是 0L。
 5. 例子：long a = 100000L，b = -200000L。
@@ -460,7 +459,7 @@ finally 块执行：3
 
 　　long a = 111111111111111L（正确，强制转换）。
 
-#### 5.1.5. float
+### 5.1.5. float
 
 1. 浮点型，float 数据类型是单精度、32 位、占 4 字节，符合 IEEE 754 标准的浮点数，浮点数是有舍入误差的。
 3. float 在储存大型复数数组的时候可节省内存空间。
@@ -474,7 +473,7 @@ finally 块执行：3
 
 　　double d = 4.55（正确）。
 
-#### 5.1.6. double
+### 5.1.6. double
 
 1. 双精度浮点型，double 数据类型是双精度、64 位、符合 IEEE 754 标准的浮点数。
 3. 浮点数的默认类型是 double 类型。
@@ -483,7 +482,7 @@ finally 块执行：3
 6. 例子：double d1 = 123.4。
 7. 如果是小数类型，并且小数比较小，比如四位小数，建议使用 BigDecimal。
 
-#### 5.1.7. boolean
+### 5.1.7. boolean
 
 1. 布尔类型，boolean 数据类型表示一位的信息。
 2. 只有两个取值：true 和 false。
@@ -491,11 +490,11 @@ finally 块执行：3
 4. 默认值是 false。
 5. 例子：boolean one = true。
 
-#### 5.1.8. char
+### 5.1.8. char
 
 1. 字符型，用于存储单个字符。
 2. char 类型是一个单一的 16 位 Unicode 字符，用 ' ' 表示一个字符。java 内部使用 Unicode 字符集，也有一些转义字符，2 字节。存储 Unicode 码，用单引号赋值。
-3. 范围为：[‘\u0000’（即为0），'\uffff'（即为65,535）]，可以当整数用，它的每一个字符都对应一个整数。
+3. 范围为：[‘\u0000’（即为 0 ），'\uffff'（即为 65,535 ）]，可以当整数用，它的每一个字符都对应一个整数。
 4. char 数据类型可以存储任何字符。
 5. 例子：char letter = 'A'。
 
@@ -517,7 +516,7 @@ finally 块执行：3
 
 　　注意：float、double 两种类型的最小值与 Float.MIN_VALUE 、Double.MIN_VALUE 的值并不相同，实际上 Float.MIN_VALUE 和 Double.MIN_VALUE 分别指的是 float 和 double 类型所能表示的最小正数。也就是说存在这样一种情况，0 到正负 Float.MIN_VALUE 之间的值 float 类型无法表示，0 到正负 Double.MIN_VALUE 之间的值 double 类型无法表示。这并没有什么好奇怪的，因为这些范围内的数值超出了它们的精度范围。
 
-　　Float 和 Double 的最小值和最大值都是以科学记数法的形式输出的，结尾的 “E+数字” 表示 E 之前的数字要乘以 10 的多少倍。比如 3.14E3 就是 3.14x1000 = 3140，3.14E-3 = 3.14/1000 = 0.00314。
+　　Float 和 Double 的最小值和最大值都是以科学记数法的形式输出的，结尾的 “ E+ 数字” 表示 E 之前的数字要乘以 10 的多少倍。比如 3.14E3 就是 3.14x1000 = 3140，3.14E-3 = 3.14/1000 = 0.00314。
 
 　　Java 基本类型存储在栈中，因此它们的存取速度要快于存储在堆中的对应包装类的实例对象。从 Java 5.0 (1.5) 开始，JAVA 虚拟机（Java Virtual Machine）可以完成基本类型和它们对应包装类之间的自动转换。因此在赋值、参数传递以及数学运算的时候像使用基本类型一样使用它们的包装类。另外，所有基本类型（包括 void）的包装类都使用了 final 修饰，因此无法继承它们扩展新的类，也无法重写它们的任何方法。
 
@@ -525,7 +524,7 @@ finally 块执行：3
 
 　　包装类的优势：比如集合的元素必须是对象类型，满足了 java 一切皆是对象的思想。
 
-### 5.2. 引用数据类型
+## 5.2. 引用数据类型
 
 　　Java 有 5 种引用类型（对象类型）：类、接口、数组、枚举、标注。
 
@@ -552,14 +551,12 @@ stu.study(); //把对象的地址赋给 stu 引用对象
 
 　　“ 引用 “ 是存储在有序的内存栈上的，而对象本身的值存储在内存堆上的。
 
-　　
-
 1. 引用类型变量由类的构造函数创建，可以使用它们访问所引用的对象。这些变量在声明时被指定为一个特定的类型，比如 Student 等。变量一旦声明，类型就不能被改变了。
 2. 对象、数组都是引用数据类型。
 3. 所有引用类型的默认值都是 null。
 4. 一个引用变量可以用来引用与任何与之兼容的类型。
 
-### 5.3. 数据类型之间的转换
+## 5.3. 数据类型之间的转换
 
 　　只有 boolean 不参与数据类型的转化。
 
@@ -587,9 +584,15 @@ stu.study(); //把对象的地址赋给 stu 引用对象
 
 2. 强制类型转换：用圆括号括起来目标类型，置于变量前。
 
-## 6. 进程与线程
+## 5.4. BigDecimal
 
-### 6.1. 线程的状态有哪些？
+1. 在需要精确的小数计算时再使用 BigDecimal，BigDecimal 的性能比 double 和 float 差，在处理庞大，复杂的运算时尤为明显。故一般精度的计算没必要使用 BigDecimal。
+2. 尽量使用参数类型为 String 的构造函数。
+3. BigDecimal 都是不可变的（immutable）的， 在进行每一次四则运算时，都会产生一个新的对象 ，所以在做加减乘除运算时要记得要保存操作后的值。
+
+# 6. 线程
+
+## 6.1. 线程的状态有哪些？
 
 　　线程的五大状态分别为：创建状态（New）、就绪状态（Runnable）、运行状态（Running）、阻塞状态（Blocked）、死亡状态（Dead）。
 
@@ -601,9 +604,9 @@ stu.study(); //把对象的地址赋给 stu 引用对象
 4. 阻塞状态：线程进入运行状态后，可能由于多种原因让线程进入阻塞状态，如：调用 sleep() 方法让线程睡眠，调用 wait() 方法让线程等待，调用 join() 方法、suspend() 方法（已被弃用）以及阻塞式 IO 方法。
 5. 死亡状态：run() 方法的正常退出就让线程进入到死亡状态，还有当一个异常未被捕获而终止了 run() 方法的执行也将进入到死亡状态。
 
-### 6.2. 如何实现线程
+## 6.2. 如何实现线程
 
-#### 6.2.1. 继承 Thread 类创建线程
+### 6.2.1. 继承 Thread 类创建线程
 
 　　使用继承 Thread 类创建线程时，首先需要创建一个类继承 Thread 类并覆写 Thread 类的 run() 方法，在 run() 方法中，要写线程要执行的任务。
 
@@ -654,9 +657,9 @@ main方法
 
 　　注意：一个对象多次调用 start() 方法时，会出现 Excepction in thread "main" java.lang.IllegalThreadStateException 异常。
 
-#### 6.2.2. 实现 Runnable 接口创建线程
+### 6.2.2. 实现 Runnable 接口创建线程
 
-　　Thred 类的核心功能就是进行线程的启动，但一个类为了实现多线程直接继承 Thread 类时出现的问题就是：单继承的局限性！，所以 Java 中还提供了另一种实现多线程的方法：实现 Runnable 接口来创建多线程。
+　　Thread 类的核心功能就是进行线程的启动，但一个类为了实现多线程直接继承 Thread 类时出现的问题就是：单继承的局限性！，所以 Java 中还提供了另一种实现多线程的方法：实现 Runnable 接口来创建多线程。
 
 　　Runnable 接口只有一个抽象方法就是 run() 方法，如何使用 Runnable 接口去创建线程：
 
@@ -667,17 +670,17 @@ main方法
 　　具体代码如下：
 
 ```java
-//定义一个类MyThread实现Runnable接口，从而覆写run()方法
+// 定义一个类 MyThread 实现 Runnable 接口，从而覆写 run() 方法
 class MyThread implements Runnable{
 	@Override
 	public void run() {
-		System.out.println("利用Runnable接口创建线程");
+		System.out.println("利用 Runnable 接口创建线程");
 	}
 }
 public class Genericity {
 	public static void main(String[] args) {
-		//实例化Runnable接口的对象，其实也可以实例化MyThread类的对象，因为可以向上转型
-		Runnable runnable=new MyThread();//也可以改为 MyThread runnable=new MyThread();
+		// 实例化 Runnable 接口的对象，其实也可以实例化 MyThread 类的对象，因为可以向上转型
+		Runnable runnable=new MyThread();// 也可以改为 MyThread runnable=new MyThread();
 		//实例化Thread类的对象
 		Thread thread=new Thread(runnable);
 		//调用Thread类的start()方法
@@ -695,7 +698,7 @@ main方法
 利用Runnable接口创建线程
 ```
 
-#### 6.2.3. 实现 Callable 接口的源码
+### 6.2.3. 实现 Callable 接口的源码
 
 　　Runnable 接口的 run() 方法没有返回值，而 Callable 接口中的 call() 方法有返回值，若某些线程执行完成后需要一些返回值的时候，就需要用 Callable 接口创建线程。
 
@@ -714,26 +717,26 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
  
-//1.定义一个类MyThread实现Callable接口，从而覆写call()方法
+// 1. 定义一个类 MyThread 实现 Callable 接口，从而覆写 call() 方法
 class MyThread implements Callable<String>{
 	@Override
 	public String call() throws Exception {
-		return "Callable接口创建线程";
+		return "Callable 接口创建线程";
 	}
 }
 public class Genericity {
 	public static void main(String[] args) throws InterruptedException, ExecutionException {
-		//2.利用MyThread类实例化Callable接口的对象
+		// 2. 利用 MyThread 类实例化 Callable 接口的对象
 		Callable callable=new MyThread();
-		//3.利用FutureTask类的构造方法public  FutureTask(Claaable<V> callable)
-		//将Callable接口的对象传给FutureTask类
+		// 3. 利用 FutureTask 类的构造方法 public  FutureTask(Claaable<V> callable)
+		// 将 Callable 接口的对象传给 FutureTask 类
 		FutureTask task=new FutureTask(callable);
-		//4.将FutureTask类的对象隐式地向上转型
-		//从而作为Thread类的public Thread(Runnable runnable)构造方法的参数
+		// 4. 将 FutureTask 类的对象隐式地向上转型
+		// 从而作为 Thread 类的 public Thread(Runnable runnable) 构造方法的参数
 		Thread thread=new Thread(task);
-		//5.调用Thread类的start()方法
+		// 5. 调用 Thread 类的 start() 方法
 		thread.start();
-		//FutureTask的get()方法用于获取FutureTask的call()方法的返回值，为了取得线程的执行结果
+		// FutureTask 的 get() 方法用于获取 FutureTask 的 call() 方法的返回值，为了取得线程的执行结果
 		System.out.println(task.get());
 	}
 }
@@ -745,7 +748,7 @@ public class Genericity {
 Callable接口创建线程
 ```
 
-### 6.3. start 与 run 的区别
+## 6.3. start 与 run 的区别
 
 **start()**
 
@@ -771,125 +774,18 @@ Callable接口创建线程
 
 　　调用 start() 方法方可启动线程，而 run() 方法只是 thread 的一个普通方法调用，还是在主线程里执行。
 
-### 6.4. 线程与进程的区别
+## 6.4. Thread 与 Runnable 的区别
 
-#### 6.4.1. 进程（线程+内存+文件/网络句柄）
+1. Runnable 是接口，Thread 是类，且实现了 Runnable 接口。
+2. Runnable 适合多个相同程序代码的线程去处理同一资源的情况，把虚拟 CPU（线程）同程序的代码，数据有效的分离，较好地体现了面向对象的设计思想。
+3. Runnable 可以避免由于 Java 的单继承特性带来的局限。经常碰到这样一种情况，即当要将已经继承了某一个类的子类放入多线程中，由于一个类不能同时有多个父类，所以不能用继承 Thread 类的方式，那么这个类就只能采用实现 Runnable 接口的方式了。
+4. Runnable 有利于程序的健壮性，代码能够被多个线程共享，代码与数据是独立的。当多个线程的执行代码来自同一个类的实例时，即称它们共享相同的代码。多个线程操作相同的数据，与它们的代码无关。当共享访问相同的对象时，即它们共享相同的数据。当线程被构造时，需要的代码和数据通过一个对象作为构造函数实参传递进去，这个对象就是一个实现了 Runnable 接口的类的实例。
 
-　　**进程（Process）**是计算机中的程序关于某数据集合上的一次运行活动，是系统进行资源分配和调度的基本单位，是操作系统结构的基础。
+## 6.5. 线程间通信
 
-　　在当代面向线程设计的计算机结构中，进程是线程的容器。
+　　在 java 中实现多线程间通信则主要采用 “ 共享变量 ” 和 “ 管道流 ” 这三种方法。
 
-　　程序是指令、数据及其组织形式的描述，进程是程序的实体。
-
-　　进程在系统中指的是正在运行的一个应用程序，程序一旦运行就是进程。
-
-![](image/进程.png)
-
-##### 6.4.1.1. 内存
-
-　　这里的内存是逻辑内存，指的是内存的寻址空间。每个进程的内存都是相互独立的。
-
-　　进程独占内存空间，保持各自运行状态，相互间不干扰且可以互相切换，为并发处理任务提供了可能。
-
-##### 5.4.1.2. 文件/网络句柄
-
-　　它们是所有线程所共有的，例如打开同一个文件、去抢同一个网络的端口这样的操作是被允许的。
-
-#### 6.4.2. 线程（栈+PC+TLS）
-
-　　**线程（Thread）**：是操作系统能够进行运算调度的最小单位，也就是程序执行的最小单元。它被包含在进程之中，是进程中的实际运作单位。也可以说是系统分配处理器时间资源的基本单元，或者说进程之内独立执行的一个单元执行流，一条线程指的是进程中一个单一顺序的控制流，一个进程中可以并发多个线程，每条线程并发执行不同的任务。
-
-　　线程才是操作系统所真正去运行的，而进程则是像容器一样把需要的一些东西放在了一起，而把不需要的东西做了一层隔离，进行隔离开来。
-
-　　线程共享进程的内存资源，相互间切换更快速，支持更细粒度的任务控制，使进程内的子任务得以并发执行。
-
-　　线程是操作系统中可调度的最小单元，它的资源首先不可能无限制产生，会存在资源消耗，线程的创建和销毁都会有相应的开销。操作系统会通过时间片轮转的方式调度每个线程，因此线程不是绝对的并行，而是因为轮转速度太快，看起来像并行。若频繁创建和销毁线程，会造成大量资源开销，可以通过使用线程池来解决，线程池中会缓存一定数量的线程，当需要使用线程时直接复用而不需要重新创建，这样就避免因频繁创建和销毁线程所带来的资源开销。
-
-　　进程是资源分配的最小单位，线程是程序执行（CPU 调度）的最小单位。所有与进程相关的资源，都被记录在 PCB 中，进程是抢占处理机的调度单元，线程属于某个进程，共享其资源。
-
-![](image/PCB.png)
-
-![](image/线程.png)
-
-##### 6.4.2.1. 栈
-
-　　从主线程的入口 main 函数，会不断的进行函数调用，每次调用的时候，会把所有的参数和返回地址压入到栈中。
-
-##### 6.4.2.2. PC
-
-　　Program Counter 程序计数器，操作系统真正运行的是一个个的线程，而进程只是它的一容器。PC 就是指向当前的指令，而这个指令是放在内存中的。
-
-　　每一个线程都有一串自己的指针，去指向自己当前所在内存的指针。
-
-　　计算机绝大部分是存储程序性的，说的就是数据和程序是存储在同一片内存里的。这个内存中既有数据变量又有程序，所以 PC 指针就是指向内存的。
-
-##### 6.4.1.3. TLS
-
-　　全称：thread local storage
-
-　　线程的独立内存就是 TLS，用来存储线程所独有的数据。
-
-#### 6.4.3. 总结
-
-![](image/进程与线程.png)
-
-1. 进程是系统进行资源分配和调度的最小单位，线程是程序执行（CPU 调度）的最小单位。
-
-2. 进程有自己的独立地址空间，互相不影响，可以看做是独立应用，每启动一个进程，系统就会为它分配地址空间，建立数据表来维护代码段、堆栈段和数据段，这种操作非常昂贵。
-
-   线程是共享进程中的数据的，只是进程的不同执行路径，不能看做独立应用，使用相同的地址空间。
-
-3. CPU 切换一个线程的花费远比进程要小的多，同时创建一个线程的开销也比进程要小很多，所以进程的切换比线程的切换开销大。
-
-4. 线程之间的通信更方便，同一进程下的线程共享全局变量、静态变量等数据，而进程之间的通信要以通信的方式（IPC）进行。
-
-5. 进程要分配一大部分的内存，而线程只需要分配一部分栈就可以了。
-
-6. 一个线程可以创建和销毁另一个线程，同一个进程中的多个线程之间可以并发执行。
-
-7. 多进程程序要比多线程程序更健壮，多线程程序只要有一个线程死掉，整个进程也死掉了，而一个进程死掉并不会对另外一个进程造成影响，因为进程有自己独立的地址空间。
-
-**Java 进程和线程的关系**
-
-1. Java 对操作系统提供的功能进程封装，包括进程和线程。
-2. 运行一个程序至少会有一个进程，一个进程包含至少一个线程。
-3. 每个进程对应一个 JVM 实例，多个线程共享 JVM 里的堆。
-4. Java 采用单线程编程模型，程序会自动创建主线程。
-5. 主线程可以创建子线程，原则上要后于子线程完成执行。
-
-### 6.5. 进程间通信
-
-　　进程间通信的主要方法有：
-
-1. 管道（Pipe）：管道可用于具有亲缘关系进程间的通信，允许一个进程和另一个与它有共同祖先的进程之间进行通信。
-
-2. 命名管道（named pipe）：命名管道克服了管道没有名字的限制，因此，除具有管道所具有的功能外，它还允许无亲缘关系进程间的通信。命名管道在文件系统中有对应的文件名。命名管道通过命令 mkfifo 或者系统调用 mkfifo 来创建。
-
-3. 信号（Signal）：信号是比较复杂的通信方式，用于通知接受进程有某种事件发生，除了用于进程间通信外，进程还可以发送信号给进程本身；linux 除了支持 Unix 早期信号语义函数 signal 外，还支持语义符合 Posix.1 标准的信号函数 sigaction（实际上，该函数是基于 BSD 的，BSD 为了实现可靠信号机制，又能够统一对外接口，用 sigaction 函数重新实现了 signal 函数）。Linux 中可以使用 kill -12 进程号，向当前进程发送信号，但前提是发送信号的进程要注册该信号。
-
-   ```java
-   OperateSignal operateSignalHandler = new OperateSignal();
-   Signal sig = new Signal("USR2");
-   Signal.handle(sig, operateSignalHandler);
-   ```
-
-4. 消息（Message）队列：消息队列是消息的链接表，包括 Posix 消息队列 system V 消息队列。有足够权限的进程可以向队列中添加消息，被赋予读权限的进程则可以读走队列中的消息。消息队列克服了信号承载信息量少，管道只能承载无格式字节流以及缓冲区大小受限等缺陷。
-
-5. 共享内存：使用多个进程可以访问同一块内存空间，是最快的可用 IPC 形式。是针对其他通信机制运行效率较低而设计的。往往与其他通信机制，如信号量结合使用，来达到进程间的同步及互斥。
-
-6. 内存映射（mapped memory）：内存映射允许任何多个进程间通信，每一个使用该机制的进程通过把一个共享的文件映射到自己的进程地址空间来实现它。
-
-7. 信号量（semaphore）：主要作为进程间以及同一进程不同线程之间的同步手段。
-
-8. 套接口（Socket）：更为一般的进程间通信机制，可用于不同机器之间的进程间通信。起初是由 Unix 系统的 BSD 分支开发出来的，但现在一般可以移植到其他 Unix 系统上：Linux 和 System V 的变种都支持套接字。
-
-
-
-### 6.6. 线程间通信
-
-　　在 java 中数显多线程间通信则主要采用 “共享变量” 和 “管道流”这三种方法。
-
-#### 6.6.1. 使用同一个共享变量控制
+### 6.5.1. 使用同一个共享变量控制
 
 1. Synchronized、wait、notify
 
@@ -925,11 +821,11 @@ Callable接口创建线程
 
    和 volatile 类似。采用 CAS 操作保证数据的同步。
 
-#### 6.6.2. 使用管道流
+### 6.5.2. 使用管道流
 
 　　管道流主要用来实现两个线程之间的二进制数据的传播，主要使用 PipedInputStream、PipedOutputStream 来实现。
 
-#### 6.6.3. 利用 BlockingQueue
+### 6.5.3. 利用 BlockingQueue
 
 　　**BlockingQueue** 即阻塞队列，从阻塞这个词可以看出，在某些情况下对阻塞队列的访问可能会造成阻塞。被阻塞的情况主要有如下两种：
 
@@ -959,9 +855,9 @@ Callable接口创建线程
 4. SynchronousQueue：特殊的 BlockingQueue，它的内部同时只能够容纳单个元素，对其的操作必须是放和取交替完成的。
 5. DelayQueue：延迟队列，注入其中的元素必须实现 java.util.concurrent.Delayed 接口。
 
-### 6.7. 线程的常用方法
+## 6.6. 线程的常用方法
 
-#### 6.7.1. 设置或获取多线程的线程名称的方法
+### 6.6.1. 设置或获取多线程的线程名称的方法
 
 　　由于在一个进程中可能有多个线程，而多线程的状态运行又是不确定的，即不知道在多线程中当前执行的线程是哪个线程，所以在多线程操作中需要有一个明确的标识符标识出当前线程对象的信息，这个信息往往通过线程的名称来描述。在 Thread 类中提供了一些设置或获取线程名称的方法：
 
@@ -983,11 +879,13 @@ Callable接口创建线程
    public final String getName()
    ```
 
-　1. 如果没有手动设置线程名称时，会自动分配一个线程的名称，如线程对象 thread 自动分配线程名称 Thread - 0。
- 　2. 多线程的运行状态是不确定的，不知道下一个要执行的是哪个线程，这是因为 CPU 以不确定方式或以随机的时间调用线程中的 run() 方法。
- 　3. 需要注意的是，由于设置线程名称是为了区分当前正在执行的线程是哪一个线程，所以在设置线程名称时应避免重复。
+ 4. 如果没有手动设置线程名称时，会自动分配一个线程的名称，如线程对象 thread 自动分配线程名称 Thread - 0。
 
-#### 6.7.2. sleep：线程休眠
+  5. 多线程的运行状态是不确定的，不知道下一个要执行的是哪个线程，这是因为 CPU 以不确定方式或以随机的时间调用线程中的 run() 方法。
+
+  6. 需要注意的是，由于设置线程名称是为了区分当前正在执行的线程是哪一个线程，所以在设置线程名称时应避免重复。
+
+### 6.6.2. sleep：线程休眠
 
 　　线程休眠指的是让线程暂缓执行，等到预计时间之后再恢复执行。
 
@@ -1003,7 +901,7 @@ public static native void sleep(long millis) throws InterruptedException;
 
 　　sleep() 方法让原本处于运行状态的线程进入了休眠，从而线程的状态从运行状态转换为阻塞状态。
 
-#### 6.7.3. yield() ：线程让步
+### 6.6.3. yield() ：线程让步
 
 　　线程让步：暂停当前正在执行的线程对象，并执行其他线程。
 
@@ -1016,7 +914,7 @@ public static native void sleep(long millis) throws InterruptedException;
 public static native void yield();
 ```
 
-#### 6.7.4. join()：等待线程终止
+### 6.6.4. join()：等待线程终止
 
 　　等待线程终止指的是如果在主线程中调用该方法时就会让主线程休眠，让调用 join() 方法的线程先执行完毕后再开始执行主线程。
 
@@ -1028,7 +926,7 @@ public final void join() throws InterruptedException {
 
 　　join() 除了不带参数的，还有带参数的。
 
-#### 6.7.5. 线程停止
+### 6.6.5. 线程停止
 
 　　多线程中停止线程有三种方式：
 
@@ -1084,7 +982,7 @@ public final void join() throws InterruptedException {
    				// 调用 isInterrupted() 方法，用于判断当前线程是否被中断
    				boolean bool=Thread.currentThread().isInterrupted();
    				if(bool) {
-   					System.out.println("非阻塞状态下执行该操作，当前线程被中断!");
+   					System.out.println(" 非阻塞状态下执行该操作，当前线程被中断!");
    					break;
    				}
    				System.out.println("第"+(i++)+"次执行"+" 线程名称："+Thread.currentThread().getName());
@@ -1101,15 +999,17 @@ public final void join() throws InterruptedException {
    }
    thread1.interrupt();
    ```
-   
+
    * interrupt() 方法只是改变中断状态而已，它不会中断一个正在运行的线程。具体来说就是，调用 interrupt() 方法只会给线程设置一个 true 的中断标志，而设置之后，则根据线程当前状态进行不同的后续操作。
    * 如果线程的当前状态处于非阻塞状态，那么仅仅将线程的中断状态设置为 true 而已。
-* 如果线程的当前状态处于阻塞状态，那么将在中断标志设置为 true 后，还会出现 wait()、sleep()、join() 方法之一引起的阻塞，那么会将线程的中断标志位重新设置为 false，并抛出一个 InterruptedException 异常。
-   * 如果在中断时，线程正处于非阻塞状态，则将中断标志修改为 true，而在此基础上，一旦进入阻塞状态，则按照阻塞状态的情况来进行处理。例如，一个线程在运行状态时，其中断标志设置为 true 之后，一旦线程调用了 wait()、sleep()、join() 方法中的一种，立马抛出 InterruptedException 异常，且中断标志被程序自动清除，重新设置为 false。
-   
-   总结：调用 Thread 类的 interrupted() 方法，其本质只是设置该线程的中断标志，将中断标志设置为 true，并根据线程状态决定是否抛出异常。因此，通过 interrupted() 方法真正实现线程的中断原理是：开发人员根据中断标志的具体值来决定如何退出线程。
 
-#### 6.7.6. wait()：线程等待
+* 如果线程的当前状态处于阻塞状态，那么将在中断标志设置为 true 后，还会出现 wait()、sleep()、join() 方法之一引起的阻塞，那么会将线程的中断标志位重新设置为 false，并抛出一个 InterruptedException 异常。
+
+  * 如果在中断时，线程正处于非阻塞状态，则将中断标志修改为 true，而在此基础上，一旦进入阻塞状态，则按照阻塞状态的情况来进行处理。例如，一个线程在运行状态时，其中断标志设置为 true 之后，一旦线程调用了 wait()、sleep()、join() 方法中的一种，立马抛出 InterruptedException 异常，且中断标志被程序自动清除，重新设置为 false。
+
+  总结：调用 Thread 类的 interrupted() 方法，其本质只是设置该线程的中断标志，将中断标志设置为 true，并根据线程状态决定是否抛出异常。因此，通过 interrupted() 方法真正实现线程的中断原理是：开发人员根据中断标志的具体值来决定如何退出线程。
+
+### 6.6.6. wait()：线程等待
 
 　　首先，wait() 方法是 Object 类的方法，下面是无参的 wait() 方法：
 
@@ -1143,7 +1043,7 @@ public class Test1 {
 
 　　调用了 Object 类的 wait() 方法，会使得程序在执行 wait() 方法之后一直等待下去，可以调用 notify() 方法唤醒调用 wait() 方法的处于等待状态的线程，让等待线程继续执行下去。
 
-#### 6.7.7. notify()：线程唤醒
+### 6.6.7. notify()：线程唤醒
 
 　　首先，notify() 方法也是 Object 类的方法：
 
@@ -1204,7 +1104,7 @@ class MyThread implements Runnable{
 
 　　要注意的是，当有多个线程处于等待时，调用 notify() 方法唤醒线程时，就会依然有线程处于等待状态。notify() 只是随机将某一个等待线程唤醒，并没有唤醒所有等待的线程，如果有多个线程处于等待状态时，可以使用 notifyAll() 方法将所有等待线程都唤醒。
 
-#### 6.7.8. notifyAll() ：唤醒所有线程
+### 6.6.8. notifyAll() ：唤醒所有线程
 
 ```java
 public final native void notifyAll();
@@ -1260,7 +1160,157 @@ class MyThread implements Runnable{
 
 　　所有等待线程都被调用 notifyAll() 方法的具有同一个对象锁的线程唤醒，故每一个等待线程都会在调用 wait() 后继续执行直到该线程结束。
 
-### 6.8. 线程池是什么？
+## 6.7. wait() 与 sleep() 的区别
+
+　　Java 中的多线程是一种抢占式的机制而不是分时机制。线程主要有一下几种状态：可运行、运行、阻塞、死亡。抢占式机制指的是有多个线程处于可运行状态但是只有一个线程在运行。
+
+　　当有多个线程访问共享数据的时候，就需要对线程进行同步。线程中的几个主要方法的比较：
+
+　　Thread 类的方法：sleep()、yield() 等。
+
+　　Object 的方法：wait() 和 notify() 等。
+
+　　每个对象都有一个机锁来控制同步访问。Synchronized 关键字可以和对象的机锁交互，来实现线程的同步。
+
+　　由于 sleep() 方法是 Thread 类的方法，因此它不能改变对象的机锁。所以当在一个 synchronized 方法中调用 sleep() 时，线程虽然休眠了，但是对象的机锁没有被释放，其他线程仍然无法访问这个对象。而 wait() 方法则会在线程休眠的同时释放掉机锁，其他线程可以访问该对象。
+
+　　yield() 方法是停止当前线程，让同等优先权的线程运行。如果没有同等优先权的线程，那么 yield() 放啊将不会起作用。
+
+　　wait() 方法和 notify() 方法：当一个线程执行到 wait() 方法时（线程休眠且释放机锁），它就进入到一个和该对象相关的等待池中，同时失去了对象的机锁。当它被一个 notify() 方法唤醒时，等待池中的线程就被放到了锁池中。该线程从锁池中获得机锁，然后回到 wait() 前的中断现场。
+
+　　共同点：他们都是在多线程的环境下，都可以在程序的调用出阻塞指定的毫秒数，并返回。
+
+　　不同点：Thread.sleep(long) 可以不在 synchronized 的块下调用，而且使用 Thread.sleep() 不会丢失当前线程对任何对象的同步锁（monitoe）；object.wait(long) 必须在 synchronized 的块下来使用，调用了之后失去对 object 的 monitor，这样做的好处是它不影响其他的线程对 object 进行操作。
+
+　　
+
+1. 每个对象都有一个锁来控制同步访问，synchronzied 关键字可以和对象的锁交互，来实现同步方法或同步块。
+
+   sleep() 方法正在执行的线程主动让出 CPU（然后 CPU 就可以去执行其他任务），在 sleep 指定时间后 CPU 再回到该线程继续往下执行（注意：sleep 方法只让出了 CPU，而并不会释放同步资源锁）；
+
+   wait() 方法则是指当前线程让自己暂时退让出同步资源锁，以便其他正在等待该资源的线程得到该资源进而运行，只是调用了 notify() 方法，之前调用 wait() 的线程才会解除 wait 状态，可以去参与竞争同步资源锁，进而得到执行。（注意：notify 的作用相当于叫醒睡着的人，而并不会给他分配任务，就是说 notify 只是让之前调用 wait 的线程有权利重新参与线程的调度）。
+
+2. sleep() 方法可以在任何地方使用；wait() 方法则只能在同步方法或同步块中使用；
+
+3. sleep() 是线程类（Thread）的方法，调用会暂停此线程指定的时间，但监控依然保持，不会释放对象锁，到时间主动恢复；wait() 是 Object 的方法，调用会释放对象锁，进入等待队列，待调用 notify()/notifyAll() 唤醒指定的线程或者所有线程池，才会进入锁池，不再次获得对象锁才会进入运行状态。
+
+# 7. 进程
+
+## 7.1. 线程与进程的区别
+
+### 7.1.1. 进程（线程+内存+文件/网络句柄）
+
+　　**进程（Process）**是计算机中的程序关于某数据集合上的一次运行活动，是系统进行资源分配和调度的基本单位，是操作系统结构的基础。
+
+　　在当代面向线程设计的计算机结构中，进程是线程的容器。
+
+　　程序是指令、数据及其组织形式的描述，进程是程序的实体。
+
+　　进程在系统中指的是正在运行的一个应用程序，程序一旦运行就是进程。
+
+![](image/进程.png)
+
+#### 7.1.1.1. 内存
+
+　　这里的内存是逻辑内存，指的是内存的寻址空间。每个进程的内存都是相互独立的。
+
+　　进程独占内存空间，保持各自运行状态，相互间不干扰且可以互相切换，为并发处理任务提供了可能。
+
+#### 7.1.1.2. 文件/网络句柄
+
+　　它们是所有线程所共有的，例如打开同一个文件、去抢同一个网络的端口这样的操作是被允许的。
+
+### 7.1.2. 线程（栈+PC+TLS）
+
+　　**线程（Thread）**：是操作系统能够进行运算调度的最小单位，也就是程序执行的最小单元。它被包含在进程之中，是进程中的实际运作单位。也可以说是系统分配处理器时间资源的基本单元，或者说进程之内独立执行的一个单元执行流，一条线程指的是进程中一个单一顺序的控制流，一个进程中可以并发多个线程，每条线程并发执行不同的任务。
+
+　　线程才是操作系统所真正去运行的，而进程则是像容器一样把需要的一些东西放在了一起，而把不需要的东西做了一层隔离，进行隔离开来。
+
+　　线程共享进程的内存资源，相互间切换更快速，支持更细粒度的任务控制，使进程内的子任务得以并发执行。
+
+　　线程是操作系统中可调度的最小单元，它的资源首先不可能无限制产生，会存在资源消耗，线程的创建和销毁都会有相应的开销。操作系统会通过时间片轮转的方式调度每个线程，因此线程不是绝对的并行，而是因为轮转速度太快，看起来像并行。若频繁创建和销毁线程，会造成大量资源开销，可以通过使用线程池来解决，线程池中会缓存一定数量的线程，当需要使用线程时直接复用而不需要重新创建，这样就避免因频繁创建和销毁线程所带来的资源开销。
+
+　　进程是资源分配的最小单位，线程是程序执行（CPU 调度）的最小单位。所有与进程相关的资源，都被记录在 PCB 中，进程是抢占处理机的调度单元，线程属于某个进程，共享其资源。
+
+![](image/PCB.png)
+
+![](image/线程.png)
+
+#### 7.1.2.1. 栈
+
+　　从主线程的入口 main 函数，会不断的进行函数调用，每次调用的时候，会把所有的参数和返回地址压入到栈中。
+
+#### 7.1.2.2. PC
+
+　　Program Counter 程序计数器，操作系统真正运行的是一个个的线程，而进程只是它的一容器。PC 就是指向当前的指令，而这个指令是放在内存中的。
+
+　　每一个线程都有一串自己的指针，去指向自己当前所在内存的指针。
+
+　　计算机绝大部分是存储程序性的，说的就是数据和程序是存储在同一片内存里的。这个内存中既有数据变量又有程序，所以 PC 指针就是指向内存的。
+
+#### 7.1.2.3. TLS
+
+　　全称：thread local storage
+
+　　线程的独立内存就是 TLS，用来存储线程所独有的数据。
+
+### 7.1.3. 进程与线程的区别
+
+![](image/进程与线程.png)
+
+1. 进程是系统进行资源分配和调度的最小单位，线程是程序执行（CPU 调度）的最小单位。
+
+2. 进程有自己的独立地址空间，互相不影响，可以看做是独立应用，每启动一个进程，系统就会为它分配地址空间，建立数据表来维护代码段、堆栈段和数据段，这种操作非常昂贵。
+
+   线程是共享进程中的数据的，只是进程的不同执行路径，不能看做独立应用，使用相同的地址空间。
+
+3. CPU 切换一个线程的花费远比进程要小的多，同时创建一个线程的开销也比进程要小很多，所以进程的切换比线程的切换开销大。
+
+4. 线程之间的通信更方便，同一进程下的线程共享全局变量、静态变量等数据，而进程之间的通信要以通信的方式（IPC）进行。
+
+5. 进程要分配一大部分的内存，而线程只需要分配一部分栈就可以了。
+
+6. 一个线程可以创建和销毁另一个线程，同一个进程中的多个线程之间可以并发执行。
+
+7. 多进程程序要比多线程程序更健壮，多线程程序只要有一个线程死掉，整个进程也死掉了，而一个进程死掉并不会对另外一个进程造成影响，因为进程有自己独立的地址空间。
+
+**Java 进程和线程的关系**
+
+1. Java 对操作系统提供的功能进程封装，包括进程和线程。
+2. 运行一个程序至少会有一个进程，一个进程包含至少一个线程。
+3. 每个进程对应一个 JVM 实例，多个线程共享 JVM 里的堆。
+4. Java 采用单线程编程模型，程序会自动创建主线程。
+5. 主线程可以创建子线程，原则上要后于子线程完成执行。
+
+## 7.2. 进程间通信
+
+　　进程间通信的主要方法有：
+
+1. 管道（Pipe）：管道可用于具有亲缘关系进程间的通信，允许一个进程和另一个与它有共同祖先的进程之间进行通信。
+
+2. 命名管道（named pipe）：命名管道克服了管道没有名字的限制，因此，除具有管道所具有的功能外，它还允许无亲缘关系进程间的通信。命名管道在文件系统中有对应的文件名。命名管道通过命令 mkfifo 或者系统调用 mkfifo 来创建。
+
+3. 信号（Signal）：信号是比较复杂的通信方式，用于通知接收进程有某种事件发生，除了用于进程间通信外，进程还可以发送信号给进程本身；linux 除了支持 Unix 早期信号语义函数 signal 外，还支持语义符合 Posix.1 标准的信号函数 sigaction（实际上，该函数是基于 BSD 的，BSD 为了实现可靠信号机制，又能够统一对外接口，用 sigaction 函数重新实现了 signal 函数）。Linux 中可以使用 kill -12 进程号，向当前进程发送信号，但前提是发送信号的进程要注册该信号。
+
+   ```java
+   OperateSignal operateSignalHandler = new OperateSignal();
+   Signal sig = new Signal("USR2");
+   Signal.handle(sig, operateSignalHandler);
+   ```
+
+4. 消息（Message）队列：消息队列是消息的链接表，包括 Posix 消息队列 system V 消息队列。有足够权限的进程可以向队列中添加消息，被赋予读权限的进程则可以读走队列中的消息。消息队列克服了信号承载信息量少，管道只能承载无格式字节流以及缓冲区大小受限等缺陷。
+
+5. 共享内存：使用多个进程可以访问同一块内存空间，是最快的可用 IPC 形式。是针对其他通信机制运行效率较低而设计的。往往与其他通信机制，如信号量结合使用，来达到进程间的同步及互斥。
+
+6. 内存映射（mapped memory）：内存映射允许任何多个进程间通信，每一个使用该机制的进程通过把一个共享的文件映射到自己的进程地址空间来实现它。
+
+7. 信号量（semaphore）：主要作为进程间以及同一进程不同线程之间的同步手段。
+
+8. 套接口（Socket）：更为一般的进程间通信机制，可用于不同机器之间的进程间通信。起初是由 Unix 系统的 BSD 分支开发出来的，但现在一般可以移植到其他 Unix 系统上：Linux 和 System V 的变种都支持套接字。
+
+# 8. 线程池
+
+## 8.1. 线程池是什么？
 
 　　Java 中创建线程池很简单，只需要调用 Executors 中相应的便捷方法即可。
 
@@ -1270,9 +1320,9 @@ class MyThread implements Runnable{
 2. 线程并发数量过多，抢占系统资源，从而导致系统阻塞。
 3. 能够容易的管理线程，比如：线程延迟执行、执行策略等。
 
-### 6.9. 线程池分为几类？
+## 8.2. 线程池分为几类？
 
-#### 6.9.1. CacheThreadPool：可缓存线程池
+### 8.2.1. CacheThreadPool：可缓存线程池
 
 1. 线程数无限制（没有核心线程，全部都是非核心线程）
 2. 有空闲线程则复用空闲线程，若无空闲线程则新建线程。
@@ -1297,9 +1347,9 @@ ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
     }
 ```
 
-　　newCachedThreadPool，核心线程数 0，最大线程数 Integer.MAX_VALUE，线程 keepAlive 时间60s，用的队列是 SynchronousQueue，这种队列本身不会存任务，只做转发，所以newCachedThreadPool 适合执行大量的，轻量级任务。
+　　newCachedThreadPool，核心线程数 0，最大线程数 Integer.MAX_VALUE，线程 keepAlive 时间 60s，用的队列是 SynchronousQueue，这种队列本身不会存任务，只做转发，所以newCachedThreadPool 适合执行大量的，轻量级任务。
 
-#### 6.9.2. FixedThreadPool：定长线程池
+### 8.2.2. FixedThreadPool：定长线程池
 
 1. 有核心线程，核心线程数就是线程的最大数量（没有非核心线程）。
 2. 可控制线程最大并发数（同时执行的线程数）。
@@ -1330,7 +1380,7 @@ ExecutorService fixedThreadPool = Executors.newFixedThreadPool(int nThreads, Thr
 
 　　newFixedThreadPool，可以看到需要传入一个线程数量的参数 nThreads，这样线程池的核心线程数和最大线程数都会设成 nThreads, 而它的等待队列是一个 LinkedBlockingQueue，它的容量限制是 Integer.MAX_VALUE，可以认为是没有边界的。核心线程 keepAlive 时间 0，allowCoreThreadTimeOut 默认false。所以这个方法创建的线程池适合能估算出需要多少核心线程数量的场景。
 
-#### 6.9.3. ScheduledThreadPool：定时线程池
+### 8.2.3. ScheduledThreadPool：定时线程池
 
 1. 支持定时及周期性任务执行。
 2. 有核心线程，也有非核心线程。
@@ -1353,9 +1403,9 @@ ExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(int coreP
     }
 ```
 
-newScheduledThreadPool, 执行周期性任务，类似定时器。
+　　newScheduledThreadPool，执行周期性任务，类似定时器。
 
-#### 6.9.4. SingleThreadPool：单线程化的线程池
+### 8.2.4. SingleThreadPool：单线程化的线程池
 
 1. 有且仅有一个工作线程执行任务。
 2. 所有任务按照指定顺序执行，即遵循队列的入队出队规则。
@@ -1383,11 +1433,9 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 　　这四种常见的线程池其底部都是使用 ThreadPoolExecutor 来实现的。
 
+## 8.3. 线程池的使用和原理
 
-
-### 6.10. 线程池的使用和原理
-
-#### 6.10.1. 线程池的带来的好处
+### 8.3.1. 线程池带来的好处
 
 1. 降低系统的消耗：线程池复用了内部的线程对比处理任务的时候创建线程处理完毕销毁线程降低了线程资源消耗。
 2. 提高系统的响应速度：任务不必等待新线程创建，直接复用线程池的线程执行。
@@ -1396,13 +1444,13 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 4. 提供了线程的可管理功能：暴露了方法，可以对线程进行调配，优化和监控。
 
-#### 6.10.2. 线程池中的几个概念
+### 8.3.2. 线程池中的几个概念
 
 　　线程池的几个概念：
 
 * **核心线程（corePool）**：有新任务提交时，首先检查核心线程数，如果核心线程都在工作，而且数量也已经达到最大核心线程数，则不会继续新建核心线程，而会将任务放入等待队列。
 
-* **等待队列 (workQueue)**：等待队列用于存储**当核心线程都在忙时，继续新增的任务，核心线程在执行完当前任务后，也会去等待队列拉取任务继续执行**，这个队列一般是一个线程安全的阻塞队列，它的容量也可以由开发者根据业务来定制。
+* **等待队列 (workQueue)**：等待队列用于存储当核心线程都在忙时，继续新增的任务，核心线程在执行完当前任务后，也会去等待队列拉取任务继续执行，这个队列一般是一个线程安全的阻塞队列，它的容量也可以由开发者根据业务来定制。
 
 * **非核心线程**：**当等待队列满了，如果当前线程数没有超过最大线程数，则会新建线程执行任务**。核心线程和非核心线程本质上它们没有什么区别，创建出来的线程也根本没有标识去区分它们是核心还是非核心的，线程池只会去判断已有的线程数（包括核心和非核心）去跟核心线程数和最大线程数比较，来决定下一步的策略。
 
@@ -1414,7 +1462,7 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 ![](image/线程池运作概览.png)
 
-　　JDK 中线程池的核心实现类是 ThreadPoolExecutor，这个类的第一个成员变量 ctl，这个变量有双重身份，它的高三位表示线程池的状态，低29位表示线程池中现有的线程数，这也是Doug Lea一个天才的设计，用最少的变量来减少锁竞争，提高并发效率。AtomicInteger 这个类可以通过 CAS 达到无锁并发，效率比较高。
+　　JDK 中线程池的核心实现类是 ThreadPoolExecutor，这个类的第一个成员变量 ctl，这个变量有双重身份，它的高三位表示线程池的状态，低29位表示线程池中现有的线程数，这也是 Doug Lea 一个天才的设计，用最少的变量来减少锁竞争，提高并发效率。AtomicInteger 这个类可以通过 CAS 达到无锁并发，效率比较高。
 
 ```java
     // CAS，无锁并发，高三位表示线程池的状态，低 29 位表示线程池中现有的线程数
@@ -1447,7 +1495,7 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
     /*
      * Bit field accessors that don't require unpacking ctl.
      * These depend on the bit layout and on workerCount being never negative.
-     * 判断状态c是否比s小
+     * 判断状态 c 是否比 s 小
      */
     
     private static boolean runStateLessThan(int c, int s) {
@@ -1476,10 +1524,11 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 ![](image/线程状态流转.png)
 
-#### 6.10.3. 线程池的线程是如何做到复用的
+### 8.3.3. 线程池的线程是如何做到复用的
+
 　　线程池中的线程在循环中尝试取任务执行，这一步会被阻塞，如果设置了allowCoreThreadTimeOut 为 true，则线程池中的所有线程都会在 keepAliveTime 时间超时后还未取到任务而退出。或者线程池已经 STOP，那么所有线程都会被中断，然后退出。
 
-#### 6.10.4. 线程池是如何做到高效并发的。
+### 8.3.4. 线程池是如何做到高效并发的
 
 　　看整个线程池的工作流程，有以下几个需要特别关注的并发点：
 
@@ -1487,11 +1536,11 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 2. 向工作 Worker 容器 workers 中添加新的 Worker 的时候，这个线程池本身已经加锁了。
 3. 工作线程 Worker 从等待队列中取任务的时候。这个由工作队列本身来保证线程安全，比如 LinkedBlockingQueue 等。
 
-#### 6.10.5. 线程池的实现原理
+### 8.3.5. 线程池的实现原理
 
-##### 6.10.5.1. 线程池处理任务流程
+#### 8.3.5.1. 线程池处理任务流程
 
-　　当向线程池中提交一个任务，线程池内部是如何处理任务的？
+　　当向线程池中提交一个任务，线程池内部是如何处理任务的s？
 
 　　先来个流程图，标识一下核心处理步骤：
 
@@ -1505,17 +1554,17 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 4. 如果以上条件都满足，采用饱和处理策略处理任务。
 
-##### 6.10.5.2. 线程池中的线程执行任务
+#### 8.3.5.2. 线程池中的线程执行任务
 
 　　线程池中的线程执行任务分为以下两种情况：
 
 1.  创建一个线程，会在这个线程中执行当前任务；
 
-2. 工作线程完成当前任务之后，会死循环从BlockingQueue中获取任务来执行；
+2. 工作线程完成当前任务之后，会死循环从 BlockingQueue 中获取任务来执行；
 
-#### 6.10.5. 线程池的使用
+### 8.4.6. 线程池的使用
 
-##### 6.10.5.1. 创建线程池
+#### 8.4.6.1. 创建线程池
 
 　　创建线程池使用线程池的构造函数来创建。
 
@@ -1572,7 +1621,7 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 　　也可以自定义饱和策略，实现 RejectedExecutionHandler 即可。
 
-##### 6.10.5.2. 线程池中提交任务
+#### 8.4.6.2. 线程池中提交任务
 
 　　线程池中提交任务的方法有 2：
 
@@ -1580,7 +1629,7 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 2. Future submit(Callable)，有返回值，可以根据返回的 Future 对象来判断任务的执行状态，也可以调用 get 方法来同步阻塞当前线程获取结果，或者采用 get 方法的超时版本，防止阻塞超时的发生。
 
-##### 6.10.5.3. 关闭线程池
+#### 8.4.6.3. 关闭线程池
 
 　　关闭线程池方法有 2：
 
@@ -1596,7 +1645,7 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 　　只要调用了以上两个方法，isShutdown=true; 只有所有的工作线程都关闭，isTerminaed=true;
 
-##### 6.10.5.4. 如何合理的配置线程池参数？
+#### 8.4.6.4. 如何合理的配置线程池参数？
 
 　　分如下场景，参考选择依据如下：
 
@@ -1604,7 +1653,7 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 　　队列的使用推荐使用有界队列，提高系统的稳定性和预警能力。
 
-##### 6.10.5.5. 监控线程池
+#### 8.4.6.5. 监控线程池
 
 　　场景：当线程池出现问题，可以根据监控数据快速定位和解决问题。
 
@@ -1612,9 +1661,9 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 ![](image/线程池主要监控参数.jpg)
 
-　　也可以自定义监控,通过自定义线程池，实现 beforeExecute、afterExecute、terminated 方法，可以在任务执行前，任务执行后，线程池关闭前记录监控数据。
+　　也可以自定义监控，通过自定义线程池，实现 beforeExecute、afterExecute、terminated 方法，可以在任务执行前，任务执行后，线程池关闭前记录监控数据。
 
-### 6.11. ThreadLocal 原理
+# 9. ThreadLocal 原理
 
 　　ThreadLocal 并不是一个 Thread，而是 Thread 的局部变量，它的作用是可以在每个线程中存储数据，数据存储以后，只有在指定线程中可以获取到存储的数据，对于其他线程来说无法获取到数据。
 
@@ -1640,15 +1689,20 @@ ExecutorService singleThreadPool = Executors.newSingleThreadPool();
 
 　　因为 ThreadLocal 的 set 和 get 操作的对象都是当前线程的 Entry 数组，因此在不同线程中访问同一个 ThreadLocal 的 set 和 get 操作仅限于各自线程的内部。
 
-## 7. 对象的引用类型有哪些？
+# 10. 对象的引用类型有哪些？
 
-　　从 JDK 1.2 开始，Java 中的引用类型分为四种，分别是：1. 强引用（StrongReference）、2. 软引用（SoftReference）、3. 弱引用（WeakReference）、4. 虚引用（PhantomReference）
+　　从 JDK 1.2 开始，Java 中的引用类型分为四种，分别是：
 
-### 7.1. 强引用 StrongReference
+1. 强引用（StrongReference）
+2. 软引用（SoftReference）
+3. 弱引用（WeakReference）
+4. 虚引用（PhantomReference）
+
+## 10.1. 强引用 StrongReference
 
 　　这种引用是平时开发中最常用的，例如 String strong = new String ("Strong Reference")，当一个实例对象具有强引用时，垃圾回收器不会回收该对象，当内存不足时，宁愿抛出 OutOfMemoryError 异常也不会回收强引用，因为 JVM 认为强引用的对象是用户正在使用的对象，它无法分辨出到底该回收哪个，强行回收有可能导致系统严重错误。
 
-### 7.2. 软引用 SoftReference
+## 10.2. 软引用 SoftReference
 
 　　如果一个对象只有软引用，那么只有当内存不足时，JVM 才会去回收该对象，其他情况不会回收。
 
@@ -1663,7 +1717,7 @@ Reference reference = referenceQueue.poll();
 
 　　当系统内存不足时，触发 gc，这个 Book 就会被回收，reference 将不为 null。
 
-### 7.3. 弱引用 WeakReference
+## 10.3. 弱引用 WeakReference
 
 　　只有弱引用的对象，当 JVM 触发 gc 时，就会回收该对象，与软引用不同的是，不管是否内存不足，弱引用都会被回收。弱引用可以结合 ReferenceQueue 来使用，当由于系统触发 gc，导致软引用的对象被回收了，JVM 会把这个弱引用加入到与之相关联的 ReferenceQueue 中，不过由于垃圾收集线程的优先级很低，所以弱引用不一定会被很快回收。
 
@@ -1674,7 +1728,7 @@ Book book = softReference.get();
 Reference reference = referenceQueue.poll();
 ```
 
-### 7.4. 虚引用 PhantomReference
+## 10.4. 虚引用 PhantomReference
 
 　　如果一个对象只有虚引用在引用它，垃圾回收器是可以在任意时候对其进行回收的，虚引用主要用来跟踪对象对垃圾回收器回收的活动，当被回收时，JVM 会把这个弱引用加入到与之相关联的 ReferenceQueue 中。与软引用和弱引用不同的是，虚引用必须有一个与之关联的 ReferenceQueue，通过 phantomReference.get() 得到的值为 null，如果没有 ReferenceQueue 与之关联就没有什么存在的价值了。
 
