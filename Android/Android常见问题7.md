@@ -90,7 +90,7 @@ NO3 在Android4.2以上，如果Receiver是null的话（这是用来获取一个
 
 A 启动 B： A onPause() -> B onCreate() -> B onStart() -> B onResume() -> A onStop() -> A onDestory()
 
-B 又启动 A：B onPause() -> A onNewIntent() -> A onResume() -> B onStop() -> B onDestory()
+B 又启动 A：B onPause() -> A onNewIntent() -> A onStart() -> A onStart() -> A onResume() -> B onStop() -> B onDestory()
 
 # 4. onsaveinstancestate() ，说一下调用时机，它用来干什么的。 
 
