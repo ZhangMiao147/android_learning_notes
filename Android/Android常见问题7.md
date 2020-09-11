@@ -13,7 +13,7 @@
 - ContextWrapper：Context的包装类，内部持有一个ContextImpl的实例对象mBase,对Context的操作最终都进入ContextImpl类
 - ContextThemeWrapper：该类内部包含了主题(Theme)相关的接口，即android:theme属性指定的。Service不需要主题，所以Service直接继承于ContextWrapper类。而**Activity继承此类。**
 
-个应用包含的Context个数：Service个数+Activity个数+1(Application类本身对应一个Context对象)。
+1 个应用包含的 Context 个数：Service 个数+ Activity 个数+1(Application类本身对应一个Context对象)。
 
 ## 2、Context的类型
 
@@ -90,11 +90,11 @@ NO3 在Android4.2以上，如果Receiver是null的话（这是用来获取一个
 
 A 启动 B： A onPause() -> B onCreate() -> B onStart() -> B onResume() -> A onStop() -> A onDestory()
 
-B 又启动 A：B onPause() -> A onNewIntent() -> A onStart() -> A onStart() -> A onResume() -> B onStop() -> B onDestory()
+B 又启动 A：B onPause() -> A onNewIntent() -> A onRestart() -> A onStart() -> A onResume() -> B onStop() -> B onDestory()
 
 # 4. onsaveinstancestate() ，说一下调用时机，它用来干什么的。 
 
-onSaveInstanceState 方法会在 Activity 异常销毁之前调用，用来保存需要保存的数据，onRestoreInstanceState 方法在 Activity 重建之后获取保存的数据。
+　　onSaveInstanceState 方法会在 Activity 异常销毁之前调用，用来保存需要保存的数据，onRestoreInstanceState 方法在 Activity 重建之后获取保存的数据。
 
 　　关于 onSaveInstanceState 与 onRestoreInstanceState 方法需要注意的一些问题：
 
@@ -170,11 +170,7 @@ onRestart()->onStart() ->onResume()
 
 **inSampleSize** 对大图片进行压缩，可先设置Options.inJustDecodeBounds，获取Bitmap的外围数据，宽和高等。然后计算压缩比例，进行压缩。
 
-**inPurgeable与inInputShareable** 二个是并列使用，如果设置了inPurgeable = false，则inInputShareable的值会被忽略；这二个选项的作用主要是便于系统及时
-
-回收bitmap占用的内存; **inPurgeable**:设置为True,则使用BitmapFactory创建的Bitmap用于存储Pixel的内存空间，在系统内存不足时可以被回收，当应用需要再次访问
-
-该Bitmap的Pixel时，系统会再次调用BitmapFactory 的decode方法重新生成Bitmap的Pixel数组。 *设置为False时，表示不能被回收。* 
+**inPurgeable与inInputShareable** 二个是并列使用，如果设置了inPurgeable = false，则inInputShareable的值会被忽略；这二个选项的作用主要是便于系统及时回收bitmap占用的内存; **inPurgeable**:设置为True,则使用BitmapFactory创建的Bitmap用于存储Pixel的内存空间，在系统内存不足时可以被回收，当应用需要再次访问该Bitmap的Pixel时，系统会再次调用BitmapFactory 的decode方法重新生成Bitmap的Pixel数组。 *设置为False时，表示不能被回收。* 
 
  ****inInputShareable**：设置是否深拷贝，与inPurgeable结合使用，inPurgeable为false时，该参数无意义**
 

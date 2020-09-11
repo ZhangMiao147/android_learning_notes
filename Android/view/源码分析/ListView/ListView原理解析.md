@@ -300,7 +300,7 @@ private View makeAndAddView(int position, int y, boolean flow, int childrenLeft,
     if (!mDataChanged) {//没有数据改变时
         // Try to use an existing view for this position
         child = mRecycler.getActiveView(position);// 从 activeViews 里拿到 view (上面说到在没有改变时将已有 view 全部放入到了 activeViews 里)
-        if (child != null) {// 没有 拿到还需要进行 obtainView 获取
+        if (child != null) {// 没有拿到还需要进行 obtainView 获取
             // Found it -- we're using an existing child
             // This just needs to be positioned
             setupChild(child, position, y, flow, childrenLeft, selected, true);// 添加 view 到层级上
