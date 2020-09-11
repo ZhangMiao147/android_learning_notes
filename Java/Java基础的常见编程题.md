@@ -4,11 +4,11 @@
 
 # 1. 请编程实现Java的生产者-消费者模型 
 
-## 7.1. 使用 synchronized、wait、notifyAll 实现生产者-消费者模式
+## 1.1. 使用 synchronized、wait、notifyAll 实现生产者-消费者模式
 
-### 7.1.1. 概述
+### 1.1.1. 概述
 
-　　对于任何一种模式，在实现之前都应该明确这种模式对线程同步及互斥的要求。对于生产者-消费者模式，有如下同步及互斥要求：
+　　对于任何一种模式，在实现之前都应该明确这种模式对线程同步及互斥的要求。对于生产者 - 消费者模式，有如下同步及互斥要求：
 
 1. 线程互斥要求
    * 生产者之间是互斥的，即同时只能有一个生产者进行生产
@@ -20,7 +20,7 @@
 
 　　有了上述需求，就可以选择互斥及同步工具了。对于互斥，采用 synchornized 关键字，对于线程同步，采用 wait()、notifyAll()。
 
-### 7.1.2. 实现 
+### 1.1.2. 实现 
 
 ```java
 /**
@@ -137,33 +137,33 @@ public class syncTest {
 }
 ```
 
-## 7.2. 使用信号量实现生产者-消费者模式
+## 1.2. 使用信号量实现生产者-消费者模式
 
-### 7.2.1. 问题描述
+### 1.2.1. 问题描述
 
 　　问题描述：使用一个缓冲区来保存物品，只有缓冲区没有满，生产者才可以放入物品；只有缓冲区不为空，消费者才可以拿走物品。
 
 　　因为缓冲区属于临界资源，因此需要使用一个互斥量 mutex 来控制对缓冲区的互斥访问。
 
-### 7.2.2. 信号量
+### 1.2.2. 信号量
 
 　　信号量 Semaphore，跟交通信号灯非常类似（Semaphore 翻译过来就是信号灯的意思），以下面这幅图为例：
 
-![](/Users/miaomiao/Desktop/android/android_learning_notes/Java/线程/image/信号量1.png)　　如果两个铁轨都是空的，那么此时信号灯是绿色（信号量为 2），允许火车通行。如果有列车请求通行则放行，同时信号灯变为黄色（信号量减一）：
+![](线程/image/信号量1.png)　　如果两个铁轨都是空的，那么此时信号灯是绿色（信号量为 2），允许火车通行。如果有列车请求通行则放行，同时信号灯变为黄色（信号量减一）：
 
-![](/Users/miaomiao/Desktop/android/android_learning_notes/Java/线程/image/信号量2.png)
+![](线程/image/信号量2.png)
 
 　　当两条铁轨都有列车通行时，信号灯为红色（信号量为 0），不允许火车通过。如果有列车请求通行，则阻塞：
 
-![](/Users/miaomiao/Desktop/android/android_learning_notes/Java/线程/image/信号量3.png)
+![](线程/image/信号量3.png)
 
 　　当一辆列车离开轻轨后，信号灯变为黄色（信号量为 1），此时等待的通行的列车被放行：
 
-![](/Users/miaomiao/Desktop/android/android_learning_notes/Java/线程/image/信号量4.png)
+![](线程/image/信号量4.png)
 
-![](/Users/miaomiao/Desktop/android/android_learning_notes/Java/线程/image/信号量5.png)
+![](线程/image/信号量5.png)
 
-### 7.2.3. 代码实现
+### 1.2.3. 代码实现
 
 　　为了同步生产者和消费者的行为，需要记录缓冲区中物品的数量。数量可以使用信号量来统计，这里需要使用两个信号量：empty 记录空缓冲区的数量，full 记录满缓冲区的数量。其中，empty 信号量是在生产者进程中使用，当 empty 不为 0 时，生产者才可以放入物品；full 信号量是在消费者进程中使用，当 full 信号量不为 0 时，消费者才可以取走物品。
 
@@ -285,9 +285,9 @@ public class ProducerAndConsumer {
 }
 ```
 
-## 7.3. 使用管程实现生产者-消费者模式
+## 1.3. 使用管程实现生产者-消费者模式
 
-### 7.3.1. 管程
+### 1.3.1. 管程
 
 　　使用信号量机制实现的生产者消费者问题需要客户端代码做很多控制，而管程把控制的代码独立出来，不仅不容易出错，也会使客户端代码调用更容易。
 
@@ -295,7 +295,7 @@ public class ProducerAndConsumer {
 
 　　管程引入了条件变量以及相关的操作：wait() 和 signal() 来实现同步操作。对条件变量执行 wait() 操作会导致调用进程阻塞，把管程让出来给另一个进程持有。signal() 操作用于唤醒被阻塞的进程。
 
-### 7.3.2. 代码实现
+### 1.3.2. 代码实现
 
 　　Java 中可以使用 ReentrantLock 来实现管程。
 
@@ -423,9 +423,9 @@ public class Monitor {
 }
 ```
 
-# 2. 算法题：两个线程分别持续打印奇数和偶数，实现两个线程的交替打印（从小到大） 
+# 2. 算法题：两个线程分别持续打印奇数和偶数，实现两个线程的交替打印（从小到大）
 
-使用 volatile 和 synchronized 实现
+## 2.1.  使用 volatile 和 synchronized 实现
 
 ```java
 public static class NumThread1 {
@@ -469,7 +469,7 @@ public static class NumThread1 {
 }
 ```
 
-使用 syncrhonzied + volatile+wait+notify 实现：
+## 2.2. 使用 syncrhonzied + volatile+wait+notify 实现
 
 ```java
     // synchronized+wait+notify
@@ -535,7 +535,7 @@ public static class NumThread1 {
     }
 ```
 
-ReentrantLock 实现：
+## 2.3. ReentrantLock 实现
 
 ```java
 public static class NumThread3 {
@@ -600,7 +600,7 @@ public static class NumThread3 {
     }
 ```
 
-flag 实现
+## 2.4. flag 实现
 
 ```java
     public static class NumThread4 {
@@ -641,3 +641,4 @@ flag 实现
 
     }
 ```
+

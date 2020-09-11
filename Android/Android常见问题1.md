@@ -1,4 +1,4 @@
-# Android 的常见问题
+# Android 的常见问题 1
 
 [TOC]
 
@@ -12,102 +12,102 @@ activity 启动过程全解析 https://blog.csdn.net/zhaokaiqiang1992/article/de
 
 - ActivityManagerServices，简称 AMS，服务端对象，负责系统中所有 Activity 的生命周期。
 - ActivityThread，App 的真正入口。当开启 App 之后，会调用 main() 开始运行，开启消息循环队列，这就是传说中的 UI 线程或者叫主线程。与 ActivityManagerServices 配合，一起完成 Activity 的管理工作。
-- ApplicationThread，用来实现ActivityManagerService与ActivityThread之间的交互。在ActivityManagerService需要管理相关Application中的Activity的生命周期时，通过ApplicationThread的代理对象与ActivityThread通讯。
-- ApplicationThreadProxy，是ApplicationThread在服务器端的代理，负责和客户端的ApplicationThread通讯。AMS就是通过该代理与ActivityThread进行通信的。
-- Instrumentation，每一个应用程序只有一个Instrumentation对象，每个Activity内都有一个对该对象的引用。Instrumentation可以理解为应用进程的管家，ActivityThread要创建或暂停某个Activity时，都需要通过Instrumentation来进行具体的操作。
-- ActivityStack，Activity在AMS的栈管理，用来记录已经启动的Activity的先后关系，状态信息等。通过ActivityStack决定是否需要启动新的进程。
-- ActivityRecord，ActivityStack的管理对象，每个Activity在AMS对应一个ActivityRecord，来记录Activity的状态以及其他的管理信息。其实就是服务器端的Activity对象的映像。
-- TaskRecord，AMS抽象出来的一个“任务”的概念，是记录ActivityRecord的栈，一个“Task”包含若干个ActivityRecord。AMS用TaskRecord确保Activity启动和退出的顺序。
+- ApplicationThread，用来实现 ActivityManagerService 与ActivityThread 之间的交互。在 ActivityManagerService 需要管理相关 Application 中的 Activity 的生命周期时，通过 ApplicationThread 的代理对象与 ActivityThread 通讯。
+- ApplicationThreadProxy，是 ApplicationThread 在服务器端的代理，负责和客户端的 ApplicationThread 通讯。AMS 就是通过该代理与 ActivityThread 进行通信的。
+- Instrumentation，每一个应用程序只有一个 Instrumentation 对象，每个 Activity 内都有一个对该对象的引用。Instrumentation 可以理解为应用进程的管家，ActivityThread 要创建或暂停某个 Activity 时，都需要通过 Instrumentation 来进行具体的操作。
+- ActivityStack，Activity 在 AMS 的栈管理，用来记录已经启动的 Activity 的先后关系，状态信息等。通过 ActivityStack 决定是否需要启动新的进程。
+- ActivityRecord，ActivityStack 的管理对象，每个 Activity 在 AMS 对应一个 ActivityRecord，来记录 Activity 的状态以及其他的管理信息。其实就是服务器端 的Activity 对象的映像。
+- TaskRecord，AMS 抽象出来的一个“任务”的概念，是记录 ActivityRecord 的栈，一个 “Task” 包含若干个 ActivityRecord。AMS 用 TaskRecord 确保 Activity 启动和退出的顺序。
 
 ## 1.2. 启动流程
 
-Android 是基于 Linux 系统的，而在 Linux 中，所有的进程都是由 Init 进程直接或者间接 fork 出来的，在 Android 系统里面 ，zygote 是一个进程的名字。Android 是基于 Linux System 的，当手机开机的时候，Linux 的内核加载完成之后就会启动一个叫 "init" 的进程。在 Linux System 里面，所有的进程都是由 init 进程 fork 出来的，zygote 进程也一样。
+　　Android 是基于 Linux 系统的，而在 Linux 中，所有的进程都是由 Init 进程直接或者间接 fork 出来的，在 Android 系统里面 ，zygote 是一个进程的名字。Android 是基于 Linux System 的，当手机开机的时候，Linux 的内核加载完成之后就会启动一个叫 "init" 的进程。在 Linux System 里面，所有的进程都是由 init 进程 fork 出来的，zygote 进程也一样。
 
-每一个 App 其实都是：
+　　每一个 App 其实都是：
 
 * 一个单独的 dalvik 虚拟机
 * 一个单独的进程
 
-所以当系统里面的第一个 zygote 进程运行之后，在这之后再开启 App，就相当于开启一个新的进程。而为了实现资源共用和更快的启动速度，Android 系统开启新进程的方式，是通过 fork 第一个 zygote 进程实现的。所以说，除了第一个 zygote 进程，其他应用所在的进程都是 zygote 的子进程。
+　　所以当系统里面的第一个 zygote 进程运行之后，在这之后再开启 App，就相当于开启一个新的进程。而为了实现资源共用和更快的启动速度，Android 系统开启新进程的方式，是通过 fork 第一个 zygote 进程实现的。所以说，除了第一个 zygote 进程，其他应用所在的进程都是 zygote 的子进程。
 
-### SystemService
+### 1.2.1. SystemService
 
-SystemService 也是一个进程，而且是由 zygote 进程 fork 出来的。
+　　SystemService 也是一个进程，而且是由 zygote 进程 fork 出来的。
 
-系统里面重要的服务都是在这个进程里面开启的，比如 
+　　系统里面重要的服务都是在这个进程里面开启的，比如 
 ActivityManagerService、PackageManagerService、WindowManagerService等等。
 
-在zygote开启的时候，会调用ZygoteInit.main()进行初始化，初始化的时候会fork SystemService 进程。
+　　在 zygote 开启的时候，会调用 ZygoteInit.main() 进行初始化，初始化的时候会 fork SystemService 进程。
 
-ActivityManagerService，简称AMS，服务端对象，负责系统中所有Activity的生命周期。
+　　ActivityManagerService，简称 AMS，服务端对象，负责系统中所有 Activity 的生命周期。
 
-ActivityManagerService进行初始化的时机很明确，就是在SystemServer进程开启的时候，就会初始化ActivityManagerService。
+　　ActivityManagerService 进行初始化的时机很明确，就是在 SystemServer 进程开启的时候，就会初始化 ActivityManagerService。
 
-在 SystemServer 的 main() 方法中运行了 `new SystemServer().run()`，而在 run() 方法中创建 ActivityManagerService对象，并且完成了成员变量初始化。而且在这之前，调用createSystemContext()创建系统上下文的时候，也已经完成了mSystemContext和ActivityThread的创建。注意，这是系统进程开启时的流程，在这之后，会开启系统的Launcher程序，完成系统界面的加载与显示。
+　　在 SystemServer 的 main() 方法中运行了 `new SystemServer().run()`，而在 run() 方法中创建 ActivityManagerService对象，并且完成了成员变量初始化。而且在这之前，调用 createSystemContext() 创建系统上下文的时候，也已经完成了 mSystemContext 和 ActivityThread 的创建。注意，这是系统进程开启时的流程，在这之后，会开启系统的 Launcher 程序，完成系统界面的加载与显示。
 
-Android系统里面的服务器和客户端的概念：其实服务器客户端的概念不仅仅存在于Web开发中，在Android的框架设计中，使用的也是这一种模式。服务器端指的就是所有App共用的系统服务，比如我们这里提到的ActivityManagerService，和前面提到的PackageManagerService、WindowManagerService等等，这些基础的系统服务是被所有的App公用的，当某个App想实现某个操作的时候，要告诉这些系统服务，比如你想打开一个App，那么我们知道了包名和MainActivity类名之后就可以打开。但是，我们的App通过调用startActivity()并不能直接打开另外一个App，这个方法会通过一系列的调用，最后还是告诉AMS说：“我要打开这个App，我知道他的住址和名字，你帮我打开吧！”所以是AMS来通知zygote进程来fork一个新进程，来开启我们的目标App的。这就像是浏览器想要打开一个超链接一样，浏览器把网页地址发送给服务器，然后还是服务器把需要的资源文件发送给客户端的。
+　　Android 系统里面的服务器和客户端的概念：其实服务器客户端的概念不仅仅存在于 Web 开发中，在 Android 的框架设计中，使用的也是这一种模式。服务器端指的就是所有 App 共用的系统服务，比如我们这里提到的 ActivityManagerService，和前面提到的 PackageManagerService、WindowManagerService 等等，这些基础的系统服务是被所有的 App 公用的，当某个 App 想实现某个操作的时候，要告诉这些系统服务，比如你想打开一个 App，那么我们知道了包名和 MainActivity 类名之后就可以打开。但是，我们的 App 通过调用 startActivity() 并不能直接打开另外一个 App，这个方法会通过一系列的调用，最后还是告诉 AMS 说：“我要打开这个 App，我知道他的住址和名字，你帮我打开吧！”所以是 AMS 来通知 zygote 进程来 fork 一个新进程，来开启我们的目标 App 的。这就像是浏览器想要打开一个超链接一样，浏览器把网页地址发送给服务器，然后还是服务器把需要的资源文件发送给客户端的。
 
-App和AMS(SystemServer进程)还有zygote进程分属于三个独立的进程，他们之间如何通信呢：App与AMS通过Binder进行IPC通信，AMS(SystemServer进程)与zygote通过Socket进行IPC通信。
+　　App 和 AMS(SystemServer进程)还有 zygote 进程分属于三个独立的进程，他们之间如何通信呢：App 与 AMS 通过 Binder 进行 IPC 通信，AMS(SystemServer进程) 与 zygote 通过 Socket 进行 IPC 通信。
 
-AMS有什么用？如果想打开一个App的话，需要AMS去通知zygote进程，除此之外，其实所有的Activity的开启、暂停、关闭都需要AMS来控制，所以说，AMS负责系统中所有Activity的生命周期。
+　　AMS 有什么用？如果想打开一个 App 的话，需要 AMS 去通知 zygote 进程，除此之外，其实所有的 Activity 的开启、暂停、关闭都需要 AMS 来控制，所以说，AMS 负责系统中所有 Activity 的生命周期。
 
-在Android系统中，任何一个Activity的启动都是由AMS和应用程序进程（主要是ActivityThread）相互配合来完成的。AMS服务统一调度系统中所有进程的Activity启动，而每个Activity的启动过程则由其所属的进程具体来完成。
+　　在 Android 系统中，任何一个 Activity 的启动都是由 AMS 和应用程序进程（主要是 ActivityThread）相互配合来完成的。AMS 服务统一调度系统中所有进程的 Activity 启动，而每个 Activity 的启动过程则由其所属的进程具体来完成。
 
-### Launcher
+### 1.2.2. Launcher
 
-当点击手机桌面上的图标的时候，App就由Launcher开始启动了。Launcher本质上也是一个应用程序，和我们的App一样，也是继承自Activity。
+　　当点击手机桌面上的图标的时候，App 就由 Launcher 开始启动了。Launcher 本质上也是一个应用程序，和我们的 App 一样，也是继承自 Activity。
 
-Launcher实现了点击、长按等回调接口，来接收用户的输入。通过捕捉图标点击事件，然后startActivity()发送对应的Intent请求。
+　　Launcher 实现了点击、长按等回调接口，来接收用户的输入。通过捕捉图标点击事件，然后 startActivity() 发送对应的 Intent 请求。
 
-### Instrumentation
+### 1.2.3. Instrumentation
 
-每个Activity都持有Instrumentation对象的一个引用，但是整个进程只会存在一个Instrumentation对象。当startActivityForResult()调用之后，实际上还是调用了mInstrumentation.execStartActivity()。
+　　每个 Activity 都持有 Instrumentation 对象的一个引用，但是整个进程只会存在一个 Instrumentation 对象。当 startActivityForResult() 调用之后，实际上还是调用了 mInstrumentation.execStartActivity()。
 
-所以当我们在程序中调用startActivity()的 时候，实际上调用的是Instrumentation的相关的方法。
+　　所以当我们在程序中调用 startActivity() 的时候，实际上调用的是 Instrumentation 的相关的方法。
 
-这个类里面的方法大多数和Application和Activity有关，是的，这个类就是完成对Application和Activity初始化和生命周期的工具类。
+　　这个类里面的方法大多数和 Application 和 Activity 有关，是的，这个类就是完成对 Application 和 Activity 初始化和生命周期的工具类。
 
-### AMS 和 ActivityThread 之间的 Bindler 通信
+### 1.2.4. AMS 和 ActivityThread 之间的 Bindler 通信
 
-Binder本质上只是一种底层通信方式，和具体服务没有关系。为了提供具体服务，Server必须提供一套接口函数以便Client通过远程访问使用各种服务。这时通常采用Proxy设计模式：将接口函数定义在一个抽象类中，Server和Client都会以该抽象类为基类实现所有接口函数，所不同的是Server端是真正的功能实现，而Client端是对这些函数远程调用请求的包装。
+　　Binder 本质上只是一种底层通信方式，和具体服务没有关系。为了提供具体服务，Server 必须提供一套接口函数以便 Client 通过远程访问使用各种服务。这时通常采用 Proxy 设计模式：将接口函数定义在一个抽象类中，Server 和 Client 都会以该抽象类为基类实现所有接口函数，所不同的是Server 端是真正的功能实现，而 Client 端是对这些函数远程调用请求的包装。
 
-ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IActivityManager。
+　　ActivityManagerService 和 ActivityManagerProxy 都实现了同一个接口——IActivityManager。
 
-虽然都实现了同一个接口，但是代理对象ActivityManagerProxy并不会对这些方法进行真正地实现，ActivityManagerProxy只是通过这种方式对方法的参数进行打包(因为都实现了相同接口，所以可以保证同一个方法有相同的参数，即对要传输给服务器的数据进行打包)，真正实现的是ActivityManagerService。
+　　虽然都实现了同一个接口，但是代理对象 ActivityManagerProxy 并不会对这些方法进行真正地实现，ActivityManagerProxy 只是通过这种方式对方法的参数进行打包(因为都实现了相同接口，所以可以保证同一个方法有相同的参数，即对要传输给服务器的数据进行打包)，真正实现的是 ActivityManagerService。
 
-但是这个地方并不是直接由客户端传递给服务器，而是通过Binder驱动进行中转。
+　　但是这个地方并不是直接由客户端传递给服务器，而是通过 Binder 驱动进行中转。
 
-客户端调用ActivityManagerProxy接口里面的方法，把数据传送给Binder驱动，然后Binder驱动就会把这些东西转发给服务器的ActivityManagerServices，由ActivityManagerServices去真正的实施具体的操作。
+　　客户端调用 ActivityManagerProxy 接口里面的方法，把数据传送给 Binder 驱动，然后 Binder 驱动就会把这些东西转发给服务器的 ActivityManagerServices，由 ActivityManagerServices 去真正的实施具体的操作。
 
-客户端：ActivityManagerProxy =====>Binder驱动=====> ActivityManagerService：服务器
+　　客户端：ActivityManagerProxy => Binder驱动 => ActivityManagerService：服务器
 
-而且由于继承了同样的公共接口类，ActivityManagerProxy提供了与ActivityManagerService一样的函数原型，使用户感觉不出Server是运行在本地还是远端，从而可以更加方便的调用这些重要的系统服务。
+　　而且由于继承了同样的公共接口类，ActivityManagerProxy 提供了与 ActivityManagerService 一样的函数原型，使用户感觉不出 Server 是运行在本地还是远端，从而可以更加方便的调用这些重要的系统服务。
 
-但是！这里Binder通信是单方向的，即从ActivityManagerProxy指向ActivityManagerService的，如果AMS想要通知ActivityThread做一些事情，应该咋办呢？
+　　但是！这里 Binder 通信是单方向的，即从 ActivityManagerProxy 指向 ActivityManagerService 的，如果 AMS 想要通知 ActivityThread 做一些事情，应该咋办呢？
 
-还是通过Binder通信，不过是换了另外一对，换成了ApplicationThread和ApplicationThreadProxy。
+　　还是通过 Binder 通信，不过是换了另外一对，换成了 ApplicationThread 和 ApplicationThreadProxy。
 
-客户端：ApplicationThread <=====Binder驱动<===== ApplicationThreadProxy：服务器
+　　客户端：ApplicationThread <= Binder驱动 <= ApplicationThreadProxy：服务器
 
-他们也都实现了相同的接口IApplicationThread。
+　　他们也都实现了相同的接口 IApplicationThread。
 
-### AMS接收到客户端的请求之后，会如何开启一个Activity？
+### 1.2.5. AMS 接收到客户端的请求之后，会如何开启一个 Activity？
 
-回去调用 Instrumentation 去创建一个 Activity 对象，创建成功后会调用 Activity 的 onCreate() 方法。
+　　会去调用 Instrumentation 去创建一个 Activity 对象，创建成功后会调用 Activity 的 onCreate() 方法。
 
 
 
-口述：Activity 的启动分为冷启动和热启动两种。冷启动指的是应后台中没有应用的进程，开启应用系统会创建一个进程分配给它，之后会创建和初始化 Application，然后执行 ActivityThread 的 main 方法主线程开启运行 ，而热启动指的是后台存在应用进程中，开启应用就是从以后的进程中来启动引用，不需要走 Application 的部分。
+　　口述：Activity 的启动分为冷启动和热启动两种。冷启动指的是应后台中没有应用的进程，开启应用系统会创建一个进程分配给它，之后会创建和初始化 Application，然后执行 ActivityThread 的 main 方法主线程开启运行 ，而热启动指的是后台存在应用进程中，开启应用就是从以后的进程中来启动引用，不需要走 Application 的部分。
 
 ![](components/Activity/image/冷启动流程图.png)
 
-冷启动是从桌面的应用快捷图标的点击开始的，Launcher 类是手机桌面 Activity ，当点击手机桌面上的 Activity 就会触发 Launcher 的 onClick() 方法，在 onClick() 方法中启动 Activity，经过一系列的方法调用，最后将会进入 ActivityThread 类，启动 ActivityThread 的 main() 方法。
+　　冷启动是从桌面的应用快捷图标的点击开始的，Launcher 类是手机桌面 Activity ，当点击手机桌面上的 Activity 就会触发 Launcher 的 onClick() 方法，在 onClick() 方法中启动 Activity，经过一系列的方法调用，最后将会进入 ActivityThread 类，启动 ActivityThread 的 main() 方法。
 
 ![](components/Activity/image/Activity启动流程图.jpg)
 
-在 Activity 的 main() 方法中会初始化主线程的 Looper，并实例化一个 ActivityThread 对象，并且发出创建 Application 的消息，最后开启 Looper，等待接收消息。创建 Application 会交给 AMS 去完成，AMS 完成后会向 客户端  ActivityThread 通信，创建 Instrumentation 对象，创建 Application 的工作会交给 Instrumentation 对象，并通过 Instrumentatiion 调用 Application 的 onCreate() 方法，Application 就创建好了。
+　　在 Activity 的 main() 方法中会初始化主线程的 Looper，并实例化一个 ActivityThread 对象，并且发出创建 Application 的消息，最后开启 Looper，等待接收消息。创建 Application 会交给 AMS 去完成，AMS 完成后会向客户端  ActivityThread 通信，创建 Instrumentation 对象，创建 Application 的工作会交给 Instrumentation 对象，并通过 Instrumentatiion 调用 Application 的 onCreate() 方法，Application 就创建好了。
 
-在 AMS 处理创建 Application 之后就会去开启 Activity，AMS 会像客户端发消息去开启 LAUNCH_ACTIVITY ，开启 Activity 会先通过 Instrumentation 去创建 Activity 对象，创建完成调用 onCreate() 方法。
+　　在 AMS 处理创建 Application 之后就会去开启 Activity，AMS 会像客户端发消息去开启 LAUNCH_ACTIVITY ，开启 Activity 会先通过 Instrumentation 去创建 Activity 对象，创建完成调用 onCreate() 方法。
 
 # 2.Activity 的启动模式，及其使用场景
 
@@ -153,7 +153,7 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
 
 ## 2.2. Intent 的 flags
 
-也可以通过 Intent 的 setFlags() 方法设置应用的启动方式。
+　　也可以通过 Intent 的 setFlags() 方法设置应用的启动方式。
 
 ### 2.2.1. 常用的 flags 介绍
 
@@ -161,8 +161,8 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
 
 #### 2.2.1.1. FLAG_ACTIVITY_CLEAR_TOP
 
-1. 新活动已在当前任务中时，在新活动上面的活动会被关闭，新活动不会重新启动，只会接收new intent。
-2.  新活动已在任务最上面时：如果启动模式是"multiple" (默认的)，并且没添加 FLAG_ACTIVITY_SINGLE_TOP，那么活动会被销毁重新创建；如果启动模式是其他的，或者添加了FLAG_ACTIVITY_SINGLE_TOP，那么只会调用活动的onNewIntent()。
+1. 新活动已在当前任务中时，在新活动上面的活动会被关闭，新活动不会重新启动，只会接收 new intent。
+2.  新活动已在任务最上面时：如果启动模式是"multiple" (默认的)，并且没添加 FLAG_ACTIVITY_SINGLE_TOP，那么活动会被销毁重新创建；如果启动模式是其他的，或者添加了 FLAG_ACTIVITY_SINGLE_TOP，那么只会调用活动的 onNewIntent()。
 3. 跟 FLAG_ACTIVITY_NEW_TASK 联合使用效果很好：如果用于启动一个任务中的根活动，会把该任务移到前面并清空至root状态。这特别有用，比如用于从 notification manager 中启动活动。
 
 #### 2.2.1.2. FLAG_ACTIVITY_NO_HISTORY
@@ -170,7 +170,7 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
 1.  新活动不会保留在历史栈中，一旦用户切换到其他页面，新活动会马上销毁。
 2. 旧活动的onActivityResult()方法永远不会被触发。
 
-**举例**：A 跳转 B 的 flag 设置为 FLAG_ACTIVITY_NO_HISTORY，B 跳转 C，在 C 界面点击返回键，则会直接回到 A 界面。
+　　**举例**：A 跳转 B 的 flag 设置为 FLAG_ACTIVITY_NO_HISTORY，B 跳转 C，在 C 界面点击返回键，则会直接回到 A 界面。
 
 #### 2.2.1.3. FLAG_ACTIVITY_SINGLE_TOP
 
@@ -185,9 +185,9 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
 4. 如果新活动要返回result给启动自己的活动，就不能用这个flag。
 5. 与 launchModel 的 “singleTask” 启动模式效果相同？
 
-**描述**：设置 FLAG_ACTIVITY_NEW_TASK 标签后，首先会查找是否存在和被启动的 activity 具有相同亲和性的任务栈，如果没有，则新建一个栈让 activity 入栈；如果有，则保持栈中 activity 的顺序不变，如果栈中没有 activity，将 activity 入栈，如果栈中有 activity，则将整个栈移动到前台。
+　　**描述**：设置 FLAG_ACTIVITY_NEW_TASK 标签后，首先会查找是否存在和被启动的 activity 具有相同亲和性的任务栈，如果没有，则新建一个栈让 activity 入栈；如果有，则保持栈中 activity 的顺序不变，如果栈中没有 activity，将 activity 入栈，如果栈中有 activity，则将整个栈移动到前台。
 
-**举例**：设置 A 跳转 B 的 flag 为 FLAG_ACTIVITY_NEW_TASK，设置 B 的 taskAffinity 的值。A 跳转 B ，B 跳转 C，C 跳转回到 A，A 跳转 B,会显示 C 界面。
+　　**举例**：设置 A 跳转 B 的 flag 为 FLAG_ACTIVITY_NEW_TASK，设置 B 的 taskAffinity 的值。A 跳转 B ，B 跳转 C，C 跳转回到 A，A 跳转 B,会显示 C 界面。
 
 #### 2.2.1.5. FLAG_ACTIVITY_NEW_DOCUMENT
 
@@ -266,7 +266,7 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
                     && li.mOnTouchListener.onTouch(this, event)) {
                 result = true;
             }
-						// 调用 onTouchEvent 方法
+			// 调用 onTouchEvent 方法
             if (!result && onTouchEvent(event)) {
                 result = true;
             }
@@ -282,7 +282,7 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
 
 　　`li.mOnTouchListener.onTouch(this, event)`：li.mOnTouchListener 是触摸监听的 OnTouchListener 对象，调用它的 onTouch() 方法，如果 onTouch() 返回 true，则三个条件成立，则 dispatchTouchEvent() 方法返回 true。
 
-　　如果控件是不可点击的或者 OnTouchListener.onTouch() 方法不存在或 OnTouchListener.onTouch() 存在并返回 false，就会执行 onTouchEvent() 方法。
+　　如果控件是不可点击的或者 OnTouchListener.onTouch() 方法不存在或 OnTouchListener.onTouch() 存在并返回 false，才会执行 onTouchEvent() 方法。
 
 ### 3.1.2. View#onTouchEvent
 
@@ -326,7 +326,7 @@ ActivityManagerService和ActivityManagerProxy都实现了同一个接口——IA
 
 5. 子 View 可以通过调用 getParent().requestDisallowInterceptTouchEvent(true); 阻止 ViewGroup 对其 ACTION_MOVE 事件进行拦截。
 
-   也可以在 ACTION_DOWN 和 ACTION_UP 中 return true，但是触摸事件是父控件先执行 dispatchTouchEvent() 方法，然后父控件分发事件调用子控件的 dispatchTouchEvent9) 方法，而子控件在 dispatchTouchEvent() 方法中执行 getParent().requestDisallowInterceptTouchEvent(true) 设置已经不能影响到父控件的  dispatchTouchEvent() 方法了。
+   也可以在 ACTION_DOWN 和 ACTION_UP 中 return true，但是触摸事件是父控件先执行 dispatchTouchEvent() 方法，然后父控件分发事件调用子控件的 dispatchTouchEvent() 方法，而子控件在 dispatchTouchEvent() 方法中执行 getParent().requestDisallowInterceptTouchEvent(true) 设置已经不能影响到父控件的  dispatchTouchEvent() 方法了。
 
    而 ACTION_UP，事件都是最后一个了，return true 拦截子控件，如果不想拦截，直接 return false 就好了，没有必要。
 
@@ -378,7 +378,7 @@ View 的 onTouchEvent() 方法在 ACTION_DOWN 会发送延时消息检测滚动�
 
 　　内存缓存能够快速的获取到最近显示的图片，但不一定就能够获取到需要的图片缓存。当数据集过大时很容易把内存缓存填满（如 GridView）。应用也有可能被其他的任务（比如来电）中断进行到后台，后台应用有可能会被杀死，那么相应的内存缓存对象也会被销毁。当应用重新回到前台显示时，应用又需要一张一张的去加载图片了。
 
-　　硬盘文件缓存能够用来处理这些情况，保存处理好的图片，当内存缓存不可用的时候，直接读取在硬盘中保存好的图片，这样可以有效的减少图片加载的次数。读取磁盘文件要比直接从内存缓存中读取要慢一些，而且需要在一个 UI 主线程外的线程中进行，因为磁盘的读取速度时不能够保证的，磁盘文件缓存显然也是一种以空间换时间的策略。
+　　硬盘文件缓存能够用来处理这些情况，保存处理好的图片，当内存缓存不可用的时候，直接读取在硬盘中保存好的图片，这样可以有效的减少图片加载的次数。读取磁盘文件要比直接从内存缓存中读取要慢一些，而且需要在一个 UI 主线程外的线程中进行，因为磁盘的读取速度是不能够保证的，磁盘文件缓存显然也是一种以空间换时间的策略。
 
 　　如果图片使用非常频繁的话，一个 ContentProvider 可能更适合代替去存储缓存图片。
 

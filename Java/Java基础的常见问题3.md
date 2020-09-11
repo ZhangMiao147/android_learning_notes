@@ -410,7 +410,7 @@ https://www.jianshu.com/p/208ac4a71c6f Android 序列化
 
 　　那么当两个 Java 进程进行通信时，能否实现进程间的对象传送呢？当然是可以的！如何做到呢？这就需要使用  Java 序列化与反序列化了。发送方需要把这个Java对象转换为字节序列，然后在网络上传输，接收方则需要将字节序列中恢复出 Java 对象。
 
-## 8.4. 序列化的好处
+## 8.3. 序列化的好处
 
 　　Java 序列化有哪些好处：
 
@@ -443,7 +443,7 @@ https://www.jianshu.com/p/208ac4a71c6f Android 序列化
 
 ### 8.4.1. Serizable
 
-　　Serializable是java提供的一个序列化接口，它是一个空接口，专门为对象提供标准的序列化和反序列化操作，使用Serializable实现类的序列化比较简单，只要在类声明中实现Serializable接口即可，同时强烈建议声明序列化标识。
+　　Serializable 是 java 提供的一个序列化接口，它是一个空接口，专门为对象提供标准的序列化和反序列化操作，使用 Serializable 实现类的序列化比较简单，只要在类声明中实现 Serializable 接口即可，同时强烈建议声明序列化标识。
 
 ```java
 public class User implements Serializable {
@@ -472,17 +472,17 @@ public class User implements Serializable {
 }
 ```
 
-如上述代码所示，User类实现的Serializable接口并声明了序列化标识serialVersionUID，该ID由编辑器生成，当然也可以自定义，如1L，5L，不过还是建议使用编辑器生成唯一标识符。那么serialVersionUID有什么作用呢？实际上我们不声明serialVersionUID也是可以的，因为在序列化过程中会自动生成一个serialVersionUID来标识序列化对象。既然如此，那我们还需不需要要指定呢？原因是serialVersionUID是用来辅助序列化和反序列化过程的，原则上序列化后的对象中serialVersionUID只有和当前类的serialVersionUID相同才能够正常被反序列化，也就是说序列化与反序列化的serialVersionUID必须相同才能够使序列化操作成功。具体过程是这样的：序列化操作的时候系统会把当前类的serialVersionUID写入到序列化文件中，当反序列化时系统会去检测文件中的serialVersionUID，判断它是否与当前类的serialVersionUID一致，如果一致就说明序列化类的版本与当前类版本是一样的，可以反序列化成功，否则失败。报出如下UID错误：
+　　如上述代码所示，User 类实现的 Serializable 接口并声明了序列化标识 serialVersionUID，该 ID 由编辑器生成，当然也可以自定义，如 1L，5L，不过还是建议使用编辑器生成唯一标识符。那么 serialVersionUID 有什么作用呢？实际上我们不声明 serialVersionUID 也是可以的，因为在序列化过程中会自动生成一个 serialVersionUID 来标识序列化对象。既然如此，那我们还需不需要要指定呢？原因是 serialVersionUID 是用来辅助序列化和反序列化过程的，原则上序列化后的对象中 serialVersionUID 只有和当前类的 serialVersionUID 相同才能够正常被反序列化，也就是说序列化与反序列化的 serialVersionUID 必须相同才能够使序列化操作成功。具体过程是这样的：序列化操作的时候系统会把当前类的 serialVersionUID 写入到序列化文件中，当反序列化时系统会去检测文件中的 serialVersionUID，判断它是否与当前类的 serialVersionUID 一致，如果一致就说明序列化类的版本与当前类版本是一样的，可以反序列化成功，否则失败。报出如下 UID 错误：
 
-```
+```java
 Exception in thread "main" java.io.InvalidClassException: com.zejian.test.Client; 
 local class incompatible: stream classdesc serialVersionUID = -2083503801443301445, 
 local class serialVersionUID = -4083503801443301445
 ```
 
-因此强烈建议指定serialVersionUID，这样的话即使微小的变化也不会导致crash的出现，如果不指定的话只要这个文件多一个空格，系统自动生成的UID就会截然不同的，反序列化也就会失败。
+　　因此强烈建议指定 serialVersionUID，这样的话即使微小的变化也不会导致 crash 的出现，如果不指定的话只要这个文件多一个空格，系统自动生成的 UID 就会截然不同的，反序列化也就会失败。
 
-下面来看一个如何进行对象序列化和反序列化的列子：
+　　下面来看一个如何进行对象序列化和反序列化的列子：
 
 ```java
 public class Demo {
@@ -508,15 +508,15 @@ public class Demo {
 }
 ```
 
-输出结果：
+　　输出结果：
 
 ```java
 read serializable user:id=1000, name=韩梅梅
 ```
 
-从代码可以看出只需要ObjectOutputStream和ObjectInputStream就可以实现对象的序列化和反序列化操作，通过流对象把user对象写到文件中，并在需要时恢复userBack对象，但是两者并不是同一个对象了，反序列化后的对象是新创建的。这里有两点特别注意的是如果反序列类的成员变量的类型或者类名，发生了变化，那么即使serialVersionUID相同也无法正常反序列化成功。其次是静态成员变量属于类不属于对象，不会参与序列化过程，使用transient关键字标记的成员变量也不参与序列化过程。
+　　从代码可以看出只需要 ObjectOutputStream 和 ObjectInputStream 就可以实现对象的序列化和反序列化操作，通过流对象把 user 对象写到文件中，并在需要时恢复 userBack 对象，但是两者并不是同一个对象了，反序列化后的对象是新创建的。这里有两点特别注意的是如果反序列类的成员变量的类型或者类名，发生了变化，那么即使 serialVersionUID 相同也无法正常反序列化成功。其次是静态成员变量属于类不属于对象，不会参与序列化过程，使用 transient 关键字标记的成员变量也不参与序列化过程。
 
-另外，系统的默认序列化过程是可以改变的，通过实现如下4个方法，即可以控制系统的默认序列化和反序列过程：
+　　另外，系统的默认序列化过程是可以改变的，通过实现如下 4 个方法，即可以控制系统的默认序列化和反序列过程：
 
 ```java
 public class User implements Serializable {
@@ -545,7 +545,7 @@ public class User implements Serializable {
 
     /**
      * 序列化时,
-     * 首先系统会先调用writeReplace方法,在这个阶段,
+     * 首先系统会先调用 writeReplace 方法,在这个阶段,
      * 可以进行自己操作,将需要进行序列化的对象换成我们指定的对象.
      * 一般很少重写该方法
      */
@@ -554,10 +554,10 @@ public class User implements Serializable {
         return this;
     }
     /**
-     *接着系统将调用writeObject方法,
+     * 接着系统将调用 writeObject 方法,
      * 来将对象中的属性一个个进行序列化,
      * 我们可以在这个方法中控制住哪些属性需要序列化.
-     * 这里只序列化name属性
+     * 这里只序列化 name 属性
      */
     private void writeObject(java.io.ObjectOutputStream out) throws IOException {
         System.out.println("writeObject invoked");
@@ -565,9 +565,9 @@ public class User implements Serializable {
     }
 
     /**
-     * 反序列化时,系统会调用readObject方法,将我们刚刚在writeObject方法序列化好的属性,
-     * 反序列化回来.然后通过readResolve方法,我们也可以指定系统返回给我们特定的对象
-     * 可以不是writeReplace序列化时的对象,可以指定其他对象.
+     * 反序列化时,系统会调用 readObject 方法,将我们刚刚在 writeObject 方法序列化好的属性,
+     * 反序列化回来.然后通过 readResolve 方法,我们也可以指定系统返回给我们特定的对象
+     * 可以不是 writeReplace 序列化时的对象,可以指定其他对象.
      */
     private void readObject(java.io.ObjectInputStream in) throws IOException,
             ClassNotFoundException {
@@ -578,8 +578,8 @@ public class User implements Serializable {
 
 
     /**
-     * 通过readResolve方法,我们也可以指定系统返回给我们特定的对象
-     * 可以不是writeReplace序列化时的对象,可以指定其他对象.
+     * 通过 readResolve 方法,我们也可以指定系统返回给我们特定的对象
+     * 可以不是 writeReplace 序列化时的对象,可以指定其他对象.
      * 一般很少重写该方法
      */
     private Object readResolve() throws ObjectStreamException {
@@ -589,11 +589,32 @@ public class User implements Serializable {
 }
 ```
 
-通过上面的4个方法，我们就可以随意控制序列化的过程了，由于在大部分情况下我们都没必要重写这4个方法，因此这里我们也不过介绍了，只要知道有这么一回事就行。
+　　通过上面的 4 个方法，就可以随意控制序列化的过程了，由于在大部分情况下都没必要重写这4个方法，因此这里也不过介绍了，只要知道有这么一回事就行。
 
-### Parcelable
+#### 8.4.1.1. 注意事项
 
-鉴于Serializable在内存序列化上开销比较大，而内存资源属于android系统中的稀有资源（android系统分配给每个应用的内存开销都是有限的），为此android中提供了Parcelable接口来实现序列化操作，Parcelable的性能比Serializable好，在内存开销方面较小，所以在内存间数据传输时推荐使用Parcelable，如通过Intent在activity间传输数据，而Parcelable的缺点就使用起来比较麻烦，下面给出一个Parcelable接口的实现案例，大家感受一下：
+1. 当一个父类实现序列化，子类就会自动实现序列化，不需要显式实现 Serializable 接口。
+
+2. 当一个对象的实例变量引用其他对象，序列化该对象时也把引用对象进行序列化。
+
+3. 并非所有的对象都可以进行序列化，比如：
+
+- 安全方面的原因，比如一个对象拥有 private，public 等成员变量，对于一个要传输的对象，比如写到文件，或者进行 RMI 传输等等，在序列化进行传输的过程中，这个对象的 private 等域是不受保护的;
+- 资源分配方面的原因，比如 socket，thread 类，如果可以序列化，进行传输或者保存，也无法对他们进行重新的资源分配，而且，也是没有必要这样实现。
+
+4. 声明为 static 和 transient 类型的成员变量不能被序列化。因为 static 代表类的状态，transient 代表对象的临时数据。
+
+5. 序列化运行时会使用一个称为 serialVersionUID 的版本号，并与每个可序列化的类相关联，该序列号在反序列化过程中用于验证序列化对象的发送者和接收者是否为该对象加载了与序列化兼容的类。如果接收者加载的该对象的类的 serialVersionUID 与对应的发送者的类的版本号不同，则反序列化将会导致 InvalidClassException。可序列化类可以通过声明名为 "serialVersionUID" 的字段 ( 该字段必须是静态 (static)、最终 (final) 的 long 型字段 ) 显式声明其自己的 serialVersionUID。
+
+　　如果序列化的类未显式的声明 serialVersionUID，则序列化运行时将基于该类的各个方面计算该类的默认 serialVersionUID 值，如 “ Java(TM) 对象序列化规范 ” 中所述。不过，强烈建议所有可序列化类都显式声明 serialVersionUID 值，原因是计算默认的 serialVersionUID 对类的详细信息具有较高的敏感性，根据编译器实现的不同可能千差万别，这样在反序列化过程中可能会导致意外的 InvalidClassException。因此，为保证 serialVersionUID 值跨不同 java 编译器实现的一致性，序列化类必须声明一个明确的 serialVersionUID 值。还强烈建议使用 private 修饰符显示声明 serialVersionUID ( 如果可能 )，原因是这种声明仅应用于直接声明类 -- serialVersionUID 字段作为继承成员没有用处。数组类不能声明一个明确的 serialVersionUID，因此它们总是具有默认的计算值，但是数组类没有匹配 serialVersionUID 值的要求。
+
+6. Java 有很多基础类已经实现了 serializable 接口，比如 String，Vector 等。但是也有一些没有实现 serializable 接口的。
+
+7. 如果一个对象的成员变量是一个对象，那么这个对象的数据成员也会被保存!这是能用序列化解决深拷贝的重要原因。
+
+### 8.4.2. Parcelable
+
+　　鉴于 Serializable 在内存序列化上开销比较大，而内存资源属于 android 系统中的稀有资源（android 系统分配给每个应用的内存开销都是有限的），为此 android 中提供了 Parcelable 接口来实现序列化操作，Parcelable 的性能比 Serializable 好，在内存开销方面较小，所以在内存间数据传输时推荐使用 Parcelable，如通过 Intent 在 activity 间传输数据，而 Parcelable 的缺点就使用起来比较麻烦，下面给出一个 Parcelable 接口的实现案例，大家感受一下：
 
 ```java
 public class User implements Parcelable {
@@ -658,191 +679,37 @@ public class User implements Parcelable {
 }
 ```
 
-从代码可知，在序列化的过程中需要实现的功能有序列化和反序列以及内容描述。其中writeToParcel方法实现序列化功能，其内部是通过Parcel的一系列write方法来完成的，接着通过CREATOR内部对象来实现反序列化，其内部通过createFromParcel方法来创建序列化对象并通过newArray方法创建数组，最终利用Parcel的一系列read方法完成反序列化，最后由describeContents完成内容描述功能，该方法一般返回0，仅当对象中存在文件描述符时返回1。同时由于User是另一个序列化对象，因此在反序列化方法中需要传递当前线程的上下文类加载器，否则会报无法找到类的错误。
+　　从代码可知，在序列化的过程中需要实现的功能有序列化和反序列以及内容描述。其中 writeToParcel 方法实现序列化功能，其内部是通过 Parcel 的一系列 write 方法来完成的，接着通过 CREATOR 内部对象来实现反序列化，其内部通过 createFromParcel 方法来创建序列化对象并通过 newArray 方法创建数组，最终利用 Parcel 的一系列 read 方法完成反序列化，最后由 describeContents 完成内容描述功能，该方法一般返回 0，仅当对象中存在文件描述符时返回 1。同时由于 User 是另一个序列化对象，因此在反序列化方法中需要传递当前线程的上下文类加载器，否则会报无法找到类的错误。
 
-简单用一句话概括来说就是通过writeToParcel将我们的对象映射成Parcel对象，再通过createFromParcel将Parcel对象映射成我们的对象。也可以将Parcel看成是一个类似Serliazable的读写流，通过writeToParcel把对象写到流里面，在通过createFromParcel从流里读取对象，这个过程需要我们自己来实现并且写的顺序和读的顺序必须一致。ok~，到此Parcelable接口的序列化实现基本介绍完。
+　　简单用一句话概括来说就是通过 writeToParcel 将我们的对象映射成 Parcel 对象，再通过 createFromParcel 将 Parcel 对象映射成我们的对象。也可以将 Parcel 看成是一个类似 Serliazable 的读写流，通过 writeToParcel 把对象写到流里面，在通过 createFromParcel 从流里读取对象，这个过程需要我们自己来实现并且写的顺序和读的顺序必须一致。ok~，到此 Parcelable 接口的序列化实现基本介绍完。
   
- 那么在哪里会使用到Parcelable对象呢？其实通过Intent传递复杂类型(如自定义引用类型数据)的数据时就需要使用Parcelable对象，如下是日常应用中Intent关于Parcelable对象的一些操作方法，引用类型必须实现Parcelable接口才能通过Intent传递，而基本数据类型，String类型则可直接通过Intent传递而且Intent本身也实现了Parcelable接口，所以可以轻松地在组件间进行传输。
+　　那么在哪里会使用到 Parcelable 对象呢？其实通过 Intent 传递复杂类型( 如自定义引用类型数据)的数据时就需要使用 Parcelable 对象，如下是日常应用中 Intent 关于 Parcelable 对象的一些操作方法，引用类型必须实现 Parcelable 接口才能通过 Intent 传递，而基本数据类型，String 类型则可直接通过 Intent 传递而且 Intent 本身也实现了 Parcelable 接口，所以可以轻松地在组件间进行传输。
 
-|                         方法名称                          |                         含义                         |
-| :-------------------------------------------------------: | :--------------------------------------------------: |
-|          putExtra(String name, Parcelable value)          |         设置自定义类型并实现Parcelable的对象         |
-|         putExtra(String name, Parcelable[] value)         |       设置自定义类型并实现Parcelable的对象数组       |
-| putParcelableArrayListExtra(String name, ArrayList value) | 设置List数组，其元素必须是实现了Parcelable接口的数据 |
+|                         方法名称                          |                          含义                          |
+| :-------------------------------------------------------: | :----------------------------------------------------: |
+|          putExtra(String name, Parcelable value)          |         设置自定义类型并实现 Parcelable 的对象         |
+|         putExtra(String name, Parcelable[] value)         |       设置自定义类型并实现 Parcelable 的对象数组       |
+| putParcelableArrayListExtra(String name, ArrayList value) | 设置List数组，其元素必须是实现了 Parcelable 接口的数据 |
 
-除了以上的Intent外系统还为我们提供了其他实现Parcelable接口的类，再如Bundle、Bitmap，它们都是可以直接序列化的，因此我们可以方便地使用它们在组件间进行数据传递，当然Bundle本身也是一个类似键值对的容器，也可存储Parcelable实现类，其API方法跟Intent基本相似，由于这些属于android基础知识点，这里我们就不过多介绍了。
+　　除了以上的 Intent 外系统还为我们提供了其他实现 Parcelable 接口的类，再如 Bundle、Bitmap，它们都是可以直接序列化的，因此我们可以方便地使用它们在组件间进行数据传递，当然 Bundle 本身也是一个类似键值对的容器，也可存储 Parcelable 实现类，其 API 方法跟 Intent 基本相似，由于这些属于 android 基础知识点，这里我们就不过多介绍了。
 
-### Parcelable 与 Serializable 区别
+### 8.4.3. Parcelable 与 Serializable 区别
 
-### （1）两者的实现差异
+#### 8.4.3.1. 两者的实现差异
 
-Serializable的实现，只需要实现Serializable接口即可。这只是给对象打了一个标记（UID），系统会自动将其序列化。而Parcelabel的实现，不仅需要实现Parcelabel接口，还需要在类中添加一个静态成员变量CREATOR，这个变量需要实现 Parcelable.Creator 接口，并实现读写的抽象方法。
+　　Serializable 的实现，只需要实现 Serializable 接口即可。这只是给对象打了一个标记（UID），系统会自动将其序列化。而 Parcelabel 的实现，不仅需要实现 Parcelabel 接口，还需要在类中添加一个静态成员变量 CREATOR，这个变量需要实现 Parcelable.Creator 接口，并实现读写的抽象方法。
 
-### （2）两者的设计初衷
+#### 8.4.3.2. 两者的设计初衷
 
-Serializable的设计初衷是为了序列化对象到本地文件、数据库、网络流、RMI以便数据传输，当然这种传输可以是程序内的也可以是两个程序间的。而Android的Parcelable的设计初衷是由于Serializable效率过低，消耗大，而android中数据传递主要是在内存环境中（内存属于android中的稀有资源），因此Parcelable的出现为了满足数据在内存中低开销而且高效地传递问题。
+　　Serializable 的设计初衷是为了序列化对象到本地文件、数据库、网络流、RMI（远程方法调用） 以便数据传输，当然这种传输可以是程序内的也可以是两个程序间的。而 Android 的 Parcelable 的设计初衷是由于 Serializable 效率过低，消耗大，而 android 中数据传递主要是在内存环境中（内存属于 android 中的稀有资源），因此 Parcelable 的出现为了满足数据在内存中低开销而且高效地传递问题。
 
-### （3）两者效率选择
+#### 8.4.3.3. 两者效率选择
 
-Serializable使用IO读写存储在硬盘上。序列化过程使用了反射技术，并且期间产生临时对象，优点代码少，在将对象序列化到存储设置中或将对象序列化后通过网络传输时建议选择Serializable。
+　　Serializable 使用 IO 读写存储在硬盘上。序列化过程使用了反射技术，并且期间产生临时对象，优点代码少，在将对象序列化到存储设置中或将对象序列化后通过网络传输时建议选择 Serializable。
 
- Parcelable是直接在内存中读写，我们知道内存的读写速度肯定优于硬盘读写速度，所以Parcelable序列化方式性能上要优于Serializable方式很多。所以Android应用程序在内存间数据传输时推荐使用Parcelable，如activity间传输数据和AIDL数据传递。大多数情况下使用Serializable也是没什么问题的，但是针对Android应用程序在内存间数据传输还是建议大家使用Parcelable方式实现序列化，毕竟性能好很多，其实也没多麻烦。
+　　Parcelable 是直接在内存中读写，我们知道内存的读写速度肯定优于硬盘读写速度，所以 Parcelable 序列化方式性能上要优于 Serializable 方式很多。所以 Android 应用程序在内存间数据传输时推荐使用 Parcelable，如 activity 间传输数据和 AIDL 数据传递。大多数情况下使用 Serializable 也是没什么问题的，但是针对 Android 应用程序在内存间数据传输还是建议大家使用 Parcelable 方式实现序列化，毕竟性能好很多，其实也没多麻烦。
 
- Parcelable也不是不可以在网络中传输，只不过实现和操作过程过于麻烦并且为了防止android版本不同而导致Parcelable可能不同的情况，因此在序列化到存储设备或者网络传输方面还是尽量选择Serializable接口。
-
-### 8.4.1. Serializable
-
-实现Serializable接口即可。
-
-实现这个Serializable 接口的时候，一定要给这个 serialVersionUID 赋值。
-
-**关于 serialVersionUID 的描述**
-
-序列化运行时使用一个称为 serialVersionUID 的版本号与每个可序列化类相关联，该序列号在反序列化过程中用于验证序列化对象的发送者和接收者是否为该对象加载了与序列化兼容的类。如果接收者加载的该对象的类的 serialVersionUID 与对应的发送者的类的版本号不同，则反序列化将会导致 InvalidClassException。可序列化类可以通过声明名为 “serialVersionUID” 的字段（该字段必须是静态 (static)、最终 (final) 的 long 型字段）显式声明其自己的 serialVersionUID。
-
-如果可序列化类未显式声明 serialVersionUID，则序列化运行时将基于该类的各个方面计算该类的默认 serialVersionUID 值，如“Java™ 对象序列化规范”中所述。不过，强烈建议 所有可序列化类都显式声明 serialVersionUID 值，原因是计算默认的 serialVersionUID 对类的详细信息具有较高的敏感性，根据编译器实现的不同可能千差万别，这样在反序列化过程中可能会导致意外的 InvalidClassException。因此，为保证 serialVersionUID 值跨不同 java 编译器实现的一致性，序列化类必须声明一个明确的 serialVersionUID 值。还强烈建议使用 private 修饰符显示声明 serialVersionUID（如果可能），原因是这种声明仅应用于直接声明类 – serialVersionUID 字段作为继承成员没有用处。数组类不能声明一个明确的 serialVersionUID，因此它们总是具有默认的计算值，但是数组类没有匹配 serialVersionUID 值的要求。
-
-
-
-1）JDK类库中序列化API
-
- java.io.ObjectOutputStream：表示对象输出流
-
-它的writeObject(Object obj)方法可以对参数指定的obj对象进行序列化，把得到的字节序列写到一个目标输出流中。
-
-java.io.ObjectInputStream：表示对象输入流
-
-它的readObject()方法源输入流中读取字节序列，再把它们反序列化成为一个对象，并将其返回。
-
-2）实现序列化的要求
-
-只有实现了Serializable或Externalizable接口的类的对象才能被序列化，否则抛出异常。
-
-3）实现Java对象序列化与反序列化的方法
-
-假定一个Student类，它的对象需要序列化，可以有如下三种方法：
-
-方法一：若Student类仅仅实现了Serializable接口，则可以按照以下方式进行序列化和反序列化
-
-ObjectOutputStream采用默认的序列化方式，对Student对象的非transient的实例变量进行序列化。
-
-ObjcetInputStream采用默认的反序列化方式，对对Student对象的非transient的实例变量进行反序列化。
-
-方法二：若Student类仅仅实现了Serializable接口，并且还定义了readObject(ObjectInputStream in)和writeObject(ObjectOutputSteam out)，则采用以下方式进行序列化与反序列化。
-
-ObjectOutputStream调用Student对象的writeObject(ObjectOutputStream out)的方法进行序列化。
-
-ObjectInputStream会调用Student对象的readObject(ObjectInputStream in)的方法进行反序列化。
-
-方法三：若Student类实现了Externalnalizable接口，且Student类必须实现readExternal(ObjectInput in)和writeExternal(ObjectOutput out)方法，则按照以下方式进行序列化与反序列化。
-
-ObjectOutputStream调用Student对象的writeExternal(ObjectOutput out))的方法进行序列化。
-
-ObjectInputStream会调用Student对象的readExternal(ObjectInput in)的方法进行反序列化。
-
-4）JDK类库中序列化的步骤
-
-步骤一：创建一个对象输出流，它可以包装一个其它类型的目标输出流，如文件输出流：
-
-ObjectOutputStream out = new ObjectOutputStream(new fileOutputStream(“D:\\objectfile.obj”));
-
-步骤二：通过对象输出流的writeObject()方法写对象：
-
-out.writeObject(“Hello”);
-
-out.writeObject(new Date());
-
-5）JDK类库中反序列化的步骤
-
-步骤一：创建一个对象输入流，它可以包装一个其它类型输入流，如文件输入流：
-
-ObjectInputStream in = new ObjectInputStream(new fileInputStream(“D:\\objectfile.obj”));
-
-步骤二：通过对象输出流的readObject()方法读取对象：
-
-String obj1 = (String)in.readObject();
-
-Date obj2 = (Date)in.readObject();
-
-说明：为了正确读取数据，完成反序列化，必须保证向对象输出流写对象的顺序与从对象输入流中读对象的顺序一致。
-
-为了更好地理解Java序列化与反序列化，选择方法一编码实现。
-
-总结：
-
-1）Java序列化就是把对象转换成字节序列，而Java反序列化就是把字节序列还原成Java对象。
-
-2）采用Java序列化与反序列化技术，一是可以实现数据的持久化，在MVC模式中很是有用；二是可以对象数据的远程通信
-
-
-
-只要对象实现了Serializable、Externalizable接口(该接口仅仅是一个标记接口，并不包含任何方法)，则该对象就实现了序列化。
-
-
-
-#### 1、具体是如何实现的呢?
-
-序列化，首先要创建某些OutputStream对象，然后将其封装在一个ObjectOutputStream对象内，这时调用writeObject()方法，即可将对象序列化，并将其发送给OutputStream(对象序列化是基于字节的，因此使用的InputStream和OutputStream继承的类)。
-
-反序列化，即反向进行序列化的过程，需要将一个InputStream封装在ObjectInputStream对象内，然后调用readObject()方法，获得一个对象引用(它是指向一个向上转型的Object)，然后进行类型强制转换来得到该对象。
-
-假定一个User类，它的对象需要序列化，可以有如下三种方法：
-
-(1)若User类仅仅实现了Serializable接口，则可以按照以下方式进行序列化和反序列化。
-
-- ObjectOutputStream采用默认的序列化方式，对User对象的非transient的实例变量进行序列化。
-- ObjcetInputStream采用默认的反序列化方式，对对User对象的非transient的实例变量进行反序列化。
-
-(2)若User类仅仅实现了Serializable接口，并且还定义了readObject(ObjectInputStream in)和writeObject(ObjectOutputSteam out)，则采用以下方式进行序列化与反序列化。
-
-- ObjectOutputStream调用User对象的writeObject(ObjectOutputStream out)的方法进行序列化。
-- ObjectInputStream会调用User对象的readObject(ObjectInputStream in)的方法进行反序列化。
-
-(3)若User类实现了Externalnalizable接口，且User类必须实现readExternal(ObjectInput in)和writeExternal(ObjectOutput out)方法，则按照以下方式进行序列化与反序列化。
-
-- ObjectOutputStream调用User对象的writeExternal(ObjectOutput out))的方法进行序列化。
-- ObjectInputStream会调用User对象的readExternal(ObjectInput in)的方法进行反序列化。
-
-java.io.ObjectOutputStream：对象输出流，它的writeObject(Object obj)方法可以对指定的obj对象进行序列化，把得到的字节序列写到一个目标输出流中。
-
-java.io.ObjectInputStream：对象输入流，它的readObject()方法可以将从输入流中读取字节序列，再把它们反序列化成为一个对象，并将其返回。
-
-### 注意事项
-
-1、当一个父类实现序列化，子类就会自动实现序列化，不需要显式实现Serializable接口。
-
-2、当一个对象的实例变量引用其他对象，序列化该对象时也把引用对象进行序列化。
-
-3、并非所有的对象都可以进行序列化，比如：
-
-- 安全方面的原因，比如一个对象拥有private，public等成员变量，对于一个要传输的对象，比如写到文件，或者进行RMI传输等等，在序列化进行传输的过程中，这个对象的private等域是不受保护的;
-- 资源分配方面的原因，比如socket，thread类，如果可以序列化，进行传输或者保存，也无法对他们进行重新的资源分配，而且，也是没有必要这样实现。
-
-4、声明为static和transient类型的成员变量不能被序列化。因为static代表类的状态，transient代表对象的临时数据。
-
-5、序列化运行时会使用一个称为 serialVersionUID 的版本号，并与每个可序列化的类相关联，该序列号在反序列化过程中用于验证序列化对象的发送者和接收者是否为该对象加载了与序列化兼容的类。如果接收者加载的该对象的类的 serialVersionUID 与对应的发送者的类的版本号不同，则反序列化将会导致 InvalidClassException。可序列化类可以通过声明名为 "serialVersionUID" 的字段(该字段必须是静态 (static)、最终 (final) 的 long 型字段)显式声明其自己的 serialVersionUID。
-
-如果序列化的类未显式的声明 serialVersionUID，则序列化运行时将基于该类的各个方面计算该类的默认 serialVersionUID 值，如“Java(TM) 对象序列化规范”中所述。不过，强烈建议 所有可序列化类都显式声明 serialVersionUID 值，原因是计算默认的 serialVersionUID 对类的详细信息具有较高的敏感性，根据编译器实现的不同可能千差万别，这样在反序列化过程中可能会导致意外的 InvalidClassException。因此，为保证 serialVersionUID 值跨不同 java 编译器实现的一致性，序列化类必须声明一个明确的 serialVersionUID 值。还强烈建议使用 private 修饰符显示声明 serialVersionUID(如果可能)，原因是这种声明仅应用于直接声明类 -- serialVersionUID 字段作为继承成员没有用处。数组类不能声明一个明确的 serialVersionUID，因此它们总是具有默认的计算值，但是数组类没有匹配 serialVersionUID 值的要求。
-
-6、Java有很多基础类已经实现了serializable接口，比如String，Vector等。但是也有一些没有实现serializable接口的。
-
-7、如果一个对象的成员变量是一个对象，那么这个对象的数据成员也会被保存!这是能用序列化解决深拷贝的重要原因。
-
-
-
-## Android 序列化与 Java 序列化
-
-在日常的应用开发中，我们可能需要让某些对象离开内存空间，存储到物理磁盘，以便长期保存，同时也能减少对内存的压力，而在需要时再将其从磁盘读取到内存，比如将某个特定的对象保存到文件中，隔一段时间后再把它读取到内存中使用，那么该对象就需要实现序列化操作，在java中可以使用Serializable接口实现对象的序列化，而在android中既可以使用Serializable接口实现对象序列化也可以使用Parcelable接口实现对象序列化，但是在内存操作时更倾向于实现Parcelable接口，这样会使用传输效率更高效。
-
-
-
-
-
-
-
-## 反序列化会遇到什么问题，如何解决？
-
-
+　　Parcelable 也不是不可以在网络中传输，只不过实现和操作过程过于麻烦并且为了防止 android 版本不同而导致 Parcelable 可能不同的情况，因此在序列化到存储设备或者网络传输方面还是尽量选择 Serializable 接口。
 
 # 9. Java 8 的新特性
 
@@ -850,7 +717,7 @@ https://www.jianshu.com/p/0bf8fe0f153b
 
 ## 9.1. 接口的默认方法
 
-　　Java 8 允许给接口添加一个非抽象的方法实现，只需要使用 default关键字即可，这个特征又叫做扩展方法，示例如下：
+　　Java 8 允许给接口添加一个非抽象的方法实现，只需要使用 default 关键字即可，这个特征又叫做扩展方法，示例如下：
 
 ```csharp
 interface Formula {
@@ -889,7 +756,7 @@ Collections.sort(names, (a, b) -> b.compareTo(a));
 
 ## 9.3. 函数式接口
 
-　　每一个lambda 表达式都对应一个类型，通常是接口类型。而 “ 函数式接口 ” 是指仅仅只包含一个抽象方法的接口，每一个该类型的 lambda表达式都会被匹配到这个抽象方法。因为默认方法不算抽象方法，所以也可以给你的函数式接口添加默认方法。
+　　每一个lambda 表达式都对应一个类型，通常是接口类型。而 “ 函数式接口 ” 是指仅仅只包含一个抽象方法的接口，每一个该类型的 lambda 表达式都会被匹配到这个抽象方法。因为默认方法不算抽象方法，所以也可以给你的函数式接口添加默认方法。
 
 　　可以将 lambda 表达式当作任意只包含一个抽象方法的接口类型，确保接口一定达到这个要求，只需要给你的接口添加 @FunctionalInterface 注解，编译器如果发现标注了这个注解的接口有多于一个抽象方法的时候会报错的。
 
@@ -925,9 +792,8 @@ System.out.println(converted);    // "J"
 
 　　构造函数使用 :: new 来引用的，
 
-```cpp
+```java
 PersonFactory<Person> personFactory = Person::new;
-
 ```
 
 　　只需要使用 Person::new 来获取 Person 类构造函数的引用，Java 编译器会自动根据方法的签名来选择合适的构造函数。
@@ -1003,17 +869,18 @@ Built-in Functional Interfaces
 ```
 
 　　JDK 1.8 API 包含了很多内建的函数式接口，在老 Java 中常用到的比如 Comparator 或者 Runnable 接口，这些接口都增加了 @FunctionalInterface 注解以便能用在 lambda 上。
- Java 8 API 同样还提供了很多全新的函数式接口来让工作更加方便，有一些接口是来自 Google Guava 库里的，这些都被扩展到 lambda 上。
+
+　　Java 8 API 同样还提供了很多全新的函数式接口来让工作更加方便，有一些接口是来自 Google Guava 库里的，这些都被扩展到 lambda 上。
 
 ## 9.9. Data API
 
-　　Java 8 在包 java.time 下包含了一组全新的时间日期API。新的日期API 和开源的 Joda-Time 库差不多，但又不完全一样。
+　　Java 8 在包 java.time 下包含了一组全新的时间日期 API。新的日期 API 和开源的 Joda-Time 库差不多，但又不完全一样。
 
 　　Clock 时钟：Clock 类提供了访问当前日期和时间的方法，Clock 是时区敏感的，可以用来取代 System.currentTimeMillis() 来获取当前的微秒数。某一个特定的时间点也可以使用 Instant 类来表示，Instant 类也可以用来创建老的 java.util.Date 对象。
 
 　　Timezones 时区：在新 API 中时区使用 ZoneId 来表示。时区可以很方便的使用静态方法 of 来获取到。 时区定义了到 UTS 时间的时间差，在 Instant 时间点对象到本地日期对象之间转换的时候是极其重要的。
 
-　　LocalTime 本地时间：LocalTime 定义了一个没有时区信息的时间，例如 晚上 10 点，或者 17:30:15。
+　　LocalTime 本地时间：LocalTime 定义了一个没有时区信息的时间，例如 晚上 10 点或者 17:30:15。
 
 　　LocalDate 本地日期：LocalDate 表示了一个确切的日期，比如 2014-03-11。该对象值是不可变的，用起来和 LocalTime 基本一致。
 
@@ -1081,7 +948,7 @@ public class data13 {
 　　“a” 的值是129，转换成二进制就是 10000001，而 “b” 的值是128，转换成二进制就是 10000000。根据与运算符的运算规律，只有两个位都是1，结果才是1，可以知道结果就是 10000000，即 128。
 ### 10.1.2．或运算符
 　　或运算符用符号 “|” 表示，其运算规律如下：
-　　两个位只要有一个为1，那么结果就是1，否则就为 0，下面看一个简单的例子。
+　　两个位只要有一个为 1，那么结果就是 1，否则就为 0，下面看一个简单的例子。
 
 ```java
 public class data14 {

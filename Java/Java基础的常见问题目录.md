@@ -207,7 +207,78 @@
 6. 深拷贝和浅拷贝的区别
 7. HashSet 内部是如何工作的
 8. 序列化
-9. 
+   * 什么是序列化与反序列化
+   * 序列化的应用场景
+   * 序列化的好处
+   * 如何实现序列化
+     * Serizable
+       * 注意事项
+     * Parcelable
+     * Parcelable 与 Serializable 区别
+       * 两者的实现差异
+       * 两者的设计初衷
+       * 两者效率选择
+9. Java 8 的新特性
+   * 接口的默认方法
+   * Lambda 表达式
+   * 函数式接口
+   * 方法与构造函数引用
+   * Lambda 作用域
+   * 访问局部变量
+   * 访问对象字段与静态变量
+   * 访问接口的默认方法
+   * Data API
+   * Annotation 注解
+10. 运算符
+    * java 运算符与（&）、非（~）、或（|）、异或（^）
+      * 与运算符
+      * 或运算符
+      * 非运算符
+      * 异或运算符
+
+# Java 基础的常见问题 4
+
+1. 为什么 Java 枚举文字不能具有泛型类型参数
+
+2. arrayList、LInkedList、vector 效率
+
+3. final、finally、finalize 区别
+
+4. 介绍一下所有的 map，以及他们之间的对比，适用场景。
+
+   * list 与 set、map 区别及适用场景
+   * ArrayList 与 LinkedList 的区别和适用场景
+   * ArrayList 与 Vector 的区别和适用场景
+   * HashSet 和 TreeSet 的适用场景
+   * HashMap 与 TreeMap、HashTable 的区别及适用场景
+
+5. Map 集合几种遍历方式的性能比较
+
+6. 对象锁与类锁的区别
+
+   * 实例锁
+   * 类锁
+
+7. 讲讲类的实例化顺序，比如父类静态数据，构造函数，字段，子类静态数据，构造函数，字段，当 new 的时候，他们的执行顺序。
+
+8. reentrantlock/synchronized 区别？如何实现上锁
+
+   * synchroznied
+   * ReentrantLock
+     * ReentrantLock 实现的原理
+
+
+# Java 基础的常见编程题
+
+1. 请编程实现 Java 的生产者-消费者模型
+   * 使用 synchronzied、wait、notifyAll 实现生产者-消费者模式
+   * 使用信号量实现生产者-消费者模式
+   * 使用 ReentrantLock 实现生产者-消费者模式
+2. 算法题：两个线程分别持续打印奇数和偶数，实现两个线程的交替打印（从小到大）
+   * 使用 volatile 和 synchronzied 实现
+   * 使用 synchronzied + volatile + wait + notify 实现
+   * ReentrantLock 实现
+   * flag 实现
 
 
 
