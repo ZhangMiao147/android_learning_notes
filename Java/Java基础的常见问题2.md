@@ -932,6 +932,8 @@ Map m = Collections.synchronizeMap(hashMap);// 性能差，不推荐使用
 
 　　在 JDK 1.7 中 ConcurrentHashMap 采用了数组 + Segment + 分段锁的方式实现。其中 Segment 继承于 ReetrantLock，所以它是一种可重入锁。
 
+　　默认 ConcurrentHashMap 的 Segment 数是 16。每个 segment 内的 HashEntry 数组大小也是 16 个。threshold 是 16*0.75。
+
 　　Segment 在其中扮演锁的角色，HashEntry 用于存储数据。
 
 　　核心数据如 value 以及数据链表都是 volatile 修饰的，保证了获取时的可见性。

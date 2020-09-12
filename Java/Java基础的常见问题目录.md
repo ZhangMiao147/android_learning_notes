@@ -60,6 +60,7 @@
      * notify()：线程唤醒
      * notifyAll()：唤醒所有线程
    * wait() 与 sleep() 的区别
+   * sleep,wait,yield 在多线程应用中的区别 
 7. 进程
    * 线程与进程的区别
      * 进程（线程+内存+文件/网络句柄）
@@ -266,6 +267,7 @@
    * synchroznied
    * ReentrantLock
      * ReentrantLock 实现的原理
+9. list 的 remove
 
 
 # Java 基础的常见编程题

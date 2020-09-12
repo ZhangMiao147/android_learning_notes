@@ -141,3 +141,89 @@
 1. ANR
 
    
+
+# Android 常见问题 6
+
+1. android launcher 的架构怎么样，用到什么模式
+2. 问 rgb_565 位图，一个像素占多少位？
+3. Android View 的刷新机制
+4. 内存机制
+
+5. JNI 线程需要对 java VM 做的操作
+   * 创建线程
+   * 附着在 Java 虚拟机上
+   * 等待线程返回结果
+   * 同步线程块
+6. activity 和 service 的通信方式
+7. 并发和并行分别是什么意思，多线程是并发还是并行
+8. 一个按钮，手抖了连续点了两次，会跳转两次页面，怎么让这种情况不发生
+
+
+
+# Android 常见问题 8
+
+1. ListView 源码分析
+2. RecyclerView 源码分析
+3. Android 时间分发机制，如何处理冲突
+4. webView 有哪些问题
+5. Bitmap 图片优化
+6. 使用 JNI 时，如何在 C++ 代码中访问到一个 java 对象
+7. ServiceManager、ActivityManager、packageManager
+8. Binder 原理
+9. FrameWork 层的核心类
+10. IPC 机制
+
+
+
+TCP原理，如何确保稳定（与udp相比），阻塞， 
+
+反射如何实现 
+
+文件上传下载原理，下载中流的大小； 
+
+操作系统，cpu调度 
+
+•数据库
+
+Linux指令
+
+权限机制
+
+ClassLoader和DexLoader会用吗
+
+Monkey能跑多长时间？ 
+
+Intent是如何实现Activity、Service等之间的解耦合的？ 
+
+View的渲染机制
+
+[View渲染机制](https://blog.csdn.net/say_from_wen/article/details/79093883)
+
+Hook机制
+
+[Android Hook 机制之简单实战](https://www.jianshu.com/p/c431ad21f071)
+
+mmap + native 日志优化
+
+广播和 EventBus 的区别
+
+跨进程传递大内存数据如何做
+
+启动优化怎么优化
+
+synchronized 底层实现原理，ReentrantLock 公平锁与非公平锁
+
+主线程等待所有线程执行完毕，再执行某个特定任务怎么实现？原理和源码看过没？
+
+自定义 view 的一般流程，要注意些什么如何优化，点击事件和长按时间分别是怎么实现的？
+
+四种启动模式，在源码分析中的原理是怎样的？
+
+.讲讲 bindService 的过程，你当初是怎么优化后台服务进程的？
+
+RxJava 在使用过程中碰到了某些不友好的错误一般怎么解决？发现了内存泄露一般怎么解决分析，有没有碰到过系统服务内存泄露的问题？
+
+给你个数 1 吧，比如 1000011 里面有几个 1 ？
+
+你看过 binder 驱动的源码，说说他的内存映射过程，说说客户端等待服务端处理返回的流程，如果要跨进程传递大内存数据你具体会怎么做？简单写一写吧。
+

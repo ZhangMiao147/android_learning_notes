@@ -283,6 +283,61 @@ public enum MyEnum {
 
 　　ReenTrantLock 的实现是一种自旋锁，通过循环调用 CAS 操作来实现加锁。它的性能比较好也是因为避免了使线程进入内核态的阻塞状态。想尽办法避免线程进入内核的阻塞状态是我们去分析和理解锁设计的关键钥匙。
 
+# 9. list 的 remove
+
+　　for 循环和 foreach 循环都是错误的，会抛出 java.util.ConcurrentModificationException 异常。
+
+　　正确的做法：
+
+- 使用 for 循环，并且同时改变索引；（**正确**）
+
+```java
+// 正确
+for(int i=0;i<list.size();i++) {
+	if(list.get(i)%2==0) {
+		list.remove(i);
+		i--; // 在元素被移除掉后，进行索引后移
+	}
+}
+```
+
+- 使用 for 循环，倒序进行；（**正确**）
+
+```java
+// 正确
+for(int i=list.size()-1;i>=0;i--) {
+	if(list.get(i)%2==0) {
+		list.remove(i);
+	}
+}
+```
+
+- 使用while循环，删除了元素，索引便不+1，在没删除元素时索引+1（**正确**）
+
+```java
+// 正确
+int i=0;
+while(i<list.size()) {
+	if(list.get(i)%2==0) {
+		list.remove(i);
+	}else {
+		i++;
+	}
+}
+```
+
+4.使用迭代器方法（**正确,推荐**）
+只能使用**迭代器的 ** remove() 方法，使用**列表的** remove() 方法是错误的
+
+```java
+// 正确，并且推荐的方法
+Iterator<Integer> itr = list.iterator();
+while(itr.hasNext()) {
+	if(itr.next()%2 ==0)
+		itr.remove();
+}
+```
+
 # 在多线程的情况下，在JAVA 中如何保证一个方法只被一个对象调用？
 
 1. synchronized

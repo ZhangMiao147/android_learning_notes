@@ -263,7 +263,7 @@ POSIX Thread 的 Android 实现是 Bionic 标准库的一部分，在编译的�
 #include <pthread.h>
 ```
 
-## 创建线程
+## 5.1. 创建线程
 
 线程创建函数：
 
@@ -310,7 +310,7 @@ JNIEXPORT jint JNICALL Java_com_david_JNIController_sayhello
 
 调用函数就可以在线程执行打印 say hello 了。
 
-## 附着在Java虚拟机上
+## 5.2. 附着在Java虚拟机上
 
 创建了线程后，只能做一些简单的 Native 操作，如果想要对 Java 层做一些操作就不行了，因为它没有 Java 虚拟机环境，这个时候为了和 Java 空间进行交互，就要把 POSIX 线程附着在 Java 虚拟机上，然后就可以获得当前线程的 JNIEnv 指针了。
 
@@ -355,7 +355,7 @@ void sayHello(void *){
 
 这样就在 Native 线程中调用 Java 相关的函数了。
 
-## 等待线程返回结果
+## 5.3. 等待线程返回结果
 
 前面提到的方法是新线程运行后，该方法也就立即返回退出，执行完了。我们也可以通过另一个函数可以在等待线程执行完毕后，拿到线程执行完的结果之后再退出。
 
@@ -388,7 +388,7 @@ int pthread_join(pthread_t pthread, void** ret_value);
 
 pthread_join 返回为 0 代表执行成功，非 0 则执行失败。
 
-## 同步代码块
+## 5.4. 同步代码块
 
 在 Java 中，JDK 为我们提供了 synchronized 来处理多线程同步代码块。
 
