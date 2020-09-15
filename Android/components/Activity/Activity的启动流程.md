@@ -444,7 +444,7 @@ public final class Launcher extends Activity
     }
 ```
 
-　　ActivityStackSupervisor 的 resumeFocusedStackTopActivityLocked() 方法最后调用到了 ActivityStack 的 resumeTopActivityUncheckedLocked（） 方法。
+　　ActivityStackSupervisor 的 resumeFocusedStackTopActivityLocked() 方法最后调用到了 ActivityStack 的 resumeTopActivityUncheckedLocked()  方法。
 
 ### 3.1.16. ActivityStack #resumeTopActivityUncheckedLocked()
 
