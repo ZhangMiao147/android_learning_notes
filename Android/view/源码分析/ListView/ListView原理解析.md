@@ -20,9 +20,9 @@
 
 　　列表控件是为了展示一组关联数据的 view 的，他的工作模式就是一个列表控件加上一个数据源即可，但是列表控件并不需要关心具体是什么类型的数据源，因为如果要列表控件直接和数据源打交道，那么控件所要做的工作就很繁琐而且没有任何扩展性。
 
-　　所以只需要为这个数据源定义一个通用的实现接口，使控件通过指定的方法去完成对数据的监控和使用，而不需要关系数据是什么类型。
+　　所以只需要为这个数据源定义一个通用的实现接口，使控件通过指定的方法去完成对数据的监控和使用，而不需要关心数据是什么类型。
 
-　　Adapter 就是一个接口，定义了一组数据的统一方法，可以实现该接口完成各种各样的子类，比如 ArrayAdapter 专门存放一个简单数组的 adapter、SimpleCursorAdapter 存放游标数据的 adapte r等等，而列表控件只需知道这是一种数据源、并可以通过同样的方法来访问数据即可。
+　　Adapter 就是一个接口，定义了一组数据的统一方法，可以实现该接口完成各种各样的子类，比如 ArrayAdapter 专门存放一个简单数组的 adapter、SimpleCursorAdapter 存放游标数据的 adapter 等等，而列表控件只需知道这是一种数据源、并可以通过同样的方法来访问数据即可。
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20190730192524388.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzE1ODI3MDEz,size_16,color_FFFFFF,t_70)
 
 ## 3. RecycleBin 回收机制
