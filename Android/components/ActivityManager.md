@@ -43,7 +43,7 @@
 
 #### 判断应用是否在前台运行，应用是否在运行
 
-```
+```java
 //判断应用是否在前台运行
 public boolean isRunningForeground(Context context){
         String packageName=getPackageName(context);
@@ -95,7 +95,7 @@ public  String getTopActivityName(Context context){
     public String getPackageName(Context context){
          String packageName = context.getPackageName();  
          return packageName;
-    }12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152
+    }
 ```
 
 
