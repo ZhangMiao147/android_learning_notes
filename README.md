@@ -1,8 +1,8 @@
 # Android 开发工程师知识目录
 
-## Android
+# Android
 
-### 四大组件
+## 四大组件
 
 #### Activity
 
@@ -16,17 +16,25 @@
 * [Activity 的使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Activity%E7%9A%84%E4%BD%BF%E7%94%A8.md)
 * [Activity 的启动流程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Activity%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B.md)
 * [Activity 的常见问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Activity%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98.md)
+* Binder
+* Intent
+* Window、Activity、DecorView 以及 ViewRoot 之间的关系
+* IPC 多线程通信方式
 
 #### Service
 
 * [Service 的基础知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Service/Service%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86.md)
 * [Service 的常见问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Service/Service%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98.md)
+* JobService、JobScheduler
+* Messenger
+* IntentService
 
 #### BroadcaseReceiver
 
 * [BroadcaseReceiver 的基础知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/BroadcastReceiver/BroadcastRecevier的基础知识.md)
 * [BroadcaseReceiver 的实现原理](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/BroadcastReceiver/BroadcastRecevier的实现原理.md)
 *  [BroadcaseReceiver 的常见问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/BroadcastReceiver/BroadcastRecevier的常见问题.md)
+*  LocalBroadcastManager 
 
 #### ContentProvider
 
@@ -34,12 +42,13 @@
 * [ContentProvider 的常见问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/ContentProvider/ContentProvider%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98.md)
 * [ContentProvider 运行过程源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/ContentProvider/ContentProvider运行过程源码分析.md)
 * [ContentProvider 的共享数据更新通知机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/ContentProvider/ContentProvider的共享数据更新通知机制.md)
-
 * [守护进程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/守护进程.md)
 * [ActivityManagerService](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/ActivityManagerService.md)
 * [WindowManagerService](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/WindowManagerService.md)
 * [PackageManagerService之启动解析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/PackageManagerService之启动解析.md)
 * [IntentFilter 的匹配规则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/IntentFilter的匹配规则.md)
+* pms
+* [ContentProvider 之文件储存](https://blog.csdn.net/kaiwii/article/details/7780593)
 
 ### Fragment
 
@@ -52,6 +61,8 @@
 * [Handler 的延伸](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/Handler的延伸.md)
 * [ThreadLocal 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/ThreadLocal知识.md)
 * [AsyncTask 的知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/AysncTask的知识.md)
+* HandlerThread
+* IdleHandler
 
 ### View
 
@@ -61,11 +72,17 @@
 * [View 事件分发机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/View事件分发机制.md)
 * [ViewGroup 事件分发机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/ViewGroup事件分发机制.md)
 * [自定义View的实现方式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/自定义View的实现方式.md)
+* GestureDetector
+* ActionBarDrawerToggle 
 
 #### View 应用
 
 * [Android实现卡片翻转的动画（翻牌动画）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/view%E7%9A%84%E5%AE%9E%E8%B7%B5/Android%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E7%BF%BB%E8%BD%AC%E7%9A%84%E5%8A%A8%E7%94%BB%EF%BC%88%E7%BF%BB%E7%89%8C%E5%8A%A8%E7%94%BB%EF%BC%89.md)
 * [系统控件的常用使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/view%E7%9A%84%E5%AE%9E%E8%B7%B5/%E7%B3%BB%E7%BB%9F%E6%8E%A7%E4%BB%B6%E7%9A%84%E5%B8%B8%E7%94%A8%E4%BD%BF%E7%94%A8.md)
+
+### AIDL
+
+* AIDL
 
 ### 缓存
 
@@ -97,21 +114,57 @@
 
 * [Android 4.4.4 的 setResult 失效的问题适配](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/adaptation/Android4.4.4%E7%9A%84setResult%E5%A4%B1%E6%95%88%E7%9A%84%E9%97%AE%E9%A2%98%E9%80%82%E9%85%8D.md)
 * [Android 4.4.4 支持分包后找不到勒的问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/adaptation/Android%204.4.4支持分包后找不到类的问题.md)
+* 适配
+* 屏幕适配
 
 ### Gradle
 
+* gradle
 * [api 与 implementation 的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/gradle/api%E4%B8%8Eimplementation%E7%9A%84%E5%8C%BA%E5%88%AB.md)
 
 ### 其他
 
 * [多渠道打包](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/Software/%E5%A4%9A%E6%B8%A0%E9%81%93%E6%89%93%E5%8C%85.md)
+
 * [jar 包和 aar 包的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/jar%E5%8C%85%E4%B8%8Eaar%E5%8C%85%E7%9A%84%E5%8C%BA%E5%88%AB.md)
+
 * [日常问题记录](https://github.com/ZhangMiao147/android_learning_notes/tree/master/Android/question)
+
 * [Android 中 Home 键的监听](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/Android中Home键的监听.md)
+
+* ArrayDeque
+
+* ArrayMap
+
+* SpareArray
+
+* nano ptotobufs
+
+* 协程
+
+* Android Dex 分包 https://www.jianshu.com/p/e96f345e822f
+
+* SurfaceView 
+
+* WindowManager
+
+  [Android解析WindowManager（一）WindowManager体系](https://blog.csdn.net/itachi85/article/details/77888668)
+
+* DiskLruCache
+
+  [Android DiskLruCache完全解析，硬盘缓存的最佳方案](https://blog.csdn.net/guolin_blog/article/details/28863651)
+
+* Protocal buffers 
+
+* 
 
 ### 架构与设计模式
 
 * [设计模式选择](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/%E6%9E%B6%E6%9E%84%E4%B8%8E%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E9%80%89%E6%8B%A9.md)
+
+### 混淆
+
+* ProGuard 
 
 ## 网络
 
@@ -124,6 +177,7 @@
 * [HTTPS](https://github.com/ZhangMiao147/android_learning_notes/blob/master/network/HTTPS/HTTPS.md)
 * [IP 协议](https://github.com/ZhangMiao147/android_learning_notes/blob/master/network/IP/IP协议.md)
 * [IPv4 和 IPv6](https://github.com/ZhangMiao147/android_learning_notes/blob/master/network/IP/IPv4和IPv6.md)
+* KCP
 
 ## 数据结构
 
@@ -131,6 +185,9 @@
 * [线性表链式存储](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/线性表链式存储.md)
 * [堆](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/堆.md)
 * [Set 集合](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/数据结构/Set集合.md)
+* 图
+* 并查集
+* 栈
 
 ### 树
 
@@ -160,6 +217,7 @@
 
 ### 查找算法
 
+* 查找算法知识
 * [顺序查找](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/顺序查找.md)
 * [二分查找](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/二分查找.md)
 * [插值查找](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/查找算法/插值查找.md)
@@ -173,11 +231,13 @@
 
 ### 排序算法
 
+* 排序算法总结
 * [直接插入排序](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/排序算法/直接插入排序.md)
 * [希尔排序](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/排序算法/希尔排序.md)
 * [简单选择排序](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/排序算法/简单选择排序.md)
 * [堆排序](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/排序算法/堆排序.md)
 * [冒泡排序](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/排序算法/冒泡排序.md)
+* 快速排序
 * [归并排序](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/排序算法/归并排序.md)
 * [基数排序](https://github.com/ZhangMiao147/android_learning_notes/blob/master/DataStructure/算法/排序算法/基数排序.md)
 
@@ -186,10 +246,34 @@
 ### 基础
 
 * [Java 泛型](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/基础/Java泛型.md)
+
 * [Java 代理](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/基础/Java代理.md)
+
 * [Java 反射](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/基础/Java反射.md)
+
 * [在Java反射中Class.forName和ClassLoader的区别.md](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/基础/在Java反射中Class.forName和ClassLoader的区别.md)
+
 * [Java 注解](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/基础/Java注解.md)
+
+* NIO
+
+* Java 中字符串 String switch 的实现原理
+
+  [Java中字符串String Switch的实现原理](https://blog.csdn.net/MOLIILOM/article/details/51166697)
+
+* Java 线程的创建
+
+* Java 数据类型
+
+* java 读写文件的几种方式
+
+* Java 注解
+
+  [Java 注解（Annotation）](https://www.runoob.com/w3cnote/java-annotation.html)
+
+* Vector
+
+* ConcurrentModificationException 异常
 
 ### 数据结构
 
@@ -202,6 +286,15 @@
 * [ConcurrentHashMap](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/ConcurrentHashMap.md)
 * [JDK1.7ConcurrentHashMap的源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/JDK1.7ConcurrentHashMap的源码分析.md)
 * [JDK1.8ConcurrentHashMap的源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/JDK1.8ConcurrentHashMap的源码分析.md)
+* hashCode
+* treeMap
+* String
+* 动态代理类 Proxy
+* PriorityQueue
+* transient
+* CopyOnWriteArrayList
+* SortedMap / TreeMap
+* ArrayBlockingQueue 阻塞队列
 
 ### 线程
 
@@ -220,6 +313,8 @@
 * [使用管程实现生产者-消费者模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/使用管程实现生产者-消费者模式.md)
 * [哲学家就餐问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/哲学家就餐问题.md)
 * [读者写者问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/线程/读者写者问题.md)
+* Semaphore
+* countdownlatch
 
 
 
@@ -252,6 +347,42 @@
 * [RxJava 2 与 RxJava 1 的对比](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/RxJava/RxJava2与RxJava1的对比.md)
 * [RxJava 2 背压源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/RxJava/RxJava2背压源码分析.md)
 
+
+
+### EventBus
+
+
+
+### ButterKnife
+
+
+
+### RxAndroid
+
+
+
+### XWalkView
+
+
+
+### Okio
+
+
+
+### 组件化与插件化
+
+
+
+### 热修复
+
+
+
+### TagSoup
+
+* 解析 html内容
+
+[在 Android 应用中使用 HTML Parser 便捷的解析 html 内容](https://www.ibm.com/developerworks/cn/opensource/os-cn-android-hp/index.html)
+
 ## 多媒体
 
 * Opengl
@@ -283,6 +414,32 @@
 * [设备管理](https://github.com/ZhangMiao147/android_learning_notes/blob/master/system/设备管理.md)
 * [文件管理](https://github.com/ZhangMiao147/android_learning_notes/blob/master/system/文件管理.md)
 * [作业管理](https://github.com/ZhangMiao147/android_learning_notes/blob/master/system/作业管理.md)
+
+## 数据库
+
+
+
+## Flutter
+
+
+
+## RN
+
+
+
+## kotlin
+
+
+
+## 其他
+
+* 类图、时序图的绘制
+
+* Fiddler 使用教程
+
+  [fiddler4使用教程](https://blog.csdn.net/chaoyu168/article/details/51065644)
+
+* 
 
 
 ## 读书笔记

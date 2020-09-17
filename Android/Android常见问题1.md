@@ -109,6 +109,10 @@ ActivityManagerService、PackageManagerService、WindowManagerService等等。
 
 　　在 AMS 处理创建 Application 之后就会去开启 Activity，AMS 会像客户端发消息去开启 LAUNCH_ACTIVITY ，开启 Activity 会先通过 Instrumentation 去创建 Activity 对象，创建完成调用 onCreate() 方法。
 
+## 1.3. Instrumentation 介绍，ActivityStack 里面存储了什么
+
+
+
 # 2.Activity 的启动模式，及其使用场景
 
 启动模式就是定义 Activity 实例与 task 的关联方式。
@@ -632,6 +636,14 @@ protected void onDestroy() {
 ```
 
 　　这样，就能完全避免内存泄漏了。
+
+## 6.4. obtainMessage() 的实现
+
+
+
+## 6.5. 将消息插入队列的操作
+
+
 
 # 7. Fragment 的生命周期，与 Activity 生命周期的比较
 
