@@ -12,7 +12,7 @@
 
 **第 6 章** [HTTP 首部](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第6章-HTTP首部.md)
 
-**第 7 章** 确保 Web 安全的 HTTPS
+**第 7 章** 确保 Web 安全的 HTTPS - 已完成
 
 **第 8 章** 确认访问用户身份的认证
 
