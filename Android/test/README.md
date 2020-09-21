@@ -16,4 +16,4 @@
 
 # 3. 测试工具
 
-1. sonar
+1. sonarQube - 测试漏洞\bug
