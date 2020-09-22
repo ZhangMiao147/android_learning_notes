@@ -1,7 +1,7 @@
 # 读书笔记
 > 随时更新，欢迎大家的批评与指导
 
-## 第一行代码
+# 第一行代码
 
 * 第 2 章 [先从看得到的入手，探究活动](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E7%AC%AC%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81/%E7%AC%AC2%E7%AB%A0-%E5%85%88%E4%BB%8E%E7%9C%8B%E5%BE%97%E5%88%B0%E7%9A%84%E5%85%A5%E6%89%8B%EF%BC%8C%E6%8E%A2%E7%A9%B6%E6%B4%BB%E5%8A%A8.md)
 
@@ -27,11 +27,11 @@
 
 * 第 13 章 [继续进阶，你还应该掌握的高级技巧](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E7%AC%AC%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81/%E7%AC%AC13%E7%AB%A0-%E7%BB%A7%E7%BB%AD%E8%BF%9B%E9%98%B6%EF%BC%8C%E4%BD%A0%E8%BF%98%E5%BA%94%E8%AF%A5%E6%8E%8C%E6%8F%A1%E7%9A%84%E9%AB%98%E7%BA%A7%E6%8A%80%E5%B7%A7.md)
 
-## Effective Java
+# Effective Java
 
 * [读书笔记](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Effective%20Java/EffectiveJavaReadRecord.txt)
 
-## Java 核心技术卷一：基础知识
+# Java 核心技术卷一：基础知识
 
 * 第二章 [Java程序设计环境](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC2%E7%AB%A0-Java%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E7%8E%AF%E5%A2%83.md)
 * 第三章 [Java的基本程序设计结构](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC3%E7%AB%A0-Java%E7%9A%84%E5%9F%BA%E6%9C%AC%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E7%BB%93%E6%9E%84.md)
@@ -46,7 +46,7 @@
 * 第十三章 [集合](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC13%E7%AB%A0-%E9%9B%86%E5%90%88.md)
 * 第十四章 [多线程](https://github.com/havenBoy/java-book-notes/blob/master/Java%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E5%8D%B7%E4%B8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%AC%AC14%E7%AB%A0-%E5%A4%9A%E7%BA%BF%E7%A8%8B.md)
 
-## Java 多线程编程核心技术
+# Java 多线程编程核心技术
 
 * 第 1 章 [Java 多线程技能](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/%E7%AC%AC1%E7%AB%A0-Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E6%8A%80%E8%83%BD.md)
 
@@ -62,7 +62,7 @@
 
 * 第 7 章 [拾遗增补](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/%E7%AC%AC7%E7%AB%A0-%E6%8B%BE%E9%81%97%E5%A2%9E%E8%A1%A5.md)
 
-## 代码整洁之道
+# 代码整洁之道
 
 * 第一章 [整洁代码](https://github.com/havenBoy/java-book-notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC1%E7%AB%A0-%E6%95%B4%E6%B4%81%E4%BB%A3%E7%A0%81.md)
 * 第二章 [有意义的命名](https://github.com/havenBoy/java-book-notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC2%E7%AB%A0-%E6%9C%89%E6%84%8F%E4%B9%89%E7%9A%84%E5%91%BD%E5%90%8D.md)
@@ -76,7 +76,7 @@
 * 第十章 [类](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC10%E7%AB%A0-%E7%B1%BB.md)
 * 第十一章 [系统](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC11%E7%AB%A0-%E7%B3%BB%E7%BB%9F.md)
 
-## 设计模式之禅
+# 设计模式之禅
 
 * 第 1 章 [单一职责原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC1%E7%AB%A0-%E5%8D%95%E4%B8%80%E8%81%8C%E8%B4%A3%E5%8E%9F%E5%88%99.md)
 * 第 2 章 [里氏置换原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC2%E7%AB%A0-%E9%87%8C%E6%B0%8F%E6%9B%BF%E6%8D%A2%E5%8E%9F%E5%88%99.md)
@@ -85,7 +85,7 @@
 * 第 5 章 [迪米特原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC5%E7%AB%A0-%E8%BF%AA%E7%B1%B3%E7%89%B9%E6%B3%95%E5%88%99.md)
 * 第 6 章 [开闭原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC6%E7%AB%A0-%E5%BC%80%E9%97%AD%E5%8E%9F%E5%88%99.md)
 
-## 深入理解 Java 虚拟机
+# 深入理解 Java 虚拟机
 
 * 第 1 章 [走进 Java](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA/%E7%AC%AC1%E7%AB%A0-%E8%B5%B0%E8%BF%9BJava.md)
 * 第 2 章 [Java 内存区域与内存溢出异常](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第2章-Java内存区域与内存溢出异常.md)
@@ -101,19 +101,19 @@
 * 第 12 章 [Java 内存模型与线程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第12章-Java内存模型与线程.md)
 * 第 13 章 [线程安全与锁优化](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/深入理解%20Java%20虚拟机/第13章-线程安全与锁优化.md)
 
-## Android 进阶之光
+# Android 进阶之光
 
 * 第 1 章 [Android 新特性](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android%E8%BF%9B%E9%98%B6%E4%B9%8B%E5%85%89/%E7%AC%AC1%E7%AB%A0-Android%E6%96%B0%E7%89%B9%E6%80%A7.md)
 
-## Android 进阶解密
+# Android 进阶解密
 
 * 第 1 章 [ Android 系统架构](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android%E8%BF%9B%E9%98%B6%E8%A7%A3%E5%AF%86/%E7%AC%AC1%E7%AB%A0-Android%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84.md)
 
-## Android 开发艺术探索
+# Android 开发艺术探索
 
 * 第 1 章 [Activity 的生命周期和启动模式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Android开发艺术探索/第1章-Activity%20的声明周期和启动模式.md)
 
-## 图解 HTTP
+# 图解 HTTP
 
 * 第 1 章 [了解 Web 及网络基础](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第1章-了解Web及网络基础.md)
 * 第 2 章 [简单的 HTTP 协议](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第2章-简单的HTTP协议.md)
@@ -121,4 +121,106 @@
 * 第 4 章 [返回结果的 HTTP 状态码](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第4章-返回结果的HTTP状态码.md)
 * 第 5 章 [与 HTTP 协作的 Web 服务器](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第5章-与HTTP协作的Web服务器.md)
 * 第 6 章 [HTTP 首部](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第6章-HTTP首部.md)
+
+# Android 源码设计模式解析与实战 - 何红辉，关爱民的书
+
+
+
+# Android 高级进阶 - 顾浩鑫
+
+
+
+# Head First 设计模式
+
+
+
+# 设计模式：可复用面向对象软件的基础
+
+# Android Gradle 权威指南
+
+# 实战 Gradle
+
+# kotlin 程序开发入门精要
+
+
+
+# kotlin 从入门到项目实战
+
+
+
+
+
+# 移动 APP 性能评测与优化
+
+
+
+# Android 应用性能优化最佳实践
+
+
+
+# 腾讯 Android 自动化测试实战
+
+
+
+# Android 移动性能实战
+
+
+
+# 高性能 Android 应用开发
+
+
+
+# 编程珠玑
+
+
+
+# 程序员代码面试指南：IT 名企算法与市局结构题目最优解
+
+
+
+# 算法之美
+
+
+
+# 代码整洁之道 程序员的职业素养 The Clean Coder
+
+# 重构 改善既有代码的设计
+
+# Android C++ 高级编程 使用 NDK
+
+# 技术之瞳 埃里巴巴技术笔试心得
+
+
+
+# 编程之美：微软技术面试心得
+
+
+
+# 剑指 Offer：名企面试官精讲典型编程题
+
+
+
+# HR 不会告诉你的那些面试技巧
+
+
+
+# 程序员你伤不起
+
+
+
+# Android 自定义控件开打入门与实战 启舰著
+
+
+
+# Android 音视频开发 - 何俊林著
+
+
+
+# App 研发录 - 架构设计，Crash 分析和竞品技术分析
+
+
+
+# 算法图解
+
+
 
