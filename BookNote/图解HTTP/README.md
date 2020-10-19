@@ -12,9 +12,9 @@
 
 **第 6 章** [HTTP 首部](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第6章-HTTP首部.md)
 
-**第 7 章** 确保 Web 安全的 HTTPS - 已完成
+**第 7 章** [确保 Web 安全的 HTTPS](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第7章-确保Web安全的HTTPS.md)
 
-**第 8 章** 确认访问用户身份的认证 - 已完成
+**第 8 章** [确认访问用户身份的认证](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第8章-确认访问用户身份的认证.md)
 
 **第 9 章** 基于 HTTP 的功能追加协议
 
