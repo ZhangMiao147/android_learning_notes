@@ -1,6 +1,6 @@
 # React Native 移动开发实战
 
-* 第 1 章 React Native 背景知识
+* 第 1 章 React Native 背景知识 - 完成
 * 第 2 章 React Native 入门基础
 * 第 3 章 React Native 基础语法
 * 第 4 章 React 技术详解
