@@ -101,4 +101,16 @@
 
 ### 3.3.1. Flexbox 布局简介
 
-　　
+　　在传统的 HTML 文档中，每个元素都被描绘成一个矩形盒子，这些矩形盒子通过一个模型来描述其占用的空间，此模型即被称为盒模型。盒模型包含 margin、border、padding 和 content 4 个边界对象，如下图所示。
+
+
+
+　　如上图所示，盒模型主要由 margin、border、padding 和 content 4 个属性构成。其中，margin 用于描述边框外的距离，border 用来描述围绕在内边距和内容外的边框，padding 用于表示内容与边框之间的填充距离，content 用于表示需要填充的空间。
+
+　　由于 CSS 盒模型需要依赖于 position 属性、float 属性以及 display 属性来进行布局，所以对于一些特殊但常用的布局实现起来就比较困难。为此，W3C 组织提出了一种新的布局方案，即 Flexbox 布局。
+
+　　Flexbox 是英文 Flexible Box 的缩写，又称为弹性盒子布局，旨在提供一个更加有效的方式制定、调整和排布一个容器里的项目布局，即使他们的大小是未知或者动态的。Flexbox 布局的主要思想是，让容器有能力使其子项目改变其宽度、高度（甚至顺序），并以最佳方式填充可用空间。
+
+　　React Native 实现了 Flexbox 布局的大部分功能，因此在实际应用开发中可以直接使用 Flexbox 布局来进行布局开发。React Native 中 Flexbox 布局和 Web 开发中的布局是基本一致的，只有少许差异。
+
+　　在 Flexbox 布局中，按照作用对象的不同，可以将 Flex　　
