@@ -103,7 +103,7 @@
 
 　　在传统的 HTML 文档中，每个元素都被描绘成一个矩形盒子，这些矩形盒子通过一个模型来描述其占用的空间，此模型即被称为盒模型。盒模型包含 margin、border、padding 和 content 4 个边界对象，如下图所示。
 
-
+![](image/CSS 盒模型示意图.jpeg)
 
 　　如上图所示，盒模型主要由 margin、border、padding 和 content 4 个属性构成。其中，margin 用于描述边框外的距离，border 用来描述围绕在内边距和内容外的边框，padding 用于表示内容与边框之间的填充距离，content 用于表示需要填充的空间。
 
@@ -113,4 +113,32 @@
 
 　　React Native 实现了 Flexbox 布局的大部分功能，因此在实际应用开发中可以直接使用 Flexbox 布局来进行布局开发。React Native 中 Flexbox 布局和 Web 开发中的布局是基本一致的，只有少许差异。
 
-　　在 Flexbox 布局中，按照作用对象的不同，可以将 Flex　　
+　　在 Flexbox 布局中，按照作用对象的不同，可以将 Flexbox 布局属性分为决定子组件的属性和决定组件自身的属性两种。其中，决定子组件的属性有 flexWrap、alignItems、flexDirection 和 justifyContext，决定组件自身的自身的属性有 alignSelf 和 flex 等。
+
+### 3.3.2. flexDirection 属性
+
+　　flexDirection 属性表示布局中子组件的排列方向，取值包括 column、row、column-reverse 和 row-reverse，默认值为 column。即在不设置 flexDirection 属性的情况下，子组件在容器中是默认值 column 纵向排列的。
+
+### 3.3.3. flexWrap 属性
+
+　　flexWrap 属性主要用于控制子组件是单行还是多行显示，取值包括 wrap、nowrap 和 wrap-reverse，默认值为 wrap，即默认多行显示。
+
+### 3.3.4. justifyContent 属性
+
+　　justifyContent 属性用于表明容器中子组件横向排列的位置，取值包括 flex-start、flex-end、center、space-between 和 space-around。
+
+　　和 justifyContent 属性类似，alignItems 属性也可以用于控制容器中子组件的排列方向，只不过 juetifyContent 决定的是子组件在容器中横向排列的位置，而 alignItems 决定子组件在容器中纵向排列的位置。alignItems 属性的取值包括 flex-start、flex-end、center、baseline 和 stretch。
+
+### 3.3.5. alignSelf 属性
+
+　　alignSelf 属性用于表明组件在容器内部的排列情况，与 alignItems 属性不同，alignSelf 属性是在子组件内部定义的，取值包括 auto、flex-start、flex-end、center 和 stretch。
+
+### 3.3.6. flex 属性
+
+　　flex 属性用于表明子控件占父控件的比例，即组件可以动态计算和配置自己所占用的空间大小，取值是数值，默认值为 0，即不占用任何父容器空间。
+
+　　flex 属性是 FlexBox 布局的重要内容之一，也是实现自适应设备和屏幕尺寸的核心。合理使用 flex 属性，可以提高页面开发的效率和质量。
+
+## 3.4. 本章小结
+
+　　本章主要从 JXS 语法、ES6 基础语法、布局和样式来介绍 React Native 开发中的基础知识。
