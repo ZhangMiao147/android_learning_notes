@@ -106,6 +106,7 @@
 * [多渠道打包](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/Software/%E5%A4%9A%E6%B8%A0%E9%81%93%E6%89%93%E5%8C%85.md)
 * [jar 包和 aar 包的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/jar%E5%8C%85%E4%B8%8Eaar%E5%8C%85%E7%9A%84%E5%8C%BA%E5%88%AB.md)
 * [Android 中 Home 键的监听](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/Android中Home键的监听.md)
+* [shape 布局文件的替换方案](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/shape布局文件的替换方案.md)
 
 ## Question 平时开发遇到的问题记录
 

@@ -16,8 +16,8 @@
 
 **第 8 章** [确认访问用户身份的认证](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/图解HTTP/第8章-确认访问用户身份的认证.md)
 
-**第 9 章** 基于 HTTP 的功能追加协议
+**第 9 章** 基于 HTTP 的功能追加协议 - 已完成
 
-**第 10 章** 构建 Web 内容的协议
+**第 10 章** 构建 Web 内容的协议 - 已完成
 
-**第 11 章** Web 的攻击技术
+**第 11 章** Web 的攻击技术 - 已完成
