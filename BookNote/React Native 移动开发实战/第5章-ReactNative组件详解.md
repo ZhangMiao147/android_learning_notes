@@ -112,3 +112,112 @@
 
 ### 5.1.3. Image
 
+​		Image 是一个图片展示组件，其作用类似于 Android 的 ImageView 或者 iOS 的 UIImageView。Image 组件支持多种类型图片的展示，包括网络图片、静态资源、临时的本地图片以及本地磁盘上的图片等。使用 Image 组件加载图片时只需要设置 source 属性即可，如果加载的是网络图片还需要添加 uri 标识。
+
+​		Image 组件默认的图片宽和高都为 0，使用 image 组件加载图片时需要为图片指定宽和高，否则图片无法显示。
+
+​		目前，Image 组件支持的图片格式有 PNG、JPG、JPEG、BMP、GIF、WebP 和 PSD。不过，默认情况下 Android 是不支持 GIF 和 WebP 格式图片的，如果需要支持 GIF 和 WebP 图片格式，需要在 android/app/build.gradle 文件中添加以下依赖脚本。
+
+```groovy
+dependencies{
+  // 支持 Android 4.0（API level 14）之前的版本
+  compile 'com.facebook.fresco:animated-base-support:1.1.0.0'
+  
+  // 支持 GIF 动图
+  compile 'com.facebook.fresco:animated-gif:1.10.0'
+  
+  // 需要支持 WebP 格式，包括 WebP 动图
+  compile 'com.facebook.fresco:animated-webp:1.10.0'
+  compile 'com.facebook.fresco:webpsupport:1.10.0'
+  
+  // 支持 WebP 格式不需要动图
+  compile 'com.facebook.fresco:webpsupport:1.10.0'
+
+}
+```
+
+​		使用 Image 组件时，有一个重要的属性，即 resizeMode，此属性用于控制当组件和图片尺寸不成比例的时候以何种方式调整图片的大小。resizeMode 的取值有 5 种，分别是 cover、contain、stretch、repeat 和 center。
+
+* conver：在保持图片宽高比的前提下缩放图片，直到宽度和高度都大于等于容器视图的尺寸。
+* contain：在保持图片宽高比的前提下缩放图片，直到宽度和高度都小于等于容器视图的尺寸。
+* stretch：拉伸图片且不维持图片的宽高比，直到宽度和高度都刚好填满容器。
+* repeat：在维持原始尺寸的前提下，重复平铺图片直到填满容器。
+* center：居中且不拉伸的显示图片。
+
+### 5.1.4. ActivityIndicator
+
+​		ActivityIndicator 是一个加载指示器组件，俗称 “ 转菊花 ”，其作用类似于 Android 的 ProgressBar 或者 iOS 的 UIProgressView。
+
+​		ActivityIndicator 组件在不同平台的表演也有所差异的。
+
+​		在移动应用开发中，加载指示器通常被用在异步耗时操作过程中以提升用户体验。
+
+### 5.1.5. Switch
+
+​		Switch 是 React Native 提供的一个状态切换组件，俗称开关组件，主要用来对开和关两个状态进行切换。
+
+​		Switch 组件的用法比较简单，只需要给组件绑定 value 属性即可。如果需要改变组件的状态，则必须使用 onValueChange() 来更新 value 属性的值，否则 Switch 组件的状态将不会改变。
+
+## 5.2. 容器组件
+
+### 5.2.1. View 组件
+
+​		在 React Native 中，View 容器组件支持 Flexbox 布局、样式、触摸事件处理和一些无障碍功能，它可以被放到其他容器组件里，也可以包含任意多个子组件。无论是 iOS 还是 Android，View 组件都会直接对应平台的原生视图，其作用等同于 iOS 的 UIView 或者 Android 的 android.view。
+
+​		作为一个容器组件，View 的设计初衷是和 StyleSheet 搭配使用，这样可以使代码变得更加清晰，也容易获得更好的性能。
+
+### 5.2.2. ScrollView 组件
+
+​		ScrollView 是一个通用的滚动容器组件，主要用来在有限的显示区域内显示更多的内容。ScrollView 支持垂直和水平两个方向上的滚动操作，并且支持嵌套任意多个不同类型的子组件。作为一个容器组件，ScrollView 必须有一个确定的高度才能正常工作。如果不知道容器的准确高度，可以将 ScrollView 组件的样式设置为 {flex:1}，让其自动填充父容器的空余空间。ScrollView 通常包裹在视图的外面，用来控制视图的滚动。除此之外，还可以用它实现一些复杂的滚动效果，例如使用它实现轮播广告效果。
+
+​		horizontal 属性用于控制视图的滚动方向，pagingEnabled 属性用于控制水平分页，showsHorizontalScrollIndicator 属性用来控制水平滚动条的显示，onMomentumScrollEnd 则是滚动结束需要调用的函数。
+
+### 5.2.3. WebView 组件
+
+​		WebView 是一个浏览器组件，主要用于加载和显示网页元素，其作用等同于 iOS 的 UIWebView、WKWebView 组件，或者 Android 的 WebView 组件。
+
+​		WebView 组件的使用方法非常简单，只需要提供 source 属性即可。
+
+​		除了使用网络地址加载网页外，WebView 组件还支持直接加载本地的 HTML 代码。
+
+### 5.2.4. TouchableOpacity 组件
+
+​		在 React Native 应用开发中，点击和触摸都是比较常见的交互行为，不过并不是所有的组件都支持点击事件。为了给这些不具备点击响应的组件绑定点击事件，React Native 提供了 Touchable 系列组件。事实上，Toychable 系列组件并不单指某一个组件，而是由 TouchableWithoutFeedback、TouchableOpacity、TouchableHigh 和 TouchableNativeFeedback 组件组成。
+
+​		其中，TouchableWithputFeedback 不带反馈效果，其他 3 个组件都是带有触摸反馈效果的，可以理解为其他 3 个组件是 TouchableWithoutFeedback 组件的扩展，它们的具体含义和作用如下。
+
+* TouchableWithoutFeedback：无反馈性触摸，用户点击时页面无任何视觉效果。
+* TouchableHighlight：高亮触摸，在用户点击组件时产生高亮效果。
+* TouchableOpacity：透明触摸，在用户点击组件时产生透明效果。
+* TouchableNativeFeedback：仅适用于 Android 平台的触摸响应组件，会在用户点击后产生水波纹的视觉效果。
+
+​		在 React Native 应用开发中，使用得最多的就是 TouchableOpacity 组件。作为一个触摸响应容器组件，TouchableOpacity 组件支持嵌套一个或多个子组件，同时会在用户手指按下视图时降低视图的透明度产生一种透明效果。
+
+​		TouchableOpacity 组件的使用方法比较简单，只需要将它包裹在其他组件的外面即可实现点击功能。
+
+## 5.3. 列表组件
+
+### 5.3.1. VirtualizedList 组件
+
+​		在移动应用开发中，列表是一种常见的页面布局方式。在 React Native 早期的版本中，如果要实现列表布局，只能使用 ListView 组件，不过在数据量特别大的情况下，组件的性能特别差，容易出现卡顿和渲染延迟的问题。为了改善这一缺陷，React Native 在 0.43.0 版本引入了 VirtualizedList 系列组件，此类组件自带视图复用和回收特性，因此特性哟了质的提升。
+
+​		事实上，VirtualizedList 组件通过维护一个有限的渲染窗口，将渲染窗口之外的元素全部用合适的定长空白空间代替，极大地降低了内存消耗以及提升了在大量数据下的使用性能。当一个元素距离可视区太远时，它的渲染优先级就会变低。通过此种方式，渲染窗口尽量减少出现空白区域的可能性，从而提高视图渲染的性能。
+
+​		VirtualizedList 组件会默认初始化一个数量为 10 的列表，然后采用循环绘制的方式来绘制列表数据。当列表元素距离可视区太远时，元素将会被回收，否则将被绘制。
+
+​		一般来说，除非有特殊的性能要求，否则不建议直接使用 VirtualizedList 组件，因为 VirtualizedList 是一个抽象组件，使用起来比较麻烦。在实际项目开发过程中，使用 FlatList 和 SectionList 组件即可满足开发需求，因为它们都是基于 VirtualizedList 组件扩展的，因而不存在任何性能上的问题。
+
+### 5.3.2. FlatList 组件
+
+
+
+## 5.4. 平台组件
+
+
+
+## 5.5. PureComponent 组件
+
+
+
+## 5.6. 本章小结
+
