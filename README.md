@@ -445,14 +445,22 @@
 
 ## 读书笔记
 
+### 技术书籍
+
 * [图解 HTTP](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/图解HTTP)
 * [第一行代码](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/第一行代码)
 * [深入理解 Java 虚拟机](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/深入理解%20Java%20虚拟机)
 * [Java 多线程编程核心技术](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/Java多线程编程核心技术)
 * [Java 核心技术卷一：基础知识](https://github.com/havenBoy/JavaBook-Notes/tree/master/Java核心技术卷一基础知识)
+* [React Native 移动开发实战]
 * [Effective Java]
 * [代码整洁之道]
 * [设计模式之禅]
+
+### 非技术书籍
+
+* [每天演好一个情绪稳定的成年人](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/非技术书籍/每天演好一个情绪稳定的成年人.md)
+* [思维导图完整手册]
 
 
 
