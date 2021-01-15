@@ -97,6 +97,12 @@ https://github.com/Ellen2018/AndroidFaceInterview 面试题以及答案
 
 https://github.com/crawlab-team/artipub 一文多发工具
 
+https://github.com/ChenLittlePing/LearningVideo?utm_source=androidweekly.io&utm_medium=website 音视频知识
+
+Android systrace :https://www.androidperformance.com/2019/05/28/Android-Systrace-About/
+
+Android 安全：https://github.com/JnuSimba/AndroidSecNotes?utm_source=androidweekly.io&utm_medium=website
+
 2. 查看源码用到的网址：
 http://androidxref.com/7.0.0_r1/
 http://androidxref.com/7.0.0_r1/xref/ 代码目录
