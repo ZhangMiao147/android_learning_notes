@@ -209,15 +209,135 @@ dependencies{
 
 ### 5.3.2. FlatList 组件
 
+​		在 FlatList 组件出现之前，React Native 使用 ListView 组件来实现列表功能，不过在列表数据比较多的情况下， ListView 组件的性能并不是很好，所以在 0.43.0 版本，React Native 引入了 FlatList 组件。相比 ListView 组件， FlatList 组件适用于加载长列表数据，而且性能也更佳。
 
+​		相比 ListView 组件，FlatList 组件主要支持以下功能和特性。
+
+* 完全跨平台。
+* 支持水平布局模式。
+* 支持行组件显示或隐藏时可配置事件回调。
+* 支持单独的头部组件。
+* 支持单独的尾部组件。
+* 支持自定义行间分隔线。
+* 支持下拉刷新。
+* 支持上拉加载更多。
+* 支持跳转到指定行，类似于ScrollToIndex功能。
+* 如果需要支持分组/类/区的功能，请使用SectionList组件。
+
+​		得益于 FlatList 组件对 VirtualizedList 组件的强大封装能力，使用 FlatList 组件实现列表效果时只需要提供 data 和 renderItem 属性即可，其他属性可以根据实际情况进行合理的配置。
+
+​		FlatList 组件还可以实现网格列表效果，使用 FlatList 组件实现网格列表需要提供 FlatList 组件的 numColumns 属性。除了 data 和 renderItem 属性之外，FlatList 组件还有如下一些使用频率比较高的属性和方法。
+
+#### 5.3.2.1. Item的key
+
+​		使用 FlatList 组件实现列表效果时，系统要求给每一行子组件设置一个 key，key 是列表项的唯一标识，目的是当某个子视图的数据发生改变时可以快速地重绘改变的子组件。
+
+​		当然，FlatList组件提供的keyExtractor属性也能达到此效果。
+
+#### 5.3.2.2. 分割线 seperator
+
+​		FlatList 组件本身的分割线并不是很明显，如果要实现分割线，主要有两种策略：设置 boderBottom 或 ItemSeperatorComponent 属性。
+
+​		如果只是简单的一条分割线，在 Item 组件的中添加 boderBottom 相关的属性即可。
+
+​		需要注意的是，使用 boderBottom 实现分割线时，列表顶部和底部的分割组件是不需要绘制的。当然，更简单的方式是使用 FlatList 的 ItemSeperatorComponent 属性。
+
+#### 5.3.2.3. 下拉刷新和上拉加载更多
+
+​		和 ListView 组件一样，FlatList 组件也可以实现下拉刷新和上拉加载更多的功能，使用时添加对应的属性即可。
+
+​		其中，在使用 FlatList 组件实现下拉刷新和上拉加载更多功能时，包含以下几个状态。
+
+* refreshing：列表是否处于正在刷新的状态。
+* onRefresh：开始刷新事件，可以在此状态发起接口请求。
+* onEndReached：上拉加载更多事件。可以在此方法中设置加载更多对应的组件状态，并在 setState() 方法的回调里请求后端数据。
+* onEndReachedThreshold：表示距离底部多远时触发onEndReached。与 ListView 不同的是，FlatList 中的onEndReachedThreshold 的值是一个比值而非像素。
+
+​		通常在执行下拉刷新操作过程中，字段的初始值都需要重新初始化，并且缓存的数据也需要清空。
+
+#### 5.3.2.4. Header和Footer
+
+​		在 React Native 应用开发中，下拉刷新是一个比较常见的功能，如果只需要执行下拉刷新操作可以直接使用 RefreshControl 组件。
+
+​		除了 RefreshControl 组件外，还可以使用FlatList组件来实现下拉刷新操作，并且 FlatList 组件还支持上拉加载更多操作。之所以可以这么做，是因为 FlatList 组件自带了手势滑动监测功能。使用 FlatList 组件实现下拉刷新和上拉加载更多功能，需要使用 FlatList 组件的 onHeaderRefresh 和 onFooterRefresh 属性。
+
+### 5.3.3. SectionList 组件
+
+​		和 FlatList 组件一样，SectionList 组件也是由 VirtualizedList 组件扩展来的，不过相比于 VirtualizedList 组件，FlatList 和 SectionList 组件的应用更加广泛，尽管VirtualizedList组件更加灵活方便。
+
+​		SectionList 也是一个列表组件，不同于 FlatList 组件， SectionList 组件主要用于开发列表分组、吸顶悬浮等功能。 SectionList 组件的使用方法也非常简单，只需要提供 renderItem、renderSectionHeader 和 sections 等必要的属性即可。
+
+​		得益于 SectionList 组件提供的诸多强大的属性和方法，使用时只需要传入 renderSection Header、renderItem 和 sections 等必要的属性即可。
 
 ## 5.4. 平台组件
 
+​		使用 React Native 进行跨平台应用开发时，由于 React Native 最终使用的是原生平台组件来完成渲染的，所以并不是所有的组件都是通用的。针对这一情况，React Native 提供了只能在某个特定平台才能使用的平台组件，并分别以 Android 和 iOS 后缀进行标识，如 ProgressBarAndroid、ViewPagerAndroid、ProgressViewIOS 和 DatePickerIOS 等。
 
+### 5.4.1. ViewPagerAndroid 组件
+
+​		ViewPagerAndroid 是一个只能运行在 Android 平台的页面切换容器组件，其作用类似于平台 Android 原生的 ViewPager 控件，主要作用是嵌套多个视图实现左右滑动切换效果。使用 ViewPagerAndroid 组件实现左右滑动切换时，每个子组件都被视为一个单独的页面，且每个子视图都必须是纯 View 视图，而不能是自定义的复合组件。
+
+​		ViewPagerAndroid 组件的使用方法非常简单，只要将需要渲染的子视图添加到 ViewPager Android 中即可。
+
+​		不过，由于 ViewPagerAndroid 仅对 Android 平台有效，所以在应用开发中使用的频率并不高。
+
+### 5.4.2. SafeAreaView 组件
+
+​		为了适配 iPhone X 及后面机型的刘海屏，React Native 官方在 0.50.1 版本引入了 SafeAreaView 组件。
+
+​		目前，SafeAreaView 组件只支持 iPhone X 及以上机型使用，因此如果需要适配 Android 设备的刘海屏，则需要借助第三方库或者修改原生 API 来实现。
+
+​		SafeAreaView 组件的使用方法非常简单，只需要将 SafeAreaView 组件嵌套在视图的最根级别中即可完成刘海屏适配。
+
+​		在 React Native 应用开发中，为了完成 iPhone X 及以上机型刘海屏的适配，还需要对刘海屏和非刘海屏设备进行区分，因为只有满足刘海屏的机型才需要刘海屏适配，判断的代码如下。
+
+```js
+export let screenW = Dimension.get('window').width;
+export let screenH = Dimension.get('window').height;
+// iPhoneX 默认宽高
+const X_WIDTH = 375;
+const X_HEIGHT = 812;
+/**
+* 判断是否为 iphoneX 
+* @returns {boolean}
+*/
+export function isIphoneX() {
+  return (
+  	Platform.OS === 'ios' && ((screenH === X_HEIGHT && screenW === X_WIDTH) || (screenH === X_WIDTH && screenW === X_HEIGHT))
+  )
+}
+
+```
+
+​		由于 SafeAreaView 是 0.50.1 版本才提供的新组件，所以如果要在老版本中适配 iPhoneX 及以上版本的刘海屏，需要借助一些开源的第三方库来实现，常见的有 react-native-safearea-view。
+
+### 5.4.3. SegmentedControlIOS
+
+​		SegmentedControlIOS 是一个分段选择组件，仅对 iOS 平台有效。如果要在 Android 平台实现分段选择，可以使用 Android 原生平台提供的 RadioButton 控件。
+
+​		SegmentedControlIOS 是 React Native 对 iOS 原生系统 UISegmentedControl 控件的封装。
+
+​		SegmentedControlIOS 组件的使用方法非常简单，使用时只需要提供 values 和 selectedIndex 属性即可。其中， values 属性表示分段组件的数据源，通常为数组格式， selectedIndex 属性用来表示被选中的选项的下标。
 
 ## 5.5. PureComponent 组件
 
+​		PureComponent 又名纯组件，是 React 15.3 版本新增的根组件类。相比于传统的 Component 根组件， PureComponent 加入了很多优化的元素，因此可以认为是一个优化版的 Component。
 
+​		PureComponent 之所以性能更强，是因为当组件的 props 或 state 发生改变时，PureComponent 将对 props 和 state 进行浅比较，然后调用 render() 绘制界面。而如果组件的 props 和 state 都没发生改变，render() 就不会触发，从而省去虚拟 DOM 的生成和比对过程，以此提升性能。
+
+​		不过需要注意的是，PureComponent 的 shouldComponentUpdate() 只会对对象进行浅对比，如果遇到的是复杂的数据结构，也有可能会因深层的数据不一致而产生错误的判断结果。
+
+​		因为 PureComponent 的 shallowEqual 操作，所以在使用 PureComponent 时，需要注意组件的 props 和 state 的引用是否发生改变。如果引用没有发生改变，直接调用 setState() 是不会触发重新渲染操作的。
+
+​		平时开发中，为了改善性能、提升渲染速度，可以直接使用 PureComponent 根组件替换 Component，但是这种方式并不是最保险的，特别是对于已经运行了很多年的项目。因此，为了兼容一些老项目，最好还是区别对待。
+
+```js
+import React { PureComponent, Component } from 'react';
+//兼容老版本的写法
+class Demo extends (PureComponent || Component) {  //...}
+```
 
 ## 5.6. 本章小结
+
+​		在前端开发中，特别是 React Native 应用开发中，组件是构成前端页面的核心。通过 React Native 官方提供的组件，开发者可以高效地开发复杂的移动应用。
 
