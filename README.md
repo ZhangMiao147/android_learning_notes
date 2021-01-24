@@ -135,6 +135,8 @@
 
 * [shape 布局文件的替换方案](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/shape布局文件的替换方案.md)
 
+* [Android 编码规范](https://github.com/ZhangMiao147/android_learning_notes/tree/master/Android/Android编码规范)
+
 * ArrayDeque
 
 * ArrayMap
