@@ -6,7 +6,7 @@
 * 第 4 章 [React 技术详解](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/React%20Native%20移动开发实战/第4章-React技术详解.md)
 * 第 5 章 React Native 组件详解 - 完成
 * 第 6 章 React Native API - 完成
-* 第 7 章 React Native 开发进阶
+* 第 7 章 React Native 开发进阶 - 完成
 * 第 8 章 网络与通信
 * 第 9 章 服务器开发基础
 * 第 10 章 React Native 测试
