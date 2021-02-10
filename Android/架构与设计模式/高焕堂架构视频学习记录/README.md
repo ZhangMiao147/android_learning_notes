@@ -18,7 +18,7 @@ A07_从架构到代码的演练 - 已完成
 
 A08_简介设计模式 - 已完成
 
-A09_认识框架(Framework)
+A09_认识框架(Framework) - 已完成
 
 ## Part_B 深入 Android 架构 ( 从线程到 AIDL )
 

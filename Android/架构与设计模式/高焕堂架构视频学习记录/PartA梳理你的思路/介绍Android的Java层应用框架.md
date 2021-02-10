@@ -63,7 +63,47 @@
 
 # 7. 四大组件之相互启动关系
 
+* 在 Android 框架里应定义了这些组件间之互动关系。互动关系又分为二：
+  1. 启动（Activation）关系。
+  2. 数据传输与交换（Data Exchange）关系。
 
+## 7.1. AA 模式
+
+​		这是由 Android 先启动一个 Activity 的子类(如 ac01 )之对象，然后 ac01 对象视需要而要求 Android 启动另一个 Activity 的子类(如 myActivity )的对象。
+
+![](image/AA模式.png)
+
+* ac01 就要求 Android (里的 ActivityManager )去启动 myActivity 子类别之对象了。
+* 当 myActivity 被启动时，立即执行 myActivity 的 onCreate() 函数。
+
+## 7.2. RA 模式
+
+​		在此模式里，是由 R(BroadcastReceiver) 启动 A(Activity)。
+
+![](image/RA模式.png)
+
+### 7.3. RS 模式
+
+​		在此模式里，是由 R(BroadcastReceiver) 启动 S(Service)。
+
+![](image/RS模式.png)
+
+## 7.4. RSA 模式
+
+​		在此模式里，是由 R(BroadcastReceiver) 启动 S(Service) ，然后 S 再启动 A。
+
+![](image/RSA模式.png)
+
+## 7.5. 其他模式
+
+* AR 模式（由 A 启动 R）
+* AS 模式
+* SR 模式
 
 # 8. 认识 ContentProvider
 
+* Activity 启动和使用 ContentProvider
+
+![](image/A使用C.png)
+
+![](image/cp.png)
