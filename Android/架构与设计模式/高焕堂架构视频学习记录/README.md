@@ -38,9 +38,9 @@ B07_Messager 框架与 IMessager 接口 - 已完成
 
 ## Part_C 掌握 API 和控制点 ( 从 Java **到** **JNI** 接口)
 
-C01_JNI 架构原理_Java 与 C 的对接
+C01_JNI 架构原理_Java 与 C 的对接 - 已完成
 
-C02_认识 JNI 开发与 NDK
+C02_认识 JNI 开发与 NDK - 已完成
 
 C03_JNI_从 C 调用 Java 函数
 
