@@ -4,9 +4,9 @@ C01_JNI 架构原理_Java 与 C 的对接 - 已完成
 
 C02_认识 JNI 开发与 NDK - 已完成
 
-C03_JNI_从 C 调用 Java 函数
+C03_JNI_从 C 调用 Java 函数 - 已完成
 
-C04_JNI_必要的优化设计
+C04_JNI_必要的优化设计 - 已完成
 
 C05_a_多个 Java 线程进入本地函数
 
