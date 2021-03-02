@@ -10,4 +10,4 @@
 * 第 8 章 $AppClick 全埋点方案 5：AspectJ - 已完成
 * 第 9 章 $AppClick 全埋点方案 6：ASM - 已完成
 * 第 10 章 $AppClick 全埋点方案 7：Javassist - 已完成
-* 第 11 章 $AppClick 全埋点方案 8：AST
+* 第 11 章 $AppClick 全埋点方案 8：AST - 已完成
