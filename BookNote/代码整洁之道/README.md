@@ -12,7 +12,7 @@
 * 第 10 章 [类](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC10%E7%AB%A0-%E7%B1%BB.md)
 * 第 11 章 [系统](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC11%E7%AB%A0-%E7%B3%BB%E7%BB%9F.md)
 * 第 12 章 迭代 - 已完成
-* 第 13 章 并发编程
+* 第 13 章 并发编程 - 已完成
 * 第 14 章 逐步改进
 * 第 15 章 JUnit 内幕
 * 第 16 章 重构 SerialDate
