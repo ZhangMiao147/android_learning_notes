@@ -6,7 +6,7 @@
 
 ​		通过上图可知，我们只要在图中红圈处拦截（即生成 .dex 文件之前），就可以拿到当前应用程序中所有的 .class 文件，然后借助一些库，就可以遍历这些 .class 文件中的所有方法，再根据一定的条件找到需要的目标方法，最后进行修改并保存，就可以插入埋点代码了。
 
-​		Google 从 Android Gradle 1.5.0 开始，提供了Transform API。通过TransformAPI，允许第三方以插件（Plugin）的形式，在Android应用程序打包成.dex文件之前的编译过程中操作.class文件。我们只要实现一套Transform，去遍历所有.class文件的所有方法，然后进行修改（在特定listener的回调方法中插入埋点代码），最后再对原文件进行替换，即可达到插入代码的目的。
+​		Google 从 Android Gradle 1.5.0 开始，提供了 Transform API。通过 TransformAPI，允许第三方以插件（Plugin）的形式，在 Android 应用程序打包成 .dex 文件之前的编译过程中操作 .class 文件。我们只要实现一套 Transform，去遍历所有 .class 文件的所有方法，然后进行修改（在特定 listener 的回调方法中插入埋点代码），最后再对原文件进行替换，即可达到插入代码的目的。
 
 ## 9.1. 关键技术
 
@@ -109,7 +109,7 @@
 
 ​		通过测试可以发现，该方案目前无法采集通过 android：onClick 属性绑定的点击事件。对于这个问题，原因和解决方案与使用 AspectJ 方案时一致。
 
-​		在 sdk module 新增一个注解@SensorsDataTrackViewOnClick。
+​		在 sdk module 新增一个注解 @SensorsDataTrackViewOnClick。
 
 ​		需要判断一下当前扫描到的注解是否是我们自定义的 @SensorsDataTrackViewOnClick 类型。如果是则做个标记，然后在 visitMethod 里判断是否有这个标记，如果有，则插入埋点字节码。
 
