@@ -8,6 +8,6 @@ D03_Native 核心服务的 Proxy-Stub 设计模式 - 已完成
 
 D04_亲自开发 SQRService 的 Proxy-Stub 模式 - 已完成
 
-D05_Android Service 的 Proxy-Stub 设计模式
+D05_Android Service 的 Proxy-Stub 设计模式 - 已完成
 
-D06_核心服务 Callback 的 IBinder 接口设计
+D06_核心服务 Callback 的 IBinder 接口设计 - 已完成
