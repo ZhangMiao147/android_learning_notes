@@ -2,7 +2,7 @@
 
 E01_HAL 的经济意义 - 完成
 
-E02_HAL 框架与 Stub 开发
+E02_HAL 框架与 Stub 开发 - 完成
 
 E03_OOPC 与 HAL 的美妙结合
 
