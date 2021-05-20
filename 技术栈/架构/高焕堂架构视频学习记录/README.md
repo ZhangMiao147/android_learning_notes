@@ -68,13 +68,13 @@ D06_核心服务 Callback 的 IBinder 接口设计 - 已完成
 
 ## Part_E 实践软硬整合(从 Android 到驱动架构)
 
-E01_HAL 的经济意义
+E01_HAL 的经济意义 - 已完成
 
-E02_HAL 框架与 Stub 开发
+E02_HAL 框架与 Stub 开发 - 已完成
 
-E03_OOPC 与 HAL 的美妙结合
+E03_OOPC 与 HAL 的美妙结合 - 已完成
 
-E04_从框架看 HAL 和 Linux 驱动开发
+E04_从框架看 HAL 和 Linux 驱动开发 - 已完成
 
 ## Part_F 观摩 Android 进阶设计 ( 从应用到设计)
 
