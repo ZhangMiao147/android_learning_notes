@@ -12,7 +12,7 @@ F05\_观摩_Android 端云整合与分工策略 - 已完成
 
 F06\_观摩_ContentProvider 架构与 DB 引擎移植方法 - 已完成
 
-F07\_观摩_Android 和 i-Jetty 网页的设计
+F07\_观摩_Android 和 i-Jetty 网页的设计 - 已完成
 
-F08\_观摩_WebView 的 PhoneGap 小框架设计
+F08\_观摩_WebView 的 PhoneGap 小框架设计 - 已完成
 
