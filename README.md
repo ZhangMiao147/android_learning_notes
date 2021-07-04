@@ -595,6 +595,7 @@
 * [Java 多线程编程核心技术](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/Java多线程编程核心技术)
 * [Java 核心技术卷一：基础知识](https://github.com/havenBoy/JavaBook-Notes/tree/master/Java核心技术卷一基础知识)
 * [React Native 移动开发实战](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/React%20Native%20移动开发实战)
+* [重构改善既有代码的设计](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/重构改善既有代码的设计)
 * [Effective Java]
 * [代码整洁之道]
 * [设计模式之禅]
@@ -604,4 +605,5 @@
 * [每天演好一个情绪稳定的成年人](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/非技术书籍/每天演好一个情绪稳定的成年人.md)
 * [思维导图完整手册](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/非技术书籍/思维导图完整手册.md)
 * [指数基金投资指南](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/非技术书籍/指数基金投资指南.md)
+* [山茶文具店](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/非技术书籍/山茶文具店.md)
 

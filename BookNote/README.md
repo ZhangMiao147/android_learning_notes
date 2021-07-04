@@ -82,7 +82,7 @@
 * 第 16 章 重构 SerialDate
 * 第 17 章 味道与启发
 
-# 设计模式之禅
+# 设计模式之禅 - 未完
 
 * 第 1 章 [单一职责原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC1%E7%AB%A0-%E5%8D%95%E4%B8%80%E8%81%8C%E8%B4%A3%E5%8E%9F%E5%88%99.md)
 * 第 2 章 [里氏置换原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E7%A6%85/%E7%AC%AC2%E7%AB%A0-%E9%87%8C%E6%B0%8F%E6%9B%BF%E6%8D%A2%E5%8E%9F%E5%88%99.md)
@@ -139,7 +139,6 @@
 * 第 2 章 [React Native 入门基础](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/React%20Native%20移动开发实战/第2章-ReactNative入门基础.md)
 * 第 3 章 [React Native 基础语法](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/React%20Native%20移动开发实战/第3章-ReactNative基础语法.md)
 * 第 4 章 [React 技术详解](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/React%20Native%20移动开发实战/第4章-React技术详解.md)
-
 * 第 5 章 [React Native 组件详解](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/React%20Native%20移动开发实战/第5章-ReactNative组件详解.md)
 * 第 6 章 [React Native API](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/React%20Native%20移动开发实战/第6章-ReactNativeAPI.md)
 * 第 7 章 [React Native 开发进阶](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/React%20Native%20移动开发实战/第7章-ReactNative开发进阶.md)
@@ -148,6 +147,27 @@
 * 第 10 章 [React Native 测试](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/React%20Native%20移动开发实战/第10章-ReactNative测试.md)
 * 第 11 章 [应用发布与热更新](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/React%20Native%20移动开发实战/第11章-应用发布与热更新.md)
 * 第 12 章 [电影购票 App 开发实战](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/React%20Native%20移动开发实战/第12章-电影购票App开发实战.md)
+
+# 重构 改善既有代码的设计
+
+* [重构列表](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/重构列表.md)
+* [第 1 章 重构，第一个案例](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第1章-重构第一个案例.md)
+* [第 2 章 重构原则](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第2章-重构原则.md)
+* [第 3 章 代码的坏味道](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第3章-代码的坏味道.md)
+* [第 4 章 构筑测试体系](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第4章-构筑测试体系.md)
+* [第 5 章 重构列表](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第5章-重构列表.md)
+* [第 6 章 重新组织函数](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第6章-重新组织函数.md)
+* [第 7 章 在对象之间搬移特性](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第7章-在对象之间搬移特性.md)
+* [第 8 章 重新组织数据](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第8章-重新组织数据.md)
+* [第 9 章 简化条件表达式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第9章-简化条件表达式.md)
+* [第 10 章 简化函数调用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第10章-简化函数调用.md)
+* [第 11 章 处理概括关系](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第11章-处理概括关系.md)
+* [第 12 章 大型重构](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第12章-大型重构.md)
+* [第 13 章 重构，复用与现实](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第13章-重构复用与现实.md)
+* [第 14 章 重构工具](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第14章-重构工具.md)
+* [第 15 章 总结](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/第15章-总结.md)
+* [要点列表](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/要点列表.md)
+* [代码的坏味道](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/重构改善既有代码的设计/代码的坏味道.md)
 
 # Android 源码设计模式解析与实战 - 何红辉，关爱民的书
 
@@ -211,7 +231,7 @@
 
 # 代码整洁之道 程序员的职业素养 The Clean Coder
 
-# 重构 改善既有代码的设计
+# 
 
 # Android C++ 高级编程 使用 NDK
 
@@ -256,3 +276,4 @@
 * [每天演好一个情绪稳定的成年人](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/非技术书籍/每天演好一个情绪稳定的成年人.md)
 * [思维导图完整手册](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/非技术书籍/思维导图完整手册.md)
 * [指数基金投资指南](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/非技术书籍/指数基金投资指南.md)
+* [山茶文具店](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/非技术书籍/山茶文具店.md)
