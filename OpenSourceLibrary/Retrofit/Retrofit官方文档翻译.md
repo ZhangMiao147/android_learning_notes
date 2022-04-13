@@ -83,12 +83,12 @@ Call<User> updateUser(@Part("photo") RequestBody photo,@Part("description") Requ
 
 #### 头部操作
 　　可以使用 `@Headers` 注解为方法设置静态的头。
-```
+```java
 @Headers("Cache-Control: max-age=640000")
 @GET("widget/list")
 Call<List<Widget>> widgetList();
 ```
-```
+```java
 @Headers({
 	"Accept: application/vnd.github.v3.full+json",
 	"User-Agent: Retrofit-Sample-App"
@@ -148,7 +148,7 @@ GitHubService service = retrofit.create(GithubService.class);
 ## 下载
 　　Retrofit的源码、例子和解释都在 [Github](https://github.com/square/retrofit) 上。
 
-#### MAVEN
+#### Maven
 ```xml
 <dependency>
 <groupId>com.squareup.retrofit2</groupId>
@@ -156,13 +156,13 @@ GitHubService service = retrofit.create(GithubService.class);
 <version>(insert latest version)</version>
 ```
 
-#### GRADLE
+#### Gradle
 ```xml
 implementation 'com.squareup.retrofit2:retrofit:(insert latest version)'
 ```
 　　Retrofit请求的最低是 Java 7 或 Android 2.3 。
 
-#### R8/PROGUARD
+#### R8/Proguard
 　　如果使用 R8 或者 ProGuard ，则添加选项到文件中。
 
 　　如果使用 OKHTTP 和 Okio 的库，也需要同样的方法。

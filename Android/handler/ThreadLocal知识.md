@@ -30,7 +30,7 @@
 // 声明 ThreadLocal 存储 Boolean 类型的数据    
 
 final ThreadLocal<Boolean> mBooleanThreadLocal = new ThreadLocal<Boolean>();
-// 主线程设置当先线程的 mBooleanThreadLocal 的值为 true
+// 主线程设置当前线程的 mBooleanThreadLocal 的值为 true
 mBooleanThreadLocal.set(true);
 System.out.println("[Thread#main]mBooleanThreadLocal=" + mBooleanThreadLocal.get());
 

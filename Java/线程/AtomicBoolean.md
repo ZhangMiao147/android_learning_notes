@@ -50,7 +50,7 @@
 
 **AtomicBoolean  的其他方法**
 
-```
+```java
 	//返回当前值
 	public final boolean get() {
         return value != 0;

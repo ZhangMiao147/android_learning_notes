@@ -1060,7 +1060,7 @@ final ViewRootHandler mHandler = new ViewRootHandler();
                     mIgnoreNextUpEvent = false;
 ```
 
-　　判断 mPrivateFlasg 是否包含 PFLAG_PREPRESSED，如果包含，则进入执行体，也就是无论是 100 ms 内或者之后抬起都会进入执行体。
+　　判断 mPrivateFlags 是否包含 PFLAG_PREPRESSED，如果包含，则进入执行体，也就是无论是 100 ms 内或者之后抬起都会进入执行体。
 
 　　如果 prepressed 为 true，调用 setPressed() 方法，给 mPrivateFlags 设置 PFLAG_PRESSED 标志，并刷新背景。
 
@@ -1145,7 +1145,7 @@ final ViewRootHandler mHandler = new ViewRootHandler();
     }
 ```
 
-　　可以看到，只要 mOnClickListener 不是 null，就会去调用它的 onClick 方法，而 mOnClickListener 就是di调用 setOnClickListener() 方法设置的点击回调。
+　　可以看到，只要 mOnClickListener 不是 null，就会去调用它的 onClick 方法，而 mOnClickListener 就是调用 setOnClickListener() 方法设置的点击回调。
 
 #### 3.5.5. View#setOnClickListener
 
@@ -1216,7 +1216,7 @@ onTouch execute, action 0
 
 #### 5.2.1. DOWN
 
-　　如果父控件支持滑动，首先设置标志为 PFLAG_PREPRESSED，设置 mHasPerformedLongPress = false，然后发出了一个 100ms 后的 mPendingChecForTag。
+　　如果父控件支持滑动，首先设置标志为 PFLAG_PREPRESSED，设置 mHasPerformedLongPress = false，然后发出了一个 100ms 后的 mPendingCheckForTag。
 
 　　如果 100ms 内没有触发 UP，则将标志置为 PFLAG_PRESSED，清除 PREPRESSED 标志，同时发出一个延时为 500-100 ms 的检查长按任务的消息。
 

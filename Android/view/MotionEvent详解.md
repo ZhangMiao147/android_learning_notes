@@ -2,7 +2,7 @@
 
 　　MotionEvent
 
-Android MotionEvent 详解，之前用了两篇文章 [事件分发机制原理](http://www.gcssloop.com/customview/dispatch-touchevent-theory) 和 [事件分发机制详解](http://www.gcssloop.com/customview/dispatch-touchevent-source) 来讲解事件分发，而作为事件分发主角之一的 MotionEvent 并没有过多的说明，本文就带大家了解 MotionEvent 的相关内容，简要介绍触摸事件，主要包括 单点触控、多点触控、鼠标事件 以及 getAction() 和 getActionMasked() 的区别。
+Android MotionEvent 详解，之前用了两篇文章 [事件分发机制原理](http://www.gcssloop.com/customview/dispatch-touchevent-theory) 和 [事件分发机制详解](http://www.gcssloop.com/customview/dispatch-touchevent-source) 来讲解事件分发，而作为事件分发主角之一的 MotionEvent 并没有过多的说明，本文就带大家了解 MotionEvent 的相关内容，简要介绍触摸事件，主要包括单点触控、多点触控、鼠标事件以及 getAction() 和 getActionMasked() 的区别。
 
 Android 将所有的输入事件都放在了 MotionEvent 中，随着安卓的不断发展壮大，MotionEvent 也开始变得越来越复杂，下面是我自己整理的 MotionEvent 大事记:
 
@@ -54,7 +54,7 @@ MotionEvent 负责集中处理所有类型设备的输入事件，但是由于�
 
 针对单点触控的事件处理一般是这样写的:
 
-```
+```java
 @Override
 public boolean onTouchEvent(MotionEvent event) {
     // ▼ 注意这里使用的是 getAction()，先埋一个小尾巴。
@@ -79,10 +79,10 @@ public boolean onTouchEvent(MotionEvent event) {
 }
 ```
 
-相信小伙伴对此已经非常熟悉了，经常使用的东西，我也不啰嗦了。
+相信小伙伴对此已经非常熟悉了，经常使用的东西，就不啰嗦了。
 
 但其中有两个比较特殊的事件: `ACTION_CANCEL` 和 `ACTION_OUTSIDE` 。
-为什么说特殊呢，因为它们是由程序触发而产生的，而且触发条件也非常特殊，通常情况下即便不处理这两个事件也没有什么问题。接下来我们就扒一扒它们的真面目:
+为什么说特殊呢，因为它们是由程序触发而产生的，而且触发条件也非常特殊，通常情况下即便不处理这两个事件也没有什么问题。接下来就扒一扒它们的真面目:
 
 ### ACTION_CANCEL
 
@@ -115,7 +115,7 @@ public boolean onTouchEvent(MotionEvent event) {
 >
 > 一个触摸事件已经发生了UI元素的正常范围之外。因此不再提供完整的手势，只提供 运动/触摸 的初始位置。
 
-我们知道，正常情况下，如果初始点击位置在该视图区域之外，该视图根本不可能会收到事件，然而，万事万物都不是绝对的，肯定还有一些特殊情况，你可曾还记得点击 Dialog 区域外关闭吗？Dialog 就是一个特殊的视图(没有占满屏幕大小的窗口)，能够接收到视图区域外的事件(虽然在通常情况下你根本用不到这个事件)，除了 Dialog 之外，你最可能看到这个事件的场景是悬浮窗，当然啦，想要接收到视图之外的事件需要一些特殊的设置。
+正常情况下，如果初始点击位置在该视图区域之外，该视图根本不可能会收到事件，然而，万事万物都不是绝对的，肯定还有一些特殊情况，你可曾还记得点击 Dialog 区域外关闭吗？Dialog 就是一个特殊的视图(没有占满屏幕大小的窗口)，能够接收到视图区域外的事件(虽然在通常情况下你根本用不到这个事件)，除了 Dialog 之外，你最可能看到这个事件的场景是悬浮窗，当然啦，想要接收到视图之外的事件需要一些特殊的设置。
 
 > 设置视图的 WindowManager 布局参数的 flags为[`FLAG_WATCH_OUTSIDE_TOUCH`](http://developer.android.com/reference/android/view/WindowManager.LayoutParams.html#FLAG_WATCH_OUTSIDE_TOUCH)，这样点击事件发生在这个视图之外时，该视图就可以接收到一个 `ACTION_OUTSIDE` 事件。
 >
@@ -158,13 +158,13 @@ Android 在 2.0 版本的时候开始支持多点触控，一旦出现了多点�
 | getX(int pointerIndex)          | 获取某一个指针(手指)的X坐标                                  |
 | getY(int pointerIndex)          | 获取某一个指针(手指)的Y坐标                                  |
 
-由于多点触控部分涉及内容比较多，也很复杂，我准备单独用一篇文章进行详细叙述，所以这里只叙述一些基础的内容作为铺垫：
+由于多点触控部分涉及内容比较多，也很复杂，准备单独用一篇文章进行详细叙述，所以这里只叙述一些基础的内容作为铺垫：
 
 ### getAction() 与 getActionMasked()
 
 当多个手指在屏幕上按下的时候，会产生大量的事件，如何在获取事件类型的同时区分这些事件就是一个大问题了。
 
-一般来说我们可以通过为事件添加一个int类型的index属性来区分，但是我们知道谷歌工程师是有洁癖的(在 [自定义View分类与流程](http://www.gcssloop.com/customview/CustomViewProcess) 的onMeasure中已经见识过了)，为了添加一个通常数值不会超过10的index属性就浪费一个int大小的空间简直是不能忍受的，于是工程师们将这个index属性和事件类型直接合并了。
+一般来说可以通过为事件添加一个int类型的index属性来区分，但是谷歌工程师是有洁癖的(在 [自定义View分类与流程](http://www.gcssloop.com/customview/CustomViewProcess) 的onMeasure中已经见识过了)，为了添加一个通常数值不会超过10的index属性就浪费一个int大小的空间简直是不能忍受的，于是工程师们将这个index属性和事件类型直接合并了。
 
 int类型共32位(0x00000000)，他们用最低8位(0x000000**ff**)表示事件类型，再往前的8位(0x0000**ff**00)表示事件编号，以手指按下为例讲解数值是如何合成的:
 
@@ -179,14 +179,14 @@ int类型共32位(0x00000000)，他们用最低8位(0x000000**ff**)表示事件�
 | 第4个手指按下 | ACTION_POINTER_DOWN (0x0000**03**05) |
 
 **注意：**
-上面表格中用粗体标示出的数值，可以看到随着按下手指数量的增加，这个数值也是一直变化的，进而导致我们使用 `getAction()` 获取到的数值无法与标准的事件类型进行对比，为了解决这个问题，他们创建了一个 `getActionMasked()` 方法，这个方法可以清除index数值，让其变成一个标准的事件类型。
+上面表格中用粗体标示出的数值，可以看到随着按下手指数量的增加，这个数值也是一直变化的，进而导致使用 `getAction()` 获取到的数值无法与标准的事件类型进行对比，为了解决这个问题，他们创建了一个 `getActionMasked()` 方法，这个方法可以清除index数值，让其变成一个标准的事件类型。
 **1、多点触控时必须使用 `getActionMasked()` 来获取事件类型。**
 **2、单点触控时由于事件数值不变，使用 `getAction()` 和 `getActionMasked()` 两个方法都可以。**
 **3、使用 getActionIndex() 可以获取到这个index数值。不过请注意，getActionIndex() 只在 down 和 up 时有效，move 时是无效的。**
 
 目前来说获取事件类型使用 `getActionMasked()` 就行了，但是如果一定要编译时兼容古董版本的话，可以考虑使用这样的写法:
 
-```
+```java
 final int action = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO)
                 ? event.getActionMasked()
                 : event.getAction();
@@ -209,7 +209,7 @@ PointId 在手指按下时产生，手指抬起或者事件被取消后消失，
 
 ## 历史数据(批处理)
 
-由于我们的设备非常灵敏，手指稍微移动一下就会产生一个移动事件，所以移动事件会产生的特别频繁，为了提高效率，系统会将近期的多个移动事件(move)按照事件发生的顺序进行排序打包放在同一个 MotionEvent 中，与之对应的产生了以下方法：
+由于设备非常灵敏，手指稍微移动一下就会产生一个移动事件，所以移动事件会产生的特别频繁，为了提高效率，系统会将近期的多个移动事件(move)按照事件发生的顺序进行排序打包放在同一个 MotionEvent 中，与之对应的产生了以下方法：
 
 | 事件                              | 简介                                                         |
 | --------------------------------- | ------------------------------------------------------------ |
@@ -227,7 +227,7 @@ PointId 在手指按下时产生，手指抬起或者事件被取消后消失，
 
 下面是官方文档给出的一个简单使用示例：
 
-```
+```java
 void printSamples(MotionEvent ev) {
      final int historySize = ev.getHistorySize();
      final int pointerCount = ev.getPointerCount();
@@ -286,7 +286,7 @@ MotionEvent支持获取某些输入设备(手指或触控笔)的与屏幕的接�
 **3、大部分设备的 `getPressure()` 是使用接触面积来模拟的。**
 **4、由于某些未知的原因(可能系统版本和硬件问题)，某些设备不支持该方法。**
 
-我用不同的设备对这两个方法进行了测试，然而不同设备测试出来的结果不相同，之后经过我多方查证，发现是系统问题，有的设备上只有 `getSize()` 能用，有的设备上只有 `getPressure()` 能用，而有的则两个都不能用。
+用不同的设备对这两个方法进行了测试，然而不同设备测试出来的结果不相同，之后经过我多方查证，发现是系统问题，有的设备上只有 `getSize()` 能用，有的设备上只有 `getPressure()` 能用，而有的则两个都不能用。
 
 **由于获取接触面积和获取压力大小受系统和硬件影响，使用的时候一定要进行数据检测，以防因为设备问题而导致程序出错。**
 
@@ -320,12 +320,6 @@ MotionEvent支持获取某些输入设备(手指或触控笔)的与屏幕的接�
 | TOOL_TYPE_UNKNOWN | 未知类型 |
 
 **使用 `getToolType(int pointerIndex)` 来获取对应的输入设备类型，pointIndex可以为0，但必须小于 `getPointerCount()`。**
-
-## 总结
-
-虽然本文标题是 MotionEvent 详解，但由于 MotionEvent 实在太庞大了，本文只能涉及一些比较常用的内容，某些不太常用的内容就在以后用到的时候再详细介绍吧，像游戏手柄等输入设备由于我暂时不做游戏开发，也没有过多了解，所以就不介绍给大家啦。
-
-由于个人水平有限，文章中可能会出现错误，如果你觉得哪一部分有错误，或者发现了错别字等内容，欢迎在评论区告诉我，另外，据说关注 [作者微博](http://weibo.com/GcsSloop) 不仅能第一时间收到新文章消息，还能变帅哦。
 
 # 参考文章
 

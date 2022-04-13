@@ -419,7 +419,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
             int l, int t, int r, int b);
 }
 ```
-　　可以看到，ViewGroup 中的 onLayout() 方法是一个抽象方法，这就意味着所有 ViewGrouup 的子类都必须重写这个方法。像 LinearLayout、RelativeLayout 和 FrameLayout 等布局，都是重写了这个方法，然后在内部按照各自的规则对子视图进行布局的。由于 LinearLayout 和 RelativeLayout 的布局规则都比较复杂，在这里通过分析 FrameLayout 的 onLayout() 方法来解析这部分的知识。
+　　可以看到，ViewGroup 中的 onLayout() 方法是一个抽象方法，这就意味着所有 ViewGroup 的子类都必须重写这个方法。像 LinearLayout、RelativeLayout 和 FrameLayout 等布局，都是重写了这个方法，然后在内部按照各自的规则对子视图进行布局的。由于 LinearLayout 和 RelativeLayout 的布局规则都比较复杂，在这里通过分析 FrameLayout 的 onLayout() 方法来解析这部分的知识。
 
 ### 2.5. FrameLayout#onLayout
 
@@ -500,7 +500,7 @@ public class FrameLayout extends ViewGroup {
     }
 }
 ```
-　　在 onLayout() 方法中，对子视图进行循环处理，调用子视图的 layout() 方法来确定它在 FrameLayout 布局中的位置，传入的 childLeft、childTop、childLeft + width、childTop + height，分别代表着子视图在 FrameLayout 中左上右下四个点的坐标。其中，调用 childView.getMeasuredWidth() 和 childView.getMeasuredHeight() 方法得到的值就是在 onMeasure() 方法中测量出的宽和高。
+　　在 FrameLayout 的 onLayout() 方法中，对子视图进行循环处理，调用子视图的 layout() 方法来确定它在 FrameLayout 布局中的位置，传入的 childLeft、childTop、childLeft + width、childTop + height，分别代表着子视图在 FrameLayout 中左上右下四个点的坐标。其中，调用 childView.getMeasuredWidth() 和 childView.getMeasuredHeight() 方法得到的值就是在 onMeasure() 方法中测量出的宽和高。
 
 　　在 onLayout() 过程结束后，就可以调用 getWidth() 方法和 getHeight() 方法来获取视图的宽高了。
 

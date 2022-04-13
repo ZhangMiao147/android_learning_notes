@@ -60,7 +60,7 @@
 2. Intent 中可以不设置 category，系统会自动添加 “action.intent.category.DEFAULT” 这个默认的 category。
 3. Intent 中可以同时设置多个 category，一旦设置多个 category，那么每个 category 都必须能够和过滤条件中的某个 category 匹配成功。
 
-　　category 的第 3 个规则和 action 的匹配规则有所不同，action 有多个的时候，主要其中之一能够匹配成功即可，但是 category 必须是每一个都需要匹配成功。
+　　category 的第 3 个规则和 action 的匹配规则有所不同，action 有多个的时候，只要其中之一能够匹配成功即可，但是 category 必须是每一个都需要匹配成功。
 
 ### 3.2. category 匹配
 

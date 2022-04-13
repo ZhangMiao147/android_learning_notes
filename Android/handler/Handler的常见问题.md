@@ -8,6 +8,8 @@
 **问题 2 ： AsyncTask 和 Handler + Thread 机制的区别**
 
 
+
+
 **问题 3 ： Handler、Message、Looper 的原理**
 
 **问题 4 ： Handler、Looper、MessageQueue、Thread、Message，每个类功能、关系？**

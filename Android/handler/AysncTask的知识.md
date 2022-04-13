@@ -10,7 +10,7 @@
 
 ### 1.1. 使用规则
 
-1. AsyncTask 的类必须在 UI 线程加载（从 4.1 开始系统回自动完成）。
+1. AsyncTask 的类必须在 UI 线程加载（从 4.1 开始系统会自动完成）。
 2. AsyncTask 对象必须在 UI 线程创建。
 3. execute 方法必须在 UI 线程调用。
 4. 不要在程序中去直接调用 onPreExecute()、onPostExecute()、doInBackground()、onProgressUpdate() 方法。
@@ -57,6 +57,8 @@ class DownloadTask extends AsyncTask<Void, Integer, Boolean> {
    当在后台任务中调用了 publishProgress(Progress...) 方法后，这个方法就很快会被调用，方法中携带的参数就是在后台任务中传递过来的。这个方法中可以对 UI 进行操作，利用参数中的数值就可以对界面元素进行相应的更新。
    
    所在线程：UI 线程
+
+（没有说明 onPostExecute 方法，20220409）
 
 　　一个完整的自定义 AsyncTask ：
 
@@ -163,7 +165,7 @@ new DownloadTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "");
     }
 ```
 
-　　初始化了三个变量，mHandler、mWorker 和 mFuture，并在初始化 mFutire 的时候将 mWorker 作为参数传入。mWorker 是一个 Callable 对象，mFuture 是一个 FutureTask 对象。
+　　初始化了三个变量，mHandler、mWorker 和 mFuture，并在初始化 mFuture 的时候将 mWorker 作为参数传入。mWorker 是一个 Callable 对象，mFuture 是一个 FutureTask 对象。
 
 ### 2.2. AsyncTask#execute
 

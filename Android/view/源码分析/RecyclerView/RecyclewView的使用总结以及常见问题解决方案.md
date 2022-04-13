@@ -8,8 +8,6 @@
 
 这个往往是因为你没有设置`LayoutManger`。 没有`LayoutManger`的话`RecycleView`是无法布局的，即是无法展示数据,下面是`RecycleView`布局的源码:
 
-
-
 ```csharp
 void dispatchLayout() {  //没有设置 Adapter 和 LayoutManager， 都不可能有内容
     if (mAdapter == null) {

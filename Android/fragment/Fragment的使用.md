@@ -557,7 +557,7 @@ protected void onCreate(Bundle savedInstanceState)  {
 
 ## 9 DialogFragment
 
-　　和 Fragment 有着一致的生命周期，且 DialogFragment 也允许开发者把 Dialog 作为内嵌得组件进行重用，类似 Fragment（可以在大屏幕和小屏幕显示出不同得效果）。使用 DialogFragment 至少需要实现 onCreateView 或者 onCreateDialog 方法。
+　　和 Fragment 有着一致的生命周期，且 DialogFragment 也允许开发者把 Dialog 作为内嵌的组件进行重用，类似 Fragment（可以在大屏幕和小屏幕显示出不同得效果）。使用 DialogFragment 至少需要实现 onCreateView 或者 onCreateDialog 方法。
 
 onCreateView 使用定义的 xml 布局文件展示 Dialog。
 

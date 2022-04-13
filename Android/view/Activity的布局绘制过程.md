@@ -643,7 +643,7 @@ public final class ViewRootImpl implements ViewParent,
 
 　　ViewRootImpl 的 requestLayout() 最终会调用到 performTraversals() 方法，requestLayout() 方法会先调用 scheduleTraversals() 方法，scheduleTraversals() 方法调用 Choreographer 的 postCallBack() 方法向主线程（UI 线程）发送重绘页面的消息，等到主线程处理处理该消息时会调用 mTraversalRunnable 的 run() 方法，调用到 doTraversal() 方法，在 doTraversal() 方法中调用了 performTraversals() 方法，在 performTraversals() 方法中会依次调用 View 的 measure、layout、draw 方法将视图显示到屏幕上。
 
-　　**总结：**setContentView 会将整个布局文件都解析完成并行程一个完整的 Dom 结构，并设置最顶部的根布局。在 resume 的时候才会进行视图的绘制操作，通过调用 requestLayout() 最终调用到 performTraversales() 方法，performTraversales() 方法会依次调用 View 的 measure、layout、draw 步骤将视图显示在屏幕上。
+　　**总结：**setContentView 会将整个布局文件都解析完成并形成一个完整的 Dom 结构，并设置最顶部的根布局。在 resume 的时候才会进行视图的绘制操作，通过调用 requestLayout() 最终调用到 performTraversales() 方法，performTraversales() 方法会依次调用 View 的 measure、layout、draw 步骤将视图显示在屏幕上。
 
 ### 3.2. inflate 方法
 

@@ -90,3 +90,4 @@ StringBuilder stringBuilder = new StringBuilder(null); // Attempt to invoke virt
 1. **String：**适用于少量的字符串操作的情况。
 2. **StringBuilder：**适用单线程下在字符缓冲区进行大量操作的情况。
 3. **StringBuffer：**使用多线程下在字符缓冲区进行大量操作的情况。
+

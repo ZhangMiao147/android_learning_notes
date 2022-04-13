@@ -125,7 +125,7 @@ public final V put(K key, V value) {
             size += safeSizeOf(key, value);
            	// 向 map 中加入缓存对象
             previous = map.put(key, value);
-            // 如果已有缓存对象，则缓存大小恢复到之前
+            // 如果已有缓存对象，则缓存大小减去之前缓存占用的大小
             if (previous != null) {
                 size -= safeSizeOf(key, previous);
             }
