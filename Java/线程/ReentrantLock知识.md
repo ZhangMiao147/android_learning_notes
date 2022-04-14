@@ -134,7 +134,7 @@ public interface Lock {
 
 　　Condition 接口中的方法，导致当前线程等待发信号。
 
-### 3.2. siginal() - 唤醒
+### 3.2. signal() - 唤醒
 
 ```java
 	// AbstractQueuedSynchronzier 的内部类 ConditionObject 

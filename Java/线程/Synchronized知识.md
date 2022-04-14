@@ -1,6 +1,6 @@
 # synchronized 知识
 
-## 1 synchronized 的三种使用方式
+## 1. synchronized 的三种使用方式
 
 ### 1.1 修饰实例方法
 
@@ -20,11 +20,11 @@
 
 　　尽量不要使用 synchronized(String a)，因为 JVM 中，字符串常量具有缓冲功能。 
 
-## 2 synchronized 的使用案例
+## 2. synchronized 的使用案例
 
 　　注意：synchronized 的锁是不可以为空的。
 
-### 2.1 同一个类中的 synchronized 方法与普通方法之间互斥吗？不互斥
+### 2.1. 同一个类中的 synchronized 方法与普通方法之间互斥吗？不互斥
 
 ![](image/sync同一个类的方法.jpg)
 
@@ -39,19 +39,19 @@ Thread-0 m1 end
 
 　　互斥的基本条件是公用一把锁，synchronized 是加在非静态方法上的，锁对象是 this 对象，t1 线程执行 m1 方法时要去读 this 对象锁，但是 t2 线程并不需要读锁，两者各管各的，没有交集（不共用一把锁），所以不互斥。
 
-### 2.2 同一个类中 synchronized 方法可以调用其他的 synchronized 方法吗？可以
+### 2.2. 同一个类中 synchronized 方法可以调用其他的 synchronized 方法吗？可以
 
 ![](image/sync同一个类同步方法调用.jpg)
 
 　　synchronized 是可重入锁，可以理解为同一个线程在已经持有该锁的情况下，可以再次获取锁，并且会在某个状态量上做 +1 操作。
 
-### 2.3 子类同步方法 synchronized 方法可以调用父类的 synchronized 方法吗？
+### 2.3. 子类同步方法 synchronized 方法可以调用父类的 synchronized 方法吗？
 
 ![](image/sync父类同步方法.jpg)
 
 　　子类对象初始化前，会调用父类构造方法，在结构上相当于包裹了一个父类对象，用的都是 this 锁对象。
 
-### 2.4 静态同步方法和非静态同步方法互斥吗？
+### 2.4. 静态同步方法和非静态同步方法互斥吗？
 
 ```java
 public class T {
@@ -108,11 +108,11 @@ Thread-0 m1 end
 
 　　同步静态方法的锁是所在类的 Class 对象，而同步普通方法的锁是 this 对象，两个的锁不同，所以不会互斥。
 
-## 3 synchronized 关键字底层原理
+## 3. synchronized 关键字底层原理
 
 　　synchronized 关键字底层原理属于 JVM 层面。
 
-### 3.1 synchronized 同步语句块的情况
+### 3.1. synchronized 同步语句块的情况
 
 ```java
 public class SyncrhonziedDemo {
@@ -134,7 +134,7 @@ public class SyncrhonziedDemo {
 
 　　如果获取对象锁失败，那当前线程就要阻塞等待，直到锁被另外一个线程释放为止。
 
-### 3.2 synchronized 修饰方法的情况
+### 3.2. synchronized 修饰方法的情况
 
 ```java
 public class SynchronizedDemo2 {
@@ -146,7 +146,7 @@ public class SynchronizedDemo2 {
 
 　　synchronized 修饰的方法并没有 monitorenter 指令和 monitorexit 指令，取而代之的是 ACC_SYNCHRONIZED 标识，该标识指明了该方法是一个同步方法，JVM 通过该 ACC_SYNCHRONIZED 访问标志来辨别一个方法是否声明为同步方法，从而执行相应的同步调用。
 
-## 4 JDK 1.6 之后的底层优化
+## 4. JDK 1.6 之后的底层优化
 
 　　在 Java 早期版本中，synchronized 属于重量级锁，效率低下，因为监视器锁（monitor）是依赖于底层的操作系统的 Mutex Lock 来实现的，Java 的线程是映射到操作系统的原生线程之上的。如果要挂起或者唤醒一个线程，都需要操作系统完成，而操作系统实现线程之间的切换时需要从用户态转换到内核态，这个状态之间的转换需要相对比较长的时间，时间成本相对较高，这也是为什么早期的 synchronized 效率低的原因。
 
@@ -162,7 +162,7 @@ public class SynchronizedDemo2 {
 
 ![](image/锁状态.png)
 
-### 4.1 偏向锁
+### 4.1. 偏向锁
 
 　　引入偏向锁的目的和引入轻量级锁的目的很像，它们都是为了没有多线程竞争的前提下，减少传统的重量级锁使用操作系统互斥量产生的性能消耗。但是不同的是：轻量级锁在无竞争的情况下使用 CAS 操作去代替使用互斥量，而偏向锁在无竞争的情况下会把整个同步都消除掉。
 
@@ -170,7 +170,7 @@ public class SynchronizedDemo2 {
 
 　　但是对于锁竞争比较激烈的场合，偏向锁就失效了，因为这样场合极有可能每次申请锁的线程都是不相同的，因此这种场合下不应该使用偏向锁，否则会得不偿失，需要注意的是，偏向锁失败后，并不会立即膨胀为重量级锁，而是先升级为轻量级锁。
 
-### 4.2 轻量级锁
+### 4.2. 轻量级锁
 
 　　倘若偏向锁失败，虚拟机并不会立即升级为重量级锁，它还会尝试使用一种称为轻量级锁的优化手段（1.6 之后加入的）。
 
@@ -188,11 +188,11 @@ public class SynchronizedDemo2 {
 
 3. 判断当前对象的 Mark Word 是否指向当前线程的栈帧，如果是则表示当前线程已经持有当前对象的锁，则直接执行同步代码块；否则只能说明该锁对象已经被其他线程抢占了，这时轻量级锁需要膨胀为重量级锁，锁标志位变成 10，后面等待的线程将会进入阻塞状态。
 
-### 4.3 重量级锁
+### 4.3. 重量级锁
 
 　　没有优化过的同步方法或者同步代码块。
 
-### 4.4 自旋锁和自适应自旋
+### 4.4. 自旋锁和自适应自旋
 
 　　轻量级锁失败后，虚拟机为了避免线程真实地在操作系统层面挂起，还会进行一项称为自旋锁的优化手段。
 
@@ -206,21 +206,21 @@ public class SynchronizedDemo2 {
 
 　　另外，在 JDK 1.6 中引入了自适应的自旋锁。自适应的自旋锁带来的改进就是：自旋的时间不在固定了，而是由前一次同一个锁上的自旋时间以及锁的拥有者的状态来决定，虚拟机变得越来越 ” 聪明 “ 了。
 
-### 4.5 锁消除
+### 4.5. 锁消除
 
 　　锁消除指的就是虚拟机即使编译器在运行时，如果检测到那些共享数据不可能存在竞争，那么就执行锁消除。
 
 　　锁消除可以节省毫无意义的请求锁的时间。
 
-### 4.6 锁粗化
+### 4.6. 锁粗化
 
 　　原则上，在编写代码得时候，总是推荐将同步块的作用范围限制得尽量小，直到共享数据的实际作用域才进行同步，这样是为了使得需要同步得操作数量尽可能变小，如果存在锁竞争，那等待线程也能尽快拿到锁。
 
 　　大部分情况下，上面的原则都是没有问题的，但是如果一系列的连续操作都对同一个对象反复加锁和解锁（比如循环），那么代码会有很多不必要的性能消耗，在这种情况下，通过对锁粗化，扩大锁区域的范围，从而减少内存的消耗。
 
-## 5 synchronized 和 ReentrantLock 的对比
+## 5. synchronized 和 ReentrantLock 的对比
 
-### 5.1 两者都是可重入锁
+### 5.1. 两者都是可重入锁
 
 　　synchronized 和 ReentrantLock 都是可重入锁。
 
@@ -232,7 +232,7 @@ public class SynchronizedDemo2 {
 
 　　ReentrantLock 是 JDK 层面实现的（也就是 API 层面，需要 lock() 和 unlock() 方法配合 try/finally 语句块来完成），所以可以通过查看源代码来查看它的具体实现。
 
-### 5.3 ReentrantLock 比 synchronized 增加了一些高级功能
+### 5.3. ReentrantLock 比 synchronized 增加了一些高级功能
 
 　　相比 synchronized ，ReentrantLock增加了一些高级功能。主要来说有三点：1. 等待可中断；2.可实现公平锁；3.可实现选择性通知（锁可以绑定多个条件）。
 
@@ -256,7 +256,7 @@ public class SynchronizedDemo2 {
 
 　　如果想使用上述功能，那么选择 ReentrantLock 是一个不错的选择。
 
-### 5.4 性能已不是选择标准
+### 5.4. 性能已不是选择标准
 
 　　在 JDK 1.6 之前，synchronized 的性能是比 ReentrantLock 差很多。具体表示为 synchronized 关键字吞吐量随线程数的增加，下降得非常严重。而 ReentrantLock 基本保持一个比较稳定的水平。但是在 JDK 1.6 之后 JVM 团队对 synchronized 关键字做了很多优化，所以 JDK 1.6 之后，synchronized 和 ReentrantLock 的性能基本是持平了。
 

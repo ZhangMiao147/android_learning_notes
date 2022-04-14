@@ -42,9 +42,7 @@
 
 ## 2.4. 传统跨进程通信的基本原理
 
-![img](https:////upload-images.jianshu.io/upload_images/14945598-fcc432474edee5c3.png?imageMogr2/auto-orient/strip|imageView2/2/w/1030/format/webp)
-
-跨进程通讯原理.png
+![img](image/跨进程通讯原理.png)
 
 　　而 Binder 的作用则是：连接 两个进程，实现了mmap() 系统调用，主要负责 创建数据接收的缓存空间 & 管理数据接收缓存，传统的跨进程通信需拷贝数据 2 次，但 Binder 机制只需 1 次，主要是使用到了内存映射。
 
@@ -52,13 +50,7 @@
 
 　　内存映射是关联 进程中的1个虚拟内存区域 & 1个磁盘上的对象，使得二者存在映射关系。
 
-
-
-![img](https:////upload-images.jianshu.io/upload_images/14945598-2da902344f069aea.png?imageMogr2/auto-orient/strip|imageView2/2/w/510/format/webp)
-
-内存映射原理.png
-
-
+![img](image/内存映射原理.png)
 
 　　内存映射的实现过程主要是通过 Linux 系统下的系统调用函数： mmap（），该函数的作用 = 创建虚拟内存区域 + 与共享对象建立映射关系。
 
@@ -78,9 +70,7 @@
 
 　　Binder驱动 属于 进程空间的 内核空间，可进行进程间 & 进程内交互
 
-![img](https:////upload-images.jianshu.io/upload_images/14945598-8a7c07ea7a924bff.png?imageMogr2/auto-orient/strip|imageView2/2/w/1070/format/webp)
-
-简单示意图.png
+![img](image/简单示意图.png)
 
 ## 3.1. Binder请求的线程管理
 
@@ -126,15 +116,11 @@ public class Binder implement IBinder{
 }
 ```
 
-![img](https:////upload-images.jianshu.io/upload_images/14945598-0c6a72b2fada8569.png?imageMogr2/auto-orient/strip|imageView2/2/w/1180/format/webp)
-
-绑定服务流程.png
+![img](image/绑定服务流程.png)
 
 　　流程总结：客户端通过 bindService，通过 Binder 驱动查询 ServiceManager 是否已经注册该服务，如果没有注册，Service 进程会向 Binder 驱动发起服务注册请求，一旦注册，调用该服务的 onBind 返回一个 Binder 对象到 Binder 驱动，已经注册则意味着 Binder 驱动内包含这个 Binder 对象，Binder 驱动返回一个 BinderProxy 对象，并通过回调，传递给客户端，客户端通过这个 BinderProxy( 在 java 层仍然是 Binder 对象)操作 Binder 驱动内的 Binder 对象（transact 方法），Binder 驱动含有很多的 Binder 对象，它们是通过 InterfaceToken 区分不同服务的。
 
-![img](https:////upload-images.jianshu.io/upload_images/14945598-3e12c9a81b483fbe.png?imageMogr2/auto-orient/strip|imageView2/2/w/1200/format/webp)
-
-Binder总示意图.png
+![img](image/Binder总示意图.png)
 
 # 4. 参考文章
 
