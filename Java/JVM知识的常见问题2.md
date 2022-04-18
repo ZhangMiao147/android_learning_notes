@@ -157,7 +157,7 @@ http://blog.csdn.net/gjanyanlig/article/details/6818655/
 
 ## 2.1. 类的加载过程
 
-　　JVM将类加载过程分为三个步骤：装载（Load），链接（Link）和初始化(Initialize)链接又分为三个步骤，如下图所示：
+　　JVM将类加载过程分为三个步骤：装载（Load），链接（Link）和初始化(Initialize)，链接又分为三个步骤，如下图所示：
 
 ![img](http://hi.csdn.net/attachment/201109/25/0_131691377413Tr.gif)
 

@@ -713,7 +713,7 @@ public class StreamStringLoader extends StringLoader<InputStream> implements Str
 register(Uri.class, InputStream.class, new StreamUriLoader.Factory());
 ```
 
-　　Uri.class 和 InputStream.class 对应的 ModelLoaderFacroty 对象是 StreamUrlLoader.Factory()。
+　　Uri.class 和 InputStream.class 对应的 ModelLoaderFacroty 对象是 StreamUriLoader.Factory()。
 
 ### 2.3.10. StreamUriLoader
 
@@ -815,7 +815,7 @@ public class HttpUrlGlideUrlLoader implements ModelLoader<GlideUrl, InputStream>
 
 　　HttpUrlGlideUrlLoader 的 Factory 类的 build() 方法返回的是 HttpUrlGlideUrlLoader() 对象。
 
-　　回到 StreamUrlLoader 类中，StreamUrlLoader 的 Factory 类的 build() 方法调用了 StreamUriLoader() 的构造方法，而这个构造方法直接调用了 StreamUriLoader 符类  UriLoader 的构造方法。
+　　回到 StreamUrlLoader 类中，StreamUrlLoader 的 Factory 类的 build() 方法调用了 StreamUriLoader() 的构造方法，而这个构造方法直接调用了 StreamUriLoader 父类  UriLoader 的构造方法。
 
 ### 2.3.12. UriLoader
 
@@ -1459,7 +1459,7 @@ public class DrawableRequestBuilder<ModelType>
 
 　　DrawableRequestBuilder 中有很多个方法，这些方法其实就是 Glide 绝大多数的 API 了。里面很多方法都是经常使用的，比如说 placeholder() 方法、error() 方法、diskCacheSrategy() 方法、override() 方法等。
 
-　　load() 方法会先调用其 父类 GenericRequestBuilder 的 load() 方法，然后将自己返回，到这里就分析完了，也就是说，最终 load() 方法返回的其实就是一个 DrawableRequestBuilder 对象，并且 DrawableRequestBuilder 类中有一个 into() 方法。
+　　load() 方法会先调用其父类 GenericRequestBuilder 的 load() 方法，然后将自己返回，到这里就分析完了，也就是说，最终 load() 方法返回的其实就是一个 DrawableRequestBuilder 对象，并且 DrawableRequestBuilder 类中有一个 into() 方法。
 
 # 3. 参考文章
 

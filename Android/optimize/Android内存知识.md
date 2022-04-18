@@ -51,7 +51,7 @@
 
 * ActivityManager.getMemoryClass() 可以用来查询当前应用的 Heap Size 阈值，这个方法会返回一个整数，表明应用的 Heap Size 阈值是多少 Mb(megabates)。
 
-### 1.3. 应用切换操作
+### 1.4. 应用切换操作
 
 * Android 系统并不会在用户切换应用的时候做交换内存的操作。
 

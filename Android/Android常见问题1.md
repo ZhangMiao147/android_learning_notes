@@ -105,7 +105,7 @@ ActivityManagerService、PackageManagerService、WindowManagerService等等。
 
 ![](components/Activity/image/Activity启动流程图.jpg)
 
-　　在 Activity 的 main() 方法中会初始化主线程的 Looper，并实例化一个 ActivityThread 对象，并且发出创建 Application 的消息，最后开启 Looper，等待接收消息。创建 Application 会交给 AMS 去完成，AMS 完成后会向客户端  ActivityThread 通信，创建 Instrumentation 对象，创建 Application 的工作会交给 Instrumentation 对象，并通过 Instrumentatiion 调用 Application 的 onCreate() 方法，Application 就创建好了。
+　　在 ActivityThread 的 main() 方法中会初始化主线程的 Looper，并实例化一个 Application 对象，并且发出创建 Application 的消息，最后开启 Looper，等待接收消息。创建 Application 会交给 AMS 去完成，AMS 完成后会向客户端  ActivityThread 通信，创建 Instrumentation 对象，创建 Application 的工作会交给 Instrumentation 对象，并通过 Instrumentatiion 调用 Application 的 onCreate() 方法，Application 就创建好了。
 
 　　在 AMS 处理创建 Application 之后就会去开启 Activity，AMS 会像客户端发消息去开启 LAUNCH_ACTIVITY ，开启 Activity 会先通过 Instrumentation 去创建 Activity 对象，创建完成调用 onCreate() 方法。
 

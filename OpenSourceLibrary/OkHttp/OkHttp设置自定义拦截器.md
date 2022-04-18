@@ -2,7 +2,7 @@
 
 　　OkHttp 的使用是支持用户自定义拦截器的，而且自定义的拦截器会最先执行，并最后处理响应结果。
 
-## 1 自定义拦截器
+## 1. 自定义拦截器
 
 　　自定义拦截器主要的逻辑就是：
 
@@ -48,7 +48,7 @@
     }
 ```
 
-## 2 使用自定义拦截器
+## 2. 使用自定义拦截器
 
 　　使用自定义拦截器是通过 OkHttpCilent.Builder() 来配置的，有两种方式：
 
@@ -74,6 +74,6 @@ client = new OkHttpClient.Builder()
 
 　　addInterceptor 和 addNetworkInterceptor 主要的区别是 addInterceptor 是最先执行的拦截器，addNetworkInterceptor 是在 ConnectInterceptor 之后执行的拦截器。
 
-## 3 参考文章
+## 3. 参考文章
 
 [okhttp之自定义拦截器](https://www.jianshu.com/p/56b8d513fc93)

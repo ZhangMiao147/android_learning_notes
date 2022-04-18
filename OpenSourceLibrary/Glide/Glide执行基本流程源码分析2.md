@@ -121,9 +121,9 @@ public class ImageViewTargetFactory {
         if (!isModelSet) {
             throw new IllegalArgumentException("You must first set a model (try #load())");
         }
-		// target 是 GlideDrawableImageViewTarget 对象
+				// target 是 GlideDrawableImageViewTarget 对象
         Request previous = target.getRequest();
-
+				// 释放之前的请求
         if (previous != null) {
             previous.clear();
             requestTracker.removeRequest(previous);
@@ -1180,7 +1180,7 @@ public class StreamBitmapDecoder implements ResourceDecoder<InputStream, Bitmap>
 }
 ```
 
-　　decode() 方法又去调用了 Downsampler 的 decode() 方法。
+　　decode() 方法又去调用了 DownSampler 的 decode() 方法。
 
 ## 2.5. DownSampler#decode
 
@@ -1480,9 +1480,7 @@ public class GifBitmapWrapper {
 }
 ```
 
-　　GifBitmapWrapper 类比较简单，就是分别对 gifResource 和 bitmapResource 做了一层封装而已。
-
-　　然后这个 GifBitmapWrapper 对象会一直向上返回，返回到 GifBitmapWrapperResourceDecoder 最外层的 decode() 方法的时候，会对它再做一次封装，将 GifBitmapWrapper 封装到了一个 GifBitmapWrapperResource 对象当中，最终返回的是一个 Respurce< GifBitmapWrapper > 对象。这个 GifBitmapResource 和 BitmapResource 是相似的，它们都实现了 Resource 接口，都可以通过 get() 方法来获取封装起来的具体内容。
+　　j
 
 ## 2.8. GifBitmapWrapperResource 类
 
@@ -1612,7 +1610,7 @@ public class GifBitmapWrapperDrawableTranscoder implements ResourceTranscoder<Gi
 
 　　GifBitmapWrapperDrawableTranscoder 的核心作用就是用来转码的。因为 GifBitmapWrapper 是无法直接显示到 ImageView 上面的，只有 Bitmap 或者 Drawable 才能显示到 ImageView 上。因此，这里的 transcode() 方法先从 Resource< GifBitmapWrapper > 中取出 GifBitmapWrapper 对象，然后再从 GifBitmapWrapper 中取出 Resource< Bitmap >对象。
 
-　　接下来做了一个判断，如果 Resource< Bitmap > 为空，那么说明此时加载的是 GIF 图，直接调用 getGifResource() 方法将图片取出即可，因为 Glide 用于加载 GIF 图片使用的是 GifDrawable 这个类，它本身就是一个 Drawable 对象了。而如果 Resource< Bitmap > 不为空，那么就需要再做一次转码，将 Bitmap 转换成 Drawable 对象才行，因为要保证静图和动如的类型一致性，方便逻辑上处理的。
+　　接下来做了一个判断，如果 Resource< Bitmap > 为空，那么说明此时加载的是 GIF 图，直接调用 getGifResource() 方法将图片取出即可，因为 Glide 用于加载 GIF 图片使用的是 GifDrawable 这个类，它本身就是一个 Drawable 对象了。而如果 Resource< Bitmap > 不为空，那么就需要再做一次转码，将 Bitmap 转换成 Drawable 对象才行，因为要保证静图和动图的类型一致性，方便逻辑上处理的。
 
 　　这里又进行了一次转码，是调用的 GlideBitmapDrawableTranscoder 对象的 transcode() 方法。
 

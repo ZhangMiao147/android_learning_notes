@@ -435,7 +435,7 @@ class EngineJob implements EngineRunnable.EngineRunnableManager {
     }
 ```
 
-　　可以看到，回调回来的 EngineResource 被 out 到了 activeResources 方法，也就是在这里写入的缓存。
+　　可以看到，回调回来的 EngineResource 被 put 到了 activeResources 方法，也就是在这里写入的缓存。
 
 ## 3.3. LruCache 缓存
 
