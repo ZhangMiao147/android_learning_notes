@@ -18,7 +18,7 @@
 
   * 相对独立，由单独的团队完成。
 
-![](/Users/ruming/Library/Application Support/marktext/images/2022-01-25-11-28-10-image.png)
+![](img/2022-01-25-11-28-10-image.png)
 
 ### 游戏团队中的角色
 
@@ -170,11 +170,11 @@ Materials-shader：针对 GPU 的渲染模式。
 
 fbx 材料->Rig-> Animation Type：动画类型，Legacy(不推荐使用) 与 Mecanim（包括 Generic 与 Humanoid 人体形态动画）
 
-![](/Users/ruming/Library/Application Support/marktext/images/2022-01-26-14-55-04-image.png)
+![](img/2022-01-26-14-55-04-image.png)
 
 fbx 材料->Animation 动画
 
-![](/Users/ruming/Library/Application Support/marktext/images/2022-01-26-14-56-26-image.png)
+![](img/2022-01-26-14-56-26-image.png)
 
 ## 动画应用-Unity3D 角色控制
 
