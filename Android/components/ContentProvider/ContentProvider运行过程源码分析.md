@@ -319,7 +319,7 @@
                 mOpPackageName = mBasePackageName;
             }
         }
-		// 创建 mContentResolver 成员
+				// 创建 mContentResolver 成员
       	// mainThread 就是 ActivityThread 对象，作为 ApplicationContentResolver 的 mMainThread 成员
         mContentResolver = new ApplicationContentResolver(this, mainThread, user);
     }
@@ -595,8 +595,7 @@
 　　方法首先会调用 acquireExistingProvider 方法来获取本地要获取的 IContentProvider，如果存在，就直接返回了。本地已经存在的 IContentProvider 保存在 ActivityThread 类的 `final ArrayMap<ProviderKey, ProviderClientRecord> mProviderMap
     = new ArrayMap<ProviderKey, ProviderClientRecord>();`成员中，以 ContentProvider 对应的 URI 的 authority 为键值保存。
 
-　　如果是第一次调用，通过 acquireExistingProvider 方法得到的 IContentProvider 为 null，所以就会调用 `ActivityManager.getService().getContentProvider(
-                    getApplicationThread(), auth, userId, stable);` 方法来获取一个 ContentProviderHolder 对象 holder，这个对象包含了所要获取的 MyContentProvider 对应的 IContentProvider，在将 IContentProvider 返回给调用者之前，还会调用 installProvider 方法把这个 IContentProvider 保存在本地中，以便下次要使用这个 IContentProvider 时，直接就可以通过 acquireExistingProvider 方法获取了。
+　　如果是第一次调用，通过 acquireExistingProvider 方法得到的 IContentProvider 为 null，所以就会调用 `ActivityManager.getService().getContentProvider(getApplicationThread(), auth, userId, stable);` 方法来获取一个 ContentProviderHolder 对象 holder，这个对象包含了所要获取的 MyContentProvider 对应的 IContentProvider，在将 IContentProvider 返回给调用者之前，还会调用 installProvider 方法把这个 IContentProvider 保存在本地中，以便下次要使用这个 IContentProvider 时，直接就可以通过 acquireExistingProvider 方法获取了。
 
 ### 2.1.3. ContentProviderRecord
 

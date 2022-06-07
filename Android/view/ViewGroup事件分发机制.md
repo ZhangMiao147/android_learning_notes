@@ -901,7 +901,7 @@ public class MyLayout extends LinearLayout {
 
 　　可以看到 MyButton 子 View 在父 View 拦截 ACTION_MOVE 的情况下（ACTION_MOVE return true）依然可以捕获到 ACTION_MOVE 和 ACTION_UP 事件。
 
-　　子控件一次执行了 dispatchEvent -> onTouch -> OnTouchListener#onTouch。而父控件只执行了 dispatchTouchEvent() 方法。
+　　子控件依次执行了 dispatchEvent -> onTouch -> OnTouchListener#onTouch。而父控件只执行了 dispatchTouchEvent() 方法。
 
 #### 4.2.1. ViewGroup#requestDisallowInterceptTouchEvent
 
@@ -941,7 +941,7 @@ public class MyLayout extends LinearLayout {
 
 　　这时 disallowIntercept 为 true，那么 就会跳过 onInterceptTouchEvent(ev) 方法的返回值设置 intercepted，intercepted 为 false。
 
-　　也可以在 ACTION_DOWN 和 ACTION_UP 中 return true，但是触摸事件是父控件先执行 dispatchTouchEvent() 方法，然后父控件分发事件调用子控件的 dispatchTouchEvent9) 方法，而子控件在 dispatchTouchEvent() 方法中执行 getParent().requestDisallowInterceptTouchEvent(true) 设置已经不能影响到父控件的  dispatchTouchEvent() 方法了。
+　　也可以在 ACTION_DOWN 和 ACTION_UP 中 return true，但是触摸事件是父控件先执行 dispatchTouchEvent() 方法，然后父控件分发事件调用子控件的 dispatchTouchEvent() 方法，而子控件在 dispatchTouchEvent() 方法中执行 getParent().requestDisallowInterceptTouchEvent(true) 设置已经不能影响到父控件的  dispatchTouchEvent() 方法了。
 
 　　而 ACTION_UP，事件都是最后一个了，return true 拦截子控件，如果不想拦截，直接 return false 就好了，没有必要。
 
