@@ -35,13 +35,18 @@
 * [RxJava 2 与 RxJava 1 的对比](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/RxJava/RxJava2与RxJava1的对比.md)
 * [RxJava 2 背压源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/RxJava/RxJava2背压源码分析.md)
 
+## EventBus
+
+* [EventBus 的使用]
+* [EventBus 原理]
+
+
+
 ## RxAndroid
 
 
 
-## eventBud
-
-
+* 
 
 ## LRUCache
 
