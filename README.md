@@ -476,7 +476,9 @@
   * [RxJava 2 与 RxJava 1 的对比](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/RxJava/RxJava2与RxJava1的对比.md)
   * [RxJava 2 背压源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/RxJava/RxJava2背压源码分析.md)
 * RxAndroid
-* EventBus
+* [EventBus](https://github.com/ZhangMiao147/android_learning_notes/tree/master/OpenSourceLibrary/EventBus)
+  * [EventBus 的使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/EventBus/EventBus%E7%9A%84%E4%BD%BF%E7%94%A8.md)
+  * [EventBus 的原理](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/EventBus/EventBus%E7%9A%84%E5%8E%9F%E7%90%86.md)
 
 ## :two: 网络请求
 
@@ -520,6 +522,8 @@
 * Lifecycles
 * Navigation
 * Room
+  * [Room 数据库操作](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/Jetpack/room/Room%E6%95%B0%E6%8D%AE%E5%BA%93%E6%93%8D%E4%BD%9C.md)
+  * [Room 原理解析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/Jetpack/room/Room%E6%95%B0%E6%8D%AE%E5%BA%93%E5%8E%9F%E7%90%86.md)
 * Paging
 * WorkManager
 * DataBinding
