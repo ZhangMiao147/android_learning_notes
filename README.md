@@ -100,7 +100,6 @@
 ## :three: Android framework
 
 * [Activity 的启动流程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Activity%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B.md)
-
 * 系统启动流程
 * 应用启动流程
 * apk 打包流程
@@ -117,6 +116,8 @@
 * pms
 * [ContentProvider 运行过程源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/ContentProvider/ContentProvider运行过程源码分析.md)
 * [ContentProvider 的共享数据更新通知机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/ContentProvider/ContentProvider的共享数据更新通知机制.md)
+* 安装
+  * 
 
 ## :four: 开发框架
 
@@ -124,6 +125,7 @@
 * MVP
 * MVVM
 * [设计模式选择](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/%E6%9E%B6%E6%9E%84%E4%B8%8E%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E9%80%89%E6%8B%A9.md)
+* MVI
 
 ## :five: 优化
 
@@ -225,7 +227,7 @@
 
 * 测试
 
-  * * 
+  * 
 
 * [多渠道打包](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/Software/%E5%A4%9A%E6%B8%A0%E9%81%93%E6%89%93%E5%8C%85.md)
 
@@ -360,6 +362,7 @@
 ## :five: 其他
 
 * [String、StringBuffer 与 StringBuilder 的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/String%E3%80%81StringBuilder%E4%B8%8EStringBuffer%E7%9A%84%E5%8C%BA%E5%88%AB.md)
+* [Queue的add与offer的区别]
 * hashCode
 * treeMap
 * String
@@ -583,11 +586,13 @@
 * 2019 年计划
 * 2020 年计划
 * 2021 年计划
+* 2022 年计划
 
 ## :three: 总结
 
 * 2019 年总结，2020 年计划
 * 2020 年总结，2021 年计划
+* 2021 年总结，2022 年计划
 
 # :books: ​读书笔记
 

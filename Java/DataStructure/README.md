@@ -8,6 +8,7 @@
 * SortedMap / TreeMap
 * CopyOnWriteArrayList
 * PriorityQueue
+* [Queue的add与offer的区别]
 
 ## Map
 
