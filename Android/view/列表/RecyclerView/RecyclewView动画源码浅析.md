@@ -1,18 +1,8 @@
 # RecyclerView 动画源码浅析
 
-> 本文是`RecyclerView源码分析系列第四篇文章`,内容主要是基于前三篇文章来叙述的，因此在阅读之前推荐看一下前3篇文章:
+本文主要分析`RecyclerView删除动画`的实现原理，不同类型动画的大体实现流程其实都是差不多的，所以对于添加、交换这种动画就不再做分析。本文主要目标是**理解清楚的是`RecyclerViewItem删除动画`源码实现逻辑**。文章比较长。
 
-[RecylcerView的基本设计结构](https://www.jianshu.com/p/88314f56545d)
-
-[RecyclerView的刷新机制](https://www.jianshu.com/p/a57608f2695f)
-
-[RecyclerView的复用机制](https://www.jianshu.com/p/aeb9ccf6a5a4)
-
-本文主要分析`RecyclerView删除动画`的实现原理,不同类型动画的大体实现流程其实都是差不多的，所以对于添加、交换这种动画就不再做分析。本文主要目标是**理解清楚的是`RecyclerViewItem删除动画`源码实现逻辑**。文章比较长。
-
-可以通过下面这两个方法触发`RecyclerView`的删除动画:
-
-
+可以通过下面这两个方法触发`RecyclerView`的删除动画：
 
 ```cpp
     //一个item的删除动画
@@ -25,17 +15,13 @@
     recyclerView.adapter.notifyItemRangeRemoved(1,2)
 ```
 
-下面这个图是设置10倍动画时长时删除动画的执行效果,可以先预想一下这个动画时大致可以怎么实现:
+下面这个图是设置 10 倍动画时长时删除动画的执行效果,可以先预想一下这个动画时大致可以怎么实现:
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-e4aae8bad187e516.gif?imageMogr2/auto-orient/strip|imageView2/2/w/360/format/webp)
-
-RecyclerViewRemoveAnimation.gif
+![RecyclerViewRemoveAnimation.gif](https:////upload-images.jianshu.io/upload_images/2934684-e4aae8bad187e516.gif)
 
 接下来就结合前面几篇文章的内容并跟随源码来一块看一下`RecyclerView`是如何实现这个动画的:
 
 `adapter.notifyItemRemoved(1)`会回调到`RecyclerViewDataObserver`:
-
-
 
 ```cpp
     public void onItemRangeRemoved(int positionStart, int itemCount) {
@@ -57,10 +43,8 @@ RecyclerViewRemoveAnimation.gif
 这个类可以理解为是用来记录`adapter.notifyXXX`动作的，即每一个`Operation(添加、删除)`都会在这个类中有一个对应记录`UpdateOp`，`RecyclerView`在布局时会检查这些`UpdateOp`，并做对应的操作。
  `mAdapterHelper.onItemRangeRemoved`其实是添加一个`Remove UpdateOp`:
 
-
-
 ```csharp
-    mPendingUpdates.add(obtainUpdateOp(UpdateOp.REMOVE, positionStart, itemCount, null));
+   mPendingUpdates.add(obtainUpdateOp(UpdateOp.REMOVE, positionStart, itemCount, null));
     mExistingUpdateTypes |= UpdateOp.REMOVE;
 ```
 
@@ -74,10 +58,6 @@ RecyclerViewRemoveAnimation.gif
 
 直接从`dispatchLayoutStep1()`开始看，这个方法是`RecyclerView`布局的第一步:
 
-> dispatchLayoutStep1():
-
-
-
 ```cpp
     private void dispatchLayoutStep1() {
         ...
@@ -90,13 +70,11 @@ RecyclerViewRemoveAnimation.gif
     }
 ```
 
-上面我只贴出了`Item删除动画`主要涉及到的部分, 先来看一下`processAdapterUpdatesAndSetAnimationFlags()`所触发的操作，整个操作链比较长，就不一一跟了，它最终其实是调用到`AdapterHelper.postponeAndUpdateViewHolders()`:
-
-
+上面只贴出了`Item删除动画`主要涉及到的部分，先来看一下`processAdapterUpdatesAndSetAnimationFlags()`所触发的操作，整个操作链比较长，就不一一跟了，它最终其实是调用到`AdapterHelper.postponeAndUpdateViewHolders()`:
 
 ```csharp
 private void postponeAndUpdateViewHolders(UpdateOp op) {
-    mPostponedList.add(op); //op其实是从mPendingUpdates中取出来的
+    mPostponedList.add(op); //op 其实是从 mPendingUpdates 中取出来的
     switch (op.cmd) {
         case UpdateOp.ADD:
             mCallback.offsetPositionsForAdd(op.positionStart, op.itemCount); break;
@@ -111,9 +89,7 @@ private void postponeAndUpdateViewHolders(UpdateOp op) {
 }
 ```
 
-即这个方法做的事情就是把`mPendingUpdates中的UpdateOp`添加到`mPostponedList`中，并回调根据`op.cmd`来回调`mCallback`,其实这个`mCallback`是回调到了`RecyclerView`中:
-
-
+即这个方法做的事情就是把`mPendingUpdates中的UpdateOp`添加到`mPostponedList`中，并回调根据`op.cmd`来回调`mCallback`，其实这个`mCallback`是回调到了`RecyclerView`中：
 
 ```java
  void offsetPositionRecordsForRemove(int positionStart, int itemCount, boolean applyToPreLayout) {
@@ -132,23 +108,21 @@ private void postponeAndUpdateViewHolders(UpdateOp op) {
     }
 ```
 
-`offsetPositionRecordsForRemove`方法:**主要是把当前显示在界面上的`ViewHolder`的位置做对应的改变，即如果item位于删除的item之后，那么它的位置应该减一**，比如原来的位置是3现在变成了2。
+`offsetPositionRecordsForRemove`方法:**主要是把当前显示在界面上的`ViewHolder`的位置做对应的改变，即如果item位于删除的item之后，那么它的位置应该减一**，比如原来的位置是 3 现在变成了 2。
 
-接下来继续看`dispatchLayoutStep1()`中的操作:
-
-
+接下来继续看`dispatchLayoutStep1()`中的操作：
 
 ```dart
     if (mState.mRunSimpleAnimations) {
         int count = mChildHelper.getChildCount();
         for (int i = 0; i < count; ++i) {
             final ViewHolder holder = getChildViewHolderInt(mChildHelper.getChildAt(i));
-            //根据当前的显示在界面上的ViewHolder的布局信息创建一个ItemHolderInfo
+            // 根据当前的显示在界面上的 ViewHolder 的布局信息创建一个 ItemHolderInfo
             final ItemHolderInfo animationInfo = mItemAnimator
                     .recordPreLayoutInformation(mState, holder,
                             ItemAnimator.buildAdapterChangeFlagsForAnimations(holder),
                             holder.getUnmodifiedPayloads());
-            mViewInfoStore.addToPreLayout(holder, animationInfo); //把 holder对应的animationInfo保存到 mViewInfoStore中
+            mViewInfoStore.addToPreLayout(holder, animationInfo); // 把 holder 对应的 animationInfo 保存到  mViewInfoStore 中
             ...
         }
     }
@@ -159,9 +133,7 @@ private void postponeAndUpdateViewHolders(UpdateOp op) {
 1. 为当前显示在界面上的每一个`ViewHolder`创建一个`ItemHolderInfo`，`ItemHolderInfo`其实就是保存了当前显示`itemview`的布局的`top、left`等信息
 2. 拿着`ViewHolder`和其对应的`ItemHolderInfo`调用`mViewInfoStore.addToPreLayout(holder, animationInfo)`。
 
-`mViewInfoStore.addToPreLayout()`就是把这些信息保存起来:
-
-
+`mViewInfoStore.addToPreLayout()`就是把这些信息保存起来：
 
 ```csharp
 void addToPreLayout(RecyclerView.ViewHolder holder, RecyclerView.ItemAnimator.ItemHolderInfo info) {
@@ -179,18 +151,14 @@ void addToPreLayout(RecyclerView.ViewHolder holder, RecyclerView.ItemAnimator.It
 
 到这里大致理完了在执行`Items删除动画`时`AdapterHelper`和`dispatchLayoutStep1()`的执行逻辑，这里用一张图来总结一下:
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-e6355cb3abc02f3b.png?imageMogr2/auto-orient/strip|imageView2/2/w/829/format/webp)
+![Remove动画dispatchLayoutStep1.png](https:////upload-images.jianshu.io/upload_images/2934684-e6355cb3abc02f3b.png)
 
-Remove动画dispatchLayoutStep1.png
+其实这些操作可以简单的理解为**保存动画前View的现场** 。其实这里有一次**预布局**，预布局也是为了保存动画前的 View 信息。
 
-其实这些操作可以简单的理解为**保存动画前View的现场** 。其实这里有一次*预布局*,预布局也是为了保存动画前的View信息,不过这里就不讲了。
+### dispatchLayoutStep2
 
-## dispatchLayoutStep2
-
-这一步就是摆放当前`adapter`中剩余的Item，在本文的例子中，就是依次摆放剩余的5个Item。在前面的文章`RecyclerView的刷新机制`中，我们知道`LinearLayoutManager`会向`Recycler`要`View`来填充`RecyclerView`,所以`RecyclerView`中填几个`View`，其实和`Recycler`有很大的关系，因为`Recycler`不给`LinearLayoutManager`的话，`RecyclerView`中就不会有`View`填充。那`Recycler`给`LinearLayoutManager``View`的边界条件是什么呢？
- 我们来看一下`tryGetViewHolderForPositionByDeadline()`方法:
-
-
+这一步就是摆放当前`adapter`中剩余的 Item，在本文的例子中，就是依次摆放剩余的 5 个 Item。在前面的文章`RecyclerView的刷新机制`中，知道`LinearLayoutManager`会向`Recycler`要`View`来填充`RecyclerView`，所以`RecyclerView`中填几个`View`，其实和`Recycler`有很大的关系，因为`Recycler`不给`LinearLayoutManager`的话，`RecyclerView`中就不会有`View`填充。那`Recycler`给`LinearLayoutManager``View`的边界条件是什么呢？
+ 来看一下`tryGetViewHolderForPositionByDeadline()`方法：
 
 ```java
 ViewHolder tryGetViewHolderForPositionByDeadline(int position, boolean dryRun, long deadlineNs) {
@@ -202,19 +170,17 @@ ViewHolder tryGetViewHolderForPositionByDeadline(int position, boolean dryRun, l
 }
 ```
 
-即如果位置大于`mState.getItemCount()`,那么就不会再向`RecyclerView`中填充子View。而这个`mState.getItemCount()`一般就是`adapter`中当前数据源的数量。所以经过这一步布局后，View的状态如下图:
+即如果位置大于`mState.getItemCount()`，那么就不会再向`RecyclerView`中填充子 View。而这个`mState.getItemCount()`一般就是`adapter`中当前数据源的数量。所以经过这一步布局后，View 的状态如下图:
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-ce035d760a487d52.png?imageMogr2/auto-orient/strip|imageView2/2/w/528/format/webp)
+![Remove动画布局.png](https:////upload-images.jianshu.io/upload_images/2934684-ce035d760a487d52.png)
 
-Remove动画布局.png
 
-这时你可能就有疑问了？ 动画呢？ 怎么直接成最终的模样了？别急，这一步只不过是布局，至于动画是怎么执行的我们继续往下看:
 
-## dispatchLayoutStep3(执行删除动画)
+这时可能就有疑问了？ 动画呢？ 怎么直接成最终的模样了？别急，这一步只不过是布局，至于动画是怎么执行的继续往下看:
+
+### dispatchLayoutStep3(执行删除动画)
 
 在上一步中对删除操作已经完成了布局，接下来`dispatchLayoutStep3()`就会做删除动画:
-
-
 
 ```cpp
 private void dispatchLayoutStep3() {
@@ -227,28 +193,26 @@ private void dispatchLayoutStep3() {
 }
 ```
 
-可以看到主要涉及到动画的是`mViewInfoStore.process()`, 其实这一步可以分为两个操作:
+可以看到主要涉及到动画的是`mViewInfoStore.process()`，其实这一步可以分为两个操作:
 
-1. 先把`Item View`动画前的起始状态准备好
-2. 执行动画使`Item View`到目标布局位置
+1. 先把`Item View`动画前的起始状态准备好。
+2. 执行动画使`Item View`到目标布局位置。
 
-下面我们来继续跟一下`mViewInfoStore.process()`这个方法
+下面来继续跟一下`mViewInfoStore.process()`这个方法
 
-### 把`Item View`动画前的起始状态准备好
-
-
+#### 把`Item View`动画前的起始状态准备好
 
 ```java
  void process(ProcessCallback callback) {
-        for (int index = mLayoutHolderMap.size() - 1; index >= 0; index--) { //对mLayoutHolderMap中每一个Holder执行动画
+        for (int index = mLayoutHolderMap.size() - 1; index >= 0; index--) { //对 mLayoutHolderMap 中每一个 Holder 执行动画
             final RecyclerView.ViewHolder viewHolder = mLayoutHolderMap.keyAt(index);
             final InfoRecord record = mLayoutHolderMap.removeAt(index);
             if ((record.flags & FLAG_APPEAR_AND_DISAPPEAR) == FLAG_APPEAR_AND_DISAPPEAR) {
                 callback.unused(viewHolder);
             } else if ((record.flags & FLAG_DISAPPEARED) != 0) {
-                callback.processDisappeared(viewHolder, record.preInfo, record.postInfo);  //被删除的那个item会回调到这个地方
+                callback.processDisappeared(viewHolder, record.preInfo, record.postInfo);  //被删除的那个 item 会回调到这个地方
             }else if ((record.flags & FLAG_PRE_AND_POST) == FLAG_PRE_AND_POST) {
-                callback.processPersistent(viewHolder, record.preInfo, record.postInfo);   //需要上移的item会回调到这个地方
+                callback.processPersistent(viewHolder, record.preInfo, record.postInfo);   //需要上移的 item 会回调到这个地方
             }  
             ...
             InfoRecord.recycle(record);
@@ -256,16 +220,14 @@ private void dispatchLayoutStep3() {
     }
 ```
 
-这一步就是遍历`mLayoutHolderMap`对其中的每一个ViewHolder做对应的动画。这里`callback`会调到了`RecyclerView`,`RecyclerView`会对每一个`Item`执行相应的动画:
-
-
+这一步就是遍历`mLayoutHolderMap`对其中的每一个 ViewHolder 做对应的动画。这里`callback`会调到了`RecyclerView`，`RecyclerView`会对每一个`Item`执行相应的动画：
 
 ```tsx
 ViewInfoStore.ProcessCallback mViewInfoProcessCallback =
         new ViewInfoStore.ProcessCallback() {
             @Override
             public void processDisappeared(ViewHolder viewHolder, @NonNull ItemHolderInfo info,@Nullable ItemHolderInfo postInfo) {
-                mRecycler.unscrapView(viewHolder);   //从scrap集合中移除,
+                mRecycler.unscrapView(viewHolder);   //从 scrap 集合中移除,
                 animateDisappearance(viewHolder, info, postInfo);
             }
 
@@ -281,11 +243,9 @@ ViewInfoStore.ProcessCallback mViewInfoProcessCallback =
 }
 ```
 
-先来分析被删除那那个`Item`的消失动画:
+先来分析被删除那那个`Item`的消失动画：
 
-#### 将Item的动画消失动画放入到`mPendingRemovals`待执行队列
-
-
+##### 将Item的动画消失动画放入到`mPendingRemovals`待执行队列
 
 ```dart
 void animateDisappearance(@NonNull ViewHolder holder, @NonNull ItemHolderInfo preLayoutInfo, @Nullable ItemHolderInfo postLayoutInfo) {
@@ -299,8 +259,6 @@ void animateDisappearance(@NonNull ViewHolder holder, @NonNull ItemHolderInfo pr
 
 先把`Holder`attch到`RecyclerView`上(这是因为在`dispatchLayoutStep1`和`dispatchLayoutStep2`中已经对这个`Holder`做了Dettach)。即它又重新出现在了`RecyclerView`的布局中(位置当然还是未删除前的位置)。然后调用了`mItemAnimator.animateDisappearance()`其执行这个删除动画，`mItemAnimator`是`RecyclerView`的动画实现者，它对应的是`DefaultItemAnimator`。继续看`animateDisappearance()`它其实最终调用到了`DefaultItemAnimator.animateRemove()`:
 
-
-
 ```java
 public boolean animateRemove(final RecyclerView.ViewHolder holder) {
     resetAnimation(holder);
@@ -309,13 +267,11 @@ public boolean animateRemove(final RecyclerView.ViewHolder holder) {
 }
 ```
 
-即，其实并没有执行动画，而是把这个`holder`放入了`mPendingRemovals`集合中，看样是要等下执行。
+其实并没有执行动画，而是把这个`holder`放入了`mPendingRemovals`集合中，看样是要等下执行。
 
-### 将未被删除的Item的移动动画放入到`mPendingMoves`待执行队列
+##### 将未被删除的Item的移动动画放入到`mPendingMoves`待执行队列
 
 其实逻辑和上面差不多`DefaultItemAnimator.animatePersistence()`:
-
-
 
 ```kotlin
 public boolean animatePersistence(@NonNull RecyclerView.ViewHolder viewHolder,@NonNull ItemHolderInfo preInfo, @NonNull ItemHolderInfo postInfo) {
@@ -327,8 +283,6 @@ public boolean animatePersistence(@NonNull RecyclerView.ViewHolder viewHolder,@N
 ```
 
 `animateMove`的逻辑也很简单，就是根据偏移构造了一个`MoveInfo`然后添加到`mPendingMoves`中，也没有立刻执行:
-
-
 
 ```java
 public boolean animateMove(final RecyclerView.ViewHolder holder, int fromX, int fromY, int toX, int toY) {
@@ -353,24 +307,19 @@ public boolean animateMove(final RecyclerView.ViewHolder holder, int fromX, int 
 }
 ```
 
-但要注意这一步把要做滚动动画的View的`TranslationX`和`TranslationY`都设置负的被删除的Item的高度，如下图
+但要注意这一步把要做滚动动画的View的`TranslationX`和`TranslationY`都设置负的被删除的 Item 的高度，如下图
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-189e5d908186691d.png?imageMogr2/auto-orient/strip|imageView2/2/w/475/format/webp)
+![DefaultItemAnimator.animateMove.png](https:////upload-images.jianshu.io/upload_images/2934684-189e5d908186691d.png)
 
-DefaultItemAnimator.animateMove.png
+**即被删除的Item之后的Item都下移了。**
 
-**即被删除的Item之后的Item都下移了**
-
-### `postAnimationRunner()`执行所有的pending动画
+#### `postAnimationRunner()`执行所有的pending动画
 
 上面一步操作已经把动画前的状态准备好了，`postAnimationRunner()`就是将上面`pendding`的动画开始执行:
 
-//DefaultItemAnimator.java
-
-
-
 ```csharp
-    public void runPendingAnimations() {
+//DefaultItemAnimator.java
+public void runPendingAnimations() {
         boolean removalsPending = !mPendingRemovals.isEmpty();
         ...
         for (RecyclerView.ViewHolder holder : mPendingRemovals) {
@@ -405,18 +354,14 @@ DefaultItemAnimator.animateMove.png
     }
 ```
 
-至于`animateRemoveImpl`和`animateMoveImpl`的源码具体我就不贴了，直接说一下它们做了什么操作吧:
+至于`animateRemoveImpl`和`animateMoveImpl`的源码具体就不贴了，直接说一下它们做了什么操作吧:
 
 1. `animateRemoveImpl` 把这个被Remove的Item做一个透明度由（1~0）的动画
 2. `animateMoveImpl`把它们的`TranslationX`和`TranslationY`移动到0的位置。
 
-我再贴一下删除动画的gif， 你感受一下是不是这个执行步骤:
+再贴一下删除动画的 gif， 感受一下是不是这个执行步骤:
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-a2512e380904961c.gif?imageMogr2/auto-orient/strip|imageView2/2/w/360/format/webp)
-
-RecyclerViewRemoveAnimation.gif
-
-
+![RecyclerViewRemoveAnimation.gif](https:////upload-images.jianshu.io/upload_images/2934684-a2512e380904961c.gif)
 
 # 参考文章
 

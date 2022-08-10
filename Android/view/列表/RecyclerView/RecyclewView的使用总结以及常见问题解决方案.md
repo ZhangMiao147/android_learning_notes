@@ -1,12 +1,10 @@
 # RecyclerView 的使用总结以及常见问题解决方案
 
-> 本文是`RecyclerView源码分析系列最后一篇文章`, 主要讲一下我个人对于`RecycleView`的使用的一些思考以及一些常见的问题怎么解决。先来看一下使用`RecycleView`时常见的问题以及一些需求。
-
 # RecyclerView使用常见的问题和需求
 
 ## RecycleView设置了数据不显示
 
-这个往往是因为你没有设置`LayoutManger`。 没有`LayoutManger`的话`RecycleView`是无法布局的，即是无法展示数据,下面是`RecycleView`布局的源码:
+这个往往是因为你没有设置`LayoutManger`。 没有`LayoutManger`的话`RecycleView`是无法布局的，即是无法展示数据，下面是`RecycleView`布局的源码:
 
 ```csharp
 void dispatchLayout() {  //没有设置 Adapter 和 LayoutManager， 都不可能有内容
@@ -23,13 +21,11 @@ void dispatchLayout() {  //没有设置 Adapter 和 LayoutManager， 都不可�
 }
 ```
 
-即`Adapter`或`Layout`任意一个为null,就不会执行布局操作。
+即`Adapter`或`Layout`任意一个为 null，就不会执行布局操作。
 
 ## RecyclerView数据多次滚动后出现混乱
 
-`RecycleView`在滚动过程中`ViewHolder`是会不断复用的，因此就会带着上一次展示的UI信息(也包含滚动状态), 所以在设置一个`ViewHolder`的UI时，尽量要做`resetUi()`操作:
-
-
+`RecycleView`在滚动过程中`ViewHolder`是会不断复用的，因此就会带着上一次展示的 UI 信息 ( 也包含滚动状态 )， 所以在设置一个`ViewHolder`的 UI 时，尽量要做`resetUi()`操作：
 
 ```kotlin
 override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -38,15 +34,13 @@ override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
 }
 ```
 
-`resetUi()`这个方法就是用来把Ui还原为最初的操作。当然如果你的每一次`bindData`操作会对每一个UI对象重新赋值的话就不需要有这个操作。就不会出现`itemView`的UI混乱问题。
+`resetUi()`这个方法就是用来把 UI 还原为最初的操作。当然如果你的每一次`bindData`操作会对每一个 UI 对象重新赋值的话就不需要有这个操作。就不会出现`itemView`的 UI 混乱问题。
 
-## 如何获取当前 ItemView展示的位置
+## 如何获取当前 ItemView 展示的位置
 
-我们可能会有这样的需求: 当`RecycleView`中的特定`Item`滚动到某个位置时做一些操作。比如某个`Item`滚动到顶部时，展示搜索框。那怎么实现呢？
+可能会有这样的需求: 当`RecycleView`中的特定`Item`滚动到某个位置时做一些操作。比如某个`Item`滚动到顶部时，展示搜索框。那怎么实现呢？
 
-首先要获取的Item肯定处于数据源的某个位置并且肯定要展示在屏幕。因此我们可以直接获取这个`Item`的`ViewHolder`:
-
-
+首先要获取的 Item 肯定处于数据源的某个位置并且肯定要展示在屏幕。因此可以直接获取这个`Item`的`ViewHolder`：
 
 ```kotlin
     val holder = recyclerView.findViewHolderForAdapterPosition(speicalItemPos) ?: return
@@ -58,21 +52,17 @@ override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
     }
 ```
 
-## 如何在固定时间内滚动一款距离
+## 如何在固定时间内滚动一段距离
 
 `smoothScrollToPosition()`大家应该都用过，如果滚动2、3个Item。那么整体的用户体验还是非常棒的。
 
-但是，如果你滚动20个Item，那这个体验可能就会就很差了，因为用户看到的可能是下面这样子:
+但是，如果你滚动 20 个Item，那这个体验可能就会就很差了，因为用户看到的可能是下面这样子:
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-a2f093bbbc5d2592.gif?imageMogr2/auto-orient/strip|imageView2/2/w/1200/format/webp)
+![smoothScroll20.gif](https:////upload-images.jianshu.io/upload_images/2934684-a2f093bbbc5d2592.gif)
 
-smoothScroll20.gif
-
-恩，滚动的时间有点长。因此对于这种case其实我推荐直接使用`scrollToPosition(20)`，效果要比这个好。 可是如果你就是想在`200ms`内从`Item 1`滚到`Item 20`怎么办呢？
+恩，滚动的时间有点长。因此对于这种 case 推荐直接使用`scrollToPosition(20)`，效果要比这个好。 可是如果你就是想在`200ms`内从`Item 1`滚到`Item 20`怎么办呢？
 
 可以参考[StackOverflow上的一个答案](https://stackoverflow.com/questions/28803319/android-control-smooth-scroll-over-recycler-view/28853254)。大致写法是这样的:
-
-
 
 ```kotlin
 //自定义 LayoutManager， Hook smoothScrollToPosition 方法
@@ -92,19 +82,15 @@ private fun get200MsScroller(context: Context, distance: Int): RecyclerView.Smoo
 }
 ```
 
-比如上面我把时间改为`10000`,那么就是用10s的时间完成这个滚动操作。
+比如上面我把时间改为`10000`,那么就是用10s 的时间完成这个滚动操作。
 
 ## 如何测量当前RecyclerView的高度
 
 先描述一下这个需求: `RecyclerView`中的每个`ItemView`的高度都是不固定的。我数据源中有20条数据，在没有渲染的情况下我想知道这个20条数据被`RecycleView`渲染后的总共高度, 比如下面这个图片:
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-8aa601e8919afca7.png?imageMogr2/auto-orient/strip|imageView2/2/w/320/format/webp)
+![RecyclerView中Item高度各不相同.png](https:////upload-images.jianshu.io/upload_images/2934684-8aa601e8919afca7.png)
 
-RecyclerView中Item高度各不相同.png
-
-怎么做呢？我的思路是利用`LayoutManager`来测量，因为`RecycleView`在对`子View`进行布局时就是用`LayoutManager`来测量`子View`来计算还有多少剩余空间可用，源码如下:
-
-
+怎么做呢？思路是利用`LayoutManager`来测量，因为`RecycleView`在对`子View`进行布局时就是用`LayoutManager`来测量`子View`来计算还有多少剩余空间可用，源码如下：
 
 ```cpp
    void layoutChunk(RecyclerView.Recycler recycler, RecyclerView.State state,LayoutState layoutState, LayoutChunkResult result) {
@@ -115,9 +101,7 @@ RecyclerView中Item高度各不相同.png
     }
 ```
 
-所以我们也可以利用`layoutManager.measureChildWithMargins`方法来测量，代码如下:
-
-
+所以也可以利用`layoutManager.measureChildWithMargins`方法来测量，代码如下:
 
 ```kotlin
     private fun measureAllItemHeight():Int {
@@ -134,8 +118,6 @@ RecyclerView中Item高度各不相同.png
 
 **但要注意的是，这个方法要等布局稳定的时候才可以用，如果你在`Activity.onCreate`中调用，那么应该`post`一下**， 即:
 
-
-
 ```kotlin
 recyclerView.post{
     val totalHeight = measureAllItemHeight()
@@ -144,18 +126,16 @@ recyclerView.post{
 
 ## IndexOutOfBoundsException: Inconsistency detected. Invalid item position 5(offset:5).state:9
 
-这个异常通常是由于`Adapter的数据源大小`改变没有及时通知`RecycleView`做UI刷新导致的，或者通知的方式有问题。 比如如果数据源变化了(比如数量变少了),而没有调用`notifyXXX`, 那么此时滚动`RecycleView`就会产生这个异常。
+这个异常通常是由于`Adapter的数据源大小`改变没有及时通知`RecycleView`做 UI 刷新导致的，或者通知的方式有问题。 比如如果数据源变化了(比如数量变少了)，而没有调用`notifyXXX`, 那么此时滚动`RecycleView`就会产生这个异常。
 
 解决办法很简单 : **`Adapter的数据源`改变时应立即调用`adapter.notifyXXX`来刷新`RecycleView`** 。
 
 分析一下这个异常为什么会产生:
 
 在`RecycleView刷新机制`一文介绍过，`RecycleView`的滚动操作是不会走`RecycleView`的正常布局过程的，它直接根据滚动的距离来摆放`新的子View`。 想象一下这种场景，原来数据源集合中
- 有8个Item，然后删除了4个后没有调用`adapter.notifyXXX()`，这时直接滚动`RecycleView`，比如滚动将要出现的是第6个Item，`LinearLayoutManager`就会向`Recycler`要第6个Item的View:
+ 有 8 个Item，然后删除了 4 个后没有调用`adapter.notifyXXX()`，这时直接滚动`RecycleView`，比如滚动将要出现的是第 6 个Item，`LinearLayoutManager`就会向`Recycler`要第 6 个Item的View:
 
 > `Recycler.tryGetViewHolderForPositionByDeadline()`:
-
-
 
 ```dart
 final int offsetPosition = mAdapterHelper.findPositionOffset(position);  //position是6 
@@ -168,15 +148,13 @@ if (offsetPosition < 0 || offsetPosition >= mAdapter.getItemCount()) {    //但�
 
 即这时就会抛出异常。如果调用了`adapter.notifyXXX`的话，`RecycleView`就会进行一次完全的布局操作，就不会有这个异常的产生。
 
-其实还有很多异常和这个原因差不多，比如:`IllegalArgumentException: Scrapped or attached views may not be recycled. isScrap:false`(很多情况也是由于没有及时同步UI和数据)
+其实还有很多异常和这个原因差不多，比如:`IllegalArgumentException: Scrapped or attached views may not be recycled. isScrap:false`(很多情况也是由于没有及时同步 UI 和数据)
 
 所以在使用`RecycleView`时一定要注意保证**数据和UI的同步，数据变化，及时刷新RecyclerView**, 这样就能避免很多crash。
 
 # 如何对RecyclerView进行封装
 
-现在很多app都会使用`RecyclerView`来构建一个页面，这个页面中有各种卡片类型。为了支持快速开发我们通常会对`RecycleView`的`Adapter`做一层封装来方便我们写各种类型的卡片,下面这种封装是我认为一种比较好的封装:
-
-
+现在很多 app 都会使用`RecyclerView`来构建一个页面，这个页面中有各种卡片类型。为了支持快速开发我们通常会对`RecycleView`的`Adapter`做一层封装来方便我们写各种类型的卡片，下面这种封装是我认为一种比较好的封装:
 
 ```kotlin
 /**
@@ -242,8 +220,6 @@ interface AdapterItemView<T> {
 
 ## 业务如果写一个新的Adapter的话只需要实现两个方法:
 
-
-
 ```kotlin
 abstract fun createItem(viewType: Int): AdapterItemView<T>
 
@@ -254,19 +230,15 @@ abstract fun getItemType(item: T): Int
 
 ## 因为抽象了`AdapterItemView`, ItemView足够灵活
 
-由于封装了`RecycleView.ViewHolder`的逻辑，因此对于`UI item view`业务方只需要返回一个实现了`AdapterItemView`的对象即可。可以是一个`View`,也可以不是一个`View`, 这是因为`CommonViewHolder`在构造的时候对它做了兼容:
-
-
+由于封装了`RecycleView.ViewHolder`的逻辑，因此对于`UI item view`业务方只需要返回一个实现了`AdapterItemView`的对象即可。可以是一个`View`,也可以不是一个`View`，这是因为`CommonViewHolder`在构造的时候对它做了兼容:
 
 ```csharp
 val view : View = if (adapterItemView is View) adapterItemView else LayoutInflater.from(context).inflate(adapterItemView.getLayoutResId(), parent, false)
 ```
 
-即如果实现了`AdapterItemView`的对象本身就是一个`View`,那么直接把它当做`ViewHolder`的`itemview`,否则就`inflate`出一个`View`作为`ViewHolder`的`itemview`。
+即如果实现了`AdapterItemView`的对象本身就是一个`View`,那么直接把它当做`ViewHolder`的`itemview`，否则就`inflate`出一个`View`作为`ViewHolder`的`itemview`。
 
-其实这里我比较推荐实现`AdapterItemView`的同时直接实现一个`View`,即不要把`inflate`的工作交给底层框架。比如这样:
-
-
+其实这里我比较推荐实现`AdapterItemView`的同时直接实现一个`View`，即不要把`inflate`的工作交给底层框架。比如这样：
 
 ```kotlin
 private class SimpleStringView(context: Context) : FrameLayout(context), AdapterItemView<String> {
@@ -285,14 +257,12 @@ private class SimpleStringView(context: Context) : FrameLayout(context), Adapter
 
 为什么呢？原因有两点 :
 
-1. 继承自一个View可复用性很高，封装性很高。即这个`SimpleStringView`不仅可以在`RecycleView`中当一个`itemView`,也可以在任何地方使用。
+1. 继承自一个View可复用性很高，封装性很高。即这个`SimpleStringView`不仅可以在`RecycleView`中当一个`itemView`，也可以在任何地方使用。
 2. 方便单元测试，直接new这个View就好了。
 
 但其实直接继承自一个`View`是有坑的，即上面那行inflate代码`LayoutInflater.from(context).inflate(getLayoutResId, this)`
 
-它其实是把`xml`文件inflate成一个`View`。然后add到你`ViewGroup`中。因为`SimpleStringView`就是一个`FrameLayout`，所有相当于add到这个`FrameLayout`中。这其实就有问题了。比如你的布局文件是下面这种:
-
-
+它其实是把`xml`文件 inflate 成一个`View`。然后 add 到你`ViewGroup`中。因为`SimpleStringView`就是一个`FrameLayout`，所有相当于 add 到这个`FrameLayout`中。这其实就有问题了。比如布局文件是下面这种：
 
 ```xml
 <FrameLayout>
@@ -300,14 +270,14 @@ private class SimpleStringView(context: Context) : FrameLayout(context), Adapter
 </FrameLayout>
 ```
 
-**这就相当于你可能多加了一层无用的父View**
+**这就相当于可能多加了一层无用的父View**
 
-所有如果是直接继承自一个View的话，我推荐这样写:
+所有如果是直接继承自一个 View 的话，推荐这样写:
 
-1. 布局文件中尽可能使用`<merge>`标签来消除这层无用的父View, 即上面的`<FrameLayout>`改为`<merge>`
-2. 很简单的布局的可以直接在代码中写，不要inflate。这样其实也可以减少inflate的耗时，稍微提高了一点性能吧。
+1. 布局文件中尽可能使用`<merge>`标签来消除这层无用的父 View, 即上面的`<FrameLayout>`改为`<merge>`
+2. 很简单的布局的可以直接在代码中写，不要 inflate。这样其实也可以减少 inflate 的耗时，稍微提高了一点性能吧。
 
-当然，如果你不需要对这个View做复用的话你可以不用直接继承自`View`,只实现`AdapterItemView`接口, inflate的工作交给底层框架即可。这样是不会产生上面这个问题的。
+当然，如果不需要对这个View做复用的话可以不用直接继承自`View`，只实现`AdapterItemView`接口， inflate的工作交给底层框架即可。这样是不会产生上面这个问题的。
 
 # 参考文章
 

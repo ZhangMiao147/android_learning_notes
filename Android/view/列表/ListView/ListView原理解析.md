@@ -4,9 +4,10 @@
 
 ## 1. 列表控件
 
-(1)继承关系
+**(1) 继承关系**
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20190730192458111.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzE1ODI3MDEz,size_16,color_FFFFFF,t_70)
-(2)层次说明
+
+**(2)层次说明**
 
 　　AdapterView 是一种 ViewGroup，负责展示与一组数据相关的 view，这些数据由一种 adapter 进行管理，该 ViewGroup 通过 adapter 来监听数据的改变以及相应的处理。
 
@@ -22,12 +23,12 @@
 
 　　所以只需要为这个数据源定义一个通用的实现接口，使控件通过指定的方法去完成对数据的监控和使用，而不需要关心数据是什么类型。
 
-　　Adapter 就是一个接口，定义了一组数据的统一方法，可以实现该接口完成各种各样的子类，比如 ArrayAdapter 专门存放一个简单数组的 adapter、SimpleCursorAdapter 存放游标数据的 adapter 等等，而列表控件只需知道这是一种数据源、并可以通过同样的方法来访问数据即可。
+　　Adapter 就是一个接口，定义了一组数据的统一方法，可以通过实现该接口完成各种各样的子类，比如 ArrayAdapter 专门存放一个简单数组的 adapter、SimpleCursorAdapter 存放游标数据的 adapter 等等，而列表控件只需知道这是一种数据源、并可以通过同样的方法来访问数据即可。
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20190730192524388.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzE1ODI3MDEz,size_16,color_FFFFFF,t_70)
 
 ## 3. RecycleBin 回收机制
 
-　　这货就是回收 view 的主要类，他是 AbsListView 一个内部类 ( 刚刚提到，回收是由列表控件基类 AbsListView 实现的 )，下面是一些主要的代码和简单的注解，先有个概念，下面分析流程时会重点讲到他的运作流程。
+　　这个类就是回收 view 的主要类，他是 AbsListView 一个内部类 ( 刚刚提到，回收是由列表控件基类 AbsListView 实现的 )，下面是一些主要的代码和简单的注解，先有个概念，下面分析流程时会重点讲到他的运作流程。
 
 ```java
 /**
@@ -115,7 +116,7 @@ void addScrapView(View scrap, int position) {
             // 放入指定 viewType 的 scrapViews 集合里
             mScrapViews[viewType].add(scrap);
         }
-	...
+	  ...
     }
 }
  
@@ -173,7 +174,6 @@ private View retrieveFromScrap(ArrayList<View> scrapViews, int position) {
 ```java
 protected void layoutChildren() {
     ...
-
         if (mAdapter == null) {// adapter 为 null
             resetList();// 清空已有 views 和各种集合、状态
             invokeOnItemScrollListener();
@@ -186,7 +186,6 @@ protected void layoutChildren() {
         if (dataChanged) {
             handleDataChanged();//处理一些逻辑，mLayoutMode 的改变
         }
-
 		...        
 
         // Pull all children into the RecycleBin.
@@ -247,7 +246,7 @@ protected void layoutChildren() {
                     sel = fillSpecific(mSelectedPosition,
                             oldSel == null ? childrenTop : oldSel.getTop());
                 } else if (mFirstPosition < mItemCount) {//通常情况
-					// 从 mFirstPosition 位置开始设置 view (从 top 到 mFirstPosition-1，从 mFirstPosition+1 到 bottom)
+					          // 从mFirstPosition位置开始设置 view (从 top 到 mFirstPosition-1，从 mFirstPosition+1 到 bottom)
                     sel = fillSpecific(mFirstPosition,
                             oldFirst == null ? childrenTop : oldFirst.getTop());
                 } else {
@@ -265,7 +264,7 @@ protected void layoutChildren() {
 
 　　有一点需要注意，在更新完 active 和 scrapView 后要将全部 view 从 parent 上 detach 掉，因为当 view 因为一些原因多次调用 layoutChildren 时，会执行相同的逻辑，如果不 detach 掉会有相同的 view 会在后面 attach。
 
-## 2. fillFromTop() 方法-→ fillDown() 方法 ViewGroup 顶部到底部设置 view 
+## 2. fillFromTop() 方法 → fillDown() 方法 ViewGroup 顶部到底部设置 view 
 
 　　fillFromTop() 方法主要调用 fillDown() 方法，从 ViewGroup 的顶部到底部进行 view 的添加。
 
@@ -274,7 +273,7 @@ protected void layoutChildren() {
 ```java
 private View fillDown(int pos, int nextTop) {
     ...
-	// 从第 pos 个 item 开始，拿到其 view，根据 view 的大小增加 top 的值，循环添加 itemView，直到下一个 view 的 top 已经大于 ViewGroup 的 bottom 或者全部 item 添加完成
+	  // 从第 pos 个 item 开始，拿到其 view，根据 view 的大小增加 top 的值，循环添加 itemView，直到下一个 view 的 top 已经大于 ViewGroup 的 bottom 或者全部 item 添加完成
     while (nextTop < end && pos < mItemCount) {
         // is this the selected item?
         boolean selected = pos == mSelectedPosition;
@@ -356,7 +355,15 @@ View obtainView(int position, boolean[] isScrap) {
 */
 private void setupChild(View child, int position, int y, boolean flowDown, int childrenLeft,
         boolean selected, boolean recycled) {
-	...
+  
+    final boolean isSelected = selected && shouldShowSelector();
+  	final boolean updateChildSelected = isSelected != child.isSelected();
+    final int mode = mTouchMode;
+    final boolean isPressed = mode > TOUCH_MODE_DOWN && mode < TOUCH_MODE_SCROLL
+                && mMotionPosition == position;
+    final boolean needToMeasure = !isAttachedToWindow || updateChildSelected
+                || child.isLayoutRequested();
+	  ...
     // Respect layout params that are already in the view. Otherwise make some up...
     // noinspection unchecked
     AbsListView.LayoutParams p = (AbsListView.LayoutParams) child.getLayoutParams();
@@ -566,17 +573,17 @@ mDataSetObserver = new AdapterDataSetObserver();
 mAdapter.registerDataSetObserver(mDataSetObserver);
 ```
 
-　　由代码可知，ListView 自己创建一个观察者，并在 adapter 更新的地方保证给其注册一个该观察者，这样，当我们数据更新时经常调用的 notifyDataSetChanged 方法被调用后，会触发相应观察者的方法，也就是 onChanged 方法，此时会更新状态及数据信息，然后请求重新布局绘制，最终会回到我们上述讲的 layoutChildren 方法开始布局。
+　　由代码可知，ListView 自己创建一个观察者，并在 adapter 更新的地方保证给其注册一个该观察者，这样，当我们数据更新时经常调用的 notifyDataSetChanged 方法被调用后，会触发相应观察者的方法，也就是 onChanged 方法，此时会更新状态及数据信息，然后请求重新布局绘制，最终会回到 layoutChildren 方法开始布局。
 
-　　除此之外，我们还可以创建自己的观察者注册到 adapter 上，不用担心被覆盖，因为 BaseAdapter 实现 Observable 来注册观察者，该类维护的是一个观察者数组，需要注意的是，notify 的时候会从后往前一次调用观察者的 onChanged 方法。
+　　除此之外，还可以创建自己的观察者注册到 adapter 上，不用担心被覆盖，因为 BaseAdapter 实现 Observable 来注册观察者，该类维护的是一个观察者数组，需要注意的是，notify 的时候会从后往前一次调用观察者的 onChanged 方法。
 
 # 五. ListView 的 Adapter 装饰器模式
 
-　　我们注意到 ListView 是可以添加多个 Header 和 Footer 的，ListView 也会将其作为 adapter 的一部分(占用与普通数据一样的 position)，但是我们自己写的 adapter 并没有去处理这些特殊 item，那 ListView 如何知道并管理的呢？
+　　注意到 ListView 是可以添加多个 Header 和 Footer 的，ListView 也会将其作为 adapter 的一部分(占用与普通数据一样的 position)，但是自己写的 adapter 并没有去处理这些特殊 item，那 ListView 如何知道并管理的呢？
 
-## 1. HeaderFooter 的 Adapter
+## 1. Header 和 Footer 的 Adapter
 
-　　ListView 对其管理的 adapter 使用了装饰器模式，构建 adapter 时，当我们有 header 或 footer 时，ListView 会将我们的 adapter 作为被装饰者，连同 Header 和 Footer 信息一起创建一个自己维护的带 Header 和 Footer 的 adapter 对象，作为真正管理的 adapter，在管理过程中调用的 adapter 的任何方法都是在这个 adapter 上调用的，只不过该 adapter 的方法又都调用我们自己的 adapter (被装饰者)的相应方法，所以我们可以完全通过使用自己的 adapter 的方法达到任何效果。
+　　ListView 对其管理的 adapter 使用了装饰器模式，构建 adapter 时，当有 header 或 footer 时，ListView 会将 adapter 作为被装饰者，连同 Header 和 Footer 信息一起创建一个自己维护的带 Header 和 Footer 的 adapter 对象，作为真正管理的 adapter，在管理过程中调用的 adapter 的任何方法都是在这个 adapter 上调用的，只不过该 adapter 的方法又都调用自己的 adapter (被装饰者)的相应方法，所以可以完全通过使用自己的 adapter 的方法达到任何效果。
 
 ```java
 public class HeaderViewListAdapter implements WrapperListAdapter, Filterable {
@@ -921,7 +928,8 @@ public long getItemId(int position) {
 
 # 参考文章
 
-[Android ListView 原理解析](https://blog.csdn.net/qq_15827013/article/details/97809431)
+1. [Android ListView 原理解析](https://blog.csdn.net/qq_15827013/article/details/97809431)
 
 
 
+ 

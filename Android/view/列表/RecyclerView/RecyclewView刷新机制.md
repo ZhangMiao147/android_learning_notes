@@ -2,16 +2,12 @@
 
 本文会从源码分析两件事 :
 
-1. `adapter.notifyXXX()`时RecyclerView的UI刷新的逻辑,即`子View`是如何添加到`RecyclerView`中的。
+1. `adapter.notifyXXX()`时 RecyclerView 的 UI 刷新的逻辑，即`子View`是如何添加到`RecyclerView`中的。
 2. 在数据存在的情况下，滑动`RecyclerView`时`子View`是如何添加到`RecyclerView`并滑动的。
-
-本文不会涉及到`RecyclerView`的动画，动画的实现会专门在一篇文章中分析。
 
 # adapter.notifyDataSetChanged()引起的刷新
 
-我们假设`RecyclerView`在初始状态是没有数据的，然后往数据源中加入数据后，调用`adapter.notifyDataSetChanged()`来引起`RecyclerView`的刷新:
-
-
+假设`RecyclerView`在初始状态是没有数据的，然后往数据源中加入数据后，调用`adapter.notifyDataSetChanged()`来引起`RecyclerView`的刷新:
 
 ```css
 data.addAll(datas)
@@ -20,19 +16,13 @@ adapter.notifyDataSetChanged()
 
 用图描述就是下面两个状态的转换:
 
+![adapter.notifyDataSetChanged.png](https:////upload-images.jianshu.io/upload_images/2934684-da2c5af643aeca2c.png)
 
-
-![img](https:////upload-images.jianshu.io/upload_images/2934684-da2c5af643aeca2c.png?imageMogr2/auto-orient/strip|imageView2/2/w/534/format/webp)
-
-adapter.notifyDataSetChanged.png
-
-接下来就来分析这个变化的源码，在上一篇文章中已经解释过，`adapter.notifyDataSetChanged()`时，会引起`RecyclerView`重新布局(`requestLayout`)，`RecyclerView`的`onMeasure`就不看了，核心逻辑不在这里。因此从`onLayout()`方法开始看:
+接下来就来分析这个变化的源码，在上一篇文章中已经解释过，`adapter.notifyDataSetChanged()`时，会引起`RecyclerView`重新布局(`requestLayout`)，`RecyclerView`的`onMeasure`就不看了，核心逻辑不在这里。因此从`onLayout()`方法开始看：
 
 ## RecyclerView.onLayout
 
 这个方法直接调用了`dispatchLayout`:
-
-
 
 ```cpp
 void dispatchLayout() {
@@ -47,9 +37,7 @@ void dispatchLayout() {
 }
 ```
 
-上面我裁剪掉了一些代码，可以看到整个布局过程总共分为3步, 下面是这3步对应的方法:
-
-
+上面我裁剪掉了一些代码，可以看到整个布局过程总共分为 3 步，下面是这 3 步对应的方法:
 
 ```rust
 STEP_START ->  dispatchLayoutStep1()
@@ -62,8 +50,6 @@ STEP_ANIMATIONS -> dispatchLayoutStep2(), dispatchLayoutStep3()
 ### dispatchLayoutStep2()
 
 先来看一下这个方法的大致执行逻辑:
-
-
 
 ```csharp
 private void dispatchLayoutStep2() {  
@@ -99,9 +85,7 @@ private void dispatchLayoutStep2() {
 
 ### 确定锚点View
 
-`锚点View`大部分是通过`updateAnchorFromChildren`方法确定的,这个方法主要是获取一个View，把它的信息设置到`AnchorInfo`中 :
-
-
+`锚点View`大部分是通过`updateAnchorFromChildren`方法确定的，这个方法主要是获取一个View，把它的信息设置到`AnchorInfo`中 :
 
 ```java
 mAnchorInfo.mLayoutFromEnd = mShouldReverseLayout   // 即和你是否在 manifest中设置了布局 rtl 有关
@@ -121,11 +105,9 @@ private boolean updateAnchorFromChildren(RecyclerView.Recycler recycler, Recycle
 }
 ```
 
-即， 如果是`start to end`, 那么就找最接近start(RecyclerView头部)的View作为布局的锚点View。如果是`end to start (rtl)`, 就找最接近end的View作为布局的锚点。
+即， 如果是`start to end`, 那么就找最接近start ( RecyclerView 头部 ) 的 View 作为布局的锚点View。如果是`end to start (rtl)`, 就找最接近 end 的 View 作为布局的锚点。
 
-`AnchorInfo`最重要的两个属性时`mCoordinate`和`mPosition`，找到锚点View后就会通过`anchorInfo.assignFromView()`方法来设置这两个属性:
-
-
+`AnchorInfo`最重要的两个属性是`mCoordinate`和`mPosition`，找到锚点 View 后就会通过`anchorInfo.assignFromView()`方法来设置这两个属性：
 
 ```cpp
 public void assignFromView(View child, int position) {
@@ -143,13 +125,11 @@ public void assignFromView(View child, int position) {
 
 ### 确定有多少布局空间可用并摆放子View
 
-当确定好`AnchorInfo`后，需要根据`AnchorInfo`来确定`RecyclerView`当前可用于布局的空间,然后来摆放子View。以布局方向为`start to end (正常方向)`为例, 这里的`锚点View`其实是`RecyclerView`最顶部的View:
-
-
+当确定好`AnchorInfo`后，需要根据`AnchorInfo`来确定`RecyclerView`当前可用于布局的空间，然后来摆放子View。以布局方向为`start to end (正常方向)`为例，这里的`锚点View`其实是`RecyclerView`最顶部的 View：
 
 ```cpp
     // fill towards end  (1)
-    updateLayoutStateToFillEnd(mAnchorInfo); //确定AnchorView到RecyclerView的底部的布局可用空间
+    updateLayoutStateToFillEnd(mAnchorInfo);     //确定AnchorView到RecyclerView的底部的布局可用空间
     ...
     fill(recycler, mLayoutState, state, false); //填充view, 从 AnchorView 到RecyclerView的底部
     endOffset = mLayoutState.mOffset; 
@@ -160,21 +140,17 @@ public void assignFromView(View child, int position) {
     fill(recycler, mLayoutState, state, false); //填充view,从 AnchorView 到RecyclerView的顶部
 ```
 
-上面我标注了`(1)和(2)`, 1次布局是由这两部分组成的, 具体如下图所示 :
+上面标注了`(1)和(2)`，1 次布局是由这两部分组成的，具体如下图所示 :
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-4b9955fa5b059353.png?imageMogr2/auto-orient/strip|imageView2/2/w/736/format/webp)
+![RecyclerView的布局步骤.png](https:////upload-images.jianshu.io/upload_images/2934684-4b9955fa5b059353.png)
 
-RecyclerView的布局步骤.png
-
-然后我们来看一下`fill towards end`的实现:
+然后来看一下`fill towards end`的实现:
 
 ### fill towards end
 
 #### 确定可用布局空间
 
 在`fill`之前，需要先确定`从锚点View`到`RecyclerView底部`有多少可用空间。是通过`updateLayoutStateToFillEnd`方法:
-
-
 
 ```cpp
 updateLayoutStateToFillEnd(anchorInfo.mPosition, anchorInfo.mCoordinate);
@@ -189,13 +165,11 @@ void updateLayoutStateToFillEnd(int itemPosition, int offset) {
 }
 ```
 
-`mLayoutState`是`LinearLayoutManager`用来保存布局状态的一个对象。`mLayoutState.mAvailable`就是用来表示`有多少空间可用来布局`。`mOrientationHelper.getEndAfterPadding() - offset`其实大致可以理解为`RecyclerView`的高度。*所以这里可用布局空间`mLayoutState.mAvailable`就是RecyclerView的高度*
+`mLayoutState`是`LinearLayoutManager`用来保存布局状态的一个对象。`mLayoutState.mAvailable`就是用来表示`有多少空间可用来布局`。`mOrientationHelper.getEndAfterPadding() - offset`其实大致可以理解为`RecyclerView`的高度。**所以这里可用布局空间`mLayoutState.mAvailable`就是RecyclerView的高度**
 
 #### 摆放子view
 
-接下来继续看`LinearLayoutManager.fill()`方法，这个方法是布局的核心方法，是用来向`RecyclerView`中添加子View的方法:
-
-
+接下来继续看`LinearLayoutManager.fill()`方法，这个方法是布局的核心方法，是用来向`RecyclerView`中添加子View的方法：
 
 ```java
 int fill(RecyclerView.Recycler recycler, LayoutState layoutState, RecyclerView.State state, boolean stopOnFocusable) {
@@ -210,23 +184,21 @@ int fill(RecyclerView.Recycler recycler, LayoutState layoutState, RecyclerView.S
         ...
         layoutState.mOffset += layoutChunkResult.mConsumed * layoutState.mLayoutDirection; // 一次 layoutChunk 消耗了多少空间
         ...
-        子View的回收工作
+        // 子 View 的回收工作
     }
     ...
 }
 ```
 
-这里我们不看`子View回收逻辑`，会在单独的一篇文章中讲。 即这个方法的核心是调用`layoutChunk()`来不断消耗`layoutState.mAvailable`,直到消耗完毕。继续看一下`layoutChunk()方法`, 这个方法的主要逻辑是:
+这里不看`子View回收逻辑`，会在单独的一篇文章中讲。 即这个方法的核心是调用`layoutChunk()`来不断消耗`layoutState.mAvailable`，直到消耗完毕。继续看一下`layoutChunk()方法`，这个方法的主要逻辑是:
 
 1. 从`Recycler`中获取一个`View`
 2. 添加到`RecyclerView`中
 3. 调整`View`的布局参数，调用其`measure、layout`方法。
 
-
-
 ```swift
 void layoutChunk(RecyclerView.Recycler recycler, RecyclerView.State state,LayoutState layoutState, LayoutChunkResult result) {
-        View view = layoutState.next(recycler);  //这个方法会向 recycler view 要一个holder 
+        View view = layoutState.next(recycler);  //这个方法会向 recycler view 要一个 holder 
         ...
         if (mShouldReverseLayout == (layoutState.mLayoutDirection == LayoutState.LAYOUT_START)) { //根据布局方向，添加到不同的位置
             addView(view);   
@@ -235,16 +207,14 @@ void layoutChunk(RecyclerView.Recycler recycler, RecyclerView.State state,Layout
         }
         measureChildWithMargins(view, 0, 0);    //调用view的measure
         
-        ...measure后确定布局参数 left/top/right/bottom
+        ...// measure 后确定布局参数 left/top/right/bottom
 
-        layoutDecoratedWithMargins(view, left, top, right, bottom); //调用view的layout
+        layoutDecoratedWithMargins(view, left, top, right, bottom); // 调用 view 的 layout
         ...
     }
 ```
 
-到这里其实就完成了上面的`fill towards end`:
-
-
+到这里其实就完成了上面的`fill towards end`：
 
 ```cpp
     updateLayoutStateToFillEnd(mAnchorInfo); //确定布局可用空间
@@ -256,17 +226,15 @@ void layoutChunk(RecyclerView.Recycler recycler, RecyclerView.State state,Layout
 
 # RecyclerView滑动时的刷新逻辑
 
-接下来我们再来分析一下在不加载新的数据情况下，`RecyclerView`在滑动时是如何展示`子View`的，即下面这种状态 :
+接下来再来分析一下在不加载新的数据情况下，`RecyclerView`在滑动时是如何展示`子View`的，即下面这种状态 :
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-55c83eae957eb262.png?imageMogr2/auto-orient/strip|imageView2/2/w/528/format/webp)
+![RecyclerView滑动时的状态.png](https:////upload-images.jianshu.io/upload_images/2934684-55c83eae957eb262.png)
 
-RecyclerView滑动时的状态.png
+
 
 下面就来分析一下`3、4`号和`12、13`号是如何展示的。
 
-`RecyclerView`在`OnTouchEvent`对滑动事件做了监听，然后派发到`scrollStep()`方法:
-
-
+`RecyclerView`在`OnTouchEvent`对滑动事件做了监听，然后派发到`scrollStep()`方法：
 
 ```csharp
 void scrollStep(int dx, int dy, @Nullable int[] consumed) {
@@ -288,11 +256,9 @@ void scrollStep(int dx, int dy, @Nullable int[] consumed) {
 }
 ```
 
-即把滑动的处理交给了`mLayout`, 这里继续看`LinearLayoutManager.scrollVerticallyBy`, 它直接调用了`scrollBy()`, 这个方法就是`LinearLayoutManager`处理滚动的核心方法。
+即把滑动的处理交给了`mLayout`，这里继续看`LinearLayoutManager.scrollVerticallyBy`，它直接调用了`scrollBy()`，这个方法就是`LinearLayoutManager`处理滚动的核心方法。
 
 ## LinearLayoutManager.scrollBy
-
-
 
 ```java
 int scrollBy(int dy, RecyclerView.Recycler recycler, RecyclerView.State state) {
@@ -311,26 +277,24 @@ int scrollBy(int dy, RecyclerView.Recycler recycler, RecyclerView.State state) {
 这个方法的主要执行逻辑是:
 
 1. 根据布局方向和滑动的距离来确定可用布局空间`mLayoutState.mAvailable`
-2. 调用`fill()`来摆放子View
-3. 滚动RecyclerView
+2. 调用`fill()`来摆放子 View
+3. 滚动 RecyclerView
 
 `fill()`的逻辑这里我们就不再看了，因此我们主要看一下`1 和 3`。
 
 ### 根据布局方向和滑动的距离来确定可用布局空间
 
-以向下滚动为为例，看一下`updateLayoutState`方法:
-
-
+以向下滚动为为例，看一下`updateLayoutState`方法：
 
 ```java
-// requiredSpace是滑动的距离;  canUseExistingSpace是true
+// requiredSpace 是滑动的距离;  canUseExistingSpace 是 true
 void updateLayoutState(int layoutDirection, int requiredSpace,boolean canUseExistingSpace, RecyclerView.State state) {
 
     if (layoutDirection == LayoutState.LAYOUT_END) { //滚动方法为向下
-        final View child = getChildClosestToEnd(); //获得RecyclerView底部的View
+        final View child = getChildClosestToEnd(); //获得 RecyclerView 底部的 View
         ...
-        mLayoutState.mCurrentPosition = getPosition(child) + mLayoutState.mItemDirection; //view的位置
-        mLayoutState.mOffset = mOrientationHelper.getDecoratedEnd(child); //view的偏移 offset
+        mLayoutState.mCurrentPosition = getPosition(child) + mLayoutState.mItemDirection; //view 的位置
+        mLayoutState.mOffset = mOrientationHelper.getDecoratedEnd(child); //view 的偏移 offset
         scrollingOffset = mOrientationHelper.getDecoratedEnd(child) - mOrientationHelper.getEndAfterPadding();
     } else {
        ...
@@ -342,13 +306,11 @@ void updateLayoutState(int layoutDirection, int requiredSpace,boolean canUseExis
 }
 ```
 
-*所以可用的布局空间就是滑动的距离*。那`mLayoutState.mScrollingOffset`是什么呢？
+**所以可用的布局空间就是滑动的距离**。那`mLayoutState.mScrollingOffset`是什么呢？
 
-上面方法它的值是`mOrientationHelper.getDecoratedEnd(child) - mOrientationHelper.getEndAfterPadding();`，其实就是`（childView的bottom + childView的margin） - RecyclerView的Padding`。 什么意思呢？ 看下图:
+上面方法它的值是`mOrientationHelper.getDecoratedEnd(child) - mOrientationHelper.getEndAfterPadding();`，其实就是`（childView 的 bottom + childView 的 margin） - RecyclerView 的 Padding`。 什么意思呢？ 看下图:
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-9b3df71f121a5075.png?imageMogr2/auto-orient/strip|imageView2/2/w/641/format/webp)
-
-RecyclerView滚动时可使用的布局空间.png
+![RecyclerView滚动时可使用的布局空间.png](https:////upload-images.jianshu.io/upload_images/2934684-9b3df71f121a5075.png)
 
 ```
 RecyclerView的padding`我没标注,不过相信上图可以让你理解: 滑动布局可用空间`mLayoutState.mAvailable`。同时`mLayoutState.mScrollingOffset`就是`滚动的距离 - mLayoutState.mAvailable
@@ -356,22 +318,18 @@ RecyclerView的padding`我没标注,不过相信上图可以让你理解: 滑动
 
 所以 `consumed`也可以理解:
 
-
-
 ```cpp
 int consumed = mLayoutState.mScrollingOffset + fill(recycler, mLayoutState, state, false);   
 ```
 
-`fill()`就不看了。子View摆放完毕后就要滚动布局展示刚刚摆放好的子View。这是依靠的`mOrientationHelper.offsetChildren(-scrolled)`, 继续看一下是如何执行`RecyclerView`的滚动的
+`fill()`就不看了。子View摆放完毕后就要滚动布局展示刚刚摆放好的子View。这是依靠的`mOrientationHelper.offsetChildren(-scrolled)`，继续看一下是如何执行`RecyclerView`的滚动的
 
 ### 滚动RecyclerView
 
-对于`RecyclerView`的滚动，最终调用到了`RecyclerView.offsetChildrenVertical()`:
-
-
+对于`RecyclerView`的滚动，最终调用到了`RecyclerView.offsetChildrenVertical()`：
 
 ```java
-//dy这里就是滚动的距离
+//dy 这里就是滚动的距离
 public void offsetChildrenVertical(@Px int dy) {
     final int childCount = mChildHelper.getChildCount();
     for (int i = 0; i < childCount; i++) {
@@ -380,7 +338,7 @@ public void offsetChildrenVertical(@Px int dy) {
 }
 ```
 
-可以看到逻辑很简单,就是*改变当前子View布局的top和bottom*来达到滚动的效果。
+可以看到逻辑很简单，就是**改变当前子View布局的top和bottom**来达到滚动的效果。
 
 本文就分析到这里。接下来会继续分析`RecyclerView`的复用逻辑。
 

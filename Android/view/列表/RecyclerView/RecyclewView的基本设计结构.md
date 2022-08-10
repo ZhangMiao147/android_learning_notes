@@ -1,27 +1,20 @@
 # RecyclerView 的基本设计结构
 
-> `RecyclerView` 作为 Android 开发中最常用的 View 之一。很多 `App` 的 feed 流都是使用 `RecyclerView` 来实现的。加深对于 `RecyclerView` 的掌握对于开发效率和开发质量都有很重要的意义。接下来我打算从源码
->  角度剖析`RecyclerView`的实现，加深对于`RecycledView`的了解。`RecyclerView`的源码实现还是很庞大的。本文就先来看一下`RecyclerView`的整体设计，了解其核心实现类的作用以及大致实现原理。
+> `RecyclerView` 作为 Android 开发中最常用的 View 之一。很多 `App` 的 feed 流都是使用 `RecyclerView` 来实现的。加深对于 `RecyclerView` 的掌握对于开发效率和开发质量都有很重要的意义。本文就先来看一下`RecyclerView`的整体设计，了解其核心实现类的作用以及大致实现原理。
 
-下面这张图是我截取的`RecyclerView的Structure:`
+下面这张图是 RecyclerView 的 Structure:
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-af8a38e293cb5310.png?imageMogr2/auto-orient/strip|imageView2/2/w/846/format/webp)
-
-类的组成.png
+![类的组成.png](https:////upload-images.jianshu.io/upload_images/2934684-af8a38e293cb5310.png)
 
 本文着重看: `ViewHolder`、`Adapter`、`AdapterDataObservable`、`RecyclerViewDataObserver`、`LayoutManager`、、`Recycler`、`RecyclerPool`。 从而理解`RecycledView`的大致实现原理。
 
-先用一张图大致描述他们之间的关系,这张图是`adapter.notifyXX()`时`RecyclerView`的执行逻辑涉及到的一些类:
+先用一张图大致描述他们之间的关系，这张图是`adapter.notifyXX()`时`RecyclerView`的执行逻辑涉及到的一些类:
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-1b8fadc84223ea0a.png?imageMogr2/auto-orient/strip|imageView2/2/w/803/format/webp)
-
-RecyclerView组成类之间的关系.png
+![RecyclerView组成类之间的关系.png](https:////upload-images.jianshu.io/upload_images/2934684-1b8fadc84223ea0a.png)
 
 ## ViewHolder
 
 对于`Adapter`来说，一个`ViewHolder`就对应一个`data`。它也是`Recycler缓存池`的基本单元。
-
-
 
 ```java
 class ViewHolder {
@@ -33,7 +26,7 @@ class ViewHolder {
 }
 ```
 
-上面我列出了`ViewHolder`最重要的4个属性:
+上面列出了`ViewHolder`最重要的4个属性:
 
 - itemView : 会被当做`child view`来`add`到`RecyclerView`中。
 - mPosition : 标记当前的`ViewHolder`在`Adapter`中所处的位置。
@@ -43,8 +36,6 @@ class ViewHolder {
 ## Adapter
 
 它的工作是把`data`和`View`绑定，即上面说的一个`data`对应一个`ViewHolder`。主要负责`ViewHolder`的创建以及数据变化时通知`RecycledView`。比如下面这个Adapter:
-
-
 
 ```kotlin
 class SimpleStringAdapter(val dataSource: List<String>, val context: Context) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -76,9 +67,7 @@ class SimpleStringAdapter(val dataSource: List<String>, val context: Context) : 
 ## AdapterDataObservable
 
 `Adapter`是数据源的直接接触者，当数据源发生变化时，它需要通知给`RecyclerView`。这里使用的模式是`观察者模式`。`AdapterDataObservable`是数据源变化时的被观察者。`RecyclerViewDataObserver`是观察者。
- 在开发中我们通常使用`adapter.notifyXX()`来刷新UI,实际上`Adapter`会调用`AdapterDataObservable`的`notifyChanged()`:
-
-
+ 在开发中我们通常使用`adapter.notifyXX()`来刷新UI，实际上`Adapter`会调用`AdapterDataObservable`的`notifyChanged()`:
 
 ```csharp
     public void notifyChanged() {
@@ -92,9 +81,7 @@ class SimpleStringAdapter(val dataSource: List<String>, val context: Context) : 
 
 ## RecyclerViewDataObserver
 
-它是`RecycledView`用来监听`Adapter`数据变化的观察者:
-
-
+它是`RecycledView`用来监听`Adapter`数据变化的观察者：
 
 ```cpp
     public void onChanged() {
@@ -108,7 +95,7 @@ class SimpleStringAdapter(val dataSource: List<String>, val context: Context) : 
 
 ## LayoutManager
 
-它是`RecyclerView`的布局管理者，`RecyclerView`在`onLayout`时，会利用它来`layoutChildren`,它决定了`RecyclerView`中的子View的摆放规则。但不止如此, 它做的工作还有:
+它是`RecyclerView`的布局管理者，`RecyclerView`在`onLayout`时，会利用它来`layoutChildren`，它决定了`RecyclerView`中的子View的摆放规则。但不止如此，它做的工作还有:
 
 1. 测量子View
 2. 对子View进行布局
@@ -119,15 +106,13 @@ class SimpleStringAdapter(val dataSource: List<String>, val context: Context) : 
 
 ## Recycler
 
-对于`LayoutManager`来说，它是`ViewHolder`的提供者。对于`RecyclerView`来说，它是`ViewHolder`的管理者，是`RecyclerView`最核心的实现。下面这张图大致描述了它的组成:
+对于`LayoutManager`来说，它是`ViewHolder`的提供者。对于`RecyclerView`来说，它是`ViewHolder`的管理者，是`RecyclerView`最核心的实现。下面这张图大致描述了它的组成：
 
-![img](https:////upload-images.jianshu.io/upload_images/2934684-0978416753d58872.png?imageMogr2/auto-orient/strip|imageView2/2/w/694/format/webp)
+![Recycler的组成.png](https:////upload-images.jianshu.io/upload_images/2934684-0978416753d58872.png)
 
-Recycler的组成.png
+
 
 ### scrap list
-
-
 
 ```dart
 final ArrayList<ViewHolder> mAttachedScrap = new ArrayList<>();
@@ -136,9 +121,9 @@ ArrayList<ViewHolder> mChangedScrap = null;
 
 - `View Scrap状态`
 
-相信你在许多`RecyclerView`的`crash log`中都看到过这个单词。它是指`View`在`RecyclerView`布局期间进入分离状态的子视图。即它已经被`deatach`(标记为`FLAG_TMP_DETACHED`状态)了。这种`View`是可以被立即复用的。它在复用时，如果数据没有更新，是不需要调用`onBindViewHolder`方法的。如果数据更新了，那么需要重新调用`onBindViewHolder`。
+相信在许多`RecyclerView`的`crash log`中都看到过这个单词。它是指`View`在`RecyclerView`布局期间进入分离状态的子视图。即它已经被`deatach`(标记为`FLAG_TMP_DETACHED`状态)了。这种`View`是可以被立即复用的。它在复用时，如果数据没有更新，是不需要调用`onBindViewHolder`方法的。如果数据更新了，那么需要重新调用`onBindViewHolder`。
 
-`mAttachedScrap`和`mChangedScrap`中的View复用主要作用在`adapter.notifyXXX`时。这时候就会产生很多`scrap`状态的`view`。 也可以把它理解为一个`ViewHolder`的缓存。不过在从这里获取`ViewHolder`时完全是根据`ViewHolder`的`position`而不是`item type`。如果在`notifyXX`时data已经被移除掉你，那么其中对应的`ViewHolder`也会被移除掉。
+`mAttachedScrap`和`mChangedScrap`中的 View 复用主要作用在`adapter.notifyXXX`时。这时候就会产生很多`scrap`状态的`view`。 也可以把它理解为一个`ViewHolder`的缓存。不过在从这里获取`ViewHolder`时完全是根据`ViewHolder`的`position`而不是`item type`。如果在`notifyXX`时 data 已经被移除掉了，那么其中对应的`ViewHolder`也会被移除掉。
 
 ### mCacheViews
 
@@ -146,9 +131,7 @@ ArrayList<ViewHolder> mChangedScrap = null;
 
 ### RecycledViewPool
 
-它是一个可以被复用的`ViewHolder`缓存池。即可以给多个`RecycledView`来设置统一个`RecycledViewPool`。这个对于`多tab feed流`应用可能会有很显著的效果。它内部利用一个`ScrapData`来保存`ViewHolder`集合:
-
-
+它是一个可以被复用的`ViewHolder`缓存池。即可以给多个`RecycledView`来设置统一个`RecycledViewPool`。这个对于`多tab feed流`应用可能会有很显著的效果。它内部利用一个`ScrapData`来保存`ViewHolder`集合：
 
 ```java
 class ScrapData {
@@ -161,9 +144,7 @@ class ScrapData {
 SparseArray<ScrapData> mScrap = new SparseArray<>();  //RecycledViewPool 用来保存ViewHolder的容器
 ```
 
-一个`ScrapData`对应一种`type`的`ViewHolder`集合。看一下它的获取`ViewHolder`和保存`ViewHolder`的方法:
-
-
+一个`ScrapData`对应一种`type`的`ViewHolder`集合。看一下它的获取`ViewHolder`和保存`ViewHolder`的方法：
 
 ```csharp
 //存
@@ -187,15 +168,6 @@ private ScrapData getScrapDataForType(int viewType) {
 ```
 
 以上所述，是`RecycledView`最核心的组成部分(本文并没有描述动画的部分)。
-
-下一篇文章会分析[RecyclerView的刷新机制](https://www.jianshu.com/p/a57608f2695f)
-
-
-
-作者：susion哒哒
-链接：https://www.jianshu.com/p/88314f56545d
-来源：简书
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
 
 # 参考文章
 
