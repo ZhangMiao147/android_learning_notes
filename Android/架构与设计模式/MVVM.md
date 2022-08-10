@@ -1,7 +1,5 @@
 # MVVM
 
-　　MVVM
-
 # 1. 概述
 
 　　Databinding 是一种框架，MVVM 是一种模式，两者的概念是不一样的。DataBinding 是一个实现数据和 UI 绑定的框架，只是一个实现 MVVM 模式的工具。
@@ -10,7 +8,7 @@
 
 # 2. MVC、MVP、MVVM
 
-　　首先，先大致了解 Android 开发中常见的模式，以便更深入了解MVVM 模式。
+　　首先，先大致了解 Android 开发中常见的模式，以便更深入了解 MVVM 模式。
 
 ## 2.1. MVC
 
@@ -114,9 +112,7 @@
 - Command （命令绑定）
 - Child ViewModel （子ViewModel）
 
-我们先来看下示例代码，然后在一一讲解5个部分是干嘛用的：
-
-
+我们先来看下示例代码，然后在一一讲解 5 个部分是干嘛用的：
 
 ```php
 //context
