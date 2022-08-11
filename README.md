@@ -315,6 +315,7 @@
   * [ArrayList 与 LinkedList](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/ArrayList%E4%B8%8ELinkedList.md)
   * SkipList
   * 线程安全
+  * [list的remove问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/list%E7%9A%84remove%E9%97%AE%E9%A2%98.md)
 * Map
   * [HashMap](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/HashMap.md)
   * [HashMap 不是线程安全的分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/HashMap不是线程安全的分析.md)
@@ -326,6 +327,8 @@
   * TreeMap
 * Tree
 * Queue
+  * [Queue的add与offer的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Queue%E7%9A%84add%E4%B8%8Eoffer%E7%9A%84%E5%8C%BA%E5%88%AB.md)
+  * PriorityQueue
   * LinkedList
   * ArrayDeque
   * 线程安全
@@ -362,7 +365,6 @@
 ## :five: 其他
 
 * [String、StringBuffer 与 StringBuilder 的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/String%E3%80%81StringBuilder%E4%B8%8EStringBuffer%E7%9A%84%E5%8C%BA%E5%88%AB.md)
-* [Queue的add与offer的区别]
 * hashCode
 * treeMap
 * String

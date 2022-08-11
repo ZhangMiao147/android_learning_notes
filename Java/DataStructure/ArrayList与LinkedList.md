@@ -95,7 +95,7 @@ public class ArrayList<E> extends AbstractList<E>
 　　尽管这样当向指定位置添加数据时也还是比 LinkedList 慢，后者添加数据只需要改变指针指向即可。ArrayList 删除数组也需要移动数组，效率较慢。但是 ArrayList 获取数据是很快的。
 
 ## 2. LinkedList
-　　LInkedList 是基于链表的动态数组，数据添加删除效率高，只需要改变指针指向即可，但是访问数据的平均效率低，需要对链表进行遍历。
+　　LinkedList 是基于链表的动态数组，数据添加删除效率高，只需要改变指针指向即可，但是访问数据的平均效率低，需要对链表进行遍历。
 
 　　LinkedList 的部分源码：
 ```java
@@ -134,7 +134,7 @@ public class LinkedList<E>
         modCount++;
     }
 	// 将数据插入到 succ 之前
-	//只需要修改位置就 OK 了
+	// 只需要修改位置就 OK 了
 	void linkBefore(E e, Node<E> succ) {
         // assert succ != null;
         final Node<E> pred = succ.prev;

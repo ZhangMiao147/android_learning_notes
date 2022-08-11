@@ -131,7 +131,7 @@ do {
 
 ### 2.3. ConcurrentHashMap
 
-　　主要就是为了应对 HashMap 在并发环境下不安全而诞生的，ConcurrentHashMap 的设计与实现非常精巧，大量的利用了 volatile、final、CAS 等 lock-free 技术来减少锁竞争对于性能的影响。
+　　主要就是为了应对 HashMap 在并发环境下不安全而诞生的。
 
 　　HashTable 访问效率低下的原因，就是因为所有的线程在竞争同一把锁。如果容器中有多把锁，不同的锁锁定不同的位置，这样线程间就不会存在锁的竞争，这样就可以有效的提高并发访问效率，这就是 ConcurrentHashMap 所使用的锁分段技术。将数据一段一段的存储，然后为每一段都配一把锁，当一个线程只是占用其中的一个数据段时，其他段的数据也能被其他线程访问。
 
@@ -206,7 +206,7 @@ class Node<K,V> implements Map.Entry<K,V> {
 }
 ```
 
-　　JDK 1.8 中的 Node 节点，其中的 cal 和 next 都通过可见性修饰。
+　　JDK 1.8 中的 Node 节点，其中的 val 和 next 都通过可见性修饰。
 
 　　JDK 1.8 ConcurrentHashMap 结构基本上和 JDK 1.8 的 HashMap 一样，不过保证线程安全性。
 

@@ -3481,6 +3481,59 @@ android {
 
 　　在 ConstaintLayout 出来前，写布局会使用大量的 margin 或 padding，但是这种方式可读性会很差，加一个布局嵌套又会损耗性能，鉴于这种情况，可以使用 space，使用方式和 View 一样，不过主要用来占位置，不会有任何显示效果。
 
+#### 优化中使用的工具
+
+##### systrace
+
+Systrace 是 Android 4.1 引入的基于 ftrace 的性能分析工具，通过在系统各个关键调用位置添加 trace 埋点来分析系统调用耗时等问题。
+
+![](https://img-blog.csdnimg.cn/2d2d9ec7e5154da2b3f8db076fb7b903.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pyI55CD5LiL55qEY2M=,size_18,color_FFFFFF,t_70,g_se,x_16)
+
+* Systrace 是平台提供的一款工具，用于记录短期内的设备活动。该工具会生成一份报告，其中汇总了 Android 内核中的数据，例如 CPU 调度程序、磁盘活动和应用线程。这份报告可帮助了解如何以最佳方式改善应用或游戏的性能。
+* Systrace 报告提供了 Android 设备在给定时间段内的系统进程的总体情况，还会检查所捕获的跟踪信息，以突出显示它所观察到的问题（例如界面卡顿或耗电量高）。
+* 在解决应用中与性能相关的错误（例如启动速度慢、转换速度慢或界面卡顿）时，录制跟踪记录特别有用。
+
+##### perfetto
+
+Perfetto 是 Android 10 中引入的全新平台级跟踪工具。这是适用于 Android、Linux 和 Chrome 的更加通用和复杂的开源跟踪项目。与 Systrace 不同，它提供数据源超集，可让您以 protobuf 编码的二进制流形式记录任意长度的跟踪记录。可以在 Perfetto 界面中打开这些跟踪记录。
+
+![](https://img-blog.csdnimg.cn/006b7bc33371423190491800bcd075cc.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pyI55CD5LiL55qEY2M=,size_18,color_FFFFFF,t_70,g_se,x_16)
+
+##### Profiler
+
+目前 Android Studio Profiler 已经集成了 4 类性能分析工具： CPU、Memory、Network、Battery，其中 CPU 相关性能分析工具为 CPU Profiler，它把 CPU 相关的性能分析工具都集成在了一起，开发者可以根据自己需求来选择使用哪一个。可能很多人都知道，谷歌已经开发了一些独立的 CPU 性能分析工具，如 Perfetto、Simpleperf、Java Method Trace 等，现在又出来一个 CPU Profiler，显然不可能去重复造轮子，CPU Profiler 目前做法就是：从这些已知的工具中获 取数据，然后把数据解析成自己想要的样式，通过统一的界面展示出来。
+
+![](https://img-blog.csdnimg.cn/7ee21bcff7754438a217581d6d468963.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pyI55CD5LiL55qEY2M=,size_18,color_FFFFFF,t_70,g_se,x_16)
+
+##### 开发者选项
+
+* 调试 GPU 过度绘制
+
+  Android 将按如下方式为界面元素着色，以确定过度绘制的次数：
+
+![](https://img-blog.csdnimg.cn/1a71697ec0e3461e990cb4b6cacb4b78.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pyI55CD5LiL55qEY2M=,size_9,color_FFFFFF,t_70,g_se,x_16)
+
+* GPU 渲染模式分析
+
+![](https://img-blog.csdnimg.cn/07cbfd2b44084d87bae978c6b0a80945.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pyI55CD5LiL55qEY2M=,size_18,color_FFFFFF,t_70,g_se,x_16)
+
+* 对于每个可见应用，该工具将显示一个图形。
+* 沿水平轴的每个竖条代表一个帧，每个竖条的高度表示渲染该帧所花的时间（以ms为单位）。
+* 水平绿线表示 16.6ms(60 FPS)/11.1ms(90 FPS)。正常的帧率，代表每个帧的竖条需要保持在此线以下。当竖条超出此线时，可能会使动画出现暂停。
+* 该工具通过加宽对应的竖条并降低透明度来突出显示超出 16ms 阈值的帧。
+* 每个竖条都有与渲染管道中某个阶段对应的彩色区段。区段数因设备的 API 级别不同而异。
+
+优化：
+
+* 红色/黄色：从布局构建角度去考虑。优化：减少视图层级、减少无用的背景图、减轻自定义控件复杂度等。
+* 蓝色/浅蓝/各种绿色：从耗时操作角度去考虑。
+
+##### LeakCanary
+
+![](https://img.jbzj.com/file_images/article/202111/20211122171937007.png?20211022171951)
+
+`LeakCanary `本质上还是用命令控制生成`hprof`文件分析检查内存泄漏。
+
 ### 架构与设计模式
 
 #### 设计模式选择

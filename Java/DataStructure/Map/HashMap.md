@@ -560,7 +560,7 @@ void resize(int newCapacity) {
 
 1. 两节点 key 值相同（hash 值一定相同），导致冲突；
 2. 两节点 key 值不同，由于 hash 函数的局限性导致 hash 值相同，冲突；
-3. 两节y点 key 值不同，hash 值不同，但是 hash 值对数组长度取模后相同（hash&(length-1)），冲突。
+3. 两节点 key 值不同，hash 值不同，但是 hash 值对数组长度取模后相同（hash&(length-1)），冲突。
 
 ### 6.2. hash() 方法不同
 
@@ -690,17 +690,17 @@ void resize(int newCapacity) {
 
 　　长度扩展为原来的 2 倍，使用的是 2 次幂的扩展，所以，元素的位置要么是在原位置，要么是在原位置再移动 2 次幂的位置。
 
-![JDK1.8扩展下标解释](./image/JDK1.8扩展下标解释.webp)
+![JDK1.8扩展下标解释](./image/JDK1.8扩展下标解释.png)
 
 　　(a) 是扩容前的 key1 和 key2 两种 key 确定索引位置，（b）是扩容后 key1 和 key2 两种 key 确定索引位置。
 
 　　元素在重新计算 hash 之后，因为 n 变为 2 倍，那么 n-1 的二进制的高位就多了 1 bit，因此新的 index 就会发生下面变化：
 
-![](./image/JDK1.8扩容下标.webp)
+![](./image/JDK1.8扩容下标.png)
 
 　　因此，扩容的时候，只需要看原来的 hash 值新增的那个 bit 是 1 还是 0 就好了，是 0 的话索引没变，是 1 的话索引变成->原索引+ oldCap。
 
-![](./image/JDK1.8扩容例图.webp)
+![](./image/JDK1.8扩容例图.png)
 
 ### 6.5. 将 capacity 设置为 2 的次幂的方式不同
 
@@ -737,7 +737,7 @@ void resize(int newCapacity) {
     }
 ```
 
-![tableSizeFor示例图](./image/tableSizeFor示例图.webp)
+![tableSizeFor示例图](./image/tableSizeFor示例图.png)
 
 ## 7. 总结
 
