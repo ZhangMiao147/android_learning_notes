@@ -10,7 +10,7 @@
 * PriorityQueue
 * [Queue的add与offer的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Queue%E7%9A%84add%E4%B8%8Eoffer%E7%9A%84%E5%8C%BA%E5%88%AB.md)
 * [list的remove问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/list%E7%9A%84remove%E9%97%AE%E9%A2%98.md)
-* [Long 的 parseLong 与 valueof 的区别]
+* [Long 的 parseLong 与 valueof 的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Long%E7%9A%84parseLong%E4%B8%8Evalueof%E7%9A%84%E5%8C%BA%E5%88%AB.md)
 
 ## Map
 
