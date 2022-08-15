@@ -17,10 +17,14 @@
   * [Service 的基础知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Service/Service%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86.md)
   * [Service 的常见问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Service/Service%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98.md)
   * 进程保活
+  * JobService、JobScheduler
+  * Messenger
+  * IntentService
 * BroadcaseReceiver
   * [BroadcaseReceiver 的基础知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/BroadcastReceiver/BroadcastRecevier的基础知识.md)
   * [BroadcaseReceiver 的实现原理](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/BroadcastReceiver/BroadcastRecevier的实现原理.md)
   *  [BroadcaseReceiver 的常见问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/BroadcastReceiver/BroadcastRecevier的常见问题.md)
+  *  LocalBroadcastManager 
 * ContentProvider
   * [ContentProvider 的知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/ContentProvider/ContentProvider%E7%9A%84%E7%9F%A5%E8%AF%86.md)
   * [ContentProvider 的常见问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/ContentProvider/ContentProvider%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98.md)
@@ -33,17 +37,28 @@
 * [PackageManagerService之启动解析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/PackageManagerService之启动解析.md)
 * [守护进程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/守护进程.md)
 
-## Handler
+## 进程与线程
 
-* [Handler 机制分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/Handler机制分析.md)
-* [Handler 的延伸](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/Handler的延伸.md)
-* [ThreadLocal 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/ThreadLocal知识.md)
-* [AsyncTask 的知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/AysncTask的知识.md)
+* Handler
+  * [Handler 机制分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/Handler机制分析.md)
+  * [Handler 的延伸](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/Handler的延伸.md)
+  * [ThreadLocal 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/ThreadLocal知识.md)
+  * [AsyncTask 的知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/AysncTask的知识.md)
+  * HandlerThread
+  * IdleHandler
+* 进程间通信
+  * IPC 多线程通信方式
+  * Binder
+  * 序列化
+    * Serializable
+    * Parcelable
+  * AIDL
 
 ## Fragment
 
 * [Fragment 的基础知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/fragment/Fragment的基础知识.md)
 * [Fragment 的使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/fragment/Fragment的使用.md)
+* Fragment+ViewPager 的懒加载
 
 ##  View
 
@@ -53,6 +68,23 @@
 * [View 事件分发机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/View事件分发机制.md)
 * [ViewGroup 事件分发机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/ViewGroup事件分发机制.md)
 * [自定义View的实现方式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/自定义View的实现方式.md)
+* GestureDetector
+* ActionBarDrawerToggle 
+* 滑动冲突
+* dispatch
+* Window
+  * ViewRoot
+  * PhoneWindow
+  * Window、Activity、DecorView 以及 ViewRoot 之间的关系
+* 动画
+  * 帧动画
+  * View 动画
+  * 属性动画
+  * FrameAnimation 逐帧动画
+  * TweenAnimation 补间动画
+  * PropertyAnimation 属性动画
+  * 第三方动画库
+    * Loto
 * View 的实践
 	* [Android实现卡片翻转的动画（翻牌动画）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/view%E7%9A%84%E5%AE%9E%E8%B7%B5/Android%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E7%BF%BB%E8%BD%AC%E7%9A%84%E5%8A%A8%E7%94%BB%EF%BC%88%E7%BF%BB%E7%89%8C%E5%8A%A8%E7%94%BB%EF%BC%89.md)
 	* [系统控件的常用使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/view%E7%9A%84%E5%AE%9E%E8%B7%B5/%E7%B3%BB%E7%BB%9F%E6%8E%A7%E4%BB%B6%E7%9A%84%E5%B8%B8%E7%94%A8%E4%BD%BF%E7%94%A8.md)
@@ -70,12 +102,44 @@
     * [RecyclerView 的复用机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/%E5%88%97%E8%A1%A8/RecyclerView/RecyclewView%E5%A4%8D%E7%94%A8%E6%9C%BA%E5%88%B6.md)
     * [RecyclerView 动画源码浅析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/%E5%88%97%E8%A1%A8/RecyclerView/RecyclewView%E5%8A%A8%E7%94%BB%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90.md)
     * [Recycler 原理分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/%E5%88%97%E8%A1%A8/RecyclerView/RecyclewView%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90.md)
+* 布局
+  * 约束布局 ConstraintLayout
+  * LinearLayout 为什么比 RelativeLayout 性能更好
+* WebView
+  * js 通信
+  * 优化
+* Materal Design
+  * Toolbar
+  * 沉浸式状态栏
+  * CardView
+  * AppBarLayout
+  * DrawerLayout
+  * NavigationView
+  * FloatingActionButton
+  * Snackbar
+  * 下拉刷新
+
+## Framework
+
+* 系统启动流程
+* 应用启动流程
+* apk 打包流程
+* SystemServer
+  * ActivityManagerService
+  * PackageManagerService
+  * WindowManagerService
+* Binder
+* Intent
+* pms
 
 ## 缓存
 
 * [缓存机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/cache/缓存机制.md)
 * [LruCache知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/cache/LruCache知识.md)
-* [本地缓存ACache]
+* [本地缓存ACache](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/cache/%E6%9C%AC%E5%9C%B0%E7%BC%93%E5%AD%98ACache.md)
+* 文件存储
+* SharedPreferences
+* SQLite
 
 ## 优化
 
@@ -102,6 +166,12 @@
 
 * [Android 4.4.4 的 setResult 失效的问题适配](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/adaptation/Android4.4.4%E7%9A%84setResult%E5%A4%B1%E6%95%88%E7%9A%84%E9%97%AE%E9%A2%98%E9%80%82%E9%85%8D.md)
 * [Android 4.4.4 支持分包后找不到勒的问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/adaptation/Android%204.4.4支持分包后找不到类的问题.md)
+* Android 6 权限适配
+* Android 8 适配
+  * apk 下载失败
+  * 通知栏不显示
+  * 无法安装 APK（权限）
+* 屏幕适配
 
 ## Gradle
 
@@ -130,11 +200,87 @@
 ## 其他
 
 * [多渠道打包](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/Software/%E5%A4%9A%E6%B8%A0%E9%81%93%E6%89%93%E5%8C%85.md)
+
 * [jar 包和 aar 包的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/jar%E5%8C%85%E4%B8%8Eaar%E5%8C%85%E7%9A%84%E5%8C%BA%E5%88%AB.md)
+
 * [Android 中 Home 键的监听](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/Android中Home键的监听.md)
+
 * [shape 布局文件的替换方案](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/shape布局文件的替换方案.md)
+
 * [Android 编码规范](https://github.com/ZhangMiao147/android_learning_notes/tree/master/Android/Android编码规范)
-* [uses-permission 和 permission 区别及使用]
+
+* [uses-permission 和 permission 区别及使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/uses-permission%E5%92%8Cpermission%E5%8C%BA%E5%88%AB%E5%8F%8A%E4%BD%BF%E7%94%A8.md)
+
+* ArrayDeque
+
+* ArrayMap
+
+* SpareArray
+
+* nano ptotobufs
+
+* 协程
+
+* Android Dex 分包 https://www.jianshu.com/p/e96f345e822f
+
+* SurfaceView 
+
+* WindowManager
+
+  [Android解析WindowManager（一）WindowManager体系](https://blog.csdn.net/itachi85/article/details/77888668)
+
+* DiskLruCache
+
+  [Android DiskLruCache完全解析，硬盘缓存的最佳方案](https://blog.csdn.net/guolin_blog/article/details/28863651)
+
+* Protocal buffers 
+
+* 混淆
+
+  * ProGuard
+
+* 多媒体
+
+  * 拍照
+  * 录像
+  * 选择照片或视频
+  * 音频
+  * 视频
+
+* 测试
+
+* Gradle
+
+  * gradle
+  * [api 与 implementation 的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/gradle/api%E4%B8%8Eimplementation%E7%9A%84%E5%8C%BA%E5%88%AB.md)
+  * Gradle 插件
+  * Gradle 多渠道打包
+  * gradle 混淆瘦身
+  * Lint
+  * 加固
+
+* json & Gson
+
+* 图片
+
+  * Bitmap
+    * 记载效率
+    * 缓存策略
+    * 内存计算
+  * Drawable
+
+* git
+
+  * 基本使用
+  * 分支
+  * 代码合并与冲突处理
+
+* Android studio
+
+  * 使用和调试
+  * 常用插件
+    * 代码规范检测插件
+  * 快捷键
 
 ## Question 平时开发遇到的问题记录
 
