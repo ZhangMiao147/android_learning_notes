@@ -27,7 +27,7 @@ LiveDataBus 是基于 LiveData 实现的类似 [EventBus](https://so.csdn.net/so
 ## LiveDataBus 的具体实现
 
 ```java
-																	public final class LiveDataBus {
+public final class LiveDataBus {
 
     private final Map<String, BusMutableLiveData<Object>> bus;
 

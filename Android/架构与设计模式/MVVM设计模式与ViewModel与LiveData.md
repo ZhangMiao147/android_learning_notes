@@ -10,7 +10,7 @@
 
 ### 1.1. Demo
 
-如果项目不是androidx，那么需要先在gradle中引入lifecycle库，androidx则不需要：
+如果项目不是 androidx，那么需要先在 gradle 中引入 lifecycle 库，androidx 则不需要：
 
 ```groovy
     implementation 'android.arch.lifecycle:extensions:1.1.1'
@@ -150,7 +150,7 @@ ViewModel 类中定义了 onCleared() 方法，提供给我们进行重写，可
 
 **Google官方的解释如下：**
 
-LiveData 是可以在给定生命周期内观察到的数据持有者类。这意味着可以将一个 Observer 与 LifecycleOwner 成对添加，并且只有在配对的 LifecycleOwner 处于活动状态时，才会向该观察者通知有关包装数据的修改。如果 LifecycleOwner 状态为 Lifecycle.State＃STARTED 或 Lifecycle.State＃RESUMED，则将其视为活动状态。通过observeForever（Observer）添加的观察者被视为始终处于活动状态，因此将始终收到有关修改的通知。对于那些观察者，您应该手动调用 removeObserver（Observer）。
+LiveData 是可以在给定生命周期内观察到的数据持有者类。这意味着可以将一个 Observer 与 LifecycleOwner 成对添加，并且只有在配对的 LifecycleOwner 处于活动状态时，才会向该观察者通知有关包装数据的修改。如果 LifecycleOwner 状态为 Lifecycle.State＃STARTED 或 Lifecycle.State＃RESUMED，则将其视为活动状态。通过observeForever（Observer）添加的观察者被视为始终处于活动状态，因此将始终收到有关修改的通知。对于那些观察者，应该手动调用 removeObserver（Observer）。
 
 如果相应的生命周期移至 “ 生命周期状态为 DESTROYED ” 状态，则添加了生命周期的观察者将被自动删除。 这对于活动和片段可以安全地观察 LiveData 而不用担心泄漏的活动特别有用：销毁它们时，它们将立即被取消订阅。
 
@@ -272,7 +272,7 @@ protected void postValue(T value) {
         if (!postTask) {
             return;
         }
-        //把runnable发送到主线程再执行，runnable中也调用setValue进行更新
+        //把 runnable 发送到主线程再执行，runnable 中也调用 setValue 进行更新
         ArchTaskExecutor.getInstance().postToMainThread(mPostValueRunnable);
     }
     
@@ -363,7 +363,7 @@ liveData.setValue(b)
 
 ### 2.4. MutableLiveData
 
-由于 LiveData 中的 setValue, postvalue 方法均为 protected，因此无法直接调用，MutableLiveData 继承于 LiveData，因此用 MutableLiveData 进行数据源的更新改变设置。
+由于 LiveData 中的 setValue、postvalue 方法均为 protected，因此无法直接调用，MutableLiveData 继承于 LiveData，因此用 MutableLiveData 进行数据源的更新改变设置。
 
 ```java
 /**
@@ -389,8 +389,7 @@ public class MutableLiveData<T> extends LiveData<T> {
 
 ```java
 /**
- * 具有 Android 生命周期的类.自定义组件可以通过事件的形式分发生命周期的改变，
- * 而无需在 Activity 或 Fragment 中实现任何代码。
+ * 具有 Android 生命周期的类，自定义组件可以通过事件的形式分发生命周期的改变，而无需在 Activity 或 Fragment 中实现任何代码。
  * 
  * @see Lifecycle
  */
@@ -463,7 +462,7 @@ public ViewModelProvider(@NonNull ViewModelStoreOwner owner) {
     }
     
     
-//属于ComponentActivity.java    
+//属于 ComponentActivity.java    
  public ViewModelStore getViewModelStore() {
         if (getApplication() == null) {
             throw new IllegalStateException("Your activity is not yet attached to the "
@@ -493,7 +492,7 @@ public ViewModelProvider(@NonNull ViewModelStoreOwner owner) {
 
 FragmentActivity、AppcompactActivity继承ComponentActivity。
 
-**如何获取到之前的 ViewModel 示例呢？**
+**如何获取到之前的 ViewModel 实例呢？**
 
 1. 实例化 ViewModel 的时候 ViewModelProvider 得到 ViewModelStoreOwner 对象，于是存了 ViewModelStore 和 Factory。
 

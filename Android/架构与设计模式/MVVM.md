@@ -345,7 +345,7 @@ protected void onDestroy() {
 - sample ---> 本文涉及的代码均处出于这个项目，sample 一个知乎日报的App的简单实现，代码包含了一大部分 MVVM Light Toolkit 的使用场景，（Data、Command、Messenger均有涉及），同时sample严格按照博文阐述的MVVM的设计思想开发的，对理解本文有很大的帮助，欢迎clone下来看看。
    **Sample 截图**
 
-  ![img](https:////upload-images.jianshu.io/upload_images/966283-e86159db8c9114b0.png?imageMogr2/auto-orient/strip|imageView2/2/w/768/format/webp)
+  ![img](https:////upload-images.jianshu.io/upload_images/966283-e86159db8c9114b0.png)
 
 - 源码涉及 RxJava+Retrofit+Lambda 如有不懂或没接触过，花点时间入门一下，用到都是比较简单的东西。
 

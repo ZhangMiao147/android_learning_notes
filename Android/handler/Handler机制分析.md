@@ -564,7 +564,7 @@ public class Handler {
 
 　　MessageQueue 并没有使用一个集合把所有的消息都保存起来，它只使用了一个 mMessages 对象表示当前待处理的消息。所谓的入队其实就是将所有的消息按时间来进行排序，这个时间就是 uptimeMillis 参数。具体的操作方法就根据时间的顺序调用 msg.next，从而为每一个消息指定它的下一个消息是什么。当通过 sendMessageAtFrointOfQueue() 方法来发送消息时，它也会调用 enqueueMessage() 来让消息入队，只不过时间为 0，这时会把 mMessages 赋值为新入队的这条消息，然后将这条消息的 next 指定为刚才的 mMessages，这样也就完成了添加消息到队列头部的操作。
 
-### 4.5. 获取消息
+### 4.4. 获取消息
 
 　　当发送了消息后，在 MessageQueue 维护了消息队列，然后在 Looper 中通过 loop() 方法，不断地获取消息。
 
@@ -572,7 +572,7 @@ public class Handler {
 
 　　下来来看 next() 方法的具体流程。
 
-#### 4.5.1. MessageQueue#next()
+#### 4.4.1. MessageQueue#next()
 
 ```java
     Message next() {
@@ -694,7 +694,7 @@ public class Handler {
 
 　　可以看出 next() 方法根据消息的触发时间，获取下一条需要执行的消息，队列中消息为空时 ，则会进行阻塞操作。
 
-### 4.6. 分发消息
+### 4.5. 分发消息
 
 　　在 loop() 方法中，获取到下一条消息后，执行 msg.target.dispatchMessage(msg)，来分发消息到目标 Handler 对象。
 
@@ -702,7 +702,7 @@ public class Handler {
 
 　　下面就来具体看 dispatchMessage(msg) 方法的执行流程。
 
-#### 4.6.1. Handler#dispatchMessage()
+#### 4.5.1. Handler#dispatchMessage()
 
 ```java
     public void dispatchMessage(Message msg) {
