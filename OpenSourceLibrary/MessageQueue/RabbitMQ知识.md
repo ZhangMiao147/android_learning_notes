@@ -115,11 +115,11 @@
 
 　　RabbitMQ 比 MQ 模型有更加详细的模型概念：
 
-![](image/rabbitmq的消息模型.webp)
+![](image/rabbitmq的消息模型.png)
 
 ![](image/rabbit模型.png)
 
-![](image/exchange交换机.webp)
+![](image/exchange交换机.png)
 
 ### 2.1 Broker 服务
 
@@ -181,7 +181,7 @@
 
 　　消息队列，提供了 FIFO（先进先出） 的处理机制，具有缓存消息的能力。RabbitMQ 中，队列消息可以设置为持久化、临时或者自动删除。是 RabbitMQ 的内部消息，用于存储消息。
 
-![](image/queue1.webp)
+![](image/queue1.png)
 
 　　队列是消息载体，每个消息都会被投入到一个或多个队列，队列会保存消息直到发送给消费者，它是消息的容器，也是消息的终点。
 
@@ -193,11 +193,11 @@
 
 　　RabbitMQ 中的消息都只能存储在 Queue 中，生产者生产消息并最终投递到 Queue 中，消费者可以从 Queue 中获取消息并消费。
 
-![](image/queue2.webp)
+![](image/queue2.png)
 
 　　多个消费者可以订阅同一个 Queue，这时 Queue 中的消息会被平均分摊给多个消费者进行处理，而不是每一个消费者都收到所有的消息并处理。
 
-![](image/queue3.webp)
+![](image/queue3.png)
 
 ### 2.8 Binding 绑定
 

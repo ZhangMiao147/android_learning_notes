@@ -12,7 +12,7 @@ EventBus 是基于 订阅/发布 模式实现的基于事件的异步分发处�
 
 1. **Event**：事件，它可以是任意类型，EventBus 会根据事件类型进行全局的通知。
 
-2. **Subscriber**：事件订阅者，在EventBus 3.0之前必须定义以 onEvent 开头的那几个方法，分别是`onEvent`、`onEventMainThread`、`onEventBackgroundThread`和`onEventAsync`，而在3.0 之后事件处理的方法名可以随意取，不过需要加上注解 `@subscribe`，并且指定线程模型，默认是 `POSTING`。
+2. **Subscriber**：事件订阅者，在 EventBus 3.0之前必须定义以 onEvent 开头的那几个方法，分别是`onEvent`、`onEventMainThread`、`onEventBackgroundThread`和`onEventAsync`，而在 3.0 之后事件处理的方法名可以随意取，不过需要加上注解 `@subscribe`，并且指定线程模型，默认是 `POSTING`。
 
 3. **Publisher**：事件的发布者，可以在任意线程里发布事件。一般情况下，使用 `EventBus.getDefault()` 就可以得到一个 EventBus 对象，然后再调用 `post(Object)` 方法即可。
 
@@ -22,8 +22,8 @@ EventBus3.0 有四种线程模型，分别是：
 
 1. **POSTING**：默认，表示事件处理函数的线程跟发布事件的线程在同一个线程。
 2. **MAIN**：表示事件处理函数的线程在主线程(UI)线程，因此在这里不能进行耗时操作。
-3. **BACKGROUND**：表示事件处理函数的线程在后台线程，因此不能进行UI操作。如果发布事件的线程是主线程(UI线程)，那么事件处理函数将会开启一个后台线程，如果发布事件的线程是在后台线程，那么事件处理函数就使用该线程。
-4. **ASYNC**：表示无论事件发布的线程是哪一个，事件处理函数始终会新建一个子线程运行，同样不能进行UI操作。
+3. **BACKGROUND**：表示事件处理函数的线程在后台线程，因此不能进行 UI 操作。如果发布事件的线程是主线程( UI 线程)，那么事件处理函数将会开启一个后台线程，如果发布事件的线程是在后台线程，那么事件处理函数就使用该线程。
+4. **ASYNC**：表示无论事件发布的线程是哪一个，事件处理函数始终会新建一个子线程运行，同样不能进行 UI 操作。
 
 ## 2. EventBus 使用
 
@@ -56,7 +56,7 @@ public class MessageWrap {
 
 ### 2.3. 发布事件
 
-然后定义一个Activity：
+然后定义一个 Activity：
 
 ```java
 @Route(path = BaseConstants.LIBRARY_EVENT_BUS_ACTIVITY1)
@@ -85,7 +85,7 @@ public class EventBusActivity1 extends CommonActivity<ActivityEventBus1Binding> 
 }
 ```
 
-当按下按钮的时候向 EventBus 注册监听，然后按下另一个按钮的时候跳转到另一个Activity，并在另一个 Activity 发布输入的事件。在上面的Activity中，会添加一个监听的方法，即 `onGetMessage`，这里需要为其加入注解`Subscribe`并指定线程模型为主线程`MAIN`。最后，就是在Activity的`onDestroy`方法中取消注册该Activity。
+当按下按钮的时候向 EventBus 注册监听，然后按下另一个按钮的时候跳转到另一个 Activity，并在另一个 Activity 发布输入的事件。在上面的 Activity 中，会添加一个监听的方法，即 `onGetMessage`，这里需要为其加入注解`Subscribe`并指定线程模型为主线程`MAIN`。最后，就是在 Activity 的`onDestroy`方法中取消注册该 Activity。
 
 下面是另一个 Activity 的定义，在这个 Activity 中，当按下按钮的时候从 EditText 中取出内容并进行发布，然后退出到之前的 Activity，以测试是否正确监听到发布的内容。
 
@@ -110,7 +110,7 @@ public class EventBusActivity2 extends CommonActivity<ActivityEventBus2Binding> 
 
 ### 2.4. 黏性事件
 
-所谓的黏性事件，就是指发送了该事件之后才注册订阅者，订阅者依然能够接收到的事件。使用黏性事件的时候有两个地方需要做些修改。一个是订阅事件的地方，这里在先打开的Activity中注册监听黏性事件：
+所谓的黏性事件，就是指发送了该事件之后才注册订阅者，订阅者依然能够接收到的事件。使用黏性事件的时候有两个地方需要做些修改。一个是订阅事件的地方，这里在先打开的 Activity 中注册监听黏性事件：
 
 ```java
 @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)

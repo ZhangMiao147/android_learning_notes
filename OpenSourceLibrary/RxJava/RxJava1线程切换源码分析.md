@@ -442,7 +442,7 @@ public class Observable<T> {
     }
 }
 ```
-　　observeOn(AndroidSchedulers.mainThread()) 方法最后返回了 lift(new OperatorObserveOn<T>(scheduler, delayError, bufferSize)) 方法的返回值。
+　　observeOn(AndroidSchedulers.mainThread()) 方法最后返回了 lift(new OperatorObserveOn\<T>(scheduler, delayError, bufferSize)) 方法的返回值。
 
 　　observeOn 有好几个重载版本，支持指定 buffer 大小、是否延迟 Error 事件，这个 delayError 是从 v1.1.1 引入的。
 

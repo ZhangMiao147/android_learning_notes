@@ -1480,8 +1480,6 @@ public class GifBitmapWrapper {
 }
 ```
 
-　　j
-
 ## 2.8. GifBitmapWrapperResource 类
 
 ```java

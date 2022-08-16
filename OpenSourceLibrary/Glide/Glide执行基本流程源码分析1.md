@@ -12,6 +12,8 @@ Glide.with(this).load(url).into(imageView);
 
 　　这篇只分析 with() 和 load() 两个方法的源码流程。into() 的分析看[Glide 执行基本流程源码分析 2](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/Glide/Glide执行基本流程源码分析2.md)。
 
+![](image/glide.png)
+
 # 1. with()
 
 　　with() 方法是 Glide 类中的一组静态方法，它有好几个方法重载。
@@ -324,7 +326,7 @@ public class RequestManager implements LifecycleListener {
 
 　　load() 方法的逻辑非常简单，就是先调用了 fromString() 方法，fromString() 方法返回的是一个 DrawableTypeRequest 对象，接着调用了 DrawableTypeRequest 的 load() 方法，然后把传入的图片 URL 地址传进去。
 
-## 2.1. RequestManager#from
+## 2.1. RequestManager#fromString
 
 ```java
     public DrawableTypeRequest<String> fromString() {

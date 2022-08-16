@@ -136,9 +136,7 @@ public interface dbDao {
  */
 @Database(entities = {TestData.class}, version = 1, exportSchema = false)
 public abstract class LocalRoomDataBase extends RoomDatabase {
-    public abstract dbDao getTestDataDao(); // 数据库相关操作 Dao，可以定义多个
-  
-  	
+    public abstract dbDao getTestDataDao(); // 数据库相关操作 Dao，可以定义多个	
 }
 
 ```
@@ -203,8 +201,6 @@ public class LocalRoomUserDao {
           }
       }
 ```
-
-
 
 Room 的操作都需要在子线程执行，如果需要在主线程执行需要设置 allowMainThreadQueries() 方法。
 
