@@ -53,6 +53,8 @@
     * Serializable
     * Parcelable
   * AIDL
+    * [AIDL 的使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/IPC/AIDL/AIDL%E7%9A%84%E4%BD%BF%E7%94%A8.md)
+    * [AIDL 的工作原理](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/IPC/AIDL/AIDL%E7%9A%84%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86.md)
 
 ## Fragment
 
@@ -119,6 +121,14 @@
   * Snackbar
   * 下拉刷新
 
+## 网络
+
+* 长链接
+
+  * https://blog.csdn.net/qq_23547831/article/details/51690047 Android产品研发（十二）-->App长连接实现
+
+  * https://www.jianshu.com/p/6ff879706d9c Android WebSocket长连接的实现
+
 ## Framework
 
 * 系统启动流程
@@ -140,6 +150,7 @@
 * 文件存储
 * SharedPreferences
 * SQLite
+* http://www.javashuo.com/article/p-ytiohkrr-hc.html Android 存储优化 —— MMKV 集成与原理
 
 ## 优化
 
@@ -153,6 +164,7 @@
 - [布局优化之 merge](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/optimize/布局优化之merge.md)
 - [布局优化之 ViewStub](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/optimize/布局优化之ViewStub.md)
 - [性能优化工具](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/optimize/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%B7%A5%E5%85%B7.md)
+- android 大图加载显示 https://blog.csdn.net/wenzhi20102321/article/details/123972710
 
 ## 存储
 

@@ -117,6 +117,9 @@
   * [Handler 的延伸](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/Handler的延伸.md)
   * [ThreadLocal 知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/ThreadLocal知识.md)
   * [AsyncTask 的知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/handler/AysncTask的知识.md)
+* AIDL
+  * [AIDL 的使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/IPC/AIDL/AIDL%E7%9A%84%E4%BD%BF%E7%94%A8.md)
+  * [AIDL 的工作原理](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/IPC/AIDL/AIDL%E7%9A%84%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86.md)
 
 ## :nine: 存储
 
@@ -480,7 +483,7 @@
 * [Java 核心技术卷一：基础知识](https://github.com/havenBoy/JavaBook-Notes/tree/master/Java核心技术卷一基础知识)
 * [React Native 移动开发实战](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/React%20Native%20移动开发实战)
 * [重构改善既有代码的设计](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/重构改善既有代码的设计)
-* [Effective Java]
+* [Effective Java](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Effective%20Java/EffectiveJavaReadRecord.txt)
 * [代码整洁之道]
 * [设计模式之禅]
 
