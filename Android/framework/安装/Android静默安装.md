@@ -140,8 +140,8 @@ PackageInstaller.SessionParams.MODE_FULL_INSTALL);
 
 步骤分为两步：
 
-1. 写入APK到nstallerSession
-2. 安装APK
+1. 写入 APK 到 InstallerSession
+2. 安装 APK
 
 写入 APK 到 InstallSession：
 
@@ -250,7 +250,7 @@ PackageInstaller.EXTRA_PACKAGE_NAME);
 
 ```
 
-在AndroidManifest里面注册InstallResultReceiver时，要加上对应的action:
+在 AndroidManifest 里面注册 InstallResultReceiver 时，要加上对应的 action:
 
 ```java
 <receiver

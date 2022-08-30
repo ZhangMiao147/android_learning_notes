@@ -159,7 +159,7 @@ public int match(Uri uri);
 
 ​		该方法用于更新 ContentProvider 中的数据。
 
-##### 5.2.1.4. quesry
+##### 5.2.1.4. query
 
 ​		public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
 
