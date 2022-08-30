@@ -144,6 +144,7 @@
 * [shape 布局文件的替换方案](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/shape布局文件的替换方案.md)
 * [Android 编码规范](https://github.com/ZhangMiao147/android_learning_notes/tree/master/Android/Android编码规范)
 * [uses-permission 和 permission 区别及使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/uses-permission%E5%92%8Cpermission%E5%8C%BA%E5%88%AB%E5%8F%8A%E4%BD%BF%E7%94%A8.md)
+* [类加载器 ClassLoader](https://github.com/ZhangMiao147/android_learning_notes/tree/master/Android/other/classLoader)
 
 # :tea: Java
 
@@ -484,7 +485,7 @@
 * [React Native 移动开发实战](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/React%20Native%20移动开发实战)
 * [重构改善既有代码的设计](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/重构改善既有代码的设计)
 * [Effective Java](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Effective%20Java/EffectiveJavaReadRecord.txt)
-* [代码整洁之道]
+* [代码整洁之道](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93)
 * [设计模式之禅]
 
 ## :two: 非技术书籍

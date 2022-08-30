@@ -75,12 +75,13 @@
 * 第 9 章 [单元测试](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC9%E7%AB%A0-%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95.md)
 * 第 10 章 [类](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC10%E7%AB%A0-%E7%B1%BB.md)
 * 第 11 章 [系统](https://github.com/havenBoy/JavaBook-Notes/blob/master/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC11%E7%AB%A0-%E7%B3%BB%E7%BB%9F.md)
-* 第 12 章 迭代
-* 第 13 章 并发编程
-* 第 14 章 逐步改进
-* 第 15 章 JUnit 内幕
-* 第 16 章 重构 SerialDate
-* 第 17 章 味道与启发
+* 第 12 章 [迭代](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC12%E7%AB%A0-%E8%BF%AD%E4%BB%A3.md)
+* 第 13 章 [并发编程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC13%E7%AB%A0-%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B.md)
+* 第 14 章 [逐步改进](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC14%E7%AB%A0-%E9%80%90%E6%AD%A5%E6%94%B9%E8%BF%9B.md)
+* 第 15 章 [JUnit 内幕](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC15%E7%AB%A0-JUnit%E5%86%85%E5%B9%95.md)
+* 第 16 章 [重构 SerialDate](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC16%E7%AB%A0-%E9%87%8D%E6%9E%84SerialDate.md)
+* 第 17 章 [味道与启发](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E7%AC%AC17%E7%AB%A0-%E5%91%B3%E9%81%93%E4%B8%8E%E5%90%AF%E5%8F%91.md)
+* 附录 A [并发编程 II](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/%E9%99%84%E5%BD%95A-%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8BII.md)
 
 # 设计模式之禅 - 未完
 
