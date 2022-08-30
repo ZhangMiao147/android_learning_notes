@@ -11,4 +11,5 @@ Activity 通常展示为一个可视化的用户界面。
 * [Activity 的使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Activity%E7%9A%84%E4%BD%BF%E7%94%A8.md)（增加一个 scheme 打开方式的知识 20220406）
 * [Activity 的启动流程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Activity%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B.md) （不够详细与透彻，再次整理，参考文档：https://blog.csdn.net/dehang0/article/details/104584002  20220406）
 * [Activity 的常见问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Activity%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98.md)
+* [Activity 的状态](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/Activity/Activity%E7%9A%84%E5%9B%9B%E7%A7%8D%E7%8A%B6%E6%80%81.md)
 
