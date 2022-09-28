@@ -10,3 +10,17 @@
 https://copyfuture.com/blogs-details/20200521113344727mtc5ap7o39yuqhi Android Jetpack 之ViewBinding和DataBinding
 
 https://blog.csdn.net/qq_43478882/article/details/125555461 区别
+
+Databinding
+
+## LiveData
+
+ ViewModel 的生命周期比 Activity 长。（为啥比它长：*https://juejin.cn/post/6844904176296673287*
+
+MediatorLiveData 
+
+Kotlin的Flow
+
+- Kotlin Symbol Processing (KSP)
+  https://github.com/google/ksp
+
