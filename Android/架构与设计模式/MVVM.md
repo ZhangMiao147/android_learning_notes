@@ -16,7 +16,7 @@
 >  **Model：**实体模型
 >  **Controllor：**对应于 Activity 业务逻辑，数据处理和 UI 处理
 
-　　从上面看起来各个组件的职责视乎还挺耦合 MVC 的，但是打开 Android 的一个 Activity 文件，一看一言难尽， Android 中经常会出现数千行的 Activity 代码，究其原因，Android 中纯粹作为 View 的各个 XML 视图功能太弱，Activity 基本上都是 View 和 Controller 的合体，既要负责视图的显示又要加入控制逻辑，承担的功能过多，代码量大也就不足为奇。所有更贴切的目前常规的开发说应该是 View-Model 模式，大部分都是通过 Activity 的协调、连接和处理逻辑的。
+　　从上面看起来各个组件的职责似乎还挺耦合 MVC 的，但是打开 Android 的一个 Activity 文件，一看一言难尽， Android 中经常会出现数千行的 Activity 代码，究其原因，Android 中纯粹作为 View 的各个 XML 视图功能太弱，Activity 基本上都是 View 和 Controller 的合体，既要负责视图的显示又要加入控制逻辑，承担的功能过多，代码量大也就不足为奇。所有更贴切的目前常规的开发说应该是 View-Model 模式，大部分都是通过 Activity 的协调、连接和处理逻辑的。
 
 ## 2.2. MVP
 
@@ -348,8 +348,6 @@ protected void onDestroy() {
   ![img](https:////upload-images.jianshu.io/upload_images/966283-e86159db8c9114b0.png)
 
 - 源码涉及 RxJava+Retrofit+Lambda 如有不懂或没接触过，花点时间入门一下，用到都是比较简单的东西。
-
-希望这篇博客在如何构建Android MVVM应用程序对你有所帮助，如有任何疑问，可以给我留言,欢迎大家共同探讨，如果对MVVM Light Toolkit 有任何问题，也可以反馈给我。
 
 # 5. 参考文章
 

@@ -32,9 +32,11 @@ BaseDexClassLoader 的 3 个子类：
 
 ## PathClassLoader
 
-PathClassLoader 是 BaseDexClassLoader 子类，应用中的类，都是由 PathClassLoader 进行加载；
+PathClassLoader 是 BaseDexClassLoader 子类，应用中的类，都是由 PathClassLoader 进行加载。
 
 Android 系统相关的类，如四大组件、Android 自带类，都是由 PathClassLoader 加载的。
+
+PathClassLoader 用来加载系统 APK 和被安装到手机中 APK 内的 dex 文件。
 
 ## DexClassLoader
 
@@ -44,7 +46,7 @@ DexClassLoader 是 BaseDexClassLoader 的子类，该类可以加载任意目录
 
 DexClassLoader 在动态字节码技术、热修复、插件化、DEX 加固等方面使用广泛。
 
-
+对比 PathClassLoader 只能加载已安装的 apk 或者 dex 文件，DexClassLoader 则没有此限制。可以从 sdcard 上加载 .apk 和 .dex 文件，这也是热修复和插件化的基础。在不需要安装应用的情况下，完成需要使用的 dex 加载。
 
 ## SecureClassLoader
 
@@ -57,3 +59,4 @@ URLClassLoader 是 SecureClassLoader 的子类，其可以使用 url 路径加�
 ## 参考文章
 
 1. [【Android 逆向】类加载器 ClassLoader ( Android 的八种类加载器 | ClassLoader | BaseDexClassLoader | DexClassLoader )](https://blog.csdn.net/shulianghan/article/details/121763949)
+2. [Android 中的类加载器](https://www.jianshu.com/p/40fd68ef0b1f/)
