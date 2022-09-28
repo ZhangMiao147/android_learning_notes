@@ -40,41 +40,41 @@ pm 就是 PackageManager。
 
    （6）HandlerParams 的 startCopy() 方法中会调用 handleStartCopy() 方法进行拷贝操作，如果失败，会进行重试 4 次，如果 4 次还失败，则调用 handleServiceError() 返回失败。如果成功，会调用 handleStartCopy 返回状态码。
 
-   （7）startCopy() 方法调用 HandlerParams 子类的 InstallParams 的 handleStartCopy()来完成拷贝工作的，在 handleStartCopy() 方法中如果内存不足，则会调用 Installer.freeCache() 释放存储空间；接下来调用InstallArgs的copyApk方法进行包拷贝。InstallArgs的copyApk 会创建目录文件，调用 imc.copyPackage() 方法进行代码拷贝，还有Native 代码（也就是 so 进行）拷贝。
+   （7）startCopy() 方法调用 HandlerParams 子类的 InstallParams 的 handleStartCopy()来完成拷贝工作的，在 handleStartCopy() 方法中如果内存不足，则会调用 Installer.freeCache() 释放存储空间；接下来调用 InstallArgs 的 copyApk 方法进行包拷贝。InstallArgs 的 copyApk 会创建目录文件，调用 imc.copyPackage() 方法进行代码拷贝，还有 Native 代码（也就是 so 进行）拷贝。
 
    （8）imc 其实是一个远程的代理，实际的调用方是 DefaultContainerService 的成员变量 mBinder。而 DefaultContainerService 的 mBinder 的 copyPackage() 方法会调用 DefaultContainerService 的 copyFile() 方法，copyFile() 方法调用了 Stream.copy() 方法完成拷贝。
 
    （9）拷贝操作成功后，在 HandlerParams 的 startCopy() 方法中会调用 handleStartCopy 返回状态码，handleStartCopy() 方法里面调用的 processPendingInstall() 方法，processPendingInstall() 方法中会向 mHandler 发送一个 Runnable 对象，如果状态是 PackageManager.INSTALL_SUCCESSED，则分为 3 个阶段：
 
-   * 预安装阶段：检查当前安装包的状态以及确保SDCARD的挂载，并返回状态信息。在安装前确保安装环境的可靠。
-   * 安装阶段：对mInstallLock加锁，表明同时只能由一个安装包进行安装，然后调用installPackageLI方法完成具体的安装操作。
+   * 预安装阶段：检查当前安装包的状态以及确保 SDCARD 的挂载，并返回状态信息。在安装前确保安装环境的可靠。
+   * 安装阶段：对 mInstallLock 加锁，表明同时只能由一个安装包进行安装，然后调用 installPackageLI 方法完成具体的安装操作。
    * 安装收尾阶段：检查状态，如果安装失败，删除相关目录文件。
 
 3. 解析验证注册流程：
 
    （1）解析验证从 PackageManagerService 的installPackageLI() 方法开始。
 
-   * 第一步：PackageManagerService 的installPackageLI() 方法中调用了 PackageParser.Package 的 parsePackage() 方法进行解析 APK，解析的结果会记录在 PackageParser.Package 中。
+   * 第一步：PackageManagerService 的 installPackageLI() 方法中调用了 PackageParser.Package 的 parsePackage() 方法进行解析 APK，解析的结果会记录在 PackageParser.Package 中。
    * 第二步：判断是新安装还是升级安装，调用 shouldCheckUpgradeKeySetLP() 方法检查密钥集合是否一致。
    * 第三步：检查权限
    * 第四步：根据不同的安装标志，来进行操作，分为三种情况
      * 移动操作：
-     * 非锁定安装且没有安装在SD卡上：**新安装走这里**，这里面主要做两个操作：第①步是**so拷贝**，第②步是**进行dex优化**，第③步机械性dex2oat操作，将dex文件转化为oat。
+     * 非锁定安装且没有安装在 SD 卡上：**新安装走这里**，这里面主要做两个操作：第①步是**so拷贝**，第②步是**进行dex优化**，第③步机械性 dex2oat 操作，将 dex 文件转化为 oat。
      * 如果上面两个条件都不满足，则什么也不做
-   * 第五步：重命名安装：将/data/app/vmdl{安装会话}.tmp重命名为/data/apppp/包名-suffix,suffix为1、2...
-   * 第六步：开始intent filter验证
+   * 第五步：重命名安装：将/data/app/vmdl{安装会话}.tmp重命名为/data/app/包名-suffix,suffix为1、2...
+   * 第六步：开始 intent filter 验证
    * 第七步：这里根据不同的安装方式进行不同的方式，主要有两种情况
-     - 覆盖安装即更新安装：调用replacePackageLI方法进行覆盖安装
-     - 首次安装：调用installNewPackageLI方法进行首次安装
-   * 第八步：安装收尾，调用PackageSetting的queryInstalledUsers设置安装用户
+     - 覆盖安装即更新安装：调用 replacePackageLI 方法进行覆盖安装
+     - 首次安装：调用 installNewPackageLI 方法进行首次安装
+   * 第八步：安装收尾，调用 PackageSetting 的 queryInstalledUsers 设置安装用户
 
-   （2）Android 安装一个 APK 的时候首先会解析 APK，而解析 APK 则需要用到一个工具类，这个工具类就是 PackageParser。PackageParse 类主要用来解析手机上的 APK 文件（支持 Single APK和 MultipleAPK），解析一个 APK 主要是分类两个步骤：1.将APK 解析成 Package：即解析 APK 文件为 Package 对象的规程。2.将 Package 转化为 PackageInfo：即由 Package 对象生成 Package 对象生成 PackageInfo 的过程。
+   （2）Android 安装一个 APK 的时候首先会解析 APK，而解析 APK 则需要用到一个工具类，这个工具类就是 PackageParser。PackageParse 类主要用来解析手机上的 APK 文件（支持 Single APK 和 MultipleAPK），解析一个 APK 主要是分类两个步骤：1.将APK 解析成 Package：即解析 APK 文件为 Package 对象的规程。2.将 Package 转化为 PackageInfo：即由 Package 对象生成 Package 对象生成 PackageInfo 的过程。
 
    （3）PackageParser.Package 的 parsePackage() 方法会调用 parseBaseApk() 方法，解析一个 apk 并生成一个 Package 对象。
 
    （4）在 PackageParser 的 parseBaseApk() 方法中会详细解析 AndroidManifest 下面的每一个节点（如 application、overlay、key_sets、permission-group、permission、permission-tree、uses-permission 等等节点）。并且也会调用 loadApkIntoAssetManager() 方法将 Android 系统中安装包路径和 AssetManager 关联。
 
-   （5）解析完成后回到PackageManagerService 的installPackageLI() 方法中会调用installNewPackageLI方法进行首次安装。
+   （5）解析完成后回到 PackageManagerService 的 installPackageLI() 方法中会调用 installNewPackageLI 方法进行首次安装。
 
 4. 装载：
 
@@ -107,8 +107,6 @@ pm 就是 PackageManager。
      * 6.解析 instrumentation，并映射到 PackageManagerService 的变量 xx 里面。
 
    （3）PackageManagerService 的 createDataDirsLI() 方法调用 Installer 的 install 方法进行了包的安装。
-
-   （4）
 
 5. 完成：在 PackageManagerService. 的 startCopy() 方法的最后，调用了 handleReturnCode() 方法发送了 POST_INSTALL 的消息到 PackageHandler 通知安装结束。
 
