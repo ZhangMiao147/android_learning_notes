@@ -11,6 +11,14 @@
 * [ConstraintLayout](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/ConstraintLayout.md)
 * LinearLayoutCompat
 
+## View
+
+* BottomNavigationView http://www.45fan.com/article.php?aid=1COkLHKOUF2TiLJM
+
+### Snackbars
+
+* [Snackbars 常见问题]
+
 ## 列表
 
 ### ListView
@@ -38,7 +46,7 @@
 
 
 
-## 其他
+## 触控
 
 * MotionEvent 详解 
 
