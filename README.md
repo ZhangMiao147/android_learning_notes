@@ -149,6 +149,7 @@
 * [Android 编码规范](https://github.com/ZhangMiao147/android_learning_notes/tree/master/Android/Android编码规范)
 * [uses-permission 和 permission 区别及使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/other/uses-permission%E5%92%8Cpermission%E5%8C%BA%E5%88%AB%E5%8F%8A%E4%BD%BF%E7%94%A8.md)
 * [类加载器 ClassLoader](https://github.com/ZhangMiao147/android_learning_notes/tree/master/Android/other/classLoader)
+* https://www.jianshu.com/p/d182479c7a44 - @CallSuper 注解
 
 # :tea: Java
 

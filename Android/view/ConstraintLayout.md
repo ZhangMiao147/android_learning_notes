@@ -601,7 +601,7 @@ Chains（链）也是一个非常好用的特性，它是将许多个控件在�
         android:textSize="25sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@id/B"
-        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintHorizontal_chainStyle="spread" // 链模式
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

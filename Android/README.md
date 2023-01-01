@@ -38,6 +38,10 @@
 * [PackageManagerService之启动解析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/PackageManagerService之启动解析.md)
 * [守护进程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/components/守护进程.md)
 
+
+
+* https://www.bbsmax.com/A/n2d9eL06dD/ Android 开发之：Intent.createChooser() 妙用
+
 ## 进程与线程
 
 * Handler
