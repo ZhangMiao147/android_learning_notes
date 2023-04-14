@@ -112,6 +112,6 @@ call.enqueue(new Callback()
 
 ## 3. 参考文章
 
-[Android OkHttp完全解析 是时候来了解OkHttp了](https://blog.csdn.net/lmj623565791/article/details/47911083)
+1. [Android OkHttp完全解析 是时候来了解OkHttp了](https://blog.csdn.net/lmj623565791/article/details/47911083)
 
-[OkHttp深入分析——基础认知部分](https://www.jianshu.com/p/b38bd9d1ae76) 
+2. [OkHttp深入分析——基础认知部分](https://www.jianshu.com/p/b38bd9d1ae76) 
