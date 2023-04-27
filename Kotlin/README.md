@@ -1,6 +1,7 @@
 # Kotlin 
 
-* 动脑学院 kotlin 学习笔记
+* [动脑学院 kotlin 学习笔记]
+* [Kotlin 之 String]
 
 
 
