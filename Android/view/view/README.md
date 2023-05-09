@@ -1,6 +1,7 @@
 # View
 
 * [WebView 遇到的 Exception]
+* [EditText 的 imeOptions 与多行输入的问题]
 
 ## Snackbars
 
