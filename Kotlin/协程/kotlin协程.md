@@ -2786,11 +2786,887 @@ Flow 就是 Kotlin 协程与响应式编程模型结合的产物。
 
 ### 11.1. 认识 Flow
 
+**代码清单 1: 序列生成器**
+
+```kotlin
+val ints = sequence {
+  (1..3).forEach { 
+    yield(it)
+  }  
+}
+```
+
+每次访问 ints 的下一个元素的时候它就执行内部的逻辑直到遇到 yield，如果希望在元素之间加上延时呢？
+
+**代码清单 2: 序列生成器中不能调用其他挂起函数**
+
+```kotlin
+val ints = sequence {
+  (1..3).forEach { 
+    yield(it)
+    delay(1000) // ERROR!
+  }  
+}
+```
+
+受 RestrictsSuspension 注解的约束，delay 不能在  SequenceScope 的扩展成员当中被调用，因为不能在序列生成器的协程体内调用了。
+
+假设序列生成器不受这个限制，调用 delay 回导致后续的执行流程的线程发生变化，外部的调用者发现在访问 ints 的下一个元素的时候居然还会有切换线程的副作用，不仅如此，想通过指定调度器来限定序列创建所在的线程，同样是不可以的，甚至没有办法为它设置协程上下文。
+
+既然序列生成器有这个多的限制，需要认识一下 Flow 了。它的 API 与序列生成器极为相似：
+
+**代码清单 3: 创建 Flow**
+
+```kotlin
+val intFlow = flow {
+  (1..3).forEach { 
+    emit(it)
+    delay(100)
+  }
+}
+```
+
+新元素通过 emit 函数提供，Flow 的执行体内部也可以调用其他挂起函数，这样就可以在每次提供一个新元素后再延时 100ms 了。
+
+Flow 也可以设定它运行时所使用的调度器：
+
+```kotlin
+intFlow.flowOn(Dispatchers.IO)
+```
+
+通过 flowOn 设置的调度器只对它之前的操作有影响，因此这里意味着 intFlow 的构造逻辑会在 IO 调度器上执行。
+
+最终消费 intFlow 需要调用 collect 函数，这个函数也是一个挂起函数，启动一个协程来消费 intFlow：
+
+**代码清单 4: 消费 Flow**
+
+```kotlin
+GlobalScope.launch(myDispatcher) {
+  intFlow.flowOn(Dispatchers.IO)
+    .collect { println(it) }
+}.join()
+```
+
+为了区分调度器，为协程设置了一个自定义的调度器，它会将协程调度到名为 MyThread 的协程上，结果如下：
+
+```kotlin
+[MyThread] 1
+[MyThread] 2
+[MyThread] 3
+```
+
+### 11.2. 对比 RxJava 的线程切换
+
+RxJava 也是一个基于响应式编程模型的异步框架，它提供了两个切换调度器的 API 分别是 subscribeOn 和 observeOn：
+
+**代码清单 5: RxJava 的调度器切换**
+
+```kotlin
+Observable.create<Int> {
+  (1..3).forEach { e ->
+    it.onNext(e)
+  }
+  it.onComplete()
+}.subscribeOn(Schedulers.io())
+.observeOn(Schedulers.from(myExecutor))
+.subscribe {
+  println(it)
+}
+```
+
+其中 subscribeOn 指定的调度器影响前面的逻辑，observeOn 影响的是后面的逻辑，因此 it.onNext(e) 执行在它的 io 这个调度器上，而最后的 println(it) 执行在通过 myExecutor 创建出来的调度器上。
+
+Flow 的调度器 API 中看似只有 flowOn 与 subscribeOn 对应，其实不然，collect 所在协程的调度器则与 observeOn 指定的调度器对应。
+
+在 RxJava 的学习和使用过程中，subscribeOn 和 observeOn 经常容易被混淆；而在 Flow 当中 collect 所在的协程自然就是观察者，它想运行在什么调度器上它自己指定即可，非常容易区分。
+
+### 11.3. 冷数据流
+
+一个 Flow 创建出来之后，不消费则不生产，多次消费则多次生产，生产和消费总是相对应的。
+
+**代码清单 6：Flow 可以被重复消费**
+
+```kotlin
+GlobalScope.launch(dispatcher) {
+  intFlow.collect { println(it) }
+  intFlow.collect { println(it) }
+}.join()
+```
+
+消费 intFlow 会输出 1,2,3, 重复消费它会重复输出 1,2,3。
+
+这一点类似于前面提到的 sequence 和 RxJava 例子，它们也都是自己的消费端。创建一个序列然后去迭代它，每次迭代都会创建一个新的迭代器从头开始迭代；RxJava 的 Observable 也是如此，每次调用它的 subscribe 都会重新消费一次。
+
+所谓冷数据流，就是只有消费时才会生产的数据流，这一点与 Channel 正对应：Channel 的发送端并不依赖于接收端。
+
+说明 RxJava 也存在热数据流，可以通过一定的手段实现冷热数据流的转化。不过相比之下，冷数据流的应用场景更为丰富。
+
+### 11.4. 异常处理
+
+Flow 的异常处理也比较直接，直接调用 catch 函数即可：
+
+**代码清单 7：捕获 Flow 的异常**
+
+```kotlin
+flow {
+  emit(1)
+  throw ArithmeticException("Div 0")
+}.catch { t: Throwable ->
+  println("caught error: $t")
+}
+```
+
+在 Flow 的参数中抛出了一个异常，在 catch 函数中就可以直接捕获到这个异常。如果没有调用 catch 函数，未捕获异常会在消费时抛出。请注意，catch 函数只能捕获它的上游的异常。
+
+如果想要在流完成时执行逻辑，可以使用 onCompletion：
+
+**代码清单 8：订阅流的完成**
+
+```kotlin
+flow {
+  emit(1)
+  throw ArithmeticException("Div 0")
+}.catch { t: Throwable ->
+  println("caught error: $t")
+}.onCompletion { t: Throwable? ->
+  println("finally.")
+}
+```
+
+onCompletion 用起来比较类似于 try ... catch ... finally 中的 finally，无论前面是否存在异常，它都会被调用，参数 t 则是前面未捕获的异常。
+
+Flow 的设计初衷是希望确保流操作中异常透明。因此，以下写法是违反 Flow 的设计原则的：
+
+**代码清单 9：命令式的异常处理（不推荐）**
+
+```kotlin
+flow { 
+  try {
+    emit(1)
+    throw ArithmeticException("Div 0")
+  } catch (t: Throwable){
+    println("caught error: $t")
+  } finally {
+    println("finally.")
+  }
+}
+```
+
+在流操作内部使用 try ... catch ... finally 这样的写法后续可能被禁用。
+
+在 RxJava 当中还有 onErrorReturn 类似的操作：
+
+**代码清单 10：RxJava 从异常中恢复**
+
+```kotlin
+val observable = Observable.create<Int> {
+  ...
+}.onErrorReturn {
+  println(t)
+  10
+}
+```
+
+捕获异常后，返回 10 作为下一个值。
+
+在 Flow 当中也可以模拟这样的操作：
+
+**代码清单 11：Flow 从异常中恢复**
+
+```kotlin
+flow {
+  emit(1)
+  throw ArithmeticException("Div 0")
+}.catch { t: Throwable ->
+  println("caught error: $t")
+  emit(10)
+}
+```
+
+这里可以使用 emit 重新生产新元素出来。emit 定义在 FlowCollector 当中，因此只要遇到 Receiver 为 FlowCollector 的函数，就可以生产新元素。
+
+**说明** onCompletion 预计在协程框架的 1.4 版本中会被重新设计，之后它的作用类似于 RxJava 中 Subscriber 的 onComplete，即作为整个 Flow 的完成回调使用，回调的参数也将包含整个 Flow 的未捕获异常。
+
+### 11.5. 末端操作符
+
+collect 是最基本的末端操作符，功能与 RxJava 的 subscribe 类似。除了 collect 之外，还有其他常见的末端操作符，大体分为两类：
+
+1. 集合类型转换操作，包括 toList、toSet 等。
+2. 聚合操作，包括将 Flow 规约到单值的 reduce、fold 等操作，以及获得耽搁元素的操作包括 single、singleOrNull、first 等。
+
+实际上，识别是否为末端操作符，还有一个简单方法，由于 Flow 的消费端一定需要运行在协程当中，因此末端操作符都是挂起函数。
+
+### 11.6. 分离 flow 的消费和触发
+
+除了可以在 collect 处消费 Flow 的元素之外，还可以通过 onEach 来做到这一点。这样消费的具体操作就不需要与末端操作符放在一起，collect 函数可以放到其他任意位置调用，例如：
+
+**代码清单 12：分离 Flow 的消费和触发**
+
+```kotlin
+fun createFlow() = flow<Int> {
+    (1..3).forEach {
+      emit(it)
+      delay(100)
+    }
+  }.onEach { println(it) }
+
+fun main(){
+  GlobalScope.launch {
+    createFlow().collect()
+  }
+}
+```
+
+由此又可以衍生出一种新的消费 Flow 的写法：
+
+**代码清单 13：使用协程作用域直接触发 Flow**
+
+```kotlin
+fun main(){
+  createFlow().launchIn(GlobalScope)
+}
+```
+
+### 11.7. Flow 的取消
+
+Flow 没有提供取消操作，原因很简单：不需要。
+
+Flow 的消费依赖于 collect 这样的末端操作符，而它们又必须在协程当中调用，因此 Flow 的取消主要依赖于末端操作符所在的协程的状态。
+
+**代码清单 14：Flow 的取消**
+
+```kotlin
+val job = GlobalScope.launch {
+  val intFlow = flow {
+    (1..3).forEach {
+      delay(1000)
+      emit(it)
+    }
+  }
+
+  intFlow.collect { println(it) }
+}
+
+delay(2500)
+job.cancelAndJoin()
+```
+
+每隔 1000ms 生产一个元素，2500ms 以后协程被取消，因此最后一个元素生产前 Flow 就已经被取消，输出为：
+
+```kotlin
+1
+▶ 1000ms later
+2
+```
+
+如此看来，想要取消 Flow 只需要取消它所在的协程即可。
+
+### 11.8. 其他 Flow 的创建方式
+
+已经知道了 flow{...}这种形式的创建方式，不过在这当中无法随意切换调度器，这是因为 emit 函数不是线程安全的：
+
+**代码清单 15：不能在 Flow 中直接切换调度器**
+
+```kotlin
+flow { // BAD!!
+  emit(1)
+  withContext(Dispatchers.IO){
+    emit(2)
+  }
+}
+```
+
+想要在生成元素时切换调度器，就必须使用 channelFlow 函数来创建 Flow：
+
+```kotlin
+channelFlow {
+  send(1)
+  withContext(Dispatchers.IO) {
+    send(2)
+  }
+}
+```
+
+此外，也可以通过集合框架来创建 Flow：
+
+```kotlin
+listOf(1, 2, 3, 4).asFlow()
+setOf(1, 2, 3, 4).asFlow()
+flowOf(1, 2, 3, 4)
+```
+
+### 11.9. Flow 的背压
+
+只要是响应式编程，就一定会有背压问题。
+
+背压问题在生产者的生产速率高于消费者的处理速率的情况下出现。为了保证数据不丢失，也会考虑添加缓存来缓解问题：
+
+**代码清单 16：为 Flow 添加缓冲**
+
+```kotlin
+flow {
+  List(100) {
+    emit(it)
+  }
+}.buffer()
+```
+
+也可以为 buffer 指定一个容量。不过，如果只是单纯地添加缓存，而不是从根本上解决问题就始终会造成数据积压。
+
+问题产生的根本原因是生产和消费速率的不匹配，除直接优化消费者的性能意外，也可以采取一些取舍的手段。
+
+第一种是 conflate。与 Channel 的 Conflate 模式一致，新数据会覆盖老数据，例如：
+
+**代码清单 17：使用 conflate 解决背压问题**	
+
+```kotlin
+flow {
+  List(100) {
+    emit(it)
+  }
+}.conflate()
+.collect { value ->
+  println("Collecting $value")
+  delay(100) 
+  println("$value collected")
+}
+```
+
+快速发送了 100 个元素，最后接收到的只有两个，当然这个结果每次都不一定一样：
+
+```kotlin
+Collecting 1
+1 collected
+Collecting 99
+99 collected
+```
+
+第二种是 collectLatest。顾名思义，只处理最新的数据，这看上去似乎与 conflate 没有区别，其实区别大了：它并不会直接用新数据覆盖老数据，而是每一个都会被处理，只不过如果前一个还没被处理完后一个就来了的话，处理前一个数据的逻辑就会被取消。
+
+**代码清单 18：使用 collectLatest 解决背压问题**	
+
+```kotlin
+flow {
+  List(100) {
+    emit(it)
+  }
+}.collectLatest { value ->
+  println("Collecting $value")
+  delay(100)
+  println("$value collected")
+}
+```
+
+运行结果如下：
+
+```kotlin
+Collecting 0
+Collecting 1
+...
+Collecting 97
+Collecting 98
+Collecting 99
+▶ 100ms later
+99 collected
+```
+
+前面的 Collecting 输出了 0 ~ 99 的所有结果，而 collected 却只有 99，因为后面的数据到达时，处理上一个数据的操作正好被挂起了（请注意 delay(100)）。
+
+除 collectLatest 之外还有 mapLatest、flatMapLatest 等等，都是这个作用。
+
+### 11.10. Flow 的变换
+
+Flow 的变换与 RxJava 的 Observable 的表现也基本一致。
+
+例如可以使用 map 来变换 Flow 的数据：
+
+**代码清单 19：Flow 的元素变换**	
+
+```kotlin
+flow {
+  List(5){ emit(it) } 
+}.map { 
+  it * 2
+}
+```
+
+也可以映射成其他 Flow:
+
+**代码清单 20：Flow 的嵌套**	
+
+```kotlin
+flow {
+  List(5){ emit(it) } 
+}.map {
+  flow { List(it) { emit(it) } }
+}
+```
+
+这实际上得到的是一个数据类型为 Flow 的 Flow，如果希望将它们拼接起来，可以使用 flattenConcat：
+
+**代码清单 21：拼接 Flow**	
+
+```kotlin
+flow {
+  List(5){ emit(it) } 
+}.map {
+  flow { List(it) { emit(it) } }
+}.flattenConcat()
+  .collect { println(it) }
+```
+
+拼接的操作中 flattenConcat 是按顺序拼接的，结果的顺序仍然是生产时的顺序；还有一个是 flattenMerge，它会并发拼接，因此结果不会保证顺序。
+
+### 11.11. 使用 Flow 实现多路复用
+
+多数情况下，可以通过构造合适的 Flow 来实现多路复用的效果。
+
+**代码清单 22：使用 Flow 实现对 await 的多路复用**
+
+```kotlin
+coroutineScope {
+  val login = "..."
+  listOf(::getUserFromApi, ::getUserFromLocal) ... ①
+    .map { function ->
+      function.call(login) ... ②
+    }
+    .map { deferred ->
+      flow { emit(deferred.await()) } ... ③
+    }
+    .merge() ... ④
+    .onEach { user ->
+      println("Result: $user")
+    }.launchIn(this)
+}
+```
+
+这其中，① 处用创建了两个函数引用组成的 List；② 处调用了它们得到 deferred；③ 处比较关键，对于每一个 deferred 创建了一个单独的 Flow，并在 Flow 内部发送 deferred.await() 返回的结果，即返回的 User 对象；现在有了两个 Flow 实例，需要将它们整合成一个 Flow 进行处理，调用 merge 函数即可。
+
+![](https://kotlinblog-1251218094.costj.myqcloud.com/9e300468-a645-433d-ae41-60b3eaa97f5a/media/9ff28c5395881742a6878225807e2dd75c150d63.png)
+
+图：使用 merge 合并 Flow
+
+同样的，对 Channel 的读取复用的场景也可以使用 Flow 来完成。
+
+**代码清单 23：使用 Flow 实现对 Channel 的复用**
+
+```kotlin
+val channels = List(10) { Channel<Int>() }
+...
+val result = channels.map {
+    it.consumeAsFlow()
+  }
+  .merge()
+  .first()
+```
+
+这比 select 的版本看上去要更简洁明了，每个 Channel 都通过 consumeAsFlow 函数被映射成 Flow，再 merge 成一个 Flow，取第一个元素。
+
+Flow 是协程当中比较重要的异步工具，它的用法与其他类似的响应式编程框架非常相近。
+
+## 12. 协程为什么被称为“轻量级线程”？
+
+### 12.1. 协程是什么？
+
+协程的概念最核心的点其实就是函数或者一段程序能够被挂起（说暂停其实也没啥问题），待会儿再恢复，挂起和恢复是开发者的程序逻辑自己控制的，协程是通过主动挂起出让运行权来实现协作的。
+
+它跟线程最大的区别在于线程一旦开始执行，从任务的角度来看，就不会被暂停，直到任务结束这个过程都是连续的，线程之间是抢占式的调度，因此也不存在协作的问题。
+
+那么再来理一理协程的概念：
+
+* 挂起恢复
+* 程序自己处理挂起恢复
+* 程序自己处理挂起恢复来实现协程的协作运行
+
+关键核心就是协程是一个能挂起并且待会儿恢复执行的东西。
+
+### 12.2. 为什么协程的概念会有混乱的感觉？
+
+Java 对线程做了很好的支持，这也是 Java 在高并发场景风生水起的一个关键支柱，虚拟机底层对线程的支持，例如 Android 虚拟机，其实就是 pthread。Java 的 Object 还有一个 wait 方法，这个方法几乎支撑了各种锁的实现，它底层是 condition。
+
+绝大多数协程都是语言层面自己的实现，不同的编程语言有不同的使用场景，自然在实现上也看似有很大的差异，甚至还有的语言自己没有实现协程，单开发者通过第三方框架的方式提供了协程的能力，例如 Java 的框架 Quasar，加上协程实现本身在操作系统层面就有过一系列演进，因此出现了虽然理论上看起来很简单，单实现上却多样化的局面。
+
+### 12.3. 协程有哪些主流的实现？
+
+按照有没有栈来分，即：
+
+*  有栈协程 Stackful Coroutine：每一个协程都会有自己的调用栈，有点儿类似于线程的调用栈，这种情况下的协程实现其实很大程度上接近线程，主要不同体现在调度上。
+* 无栈协程 Stackless Coroutine：协程没有自己的调用栈。
+
+递归调用函数的层次太多就会导致 StackOverflowException，因为栈内存是有限的；程序出现了异常总是希望看到异常点的调用关系，这样方便定位问题，这也需要栈。
+
+有栈协程有什么好处呢？因为有栈，所以在任何一个调用的地方运行时都可以选择把栈保存起来，暂停这个协程，听起来就跟线程一样了，只不过挂起和恢复执行的权限在程序自己，而不是操作系统。缺点也是非常明显的，每创建一个协程不管有没有在运行都要为它开辟一个栈，这也是目前无栈协程流行的原因。
+
+goroutine 看上去似乎不像协程，因为开发者自己无法决定一个协程的挂起和恢复，这个工作是 go 运行时自己处理的。为了支持 goroutine 在任意位置能挂起，goroutine 其实是一个有栈协程，go 运行时在这里做了大量的优化，它的栈内存可以根据需要进行扩容和缩容，最小一般为内存页长 4KB。
+
+JavaScript、C# 还有 Python 的协程，或者干脆就说 async/await，相比之下就轻量多了，它们看起来更像是针对回调加了个语法糖的支持 -- 它们其实就是无栈协程的实现了。无栈，顾名思义，每一个协程都不会单独开辟调用栈，那么问题来了，它的上下文是如何保存的？
+
+CPS，即 continuation-passing-style。程序被挂起，或者说中断，最关键的是什么？是保存挂起点，或者中断点，对于线程被操作系统中断，中断点就是被保护在调用栈当中的，而无栈协程要保存到哪儿呢？保存到 Continuation 对象当中，这个东西可能在不同的语言当中叫法不一样，但本质上都是一个 Continuation，它就是一个普通的对象，占用内存非常小，还是很抽象，常见的 Callback，它其实就是一个 Continuation 的实现。
+
+Kotlin 的协程的根基就是一个叫做 Continuation 的类，长得就是一个回调，resume 就是 onSuccess，resumeWithexception 就是 onFailure。
+
+Continuation 携带了协程继续执行所需要的上下文，同时它自己又是挂起点，因为待会儿恢复执行的时候只需要执行它回调的函数体就可以了。对于 Kotlin 来讲，每一个 suspend 函数都是一个挂起点，意味着对于当前协程来说，每遇到一个 suspend 函数的调用，它都有可能会被挂起。每一个 suspend 函数都被编译器插入了一个 Continuation 类型的参数来保存当前的调用点。
+
+```kotlin
+suspend fun hello() = suspendCoroutine<Int>{ continuation ->
+    println("Hello")
+    continuation.resumeWith(Result.success(10086))
+}
+```
+
+定义了一个 suspend 函数 hello，它看起来没有接收任何参数，如果真是这样，在后面调用的 resumeWith 的 continuation 是哪里来的？
+
+都说挂起函数必须在协程内部调用，其实也不是，用 Java 代码直接取调用 suspend 函数，会发现这些 suspend 函数都需要传入一个额外的 Continuation，就是这个意思。
+
+当然，Java 也不是必须的，需要用点儿 Kotlin 反射，一样可以让 suspend 函数现出原形：
+
+```kotlin
+val helloRef = ::hello
+val result = helloRef.call(object: Continuation<Int>{
+    override val context = EmptyCoroutineContext
+
+    override fun resumeWith(result: Result<Int>) {
+        println("resumeWith: ${result.getOrNull()}")
+    }
+})
+```
+
+虽然没有办法直接调用 hello()，但可以拿到它的函数引用，用反射调用它，调用的时候如果什么参数都不传，编译器就会提示你它需要一个参数 -- 需要的这个参数正是 Continuation。
+
+这段代码不需要运行在协程体内，或者其他的 suspend 函数中。为什么官方要求 suspend 函数一定要运行在协程体内或者其他 suspend 函数中呢？
+
+答案自然就是任何一个协程体或者 suspend 函数中都有一个隐含的 Continuation 实例，编译器能够对这个实例进行正确传递，并将这个细节隐藏在协程的背后，让一步代码看起来像同步代码一样。
+
+Kotlin 协程的本质：它是一种无栈协程实现，它的本质就是一段代码 + Continuation 实例。
+
+### 12.4. Kotlin 协程真的只是一个线程框架吗？
+
+协程的世界可以没有线程，如果操作系统的 CPU 调度模型是协程的话；反过来也成立。Kotlin 协程是不是可以没有线程呢？至少从 Java 虚拟机的实现上来看是不太行，不过这不是 Kotlin 协程的问题，是 Java 虚拟机的问题。
+
+Kotlin 除了支持 Java 虚拟机之外，还支持 JavaScript，还支持 Native。JavaScript 无论是跑在 Web 还是 Node.js 当中，都是单线程玩耍的；Kotlin Native 虽然可以调用 pthread，但官方表示有自己的兵法模型（Worker），不建议直接使用线程。在这两个平台跑，Kotlin 的协程其实都是单线程的，又怎么讲是个线程框架呢？
+
+单线程要协程能做什么呢？异步不一定要多线程。Android 刚创建的时候想要拿到一个 View 的大小一般返回都是 0，因为 Activity 的布局是在 onResume 方法调用之后完成的，所以 handle.post 一下就好了：
+
+```kotlin
+override fun onResume(){
+    super.onResume()
+    handler.post {
+        val width = myView.width
+        ...
+    }
+}
+```
+
+这就是异步代码，但这代码其实都运行在主线程的，当然可以用协程改写一下：
+
+```kotlin
+override fun onResume() {
+    super.onResume()
+    GlobalScope.launch(Dispatchers.Main) {
+        val width = handler.postSuspend {
+            myView.width
+        }
+        Log.d("MyView", width.toString())
+    }
+}
+
+suspend fun <T> Handler.postSuspend(block: () -> T) = suspendCoroutine<T> {
+    post {
+        it.resume(block())
+    }
+}
+```
+
+其实个人觉得如果 Kotlin 协程的默认的调度器是 Main，并且这个 Main 会根据各自平台选择一个合适的事件循环，这样更能体现 Kotlin 协程在不同平台的一致性，例如对于 Android 来说 Main 就是 UI 线程上的事件循环，对于 Swing 的 UI 事件循环，只要是有事件循环的平台就默认基于这个循环来一个调度器，没有默认事件循环的也好办，Kotlin 协程本身就有 runBlocking，对于普通 Java 程序来说没有事件循环就给它构造一个就行了。
+
+Kotlin 协程的设计者没有这么做，他们当然也有他们的道理，毕竟他们不愿意抢播开发者一定要用协程，甚至立刻马上就得对原有得代码进行改造，他们希望 Kotlin 只是一门编程语言，一门提供足够安全保障和灵活语法的编程语言，剩下的交给开发者去选择。
+
+### 12.5. 协程真的比线程有优势吗？
+
+Kotlin 协程刚出来的时候，有人就做过性能对比，觉得协程没有任何性能优势。在一些场景确实用协程不会有任何性能上的优势，这就好比需要再一个单核上跑一个计算密集型的程序还要开多个线程跑一样，任何特性都有适合它的场景和不适合它的领域。
+
+协程比线程轻量，编程语言级别实现的协程就是程序内部的逻辑，不会设计操作系统的资源之间的切换，操作系统的内核线程自然会重一些，且不说每创建一个线程就会开辟的栈带来的内存开销，线程在上下文切换的时候需要 CPU 把高速缓存清掉并从内存中替换下一个线程的内存数据，并且处理上一个内存的中断点保存就是一个开销很大的事儿。
+
+线程除了包含内存线程本身执行代码能力的含义以外，通常也被赋予了逻辑任务的概念，所以协程是一种轻量级的 【线程】的说法，更多描述的是它的使用场景。
+
+**协程更像一种轻量级的【线程】。**
+
+这样说更贴切一些。线程自然可以享受到并行计算的优待，协程则只能依赖程序内部的线程来实现并行计算。协程的优势其实更多是体现在 IO 密集型程序上，这对于 Java 开发者来说可能又是一个很迷惑的事情，很少有人用上 NIO，绝大多数都是用 BIO 来读写 IO，因此不管开线程还是开协程，读写 IO 的时候总是要有一个线程在等待 IO，所以看上去似乎也没有什么区别。但用 NIO 就不一样了，IO 不阻塞，通过开一个和很少的几个线程来 select IO 的事件，有 IO 事件到达时再分配相应的线程去读写 IO，比起传统的 IO 就已经又了很大的提升。
+
+用了 NIO 以后，本身就可以减少线程的使用。可是协程呢？协程可以给予这个思路进一步简化代码的组织，虽然线程就能解决问题，但写起来其实是很累的，协程可以更轻松，特别是遇到多个任务需要访问公共资源时，如果每隔任务都分配一个线程去处理，那么少不了就有线程会花费大量的时间在等待获取锁上，但如果用协程来承载任务，用极少量的线程来承载协程，那么锁优化就变简单了：协程如果无法获取到锁，那么协程挂起，对应的线程就可以让出去运行其他协程了。
+
+线程可以让程序兵法的跑，协程可以让并发程序跑的看起来更美好。
+
+不管是异步代码同步化，还是并发代码简介化，协程的出现其实是为代码从计算机向人类思维的贴近提供了可能。
+
+## 13. 协程的几种常见的实现
+
+### 13.1. 协程的分类
+
+#### 13.1.1. 按调用栈分类
+
+由于协程需要支持挂起、恢复，因此对于挂起点的状态保存就显得极其关键。类似地，线程会因为 CPU 调度权的切换而被中断，它的中断状态会保存在调用栈当中，因为协程的实现也按照是否开辟相应的调用栈存在以下两种类型：
+
+* 有栈协程 Stackful Coroutine：每一个协程都会有自己的调用栈，有点儿类似于线程的调用栈，这种情况下的协程实现其实很大程度上接近线程，主要不同体现在调度上。
+* 无栈协程 Stackless Coroutine：协程没有自己的调用栈，挂起点的状态通过状态机或者闭包等语法来实现。
+
+有栈协程的优点就是可以在任意函数调用层级的任意位置进行挂起，并转移调度权，例如 Lua 的协程，这方面多数无栈协程就显得力不从心了，例如 Python 的 Generator；通常来讲，有栈协程因为总是会给协程开辟一块儿栈内存，因此内存开销也相对可观，而无栈协程在内存方面就比较有优势了。
+
+当然也有反例。
+
+Go 语言的 go routine 可以认为是有栈协程的一个实现，不过 Go 运行时在这里做了大量的优化，它的栈内存可以根据需要进行扩容和缩容，最小一般为内存页长 4kb，相比之下线程的栈空间通常是 MB 级别，因而它在内存方面的表现也相对轻量。
+
+Kotlin 的协程是一种无栈协程的实现，它的控制流转依靠对协程体本身编译生成的状态机的状态流转来实现，变量保存也是通过闭包语法来实现的，不过 Kotlin 的协程可以在任意调用层次挂起，换句话说启动一个 Kotlin 协程，可以在其中任意嵌套 suspend 函数，而这又恰恰是有栈协程最重要的特性之一：
+
+```kotlin
+suspend fun level_0() {
+    println("I'm in level 0!")
+    level_1() // ............ ①
+}
+
+suspend fun level_1() {
+    println("I'm in level 1!")
+    suspendNow() // ............ ②
+}
+
+suspend fun suspendNow() 
+        = suspendCoroutine<Unit> {
+    ... 
+}
+```
+
+示例中 ① 处并没有真正直接挂起，② 处的调用才会真正挂起，Kotlin 通过 suspend 函数嵌套调用的方式可以实现任意函数调用层次的挂起。
+
+当然，想要在任意位置挂起，那就需要调用栈了，与开发者通过调用 API 显式地挂起协程相比，任意位置的挂起主要用于运行时对协程执行的干预，这种挂起方式对于开发者不可见，因而是一种隐式的挂起操作。Go 语言的 go routine 可以通过 channel 的读写来实现挂起和恢复，除了这种显式地切换调度权之外，Go 运行时还会对长期占用调度权的 go routine 进行隐式挂起，并将调度权转移给其他 go routine，这实际上就是线程的抢占式调度了。
+
+#### 13.1.2. 按调用方式分类
+
+调度过程中，根据协程转移调度权的目标又将协程分为对称协程和非对称协程：
+
+* 对称协程 Symmetric Coroutine：任何一个协程都是相互独立且平等的，调度权可以在任意协程之间转移。
+* 非对称协程 Asymmetric Coroutine：协程出让调度权的目标只能是它的调用者，即协程之间存在调用和被调用关系。
+
+对称协程实际上已经非常接近线程的样子了，例如 Go 语言中的 go routine 可以通过读写不同的 channel 来实现控制权的自由转移。而非对程协程的调用关系实际上也更符合思维方式，常见的语言对协程的实现大多是非对程实现，例如 Lua 的协程中当前协程调用 yield 总是会将调度权转移给 resume 它的协程；还有就是 async/await，await 时将调度权转移到异步调用中，异步调用返回结果或抛出异常时总是将调度权转换回 await 的位置。
+
+从实现的角度来讲，非对称协程的实现更自然，也相对容易；不过，只要对非对程协程稍作修改，即可实现对称协程的能力。在非对称协程的基础上，只需要添加一个中立的第三方作为协程调度权的分发中心，所有的协程在挂起时都将控制权转移给分发中心，分发中心根据参数来决定将调度权转移给哪个协程，例如 Lua 的第三方库 coro，以及 Kotlin 协程框架中基于 Channel 的通信等。
+
+### 13.2. 协程的实现举例
+
+简单来说协程需要关注的就是程序自己处理挂起和恢复，不过在分类的时候又根据解决挂起和恢复时具体实现细节的不同又区分了按照栈的有无和调度权转移的对称性的分类。不管怎样，协程的关注点就是程序自己处理挂起和恢复。
+
+#### 13.2.1. Python 的 Generator
+
+Python 的 Generator 也是协程，是一个典型的无栈协程的实现，可以在任意 Python 函数中调用 yield 来实现当前函数调用的挂起，yield 的参数作为对下一次 next(num_generator) 调用的返回值：
+
+```python
+import time
+
+def numbers():
+    i = 0
+    while True:
+        yield(i) # ..................... ①
+        i += 1
+        time.sleep(1)
+
+num_generator = numbers()
+
+print(f"[0] {next(num_generator)}") # ... ②
+print(f"[1] {next(num_generator)}") # ... ③
+
+for i in num_generator: # ............... ④
+    print(f"[Loop] {i}")
+```
+
+所以运行这段程序时，首先会在 ① 处 yield，并将 0 传出，在 ② 处输出：
+
+```kotlin
+[0] 0
+```
+
+接着自 ③ 处调用 next，将调度权从主流程转移到 numbers 函数当中，从上一次挂起的位置 ①  处继续执行，i 的值修改为 1，1s 后，再次通过 yield(1) 挂起，③ 处输出：
+
+```kotlin
+[1] 1
+```
+
+后续就以同样的逻辑在 for 循环中一直输出 [Loop] n，直到程序被终止。
+
+之所以称 Python 的 Generator 为协程，就是因为它具备了通过 yield 来挂起当前 Generator 函数的执行，通过 next 来恢复参数对应的 Generator 执行来实现挂起、恢复的协程调度权控制转移的。
+
+当然，如果在 numbers 函数中嵌套调用 yeld，就无法对 numbers 的调用进行中断了：
+
+```python
+def numbers():
+    i = 0
+    while True:
+        yield_here(i) # ................. ①
+        i += 1
+        time.sleep(1)
+
+def yield_here(i):
+    yield(i)
+```
+
+这时候再调用 numbers 函数，就会潜入死循环而无法返回，因为这次 yield_here 的返回值才是 Generator。
+
+说明 Python 的 Generator 属于非对称无栈协程的一种实现。从 Python 3.5 开始也支持 async/await，原理与 JavaScript 的实现类似，与 Generator 的不同之处在于可以通过这一组关键字实现再函数嵌套调用挂起。
+
+#### 13.2.2. Lua 标准库的协程实现
+
+Lua 的协程实现可以认为是一个教科书式的案例了，它提供了几个 API 允许开发者灵活控制协程的执行：
+
+* coroutine.create: 创建协程，参数为函数，作为协程的执行体，返回协程实例。
+* coroutine.yield：挂起协程，第一个参数为被挂起的协程实例，后面的参数则作为外部调用 resume 来继续当前协程时的返回值，而它的返回值则又是外部下一次 resume 调用时传入的参数。
+* coroutine.resume：继续协程，第一个参数为被继续的协程实例，后面的参数则作为协程内部 yield 时的返回值，返回值则为协程内部下一次 yield 时传出的参数；如果是第一次对该协程实例执行 resume，参数回作为协程函数的参数传入。
+
+Lua 的协程也有几个状态，挂起（suspended）、运行（running）、结束（dead）。其中，调用 yield 之后的协程处于挂起态，获得执行权而正在运行的协程则是处于运行态，协程对应的函数运行结束后，则处于结束态。
+
+```lua
+function producer() 
+    for i = 0, 3 do
+        print("send "..i)
+        coroutine.yield(i) -- ④
+    end
+    print("End Producer")
+end            
+
+function consumer(value)
+    repeat
+        print("receive "..value)
+        value = coroutine.yield() -- ⑤
+    until(not value)
+    print("End Consumer")
+end
+
+producerCoroutine = coroutine.create(producer) -- ①
+consumerCoroutine = coroutine.create(consumer) -- ②
+
+repeat
+    status, product = coroutine.resume(producerCoroutine) -- ③
+    coroutine.resume(consumerCoroutine, product) -- ⑥
+until(not status)
+print("End Main")
+```
+
+这段代码在 ①、② 两处创建协程，③ 处开始执行，producer 在 ④ 处 yield(0)，意味着 ③ 的返回值 product 就是 0，把 0 作为参数又传给 consumer，第一次 resume 参数 0 会作为 consumer 的参数 value 传入，因此会打印出：
+
+```
+send 0
+receive 0
+```
+
+接下来 consumer 通过 ⑤ 处的 yield 挂起，它的参数会作为 ⑥ 处的返回值，不过没有传任何参数。这时控制权又回到主流程，status 的值在对应的协程结束后会返回 false，这时候 producer 尚未结束，因此是 true，于是循环继续执行，后续流程类似，输出结果：
+
+```
+send 1
+receive 1
+send 2
+receive 2
+send 3
+receive 3
+End Producer
+End Consumer
+End Main
+```
+
+通过这个例子，能够对协程有一个更加具体的认识，对于协程来讲，它包括：
+
+* 协程的执行体，主要是指启动协程时对应的函数
+* 协程的控制实例，可以通过协程创建时返回的实例控制协程的调用流转
+* 协程的状态，在调用流程转移前后，协程的状态会发生相应的变化
+
+说明 Lua 标准库的协程属于非对称有栈协程，不过第三方提供了基于标准库的对称协程的实现 coro。这也是对称协程的实现可以基于非对称协程来实现的例子。
+
+#### 13.2.3. Go 语言中的 go routine
+
+go routine 的调度没有 Lua 那么明显，没有类似 yield 和 resume 的函数。
+
+```go
+channel := make(chan int) // .......... ①
+var readChannel <-chan int = channel
+var writeChannel chan<- int = channel
+
+// reader
+go func() { // ........................ ②
+    fmt.Println("wait for read")
+    for i := range readChannel { // ... ③
+        fmt.Println("read", i)
+    }
+    fmt.Println("read end")
+}()  // ............................... ④
 
 
+// writer
+go func() {
+    for i := 0; i < 3; i++{
+        fmt.Println("write", i)
+        writeChannel <- i // .......... ⑤
+        time.Sleep(time.Second)
+    }
+    close(writeChannel)
+}()
+```
 
+在任意函数调用前面加关键字 go 即可启动一个 go routine，并在该 go routine 中调用这个函数，例如 ② 处实际上是创建了一个匿名函数，并在后面 ④ 处立即调用了该函数。把这两个 go routine 依次称为 “reader” 和 “writer”。
 
+① 处创建了一个双向的 channel，可读可写，接着创建的 readChannel 声明为只读类型，writeChannel 声明为只写类型，这二者实际上是同一个 channel，并且由于这个 channel 没有缓冲区，因此写操作会一直挂起直到读操作执行，反过来也是如此。
 
+在 reader 中，③ 处的 for 循环会对 readChannel 进行读操作，如果此时还没有对应的写操作，就会挂起，直到有数据写入；在 writer 中，⑤ 处表示向 writeChannel 中写入 i，同样，如果写入时尚未有对应的读操作，就会挂起，直到有数据读取。整段程序的输出如下：
+
+```
+wait for read
+write 0
+read 0
+write 1
+read 1
+write 2
+read 2
+read end
+```
+
+如果有多个 go routine 对 channel 进行读写，或者有多个 channel 供多个 go routine 读写，那么这时的读写操作实际上就是在 go routine 之间平等的转移调度权，因此可以认为 go routine 是对称的协程实现。
+
+这个示例看上去对于 channel 的读写操作有点儿类似两个线程中的阻塞时 IO 操作，不过 go routine 相对操作系统的内核线程来说要轻量的多，切换的成本也很低，因此在读写过程中挂起的成本也远比线程阻塞的调用切换成本低。实际上这两个 go routine 在切换时，很大概率不会有线程的切换，为了让示例更加能说明问题，为输出添加了当前的线程 id，同时将每次向 writeChannel 写入数据之后的 Sleep 操作去掉：
+
+```kotlin
+go func() {
+    fmt.Println(windows.GetCurrentThreadId(), "wait for read")
+    for i := range readChannel {
+        fmt.Println(windows.GetCurrentThreadId(), "read", i)
+    }
+    fmt.Println(windows.GetCurrentThreadId(), "read end")
+}()
+go func() {
+    for i := 0; i < 3; i++{
+        fmt.Println(windows.GetCurrentThreadId(), "write", i)
+        writeChannel <- i
+    }
+    close(writeChannel)
+}()
+```
+
+修改后的运行结果可以看到程序在输出时所在的线程 id：
+
+```
+181808 write 0
+183984 wait for read
+181808 read 0
+181808 write 1
+181808 write 2
+181808 read 1
+181808 read 2
+181808 read end
+```
+
+两个 go routine 除了开始运行时占用了两个线程，后续都在一个线程中转移调度权（不同场景的实际运行结果可能有细微差异，这取决了 Go 运行时的调度器）。
+
+**获取线程 id** 本例在 windows 上调试，通过 sys 库的 windows 包下提供的 GetCurrentThreadId 函数来获取线程 id。Linux 系统可以通过 sys call.Gettid 来获取。
+
+**说明**虽然一直在用 go routine 做例子，并把它称作为对称有栈协程的一种实现，但考虑到 Go 运行时本身做了足够多超出其他语言的能力，例如栈优化，调度优化等，特别是调度器还支持特定场景下的抢占式调度，某种意义上已经超越了协程概念的讨论范围，因此也有很多人认为 go routine 不能简单的认为就是协程。
+
+不管怎么分类，协程的本质就是程序自己处理挂起和恢复。协程描述了多个程序之间如何通过相互出让运行调度权来完成执行，基于这一对基本的控制转移操作进而衍生出各种异步模型，并发模型例如 async/await，Channel 等。
+
+相比之下，Kotlin 的协程没有其他语言的 async/await 那么容易上手，也没有 go routine 那么容易使用，原因也很简单，Kotlin 的协程用一个最基本的 suspend 关键字来支持了最基本的挂起恢复逻辑，进而在上层封装，衍生出了以上提到的几乎所有的模型，在 Kotlin 当中可以有机会使用 async/await、Channel，以及最新出的 Flow API，将来还会有更多。
 
 ## 参考文章
 
@@ -2804,3 +3680,6 @@ Flow 就是 Kotlin 协程与响应式编程模型结合的产物。
 1. [破解 Kotlin 协程（8）：Android 篇](https://www.bennyhuo.com/2019/05/27/coroutine-android/)
 1. [破解 Kotlin 协程（9）：Channel 篇](https://www.bennyhuo.com/2019/09/16/coroutine-channel/)
 1. [破解 Kotlin 协程（10）：Select 篇](https://www.bennyhuo.com/2020/02/03/coroutine-select/)
+1. [破解 Kotlin 协程（11）：Flow 篇](https://www.bennyhuo.com/2020/03/14/coroutine-flow/)
+1. [破解 Kotlin 协程（12）：协程为什么被称为『轻量级线程』？](https://www.bennyhuo.com/2019/10/19/coroutine-why-so-called-lightweight-thread/)
+1. [破解 Kotlin 协程（13）：协程的几类常见的实现](https://www.bennyhuo.com/2019/12/01/coroutine-implementations/)
