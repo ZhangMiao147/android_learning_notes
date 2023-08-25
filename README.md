@@ -437,6 +437,10 @@
 * 构造函数
 * Latent、by lazy
 * 协程
+* [动脑学院 kotlin 学习笔记]
+* [Kotlin 之 String]
+* [kotlin 协程]
+* [利用 Kotlin 特点]
 
 ## :two: 模块化
 
