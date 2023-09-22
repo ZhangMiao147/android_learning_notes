@@ -4,9 +4,9 @@
 
 **第 2 章** [LifeCycle]
 
-**第 3 章** Navigation 46 - 77
+**第 3 章** [Navigation]
 
-**第 4 章** ViewModel 78 - 88
+**第 4 章** [ViewModel]
 
 **第 5 章** LiveData 89 - 101
 
