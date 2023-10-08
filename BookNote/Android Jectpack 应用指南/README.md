@@ -8,9 +8,9 @@
 
 **第 4 章** [ViewModel]
 
-**第 5 章** LiveData 89 - 101
+**第 5 章** [LiveData]
 
-**第 6 章** Room 102 - 123
+**第 6 章** [Room]
 
 **第 7 章** WorkManager 124 - 134
 
