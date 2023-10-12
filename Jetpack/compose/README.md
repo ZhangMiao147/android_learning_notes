@@ -8,6 +8,7 @@
 * 
 * View
   * [TextField 设置光标位置]
+  * [Compose 加载图片异常]
 
 
 
