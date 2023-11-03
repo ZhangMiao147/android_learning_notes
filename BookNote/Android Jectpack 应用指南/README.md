@@ -12,7 +12,7 @@
 
 **第 6 章** [Room]
 
-**第 7 章** WorkManager 124 - 134
+**第 7 章** [WorkManager]
 
 **第 8 章** DataBinding 135 - 176
 
