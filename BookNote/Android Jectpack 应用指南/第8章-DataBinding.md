@@ -686,21 +686,418 @@ public static void setImage(ImageView imageView, String imageUrl, int imageResou
 
 #### 8.6.4. 可选旧值
 
+BindindAdapter 中的方法有一个有趣的功能 -- 可选旧值。在某些情况下，可能希望在方法中得到该属性的旧值。例如，在修改控件的 padding 时，可能希望得到修改前的 padding，以防止方法重复调用。代码如下所示。
 
+```java
+@BindingAdapter("padding")
+public static void setPading(View view, int oldPadding, int newPadding){
+	Log.e(TAG, "oldPadding:"+oldPadding+" newPadding:"+newPadding);
+	if(oldPadding != newPadding){
+		view.setPadding(newPadding,newPadding,newPadding,newPadding);
+	}
+}
+```
+
+需要注意的是，使用可选旧值时，方法中的参数顺序需要先写旧值，后写新值。即 oldPadding 在前，newPadding 在后。
+
+下面通过一个 Button 来演示 padding 的变化。
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://******.android.com/apk/res/android"
+	xmlns:app="http://******.android.com/apk/res-auto">
+	
+	<data>
+		<variable
+			name="networkImage"
+			type="String" />
+			
+		<variable
+			name="localImage"
+			type="int" />
+			
+		<variable
+			name="imagePadding"
+			type="int" />
+			
+		<variable
+			name="ClickHandle"
+			type="com.michael.demo.BindingAdapterActivity.ClickHandle" />
+	</data>
+
+	<LinearLayout>
+		<ImageView
+			app:image="@{networkImage}"
+			app:defaultImageResource="@{localImage}"
+			app:padding="@{imagePadding}" />
+			
+		<Button
+			andriod:onClick="@{ClickHandle.onClick}"
+			android:text="change padding" />
+	</LinearLayout>
+</layout>
+```
+
+当 Button 被单击时，让 padding 从 40 变为 180。
+
+```java
+public class BindingAdapterActivity extends Activity {
+	private ActivityBindingAdapterBinding activityBindingAdapterBinding;
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState){
+		super.onCreate(savedInstanceState);
+		activityBindingAdpterBinding = DataBindingUtil.setContentView(
+															this,R.layout.activity_binding_adapter);
+															
+		activityBindingAdpterBinding.setNetworImage("https://****.jpg");
+		activityBindingAdpterBinding.setLocalImage(R.mipmap.local_image);
+		
+		// 旧值
+		activityBindingAdpterBinding.setImagePadding(40);
+		activityBindingAdpterBinding.setClickHandle(new ClickHandler());
+	} 
+	
+	public class ClickHandler
+	{
+		public void onClick(View view){
+			// 新值
+			activityBindingAdapterBinding.setImagePadding(180);
+		}
+	}
+}
+```
+
+运行程序，查看 LogCat 中的日志。当应用程序启动时，padding 从 0 变为 40；在单击 Button 后，padding 从 40 变为 180，如图所示。
+
+```
+E/ImageViewBindingAdapter: oldPadding:0 newPadding:40
+E/ImageViewBindingAdapter: oldPadding:40 newPadding:180
+```
 
 ### 8.7. 双向绑定
 
 #### 8.7.1. 单向绑定和双向绑定
 
+前面所学习的都属于单向绑定。例如，TextView 的 android:text 属性与 book 对象的 title 字段之间的绑定，就是一种单向绑定。绑定后，在 title 字段发生变化时，TextView 会自动更新相应的内容。
+
+![](img/单向绑定.png)
+
+TextView 是一个纯粹用于展示的控件，它不需要与用于产生交互。而对于其他一些能与用户产生交互的控件，例如 EditText，它不仅能够像 TextView 那样，随着字段的变化自动更新控件中的内容，还可以实现用户修改 EditText 中的内容时，对应的字段也能够自动得到更新，这就是双向绑定。
+
+![](img/双向绑定.png)
+
 #### 8.7.2. 实现双向绑定
+
+假设要实现一个登录界面，需要一个用于输入用户名的 EditText，一个用户保存用户登录信息的 Model 类 LoginModel。希望将 EditText 和 LoginModel 中的 userName 字段进行双向绑定。即当 userName 字段的内容发生变化时，EditText 会自动更新，同时，当用户修改 EditText 中的内容时，userName 字段也能得到同步修改。
+
+1. 编写 LoginModel 类。
+
+   ```java
+   public class LoginModel{
+   	public String userName;
+   }
+   ```
+
+2. 编写一个用于存放与实现双向绑定相关的业务逻辑的类，这是实现双向绑定的重点。注意，改类继承自 BaseObservable，而非 ViewModel。无论是单向绑定还是双向绑定，本质都是观察者模式。BaseObservable 是 DataBinding 库为了方便实现观察者模式而提供的类。
+
+   ```java
+   public class TwoWayBindingViewModel extends BaseObservable{
+   	private LoginModel loginModel;
+   	
+   	public TwoWayBindingViewModel(){
+   		loginModel = new LoginModel();
+   		loginModel.userName = "Michael";
+   	}
+   	
+   	@Bindable
+   	public String getUserName(){
+   		return loginModel.userName;
+   	}
+   	
+   	public void setUserName(String userName){
+   		if(userName != null && !userName.equals(loginModel.userName)){
+   			loginModel.userName = userName;
+   			// 可以在此处理一些与业务相关的逻辑，例如保存 userName 字段
+   			notifyPropertyChanged(BR.userName);
+   		}
+   	}
+   }
+   ```
+
+   分析以上代码，在构造器中为字段 userName 设置了默认值，接着为该字段写了 Getter 和 Setter 方法。请注意，这里在 Getter 方法前加上了 @Bindable 标签，这是在告诉编译器，希望对这个字段进行双向绑定。而 Setter 方法会在用户编辑 EditText 中的内容时，被自动调用，需要在该方法内对 userName 字段进行手动更新。
+
+   注意，在对字段更新之前，需要判断新值与旧值是否不同。因为在更新后，会调用 notifyPropertyChanged() 方法通知观察者，数据已经更新。观察者在收到通知后，会对 Setter 方法进行调用。因此，如果没有对值进行判断，那么则会引发循环调用的问题。
+
+   notifyPropertyChanged() 是 BaseObservable 类中的一个方法，这也是类要继承自 BaseObservable 的一个原因。
+
+3. 设置布局变量。
+
+   ```java
+   public class TwoWayBindingActivity extends Activity{
+   	@Override
+   	protected void onCreate(Bundle savedInstanceState){
+   		super.onCreate(savedInstanceState);
+   		ActivityTwoWayBindingBinding activityTwoWayBindingBinding = DataBindingUtil.setContentView(this, R.layout.activity_two_way_binding);
+   		
+   		activityTwoWayBindingBinding.setViewModel(new TwoWayBindingViewModel());
+   	}
+   }
+   ```
+
+4. 完成双向绑定。
+
+   完成双向绑定非常简单，布局表达式由单向绑定的 @{} 变为 @={} 即可。
+
+   ```xml
+   <?xml version="1.0" ecoding="utf-8" ?>
+   <layout xmlns:android="http://******.android.com/apk/res/android">
+   	<data>
+   		<variable
+   			name="viewModel"
+   			type="com.michael.demo.TwoWayBindingViewModel" />
+   			
+   	</data>
+   	
+   	<LinearLayout>
+   		<EditText android:text="@={viewModel.userName}" />
+   	</LinearLayout>
+   </layout>
+   ```
+
+   运行程序，当修改 EditText 中的值时，类中的 Setter 方法会被自动调用，userName 字段会随着 EditText 中内容的变化而变化，这就是双向绑定。
 
 #### 8.7.3. 使用 ObservableField 优化双向绑定
 
+实际上，上面的做法存在一些弊端。首先类必须继承自 BaseObervble，另外，在 Getter 方法前还需要加上 @Bindable 标签，以告诉编译器要绑定该字段。最后，在 Setter 方法中还需要手动调用 notifyPropertyChanged() 方法以通知观察者。
+
+那么有没有更简单一些的做法呢？有。那就是 ObservableField\<T>，它能将普通对象包装成一个可观察对象。ObservableField 可用于包装各种基本类型、集合数组类型和自定义类型的数据。下面的代码演示了如何将 BaseObservable 改写为 ObservableField，其中使用 ObservableField 将 LoginModel 对象包装了起来。
+
+```java
+public class TwoWayBindingViewModel{
+	private observableField<LoginModel> loginModelObservableField;
+	
+	public TwoWayBindingFieldViewModel(){
+		LoginModel loginModel = new LoginModel();
+		loginModel.userName = "Michael";
+		loginModelObservableField = new observableField<>();
+		loginModelObservableField.set(loginModel);
+	}
+	
+	public String getUserName(){
+		return loginModelObservableField.get().userName;
+	}
+	
+	public void setUserName(String userName){
+		loginModelObservableField.get().userName = userName;
+	}
+}
+```
+
+以上代码可以看出，该类不需要集成自任何类。要做的只是通过 ObservableField 将 LoginModel 对象包装起来，并为对象中的字段写好 Getter 和 Setter 方法。在布局文件中依然是通过 @={} 的方式完成双向绑定。运行程序可以发现，getUserName() 方法在程序启动时被自动调用，当用户修改 EditText 中的内容时，setUserName() 方法被自动调用。对于 Getter 方法，也无须为其添加 @Bindable 标签，使用起来方便了许多。
+
 #### 8.7.4. ObservableField 与 LiveData
+
+ObservableField 的使用方式和作用与 LiveData 很像，实际上，二者是可以替换使用的。但二者的区别在于，LiveData 与生命周期相关，它通常在 ViewModel 中使用，并且需要在页面中通过 observe() 方法对变化进行监听。而在示例中，双向绑定无须在页面中加入额外的代码，耦合度更低。
 
 ### 8.8. RecyclerView 的绑定机制
 
+DataBinding 库针对 RecyclerView 进行了哪些优化。
+
+RecyclerView 有自己的一套绑定机制。它通过 RecyclerView.Adapter 实现 RecyclerView 与数据源 List\<T> 之间的绑定。在 RecyclerView.Adapter 的回调方法中，可以利用 DataBinding 库帮助实例化 RecyclerView 中每个 Item 的布局文件，进而将布局文件中的控件与 List\<T> 中的类型对象 T 进行绑定。
+
+接下来，通过代码来演示 DataBinding 在 RecyclerView 中的使用。
+
+1. 准备工作。
+
+   在 app 的 build.gradle 文件中添加 RecyclerView 的依赖。
+
+   ```xml
+   dependencies{
+   	implementation 'androidx.recyclerview:recyclerview:1.0.0'
+   }
+   ```
+
+   启用 DataBinding。
+
+   ```groovy
+   android {
+   	...
+   	dataBinding {
+   		enabled = true
+   	}
+   }
+   ```
+
+2. 编写 RecyclerView 的布局文件。
+
+   ```xml
+   <?xml version="1.0" encoding="utf-8" ?>
+   <layout xmlns:android="http://******.andriod.com/apk/res/android">
+   
+   	<data>
+   	</data>
+   	
+   	<LinearLayout>
+   		<androidx.recyclerview.widget.RecyclerView
+   			android:id="@+id/recyclerView"
+   			android:layout_width="match_parent"
+   			android:layout_height="wrap_content" />
+   	</LinearLayout>
+   </layout>
+   ```
+
+3. 编写 Model 类。假设要实现一个书本列表，在书本类中定义 3 个字段，分别是书名、作者和封面。
+
+   ```java
+   public class Book{
+   	public String title;
+   	public String author;
+   	public String image;
+   	
+   	public Book(String title, String author){
+   		this.title = title;
+   		this.author = author;
+   	}
+   }
+   ```
+
+4. 定义用于处理图片的 BindingAdapter。
+
+   ```java
+   public class RecyclerViewImageBindingAdapter {
+   	@BindingAdapter("itemImage")
+   	public static void setImage(ImageView imageView, String imageUrl){
+   		if(!TextUtils.isEmpty(imageUrl)){
+   			Picasso.get()
+   						.load(imageUrl)
+   						.placeholder(R.drawable.ic_default)
+   						.error(R.drawable.ic_error)
+   						.into(imageView);
+   		} else {
+   			imageView.setBackgroundColor(Color.DEGRAY);
+   		}
+   	}
+   }
+   ```
+
+5. 编写 RecyclerView 中每个 Item 所对应的布局文件，并将 Book 定义为布局变量。ImageView 和两个 TextView 分别与 Book 中的 3 个字段进行绑定。在 ImageView 中，通过自定义的 BindAdapter 将 ImageView 与 Book.image 字段进行绑定。
+
+   ```java
+   <?xml version="1.0" encoding="utf-8" ?>
+   <layout xmlns:android="http://******.andriod.com/apk/res/android">
+   
+   	<data>
+   		<variable
+   			name="book"
+   			type="com.michael.databindingdemo.model.Book" />
+   	</data>
+   	
+   	<LinearLayout>
+   		
+   		<ImageView app:itemImage="@{book.image}" />
+   		
+   		<LinearLayout>
+   			<TextView android:text="@{book.title}" />
+   			<TextView android:text="@{book.author}" />
+   		</LinearLayout>
+   		
+   	</LinearLayout>
+   </layout>
+   ```
+
+6. 编写 RecyclerView.Adapter。需要注意的地方有两个。
+
+   * 在 onCreateViewHolder() 方法中，通过 DataBindingUtil.inflate() 实例化布局文件。
+   * 在 onBindViewHolder() 方法中，设置布局变量的值。
+
+   这样便完成了 Item 布局文件与 Model 之间的绑定，代码如下所示。
+
+   ```java
+   public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.MyViewHolder> {
+   	private List<Book> books;
+     
+     public RecyclerViewAdapter(List<Book> books){
+       this.books = books;
+     }
+     
+     @Override
+     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType){
+       LayoutItemBinding layoutItemBinding = DataBindingUtil.inflate(
+       	LayoutInflater.from(parent.getContext()),
+       	R.layour.layour_item,
+       	parent,
+       	false);
+       return new MyViewHolder(layoutItemBinding);
+     }
+     
+     @Override
+     public void onBindViewHolder(MyViewHolder holder, int position){
+       Book book = books.get(position);
+       holder.layoutItemBinding.setBook(book);
+     }
+     
+     @Override
+     public int getItemCount(){
+       return books.size();
+     }
+     
+     class MyViewHolder extends RecyclerView.ViewHolder{
+       LayoutItemBinding layoutItemBinding;
+       
+       public MyViewHolder(LayoutItemBinding itemView){
+         // getRoot() 返回的是布局文件的最外层 UI 视图
+         super(itemView.getRoot());
+         layoutItemBinding = itemView；
+       }
+     }
+   }
+   ```
+
+7. 模拟一些假数据。
+
+   ```java
+   public class RecyclerViewViewModel{
+   	public List<Book> getBooks(){
+   		List<Book> books = new ArrayList<>();
+   		for(int i = 0; i< 100; i++){
+   			Book book = new Book("Android 高性能编程"+i,"叶坤"+i);
+   			book.image = "http://****.jpg";
+   			books.add(book);
+   		}
+   		return books;
+   	}
+   }
+   ```
+
+8. 在 Activity 中配置 RecyclerView，并为其添加模拟数据。
+
+   ```java
+   public class RecyclerViewActivity extends Activity{
+   	@Override
+   	protected void onCreate(Bundle savedInstanceState){
+   		super.onCreate(savedInstanceState);
+   		ActivityRecyclerviewBinding activityRecyclerviewBinding = DataBindingUtil.setContentView(this, R.layout.activity_recyclerview);
+   		activityRecyclerviewBinding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
+   		activityRecyclerviewBinding.recyclerView.setHasFixedSize(true);
+   		
+   		RecyclerViewAdapter adapter = new RecyclerViewAdapter(new RecyclerViewAdapter().getBooks());
+   		activityRecyclerviewBinding.recyclerView.setAdapter(adapter);
+   	}
+   }
+   ```
+
+9. 最后，运行应用程序。
+
 ### 8.9. 总结
+
+有了 DataBinding 组件，Activity 可以正式告别 findViewById() 方法。布局文件能做的事情也更多了，它不仅负责界面的布局，也承担了部分原先属于 Activity 的工作。通过简单的布局表达式，可以将数据字段和 UI 控件直接绑定起来，甚至在布局文件中还可以引用工具类进行简单的业务处理。当然，DataBinding 组件能做的还不止这些，它还能够让布局文件中的 UI 控件响应用户事件。
+
+通过对 XXXBindingAdapter 的源码分析，了解到 UI 控件的属性与 XXXBingingAdapter 类中的静态方法之间的关系。当布局文件被渲染时，UI 控件属性所绑定的静态方法会被调用。若 BindingAdapter 不能自定义，那么对于加载图片这种较为复杂的需求，只能在页面中编写。而现在，可以通过自定义 BindingAdapter，让布局文件中的 UI 控件通过简单的属性设置，即可完成此类复杂的需求。布局文件承担了更多的工作，同时减轻了页面的负担。页面与布局文件之间的耦合度更低了。不仅如此，自定义 BindingAdapter 类在其他布局文件中也可以使用，代码的复用程度也得到了提升。
+
+DataBinding 库还提供了 BaseObservable 和 ObservableField，以实现可交互控件的双向绑定。除了 EditText，DataBinding 库还支持其他许多控件的双向绑定，例如 CheckBox。通过双向绑定，可以将 UI 控件的业务逻辑完全放在 ViewModel 类中进行处理，彻底摆脱页面的束缚，使代码的耦合度进一步降低。
+
+
 
 
 
