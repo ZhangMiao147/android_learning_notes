@@ -14,7 +14,7 @@
 
 **第 7 章** [WorkManager]
 
-**第 8 章** DataBinding 135 - 176
+**第 8 章** [DataBinding]
 
 **第 9 章** Paging 177 - 224
 
