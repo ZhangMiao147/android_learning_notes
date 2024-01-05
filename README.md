@@ -500,6 +500,7 @@
 * [Effective Java](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Effective%20Java/EffectiveJavaReadRecord.txt)
 * [代码整洁之道](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93)
 * [设计模式之禅]
+* [Android Jetpack 应用指南]
 
 ## :two: 非技术书籍
 
