@@ -16,6 +16,7 @@
 * [WebView 遇到的 Exception]
 * [EditText 的 imeOptions 与多行输入的问题]
 * BottomNavigationView http://www.45fan.com/article.php?aid=1COkLHKOUF2TiLJM
+* [getDimensionxxx方法区别]
 
 ### Snackbars
 
