@@ -1,8 +1,8 @@
 # Android 知识结构图
 
-|    Android    | Java  | 软件基础 |   开源框架   |    技术栈     |      计划       | 读书笔记 |
-| :-----------: | :---: | :------: | :----------: | :-----------: | :-------------: | :------: |
-| :monkey_face: | :tea: | :house:  | :open_hands: | :atom_symbol: | :bookmark_tabs: | :books:  |
+| Android       | Java  | 软件基础    | 开源框架         | 技术栈           | 计划              | 读书笔记    |
+|:-------------:|:-----:|:-------:|:------------:|:-------------:|:---------------:|:-------:|
+| :monkey_face: | :tea: | :house: | :open_hands: | :atom_symbol: | :bookmark_tabs: | :books: |
 
 # :monkey_face: Android
 
@@ -35,10 +35,12 @@
 ## :two: 视图
 
 * Fragment
+  
   * [Fragment 的基础知识](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/fragment/Fragment的基础知识.md)
   * [Fragment 的使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/fragment/Fragment的使用.md)
-  
+
 * 列表控件
+  
   * ListView
     * [ListView 原理解析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/%E5%88%97%E8%A1%A8/ListView/ListView%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90.md)
     * [Android中ListView的几种常见优化方式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/%E5%88%97%E8%A1%A8/ListView/Android%E4%B8%ADListView%E7%9A%84%E5%87%A0%E7%A7%8D%E5%B8%B8%E8%A7%81%E4%BC%98%E5%8C%96%E6%96%B9%E5%BC%8F.md)
@@ -52,8 +54,10 @@
       * [RecyclerView 的复用机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/%E5%88%97%E8%A1%A8/RecyclerView/RecyclewView%E5%A4%8D%E7%94%A8%E6%9C%BA%E5%88%B6.md)
       * [RecyclerView 动画源码浅析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/%E5%88%97%E8%A1%A8/RecyclerView/RecyclewView%E5%8A%A8%E7%94%BB%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90.md)
       * [Recycler 原理分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/%E5%88%97%E8%A1%A8/RecyclerView/RecyclewView%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90.md)
-  * ListView 与 RecyclerVide 的区别
+  * ListView 与 RecyclerView 的区别
+
 * View
+  
   * 绘制
     * [Activity 的布局绘制过程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/Activity的布局绘制过程.md)
     * [View 绘制流程](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/View绘制流程.md)
@@ -62,11 +66,19 @@
     * [View 事件分发机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/View事件分发机制.md)
     * [ViewGroup 事件分发机制](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/ViewGroup事件分发机制.md)
   * [自定义View的实现方式](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/自定义View的实现方式.md)
-  * [ConstraintLayout](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/ConstraintLayout.md)
+  * [getDimensionxxx方法区别]
+  * Layout
+    * [ConstraintLayout 概念布局]
+    * [ConstraintLayout 辅助布局工具类]
+    * ConstraintLayout 功能增强型控件
+
 * View 应用
+  
   * [Android实现卡片翻转的动画（翻牌动画）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/view%E7%9A%84%E5%AE%9E%E8%B7%B5/Android%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E7%BF%BB%E8%BD%AC%E7%9A%84%E5%8A%A8%E7%94%BB%EF%BC%88%E7%BF%BB%E7%89%8C%E5%8A%A8%E7%94%BB%EF%BC%89.md)
   * [系统控件的常用使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/view%E7%9A%84%E5%AE%9E%E8%B7%B5/%E7%B3%BB%E7%BB%9F%E6%8E%A7%E4%BB%B6%E7%9A%84%E5%B8%B8%E7%94%A8%E4%BD%BF%E7%94%A8.md) 
   * [GridView嵌套在ScrollView里展示不全](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/GridView%E5%B5%8C%E5%A5%97%E5%9C%A8ScrollView%E9%87%8C%E5%B1%95%E7%A4%BA%E4%B8%8D%E5%85%A8.md)
+  * [WebView 遇到的 Exception]
+  * [EditText 的 imeOptions 与多行输入的问题]
 
 ## :three: Android framework
 
@@ -160,17 +172,17 @@
 * [Java 代理](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/基础/Java代理.md)
 
 * [Java 反射](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/基础/Java反射.md)
-
+  
   * [在Java反射中Class.forName和ClassLoader的区别.md](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/基础/在Java反射中Class.forName和ClassLoader的区别.md)
 
 * [Java 注解](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/基础/Java注解.md)
 
 * IO
-
+  
   * NIO
 
 * Java 中字符串 String switch 的实现原理
-
+  
   [Java中字符串String Switch的实现原理](https://blog.csdn.net/MOLIILOM/article/details/51166697)
 
 * Java 线程的创建
@@ -180,7 +192,7 @@
 * java 读写文件的几种方式
 
 * Java 注解
-
+  
   [Java 注解（Annotation）](https://www.runoob.com/w3cnote/java-annotation.html)
 
 * Vector
@@ -196,11 +208,14 @@
 * [Collection 与 Collections](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Colletion%E4%B8%8EColletions.md)
 
 * List
+  
   * [ArrayList 与 LinkedList](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/ArrayList%E4%B8%8ELinkedList.md)
   * SkipList
   * 线程安全
   * [list的remove问题](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/list%E7%9A%84remove%E9%97%AE%E9%A2%98.md)
+
 * Map
+  
   * [HashMap](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/HashMap.md)
   * [HashMap 不是线程安全的分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/HashMap不是线程安全的分析.md)
   * [HashMap 和 HashTable 的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/HashMap和HashTable的区别.md)
@@ -209,13 +224,17 @@
   * [JDK1.8ConcurrentHashMap的源码分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Map/JDK1.8ConcurrentHashMap的源码分析.md)
   * LinkedHashMap
   * TreeMap
+
 * Tree
+
 * Queue
+  
   * [Queue的add与offer的区别](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Java/DataStructure/Queue%E7%9A%84add%E4%B8%8Eoffer%E7%9A%84%E5%8C%BA%E5%88%AB.md)
   * PriorityQueue
   * LinkedList
   * ArrayDeque
   * 线程安全
+
 * Stack
 
 ## :three: 线程
@@ -352,8 +371,6 @@
 
 ## :five: 数据库
 
-
-
 # :open_hands: ​开源框架
 
 ## :one: 异步处理
@@ -406,15 +423,38 @@
 
 ## :seven: Jetpack
 
+* Compose
+  
+  * SubcomposeLayout
+  - ModalBottomSheetLayout
+  - [Compose 基础知识]
+  - [Compose State]
+  - View
+    - [TextField 设置光标位置]
+    - [Compose 加载图片异常]
+    - [Compose 手势之点击拖动和滑动事件]
+
 * ViewModel
+
 * Livedata
+
 * Lifecycles
+
 * Navigation
+  
+  * [Navigation 使用]
+  
+  * [Navigation 之 DeepLink]
+
 * Room
+  
   * [Room 数据库操作](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/Jetpack/room/Room%E6%95%B0%E6%8D%AE%E5%BA%93%E6%93%8D%E4%BD%9C.md)
   * [Room 原理解析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/OpenSourceLibrary/Jetpack/room/Room%E6%95%B0%E6%8D%AE%E5%BA%93%E5%8E%9F%E7%90%86.md)
+
 * Paging
+
 * WorkManager
+
 * DataBinding
 
 ## :eight: 其他
@@ -422,9 +462,9 @@
 * XWalkView
 
 * Okio
-
+  
   * 解析 html内容
-
+    
     [在 Android 应用中使用 HTML Parser 便捷的解析 html 内容](https://www.ibm.com/developerworks/cn/opensource/os-cn-android-hp/index.html)
 
 # :atom_symbol: ​技术栈
@@ -435,6 +475,25 @@
 * 构造函数
 * Latent、by lazy
 * 协程
+  * [Kotlin 协程概念]
+  * Kotlin 协程的使用
+  * Kotlin 协程与 Flow
+  * Kotlin 协程实现
+  * [Kotlin 协程疑问]
+* [动脑学院 kotlin 学习笔记]
+* [Kotlin 之 String]
+* [kotlin 协程]
+* [利用 Kotlin 特点]
+* [Kotlin 之 let、with、run、apply、also 函数的使用]
+* [Kotlin Flow 的 collect 和 collectLatest 有什么区别]
+* [Kotlin Multiplatform]
+  * Koin
+  * 官方文档翻译
+    * [Supported platform]
+    * [Platform differences]
+    * [Resources overview]
+    * [Setup and configuration]
+    * Access and usage
 
 ## :two: 模块化
 
@@ -494,6 +553,7 @@
 * [Effective Java](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/Effective%20Java/EffectiveJavaReadRecord.txt)
 * [代码整洁之道](https://github.com/ZhangMiao147/android_learning_notes/tree/master/BookNote/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93)
 * [设计模式之禅]
+* [Android Jetpack 应用指南]
 
 ## :two: 非技术书籍
 
@@ -503,4 +563,3 @@
 * [山茶文具店](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/非技术书籍/山茶文具店.md)
 * [明朝那些事儿](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/非技术书籍/明朝那些事儿.md)
 * [今天也要认真穿](https://github.com/ZhangMiao147/android_learning_notes/blob/master/BookNote/非技术书籍/今天也要认真穿.md)
-

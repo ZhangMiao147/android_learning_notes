@@ -25,7 +25,7 @@ Jetpack 是一套组件库，可帮助开发人员遵循最佳实践，减少样
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/f8uqictCHrGJBibua7eTFzswx7ECG1NO7zUkndeEbJaXajl4VZIPQJPzGTJX0nHS5zEpto6CvGAUibNdCZWQo0feA/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
 
-**第二个是架构组件（10个）**，Jetpack 推出之后很令人兴奋的一点，就是 Google 引入了现代 An droid 应用开发的架构指南，结合 MVVM 的架构设计，帮助我们轻松的处理 UI 与业务逻辑之间的关系。
+**第二个是架构组件（10个）**，Jetpack 推出之后很令人兴奋的一点，就是 Google 引入了现代 Android 应用开发的架构指南，结合 MVVM 的架构设计，帮助我们轻松的处理 UI 与业务逻辑之间的关系。
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/f8uqictCHrGJBibua7eTFzswx7ECG1NO7zictatbXHAWps36OKeu1PuUkP2sWIDQZpicRwyYgU7vHe0ufpOvf3P75g/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
 
@@ -54,4 +54,3 @@ Jetpack 是一套组件库，Jetpack 是由 85 个组件库构成的，每一个
 ## 参考文章
 
 1. [Jetpack 是什么？](https://mp.weixin.qq.com/s/BzwOF1d0lCvfrIhG2sDwZw)
-

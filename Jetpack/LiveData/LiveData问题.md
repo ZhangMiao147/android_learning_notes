@@ -1,5 +1,23 @@
 # LiveData 问题
 
+问题目录：
+
+1. LiveData 如何感知生命周期的变化？
+
+2. LiveData 是如何避免内存泄漏的？
+
+3. LiveData 是粘性的吗？若是，它是怎么做到的？
+
+4. 粘性的 LiveData 会造成什么问题？怎么解决？
+
+5. 什么情况下 LiveData 会丢失数据？
+
+6. 在 Fragment 中使用 LiveData 需注意些什么？
+
+7. 如何变换 LiveData 数据及注意事项？
+
+8. MutableLiveData 的 setValue 与 postValue 的区别？
+
 LiveData 是能感知生命周期的、可观察的、粘性的、数据持有者。LiveData 用于以 “数据驱动” 方式更新界面。
 
 换一种描述方式：LiveData 缓存了最新的数据并将其传递给正活跃的组件。
@@ -249,8 +267,6 @@ class LifecycleBoundObserver extends ObserverWrapper
     ...
 }
 ```
-
-
 
 ## 3. LiveData 是粘性的吗？若是，它是怎么做到的？
 
@@ -932,8 +948,6 @@ public abstract class LiveData<T> {
 }
 ```
 
-
-
 ## 6. 在 Fragment 中使用 LiveData 需注意些什么？
 
 总结：
@@ -1132,7 +1146,31 @@ CoroutineLiveData 将更新 LiveData 值的操作封装到一个挂起方法中�
 implementation  "androidx.lifecycle:lifecycle-livedata-ktx:2.3.1"
 ```
 
+
+
+### 8. MutableLiveData 的 setValue 与 postValue 的区别？
+
+MutableLiveData 的 setValue() 与 postValue() 核心区别在于调用线程和更新机制的不同，这直接影响了它们的行为和适用场景。
+
+| 特性     | setValue                        | postValue                              |
+| ------ | ------------------------------- | -------------------------------------- |
+| 调用线程   | 必须在主线程（UI线程）调用                  | 可以在任何线程（包括主线程和子线程）调用                   |
+| 更新方式   | 同步更新。调用后立即更改 LiveData 的值并通知观察者。 | 异步更新。将更新任务发送到主线程的消息队列，待主线程执行时才会真正更新。   |
+| 多次调用结果 | 每次调用都会更新值并通知观察者。                | 如果在主线程执行更新任务前多次调用，只有最后一个值会被分发，中间值会被丢弃。 |
+| 典型场景   | 主线程直接、立即更新 UI 数据。               | 子线程（如网络请求、IO操作）中安全地更新 UI 数据。           |
+
+postValue()：没有线程限制。它内部通过 ArchTaskExecutor 等组件，将更新逻辑封装成一个 Runnable 任务，post 到主线程的 Handler 消息队列中执行。这样，即使在子线程调用，数据的更新和通知最终也会安全地在主线程完成。
+
+setValue()：是同步操作。代码执行到 setValue() 时，回立即更新内部数据 mData，并遍历所有观察者，回调其 onChanged() 方法。
+
+postValue()：是异步操作。调用时，它不会立即修改 LiveData 的值，而是将新值暂存到一个中间变量 mPendingData 中。然后，它会向主线程发送一个 Runnable。只有当主线程执行到这个 Runnable 时，才会从 mPendingData 中取出值，并调用 setValue() 完成最终的更新。
+
+getValue() 的时机问题：调用 postValue() 后立即调用 getValue()，获取的可能不是刚刚 post 的新值，因为此时主线程的更新任务可能尚未执行。
+
+
+
+
+
 ## 参考文章
 
 1. [LiveData 面试 7 连问！](https://mp.weixin.qq.com/s/txOLO-cLrOR9JwqfktAtnA)
-

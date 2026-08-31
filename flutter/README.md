@@ -30,3 +30,9 @@
 ## 资料收集
 
 1. [《Flutter实战·第二版》](https://book.flutterchina.club/)
+1. Flutter中文网 https://flutterchina.club/
+1. https://github.com/AweiLoveAndroid/Flutter-learning Flutter-learning
+1. https://zhuanlan.zhihu.com/flutter flutter 学习指南
+1. https://flutter.cn/docs 官方文档
+1. http://www.flutterj.com/ flutter 教程网
+1. 视频 https://www.bilibili.com/video/BV1S4411E7LY?p=1

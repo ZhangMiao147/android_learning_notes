@@ -13,7 +13,18 @@
 
 ## View
 
+* [WebView 遇到的 Exception]
+* [EditText 的 imeOptions 与多行输入的问题]
 * BottomNavigationView http://www.45fan.com/article.php?aid=1COkLHKOUF2TiLJM
+* [getDimensionxxx方法区别]
+
+### ConstrainLayout
+
+* [ConstraintLayout 概念布局]
+
+* [ConstraintLayout Helper 辅助对象]
+
+* [ConstraintLayout VirtualLayout Helper]
 
 ### Snackbars
 
@@ -38,32 +49,30 @@
   * [RecyclerView 动画源码浅析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/%E5%88%97%E8%A1%A8/RecyclerView/RecyclewView%E5%8A%A8%E7%94%BB%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90.md)
   * [Recycler 原理分析](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/%E5%88%97%E8%A1%A8/RecyclerView/RecyclewView%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90.md)
 
-##  View 的实践
+## View 的实践
 
 * [Android实现卡片翻转的动画（翻牌动画）](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/view%E7%9A%84%E5%AE%9E%E8%B7%B5/Android%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E7%BF%BB%E8%BD%AC%E7%9A%84%E5%8A%A8%E7%94%BB%EF%BC%88%E7%BF%BB%E7%89%8C%E5%8A%A8%E7%94%BB%EF%BC%89.md)
 * [系统控件的常用使用](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/view%E7%9A%84%E5%AE%9E%E8%B7%B5/%E7%B3%BB%E7%BB%9F%E6%8E%A7%E4%BB%B6%E7%9A%84%E5%B8%B8%E7%94%A8%E4%BD%BF%E7%94%A8.md)
 * [GridView嵌套在ScrollView里展示不全](https://github.com/ZhangMiao147/android_learning_notes/blob/master/Android/view/GridView%E5%B5%8C%E5%A5%97%E5%9C%A8ScrollView%E9%87%8C%E5%B1%95%E7%A4%BA%E4%B8%8D%E5%85%A8.md)
 
-
-
 ## 触控
 
 * MotionEvent 详解 
-
+  
   （知识整理 20220409）
 
 * 多点触控
-
+  
   （知识整理 20220409）
 
 * 多点触控详解
-
+  
   （知识整理 20220409）
 
 * GestureDetector 手势
-
+  
   （知识整理 20220409）
 
 * ScaleGestureDetector 多点触控
-
+  
   （知识整理 20220409）

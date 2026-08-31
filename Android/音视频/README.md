@@ -1,5 +1,9 @@
 # 音视频
 
+1.1.mac 账号:1006299425 密码:181501，播放器下载地址：http://www.drmsoft.net/playernet/down.asp
+
+1.2.链接：https://pan.baidu.com/s/1eN2BdtnwW17VTu4e7EXT0A?pwd=d0sx 提取码：d0sx 
+
 ## C 语言基础
 
 ### C 语言初探
